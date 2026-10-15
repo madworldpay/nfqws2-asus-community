@@ -72,8 +72,8 @@ ASUS бывает непростой платформой для таких за
 
 ## Откуда всё выросло
 
-Спасибо авторам [nfqws2-keenetic](https://github.com/nfqws/nfqws2-keenetic), [nfqws-keenetic-web](https://github.com/nfqws/nfqws-keenetic-web) [zapret2](https://github.com/bol-van/zapret2) и [DPI Detector](https://github.com/Runnin4ik/dpi-detector). Здесь адаптируются установка, служба, интерфейс и диагностика ASUS; бинарник движка и upstream Lua не переписываются.
+Спасибо авторам [nfqws2-keenetic](https://github.com/nfqws/nfqws2-keenetic), [nfqws-keenetic-web](https://github.com/nfqws/nfqws-keenetic-web), [zapret2](https://github.com/bol-van/zapret2) и [DPI Detector](https://github.com/Runnin4ik/dpi-detector). Здесь адаптируются установка, служба, интерфейс и диагностика ASUS; бинарник движка и upstream Lua не переписываются.
 
 Это самостоятельный порт, без официальной связи с ASUS, Entware или авторами upstream. Авторство и лицензии сохранены: [LICENSE](LICENSE), [UPSTREAM.md](UPSTREAM.md).
 
-В этой первой частной выкладке [исходники приложены отдельным архивом](nfqws2-asus-source-b7.zip); личные настройки, журналы и резервные копии устройств в него не входят. Изменения перечислены в [CHANGELOG](CHANGELOG.md).
+В этой первой частной выкладке [исходники приложены отдельным архивом](nfqws2-asus-source-b8.zip); личные настройки, журналы и резервные копии устройств в него не входят. Изменения перечислены в [CHANGELOG](CHANGELOG.md).
