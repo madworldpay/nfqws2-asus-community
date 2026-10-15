@@ -50,3 +50,7 @@
 Личные имена и контакты владельца этого проекта в метаданные не добавляются.
 
 ASUS browser favicon: https://www.asus.com/favicon.ico (PNG supplied by ASUS; ASUS trademark belongs to ASUSTeK, no endorsement implied).
+
+## DPI Detector
+
+Необязательный компонент [Runnin4ik/dpi-detector](https://github.com/Runnin4ik/dpi-detector), MIT, закреплённый предварительный выпуск v5.0.0-alpha.21 (`a09d03b58d452c71bd63a9b3d410713dd22049f6`). Отдельная установка с проверкой TLS/SHA256; бинарник в IPK не включён. Ограничения интеграции описаны в DPI-DETECTOR.md.
