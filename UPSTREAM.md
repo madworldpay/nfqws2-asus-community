@@ -1,3 +1,5 @@
+Описание включает испытательную ветку после Build 20. Доступные файлы выпуска перечислены в [DOWNLOADS.md](DOWNLOADS.md); новые изменения не подменяют старые IPK.
+
 # Происхождение компонентов
 
 Это самостоятельная экспериментальная адаптация для ASUS, не официальный
@@ -7,7 +9,9 @@
   `077f9af`, пакет v1.3.1; MIT, исходное авторство сохранено.
 - `webui/`: https://github.com/nfqws/nfqws-keenetic-web — импорт коммита
   `c225df3`; MIT, исходное авторство сохранено. Интерфейс адаптирован для ASUS.
-- NFQWS2 ARMv7/AArch64 и Lua взяты из указанного пакета без изменения бинарника;
+- NFQWS2 ARMv7/AArch64 и Lua взяты из указанного пакета. AArch64-бинарник
+  сохранён побайтно; ARMv7-бинарник распакован из UPX для совместимой проверки
+  процесса на старом ядре. Машинный код и алгоритмы движка не переписывались;
   его версия zapret2 — v1.0.5.2,
   `6b6c63e3385fa73f8af3be4a69171e947f5a319d`.
   Исходники: https://github.com/bol-van/zapret2/tree/6b6c63e3385fa73f8af3be4a69171e947f5a319d
@@ -46,11 +50,17 @@
 веб-сервер, аутентификация ASUS, отключение обновлений Keenetic и сборка IPK.
 Из ASUS-версии удалена проверка доменов UI/API. IPv6 доступен отдельной
 опцией, по умолчанию выключен; аргументы сохраняют upstream binding IPv4/IPv6.
-Бинарник NFQWS2 и Lua не изменены.
+Lua не изменены; способ поставки ARMv7-бинарника уточнён выше.
 Личные имена и контакты владельца этого проекта в метаданные не добавляются.
+
+Для точного RT-AC87U / Merlin 384.13_10 ARMv7-пакет содержит дополнительный
+`nfnetlink_queue.ko` из Linux 2.6.36 GPLv2. Исходник `nfnetlink_queue.c` не
+изменён: [Merlin commit 26e1f3f17a2f29ba7cb9013c67142f8a8c8adfd7](https://github.com/RMerl/asuswrt-merlin.ng/tree/26e1f3f17a2f29ba7cb9013c67142f8a8c8adfd7/release/src-rt-6.x.4708/linux/linux-2.6.36).
+В проекте сохранены исходник, COPYING, конфигурация, Module.symvers, флаги
+и рецепт воспроизведения в `asus/legacy/rt-ac87u-384.13_10/`.
+Загрузчик сверяет модель, выпуск прошивки, архитектуру и штатные файлы;
+проверки vermagic/MODVERSIONS не ослаблены. В AArch64-пакете этого модуля нет.
 
 ASUS browser favicon: https://www.asus.com/favicon.ico (PNG supplied by ASUS; ASUS trademark belongs to ASUSTeK, no endorsement implied).
 
-## DPI Detector
-
-Необязательный компонент [Runnin4ik/dpi-detector](https://github.com/Runnin4ik/dpi-detector), MIT, закреплённый предварительный выпуск v5.0.0-alpha.21 (`a09d03b58d452c71bd63a9b3d410713dd22049f6`). Отдельная установка с проверкой TLS/SHA256; бинарник в IPK не включён. Ограничения интеграции описаны в DPI-DETECTOR.md.
+DPI Detector: https://github.com/Runnin4ik/dpi-detector, MIT. Необязательные бинарники закреплены на v5.0.0-alpha.21 / a09d03b58d452c71bd63a9b3d410713dd22049f6. Оригинальное уведомление — support/dpi-detector-MIT.txt; каталог URL, SHA256 и размеров — support/dpi-catalog.json. Компонент не включён в IPK как бинарник и не скачивается сборщиком или postinst.
