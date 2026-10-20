@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {sha256} from '../webui/web/src/api/supportDigest.ts';
+import {build} from '../webui/web/node_modules/esbuild/lib/main.js';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';import {join} from 'node:path';import {pathToFileURL,fileURLToPath} from 'node:url';
+const dir=await mkdtemp(join(tmpdir(),'bundle-client-'));
+await build({entryPoints:[fileURLToPath(new URL('../webui/web/src/api/supportBundle.ts',import.meta.url))],outfile:join(dir,'bundle.mjs'),bundle:true,alias:{'@':fileURLToPath(new URL('../webui/web/src',import.meta.url))},platform:'node',format:'esm',logLevel:'silent'});
+const {prepareSupportBundle,sendSupportBundle}=await import(pathToFileURL(join(dir,'bundle.mjs')));await rm(dir,{recursive:true,force:true});
+for(const text of ['', 'abc','Тест '+'x'.repeat(100000)]){const bytes=new TextEncoder().encode(text);assert.equal(sha256(bytes),createHash('sha256').update(bytes).digest('hex'));}
+const text=JSON.stringify({schema_version:1,model:'MODEL',captured_at:'2026-10-15T12:00:00Z',complete:false,sections:{},failures:[]});
+const report={blob:new Blob([text]),filename:'NFQWS2_MODEL_2026-10-15_12-00-00Z.json',complete:false,proof:'v1.1000.'+'a'.repeat(32)+'.'+'b'.repeat(64)};
+const dpiText=JSON.stringify({type:'nfqws2_dpi',schema_version:1,origin:'router',state:'partial',started_at:'2026-10-15T12:00:00Z',groups:[{group:2}]});
+const files=[['report',report.filename,text],['dpi','NFQWS2_DPI_2026-10-15_12-00-00Z.json',dpiText]].map(([type,filename,data])=>({type,filename,byte_length:Buffer.byteLength(data),sha256:createHash('sha256').update(data).digest('hex'),data_base64:Buffer.from(data).toString('base64')}));
+let calls=[];globalThis.fetch=async(url,options)=>{calls.push({url,options});return Response.json({files,proof:'v2.1000.'+'a'.repeat(32)+'.'+'b'.repeat(64)});};
+const bundle=await prepareSupportBundle(report,'a'.repeat(32),'csrf');assert.equal(calls.length,1);assert.equal(calls[0].options.body.get('cmd'),'supportbundleprepare');assert.equal(await bundle.files[1].blob.text(),dpiText);assert.equal(await bundle.files[0].blob.text(),text);assert.ok(Object.isFrozen(bundle));
+const sid='11111111-1111-4111-8111-111111111111';let release;
+globalThis.fetch=(url,options)=>{calls.push({url,options});return new Promise(resolve=>{release=()=>resolve(Response.json({state:'accepted',submission_id:sid,code:'smtp_accepted'}));});};
+const a=sendSupportBundle(bundle,'csrf',sid),b=sendSupportBundle(bundle,'csrf',sid);await new Promise(r=>setImmediate(r));assert.equal(calls.length,2);assert.equal(calls[1].options.body.get('consent'),'send');const envelope=JSON.parse(calls[1].options.body.get('envelope'));assert.deepEqual(envelope.files,files);release();assert.equal((await a).state,'accepted');await b;await sendSupportBundle(bundle,'csrf',sid);assert.equal(calls.length,2);
+console.log('PASS SHA256 including HTTP fallback, immutable exact bundle, explicit single send');
