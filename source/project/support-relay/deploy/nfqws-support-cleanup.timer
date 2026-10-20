@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly expiration of NFQWS2 relay metadata
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1h
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

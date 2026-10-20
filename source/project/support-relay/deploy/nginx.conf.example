@@ -1,0 +1,98 @@
+# Replace SUPPORT_HOST and certificate paths only in private operator config.
+server {
+    listen 443 ssl;
+    server_name SUPPORT_HOST;
+    ssl_certificate /etc/letsencrypt/live/SUPPORT_HOST/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/SUPPORT_HOST/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    access_log off;
+    # Request errors include raw client addresses and URI/query. Do not inherit
+    # the host error log for this privacy-sensitive virtual server.
+    error_log /dev/null crit;
+    client_max_body_size 1m;
+    client_body_buffer_size 1m;
+    client_body_in_file_only off;
+    client_body_timeout 10s;
+    location = /nfqws-support/v1/reports {
+        # Reject before proxy normalization removes Transfer-Encoding.
+        if ($http_transfer_encoding != "") { return 400; }
+        limit_except POST { deny all; }
+        proxy_pass http://127.0.0.1:8875;
+        proxy_request_buffering on;
+        proxy_buffering on;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header Host localhost;
+        proxy_connect_timeout 2s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 20s;
+    }
+    location = /nfqws-support/v2/reports {
+        client_max_body_size 2m;
+        client_body_buffer_size 2m;
+        # Reject before proxy normalization removes Transfer-Encoding.
+        if ($http_transfer_encoding != "") { return 400; }
+        limit_except POST { deny all; }
+        proxy_pass http://127.0.0.1:8875;
+        proxy_request_buffering on;
+        proxy_buffering on;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header Host localhost;
+        proxy_connect_timeout 2s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 20s;
+    }
+    location = /nfqws-support/v3/reports {
+        client_max_body_size 2m;
+        client_body_buffer_size 2m;
+        # Reject before proxy normalization removes Transfer-Encoding.
+        if ($http_transfer_encoding != "") { return 400; }
+        limit_except POST { deny all; }
+        proxy_pass http://127.0.0.1:8875;
+        proxy_request_buffering on;
+        proxy_buffering on;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header Host localhost;
+        proxy_connect_timeout 2s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 20s;
+    }
+    location = /nfqws-support/v4/reports {
+        client_max_body_size 4m;
+        client_body_buffer_size 4m;
+        # Reject before proxy normalization removes Transfer-Encoding.
+        if ($http_transfer_encoding != "") { return 400; }
+        limit_except POST { deny all; }
+        proxy_pass http://127.0.0.1:8875;
+        proxy_request_buffering on;
+        proxy_buffering on;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header Host localhost;
+        proxy_connect_timeout 2s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 20s;
+    }
+    location = /nfqws-support/v3/location {
+        if ($is_args != "") { return 400; }
+        if ($http_transfer_encoding != "") { return 400; }
+        if ($content_length ~ "^[1-9]") { return 400; }
+        limit_except GET { deny all; }
+        proxy_pass http://127.0.0.1:8875;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header Host localhost;
+        proxy_connect_timeout 2s;
+        proxy_send_timeout 3s;
+        proxy_read_timeout 4s;
+    }
+    location = /health {
+        limit_except GET { deny all; }
+        proxy_pass http://127.0.0.1:8875;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For "";
+    }
+    location / { return 404; }
+}
