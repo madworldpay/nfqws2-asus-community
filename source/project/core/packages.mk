@@ -1,0 +1,180 @@
+_clean:
+	rm -rf out/$(BUILD_DIR)
+	mkdir -p out/$(BUILD_DIR)/control
+	mkdir -p out/$(BUILD_DIR)/data
+
+# Archives are produced by build-nfqws2 and downloaded before packaging.
+.PHONY: _prepare_bins
+_prepare_bins:
+	@for arch in arm64 arm mips64 mipselsf mipssf x86 x86_64; do \
+		test -s "out/nfqws2/nfqws2-$$arch.tar.gz" || { echo "Missing patched binaries: $$arch (download build-nfqws2 artifacts to out/nfqws2)" >&2; exit 1; }; \
+	done
+	rm -rf out/zapret2
+	mkdir -p out/zapret2
+	@for archive in out/nfqws2/nfqws2-*.tar.gz; do \
+		tar -C out/zapret2 -xzf "$$archive" || exit 1; \
+	done
+
+_conffiles:
+	cp common/ipk/conffiles out/$(BUILD_DIR)/control/conffiles
+	@if [[ "$(BUILD_DIR)" == "openwrt" ]]; then \
+		sed -i -E "s#/opt/#/#g" out/$(BUILD_DIR)/control/conffiles; \
+	fi
+
+_control:
+	echo "Package: nfqws2-keenetic" > out/$(BUILD_DIR)/control/control
+	echo "Version: $(VERSION)" >> out/$(BUILD_DIR)/control/control
+	echo "Depends: iptables, busybox" >> out/$(BUILD_DIR)/control/control
+	echo "Conflicts: tpws-keenetic, nfqws-keenetic" >> out/$(BUILD_DIR)/control/control
+	echo "License: MIT" >> out/$(BUILD_DIR)/control/control
+	echo "Section: net" >> out/$(BUILD_DIR)/control/control
+	echo "URL: https://github.com/nfqws/nfqws2-keenetic" >> out/$(BUILD_DIR)/control/control
+	echo "Architecture: $(ARCH)" >> out/$(BUILD_DIR)/control/control
+	echo "Description:  NFQWS2 service" >> out/$(BUILD_DIR)/control/control
+	echo "" >> out/$(BUILD_DIR)/control/control
+
+_scripts: CONFIG_VERSION=$(shell grep -E '^CONFIG_VERSION=' etc/nfqws2/nfqws2.conf 2>/dev/null | grep -oE '[0-9]+$$')
+_scripts:
+	cp common/ipk/preinst out/$(BUILD_DIR)/control/preinst
+	sed -i -E "s#^CURRENT_VERSION=([0-9]+)#CURRENT_VERSION=$(CONFIG_VERSION)#" out/$(BUILD_DIR)/control/preinst
+
+	cp common/ipk/postinst out/$(BUILD_DIR)/control/postinst
+	cp common/ipk/prerm out/$(BUILD_DIR)/control/prerm
+	cp common/ipk/postrm out/$(BUILD_DIR)/control/postrm
+
+	@if [[ "$(BUILD_DIR)" == "openwrt" ]]; then \
+		sed -i -E "s#/opt/#/#g" out/$(BUILD_DIR)/control/preinst; \
+		sed -i -E "s#/opt/#/#g" out/$(BUILD_DIR)/control/postinst; \
+		sed -i -E "s#/opt/#/#g" out/$(BUILD_DIR)/control/prerm; \
+		sed -i -E "s#/opt/#/#g" out/$(BUILD_DIR)/control/postrm; \
+	fi
+
+_binary:
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/usr/bin
+	cp out/zapret2/binaries/$(BIN)/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/usr/bin/nfqws2
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/usr/bin/nfqws2
+
+_lua:
+	cp -r out/zapret2/lua out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/nfqws2/lua
+
+_binary-multi:
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/usr/bin
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary
+
+	cp out/zapret2/binaries/linux-mipsel/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-mipsel
+	cp out/zapret2/binaries/linux-mips/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-mips
+	cp out/zapret2/binaries/linux-mips64/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-mips64
+	cp out/zapret2/binaries/linux-arm64/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-aarch64
+	cp out/zapret2/binaries/linux-arm/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-armv7
+	cp out/zapret2/binaries/linux-x86/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-x86
+	cp out/zapret2/binaries/linux-x86_64/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-x86_64
+
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-mipsel
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-mips
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-mips64
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-aarch64
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-armv7
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-x86
+	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/tmp/nfqws2_binary/nfqws2-x86_64
+
+_startup:
+	@if [[ "$(BUILD_DIR)" == "openwrt" ]]; then \
+  		cat etc/init.d/openwrt-start etc/init.d/common etc/init.d/openwrt-end > out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/init.d/nfqws2-keenetic; \
+  		chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/init.d/nfqws2-keenetic; \
+	else \
+	  	cat etc/init.d/entware-start etc/init.d/common etc/init.d/entware-end > out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/init.d/S51nfqws2; \
+	  	chmod +x out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/init.d/S51nfqws2; \
+	fi
+
+_ipk:
+	make _clean
+
+	# control.tar.gz
+	make _conffiles
+	make _control
+	make _scripts
+	cd out/$(BUILD_DIR)/control; tar czvf ../control.tar.gz .; cd ../../..
+
+	# data.tar.gz
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/var/log
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/var/run
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/init.d
+
+	cp -r etc/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/nfqws2
+	make _startup
+
+	@if [[ "$(BUILD_DIR)" != "openwrt" ]]; then \
+		cp -r etc/ndm out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/ndm; \
+	fi
+
+	@if [[ "$(BUILD_DIR)" == "all" ]] || [[ "$(BUILD_DIR)" == "openwrt" ]]; then \
+		make _binary-multi; \
+	else \
+		make _binary; \
+	fi
+
+	make _lua
+
+	cd out/$(BUILD_DIR)/data; tar czvf ../data.tar.gz .; cd ../../..
+
+	# ipk
+	echo 2.0 > out/$(BUILD_DIR)/debian-binary
+	cd out/$(BUILD_DIR); \
+	tar czvf ../$(FILENAME) control.tar.gz data.tar.gz debian-binary; \
+	cd ../..
+
+_apk:
+	make _clean
+
+	make _conffiles
+	make _scripts
+
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/var/log
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/var/run
+	mkdir -p out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/init.d
+
+	cp -r etc/nfqws2 out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/nfqws2
+	sed -i -E "s#/opt/#/#g" out/$(BUILD_DIR)/data$(ROOT_DIR)/etc/nfqws2/nfqws2.conf
+	make _startup
+	make _binary-multi
+	make _lua
+
+mipsel: _prepare_bins
+	@make \
+		BUILD_DIR=mipsel \
+		ARCH=mipsel-3.4 \
+		FILENAME=nfqws2-keenetic_$(VERSION)_mipsel-3.4.ipk \
+		BIN=linux-mipsel \
+		_ipk
+
+mips: _prepare_bins
+	@make \
+		BUILD_DIR=mips \
+		ARCH=mips-3.4 \
+		FILENAME=nfqws2-keenetic_$(VERSION)_mips-3.4.ipk \
+		BIN=linux-mips \
+		_ipk
+
+aarch64: _prepare_bins
+	@make \
+		BUILD_DIR=aarch64 \
+		ARCH=aarch64-3.10 \
+		FILENAME=nfqws2-keenetic_$(VERSION)_aarch64-3.10.ipk \
+		BIN=linux-arm64 \
+		_ipk
+
+multi: _prepare_bins
+	@make \
+		BUILD_DIR=all \
+		ARCH=all \
+		FILENAME=nfqws2-keenetic_$(VERSION)_all_entware.ipk \
+		_ipk
+
+openwrt: _prepare_bins
+	@make \
+		BUILD_DIR=openwrt \
+		ARCH=all \
+		ROOT_DIR= \
+		_apk
+
+entware: mipsel mips aarch64 multi
