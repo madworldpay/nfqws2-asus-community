@@ -1,0 +1,4 @@
+#!/bin/sh
+# opkg manages package files. Keep configuration, lists and logs for reinstall.
+# Volatile runtime directories disappear at reboot; prerm already stops service.
+exit 0

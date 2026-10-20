@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+asus_migration_restore || exit $?
+asus_install_defaults || exit $?
+mkdir -p /opt/var/log /opt/var/run
+/opt/etc/init.d/S81nfqws-asus-web start || exit $?
+if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
+    . /opt/lib/nfqws2-asus/update/lifecycle.sh || exit $?
+    if asus_update_transaction hook-postinst; then
+        # Only the verified staged worker restores the original core intent.
+        [ ! -f /opt/lib/nfqws2-asus/smartdns/control.sh ] || /bin/sh /opt/lib/nfqws2-asus/smartdns/control.sh queue-resume || exit $?
+        asus_migration_complete || exit $?
+        exit 0
+    fi
+fi
+if [ "${NFQWS_ASUS_NO_START:-0}" = 1 ]; then
+    echo 'Diagnostic install: start NFQWS2 after selecting a test client.'
+    asus_migration_complete || exit $?
+    [ ! -f /opt/lib/nfqws2-asus/smartdns/control.sh ] || /bin/sh /opt/lib/nfqws2-asus/smartdns/control.sh queue-resume || exit $?
+    exit 0
+fi
+/opt/etc/init.d/S51nfqws2 start || exit $?
+[ ! -f /opt/lib/nfqws2-asus/smartdns/control.sh ] || /bin/sh /opt/lib/nfqws2-asus/smartdns/control.sh queue-resume || exit $?
+asus_migration_complete || exit $?

@@ -1,0 +1,22 @@
+#!/bin/sh
+ASUS_UPDATE_TRANSACTION=0
+if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
+    . /opt/lib/nfqws2-asus/update/lifecycle.sh || exit $?
+    if asus_update_transaction hook-prerm; then ASUS_UPDATE_TRANSACTION=1; fi
+fi
+if [ -f /opt/lib/nfqws2-asus/smartdns/control.sh ]; then
+    case "${1:-remove}" in
+        upgrade) /bin/sh /opt/lib/nfqws2-asus/smartdns/control.sh upgrade || exit $?;;
+        *) /bin/sh /opt/lib/nfqws2-asus/smartdns/control.sh remove || exit $?;;
+    esac
+fi
+if [ -f /opt/lib/nfqws2-asus/dpi/stop.sh ]; then
+    /opt/libexec/nfqws2-asus/busybox sh /opt/lib/nfqws2-asus/dpi/stop.sh || exit $?
+fi
+if [ "$ASUS_UPDATE_TRANSACTION" != 1 ] && [ -x /opt/etc/init.d/S51nfqws2 ]; then
+    /opt/etc/init.d/S51nfqws2 stop || exit $?
+fi
+if [ -x /opt/etc/init.d/S81nfqws-asus-web ]; then
+    /opt/etc/init.d/S81nfqws-asus-web stop || exit $?
+fi
+exit 0
