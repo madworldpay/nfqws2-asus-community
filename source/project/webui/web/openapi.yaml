@@ -1,0 +1,1619 @@
+openapi: 3.1.0
+info:
+  title: nfqws-keenetic-web
+  version: 1.0.0
+servers:
+  - url: /
+
+tags:
+  - name: NFQWS
+    description: nfqws-keenetic web UI API
+
+paths:
+  /index.php:
+    post:
+      tags: [NFQWS]
+      summary: Command-style endpoint (cmd)
+      operationId: postIndexCmd
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IndexCmdRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IndexCmdRequest'
+      responses:
+        '200':
+          description: Command response (depends on cmd)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexCmdResponse'
+        '401':
+          description: Unauthorized (if auth is enabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '405':
+          description: Method not allowed / unknown cmd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+components:
+  schemas:
+    # -----------------------------
+    # Requests (discriminator by cmd)
+    # -----------------------------
+    IndexCmdRequest:
+      oneOf:
+        - $ref: '#/components/schemas/SupportBundlePrepareRequest'
+        - $ref: '#/components/schemas/SupportBundleSendRequest'
+        - $ref: '#/components/schemas/DpiStatusRequest'
+        - $ref: '#/components/schemas/DpiInstallRequest'
+        - $ref: '#/components/schemas/DpiStartRequest'
+        - $ref: '#/components/schemas/DpiJobRequest'
+        - $ref: '#/components/schemas/StatusRequest'
+        - $ref: '#/components/schemas/FilenamesRequest'
+        - $ref: '#/components/schemas/FileContentRequest'
+        - $ref: '#/components/schemas/FileCreateRequest'
+        - $ref: '#/components/schemas/FileSaveRequest'
+        - $ref: '#/components/schemas/FileRemoveRequest'
+        - $ref: '#/components/schemas/ServiceActionRequest'
+        - $ref: '#/components/schemas/LoginRequest'
+        - $ref: '#/components/schemas/LogoutRequest'
+        - $ref: '#/components/schemas/PasswordRequest'
+        - $ref: '#/components/schemas/ArkStatusRequest'
+        - $ref: '#/components/schemas/ArkActionRequest'
+        - $ref: '#/components/schemas/SupportReportRequest'
+        - $ref: '#/components/schemas/SupportMailStatusRequest'
+        - $ref: '#/components/schemas/SupportSendRequest'
+      discriminator:
+        propertyName: cmd
+        mapping:
+          supportbundleprepare: '#/components/schemas/SupportBundlePrepareRequest'
+          supportbundlesend: '#/components/schemas/SupportBundleSendRequest'
+          dpistatus: '#/components/schemas/DpiStatusRequest'
+          dpiinstall: '#/components/schemas/DpiInstallRequest'
+          dpistart: '#/components/schemas/DpiStartRequest'
+          dpistop: '#/components/schemas/DpiJobRequest'
+          dpiresult: '#/components/schemas/DpiJobRequest'
+          dpidelete: '#/components/schemas/DpiJobRequest'
+          status: '#/components/schemas/StatusRequest'
+          filenames: '#/components/schemas/FilenamesRequest'
+          filecontent: '#/components/schemas/FileContentRequest'
+          filecreate: '#/components/schemas/FileCreateRequest'
+          filesave: '#/components/schemas/FileSaveRequest'
+          fileremove: '#/components/schemas/FileRemoveRequest'
+          restart: '#/components/schemas/ServiceActionRequest'
+          stop: '#/components/schemas/ServiceActionRequest'
+          start: '#/components/schemas/ServiceActionRequest'
+          upgrade: '#/components/schemas/ServiceActionRequest'
+          login: '#/components/schemas/LoginRequest'
+          logout: '#/components/schemas/LogoutRequest'
+          password: '#/components/schemas/PasswordRequest'
+          arkstatus: '#/components/schemas/ArkStatusRequest'
+          arkprepare: '#/components/schemas/ArkActionRequest'
+          arkrestore: '#/components/schemas/ArkActionRequest'
+          supportreport: '#/components/schemas/SupportReportRequest'
+          supportmailstatus: '#/components/schemas/SupportMailStatusRequest'
+          supportsend: '#/components/schemas/SupportSendRequest'
+
+    StatusRequest:
+      type: object
+      required: [cmd]
+      properties:
+        cmd:
+          type: string
+          enum: [status]
+      additionalProperties: false
+
+    FilenamesRequest:
+      type: object
+      required: [cmd]
+      properties:
+        cmd:
+          type: string
+          enum: [filenames]
+        type:
+          type: string
+          enum: ['conf', 'list', 'log', 'lua']
+          description: File type to read.
+      additionalProperties: false
+
+    FileContentRequest:
+      type: object
+      required: [cmd, filename]
+      properties:
+        cmd:
+          type: string
+          enum: [filecontent]
+        filename:
+          type: string
+          description: File name to read. If ends with .log, server returns log content.
+      additionalProperties: false
+
+    FileCreateRequest:
+      type: object
+      required: [cmd, filename]
+      properties:
+        cmd:
+          type: string
+          enum: [filecreate]
+        filename:
+          type: string
+      additionalProperties: false
+
+    FileSaveRequest:
+      type: object
+      required: [cmd, filename, content]
+      properties:
+        cmd:
+          type: string
+          enum: [filesave]
+        filename:
+          type: string
+        content:
+          type: string
+          description: Full file content to save
+      additionalProperties: false
+
+    FileRemoveRequest:
+      type: object
+      required: [cmd, filename]
+      properties:
+        cmd:
+          type: string
+          enum: [fileremove]
+        filename:
+          type: string
+      additionalProperties: false
+
+    ServiceActionRequest:
+      type: object
+      required: [cmd]
+      properties:
+        cmd:
+          type: string
+          enum: [restart, stop, start, upgrade]
+      additionalProperties: false
+
+    LoginRequest:
+      type: object
+      required: [cmd]
+      properties:
+        cmd:
+          type: string
+          enum: [login]
+        user:
+          type: string
+        password:
+          type: string
+      additionalProperties: false
+
+    LogoutRequest:
+      type: object
+      required: [cmd]
+      properties:
+        cmd:
+          type: string
+          enum: [logout]
+      additionalProperties: false
+
+    PasswordRequest:
+      type: object
+      required: [cmd, password, confirmation, csrf_token]
+      properties:
+        cmd:
+          type: string
+          enum: [password]
+        password:
+          type: string
+          description: New panel password. Empty disables authentication.
+        confirmation:
+          type: string
+        csrf_token:
+          type: string
+      additionalProperties: false
+
+    # -----------------------------
+    # Responses (discriminator by cmd)
+    # -----------------------------
+    IndexCmdResponse:
+      oneOf:
+        - $ref: '#/components/schemas/SupportBundleResponse'
+        - $ref: '#/components/schemas/DpiStatusResponse'
+        - $ref: '#/components/schemas/DpiJob'
+        - $ref: '#/components/schemas/DpiResultResponse'
+        - $ref: '#/components/schemas/DpiStopResponse'
+        - $ref: '#/components/schemas/DpiDeleteResponse'
+        - $ref: '#/components/schemas/DpiError'
+        - $ref: '#/components/schemas/StatusResponse'
+        - $ref: '#/components/schemas/FilenamesResponse'
+        - $ref: '#/components/schemas/FileContentResponse'
+        - $ref: '#/components/schemas/FileCreateResponse'
+        - $ref: '#/components/schemas/FileSaveResponse'
+        - $ref: '#/components/schemas/FileRemoveResponse'
+        - $ref: '#/components/schemas/ActionResponse'
+        - $ref: '#/components/schemas/LoginResponse'
+        - $ref: '#/components/schemas/LogoutResponse'
+        - $ref: '#/components/schemas/PasswordResponse'
+        - $ref: '#/components/schemas/ArkStatusResponse'
+        - $ref: '#/components/schemas/ArkActionResponse'
+        - $ref: '#/components/schemas/SupportReportResponse'
+        - $ref: '#/components/schemas/SupportMailAvailability'
+        - $ref: '#/components/schemas/SupportSendResponse'
+
+    SupportMailStatusRequest:
+      type: object
+      required: [cmd, csrf_token]
+      properties:
+        cmd:
+          type: string
+          enum: [supportmailstatus]
+        csrf_token:
+          type: string
+      additionalProperties: false
+
+    SupportSendRequest:
+      type: object
+      required: [cmd, csrf_token, consent, filename, report, report_proof, submission_id]
+      properties:
+        cmd:
+          type: string
+          enum: [supportsend]
+        csrf_token:
+          type: string
+        consent:
+          type: string
+          enum: [send]
+        filename:
+          type: string
+          maxLength: 128
+        report:
+          type: string
+          maxLength: 1048576
+        report_proof:
+          type: string
+          maxLength: 128
+        submission_id:
+          type: string
+          format: uuid
+      additionalProperties: false
+
+    SupportMailAvailabilityCode:
+      type: string
+      enum: [ready, not_configured, https_unavailable, invalid_config]
+
+    SupportMailAvailability:
+      type: object
+      required: [configured, code]
+      properties:
+        dpi_attachments: { type: boolean, default: false }
+        configured:
+          type: boolean
+        code:
+          $ref: '#/components/schemas/SupportMailAvailabilityCode'
+      additionalProperties: false
+
+    SupportMailState:
+      type: string
+      enum: [accepted, failed_safe, unknown, busy, limited, invalid]
+
+    SupportMailResultCode:
+      type: string
+      enum: [smtp_accepted, transport_failed, delivery_unknown, busy, rate_limited, invalid_request, id_conflict, invalid_report, not_configured, https_unavailable, invalid_config]
+
+    SupportSendResponse:
+      type: object
+      required: [state, submission_id, code]
+      properties:
+        state:
+          $ref: '#/components/schemas/SupportMailState'
+        submission_id:
+          type: string
+          format: uuid
+        code:
+          $ref: '#/components/schemas/SupportMailResultCode'
+      additionalProperties: false
+
+    SupportReportRequest:
+      type: object
+      required: [cmd, csrf_token]
+      properties:
+        cmd:
+          type: string
+          enum: [supportreport]
+        csrf_token:
+          type: string
+      additionalProperties: false
+
+    SupportReportResponse:
+      type: object
+      description: Read-only anonymized JSON attachment, limited to 1 MiB and 25 seconds. Requires same-origin POST and CSRF. Concurrent collection returns 409.
+      required: [schema_version, collector_version, model, captured_at, duration_ms, complete, sections, failures]
+      properties:
+        schema_version:
+          type: integer
+          enum: [1]
+        collector_version:
+          type: string
+        model:
+          type: string
+        captured_at:
+          type: string
+        duration_ms:
+          type: integer
+        complete:
+          type: boolean
+        sections:
+          type: object
+          additionalProperties: true
+        failures:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportReportFailure'
+
+    SupportReportFailure:
+      type: object
+      required: [section, code]
+      properties:
+        section:
+          type: string
+        code:
+          type: string
+          enum: [missing, denied, timeout, unsupported, truncated, changed_during_collection]
+
+    StatusResponse:
+      type: object
+      required: [status, service, nfqws2, version, anonym, csrf_token, username]
+      properties:
+        status:
+          type: integer
+          enum: [0]
+        service:
+          type: boolean
+          description: Service status (running or not)
+        nfqws2:
+          type: boolean
+        version:
+          type: string
+          nullable: true
+        anonym:
+          type: boolean
+        csrf_token:
+          type: string
+        username:
+          type: string
+      additionalProperties: false
+      example:
+        status: 0
+        service: true
+        nfqws2: true
+        version: '0.1.4'
+        anonym: false
+
+    FilenamesResponse:
+      type: object
+      required: [status, files]
+      properties:
+        status:
+          type: integer
+          enum: [0]
+        files:
+          type: array
+          items: { type: string }
+      additionalProperties: false
+      example:
+        status: 0
+        files:
+          [
+            'nfqws2.conf',
+            'user.list',
+            'exclude.list',
+            'auto.list',
+            'ipset.list',
+            'ipset_exclude.list',
+            'nfqws2.log',
+          ]
+
+    FileContentResponse:
+      type: object
+      required: [status, content, filename]
+      properties:
+        status:
+          type: integer
+          enum: [0]
+        content:
+          type: string
+        filename:
+          type: string
+      additionalProperties: false
+      example:
+        status: 0
+        filename: 'nfqws2.conf'
+        content: '# Provider network interface...'
+
+    FileCreateResponse:
+      type: object
+      required: [status, filename]
+      properties:
+        status:
+          type: integer
+          description: 0 = ok, 1 = failed
+          enum: [0, 1]
+        filename:
+          type: string
+      additionalProperties: false
+      example:
+        status: 0
+        filename: 'user.list'
+
+    FileSaveResponse:
+      type: object
+      required: [status, filename]
+      properties:
+        status:
+          type: integer
+          description: 0 = ok, 1 = failed
+          enum: [0, 1]
+        filename:
+          type: string
+      additionalProperties: false
+      example:
+        status: 0
+        filename: 'user.list'
+
+    FileRemoveResponse:
+      type: object
+      required: [status, filename]
+      properties:
+        status:
+          type: integer
+          description: 0 = ok, 1 = failed
+          enum: [0, 1]
+        filename:
+          type: string
+      additionalProperties: false
+      example:
+        status: 0
+        filename: 'custom.list'
+
+    ActionResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: integer
+          description: 0 = ok, non-zero = error
+        output:
+          type: array
+          items: { type: string }
+          description: Optional console-like output lines
+      additionalProperties: true
+      example:
+        status: 0
+        output: ['Restarting nfqws...', 'Done']
+
+    LoginResponse:
+      type: object
+      required: [status, csrf_token]
+      properties:
+        status:
+          type: integer
+          enum: [0]
+        csrf_token:
+          type: string
+      additionalProperties: true
+      example:
+        status: 0
+
+    LogoutResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: integer
+          enum: [0]
+      additionalProperties: false
+      example:
+        status: 0
+
+    PasswordResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: integer
+          enum: [0, 1]
+      additionalProperties: false
+
+    # -----------------------------
+    # Errors
+    # -----------------------------
+    ApiError:
+      type: object
+      required: [code, detail]
+      properties:
+        code:
+          type: string
+        detail:
+          type: string
+      additionalProperties: true
+      example:
+        code: 'error'
+        detail: 'Unexpected error'
+
+    ArkStatusRequest:
+      type: object
+      required: [cmd]
+      properties:
+        cmd: { type: string, enum: [arkstatus] }
+      additionalProperties: false
+
+    ArkActionRequest:
+      type: object
+      required: [cmd, csrf_token, revision]
+      properties:
+        cmd: { type: string, enum: [arkprepare, arkrestore] }
+        csrf_token: { type: string }
+        revision: { type: string }
+      additionalProperties: false
+
+    ArkStatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status: { type: integer, enum: [0, 1] }
+        error: { $ref: '#/components/schemas/ArkError' }
+        model: { type: string }
+        ready: { type: boolean }
+        ark_loaded: { type: [boolean, 'null'] }
+        diagnostics: { $ref: '#/components/schemas/AsusDiagnostics' }
+        revision: { type: string }
+        flags:
+          type: array
+          items: { $ref: '#/components/schemas/ArkFlag' }
+        backup:
+          type: [object, 'null']
+          required: [created, changed, restored]
+          properties:
+            created: { type: string }
+            changed: { type: array, items: { type: string } }
+            restored: { type: boolean }
+      additionalProperties: false
+
+    AsusDiagnostics:
+      type: object
+      required: [ark, nfqueue, process_running]
+      properties:
+        ark:
+          type: object
+          required: [present, loaded]
+          properties:
+            present: { type: string, enum: [present, absent, unknown] }
+            loaded: { type: string, enum: [loaded, unloaded, unknown] }
+          additionalProperties: false
+        nfqueue:
+          type: object
+          required: [queue_number, state, sequence]
+          properties:
+            queue_number: { type: [integer, 'null'], minimum: 0, maximum: 65535 }
+            state: { type: string, enum: [bound, unbound, unknown] }
+            sequence: { type: [integer, 'null'], minimum: 0, maximum: 4294967295 }
+          additionalProperties: false
+        process_running: { type: [boolean, 'null'] }
+      additionalProperties: false
+
+    ArkActionResponse:
+      type: object
+      required: [status]
+      properties:
+        status: { type: integer, enum: [0, 1] }
+        error: { $ref: '#/components/schemas/ArkError' }
+        message: { type: string, enum: [prepared, restored, already_prepared] }
+        reboot_required: { type: boolean }
+      additionalProperties: false
+
+    ArkError:
+      type: string
+      enum:
+        [
+          read_failed,
+          runtime_unknown,
+          backup_invalid,
+          backup_failed,
+          busy,
+          backup_foreign,
+          restore_conflict,
+          stale,
+          backup_missing,
+          restore_failed,
+          backup_active,
+          apply_failed,
+          recovery_required,
+          request_failed,
+          invalid_action,
+        ]
+
+    ArkFlag:
+      type: object
+      required: [key, value, present, enabled]
+      properties:
+        key:
+          type: string
+          enum:
+            [
+              ark_qoe_enable,
+              ark_iam_enable,
+              ark_limiter_enable,
+              ark_log_enable,
+              ark_hyqos_enable,
+              ark_mals_enable,
+              ark_adblock_enable,
+              ark_tracker_enable,
+              ark_ids_enable,
+            ]
+        value: { type: string }
+        present: { type: boolean }
+        enabled: { type: boolean }
+
+    DpiStatusRequest:
+      type: object
+      required:
+      - cmd
+      - csrf_token
+      properties:
+        cmd:
+          type: string
+          enum:
+          - dpistatus
+        csrf_token:
+          type: string
+      additionalProperties: false
+    DpiInstallRequest:
+      type: object
+      required:
+      - cmd
+      - csrf_token
+      - request_id
+      - consent
+      properties:
+        cmd:
+          type: string
+          enum:
+          - dpiinstall
+        csrf_token:
+          type: string
+        request_id: &id001
+          type: string
+          format: uuid
+        consent:
+          type: string
+          enum:
+          - install
+      additionalProperties: false
+    DpiStartRequest:
+      type: object
+      required:
+      - cmd
+      - csrf_token
+      - request_id
+      - tests
+      - heavy_consent
+      properties:
+        cmd:
+          type: string
+          enum:
+          - dpistart
+        csrf_token:
+          type: string
+        request_id: *id001
+        tests:
+          type: string
+          pattern: ^[0-6]{1,7}$
+        heavy_consent:
+          type: string
+          pattern: ^[56]{0,2}$
+      additionalProperties: false
+    DpiJobRequest:
+      type: object
+      required:
+      - cmd
+      - csrf_token
+      - job_id
+      properties:
+        cmd:
+          type: string
+          enum:
+          - dpistop
+          - dpiresult
+          - dpidelete
+        csrf_token:
+          type: string
+        job_id: &id002
+          type: string
+          pattern: ^[a-f0-9]{32}$
+      additionalProperties: false
+    DpiJob:
+      type: object
+      required:
+      - id
+      - kind
+      - state
+      - started_at
+      - finished_at
+      - code
+      - tests
+      - completed_tests
+      - current_group
+      properties:
+        id: *id002
+        kind:
+          type: string
+          enum:
+          - install
+          - run
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - completed
+          - partial
+          - cancelled
+          - timed_out
+          - failed
+          - interrupted
+        started_at:
+          type: integer
+        finished_at:
+          type:
+          - integer
+          - 'null'
+        code:
+          type:
+          - string
+          - 'null'
+        tests: &id003
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          maxItems: 7
+          uniqueItems: true
+        completed_tests: *id003
+        current_group:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 6
+      additionalProperties: false
+    DpiStatusResponse:
+      type: object
+      required:
+      - available
+      - installed
+      - version
+      - default_tests
+      - active
+      - history
+      properties:
+        available:
+          type: object
+          required:
+          - available
+          - code
+          properties:
+            available:
+              type: boolean
+            code:
+              type: string
+          additionalProperties: false
+        installed:
+          type: object
+          required:
+          - installed
+          - version
+          properties:
+            installed:
+              type: boolean
+            version:
+              type:
+              - string
+              - 'null'
+          additionalProperties: false
+        version:
+          type: string
+        default_tests: *id003
+        active:
+          anyOf:
+          - $ref: '#/components/schemas/DpiJob'
+          - type: 'null'
+        history:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/DpiJob'
+      additionalProperties: false
+    DpiStopResponse:
+      type: object
+      required:
+      - id
+      - state
+      properties:
+        id: *id002
+        state:
+          type: string
+          enum:
+          - stopping
+      additionalProperties: false
+    DpiDeleteResponse:
+      type: object
+      required:
+      - deleted
+      properties:
+        deleted:
+          type: boolean
+          enum:
+          - true
+      additionalProperties: false
+    DpiError:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: string
+      additionalProperties: false
+    DpiGroup0:
+      type: object
+      properties:
+        group:
+          const: 0
+        ipv4:
+          type: boolean
+        ipv6:
+          type: boolean
+        ipv4_latency_ms:
+          anyOf:
+          - type: integer
+            minimum: 0
+            maximum: 4294967295
+          - type: 'null'
+        ipv6_latency_ms:
+          anyOf:
+          - type: integer
+            minimum: 0
+            maximum: 4294967295
+          - type: 'null'
+        tun_observed:
+          type: boolean
+        bypass_observed:
+          type: boolean
+      required:
+      - group
+      - ipv4
+      - ipv6
+      - ipv4_latency_ms
+      - ipv6_latency_ms
+      - tun_observed
+      - bypass_observed
+      additionalProperties: false
+    DpiGroup1:
+      type: object
+      properties:
+        group:
+          const: 1
+        doh_ok:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        doh_total:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        dot_ok:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        dot_total:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        udp_ok:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        udp_total:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        resolvers_total:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        subst_sub:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        subst_total:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        fakeip_sub:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              target:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesTargetValue'
+              ok:
+                type: integer
+                minimum: 0
+                maximum: 4294967295
+              total:
+                type: integer
+                minimum: 0
+                maximum: 4294967295
+              status:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+              detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+            required:
+            - target
+            - ok
+            - total
+            - status
+            - detail
+            additionalProperties: false
+          maxItems: 9
+          minItems: 0
+      required:
+      - group
+      - doh_ok
+      - doh_total
+      - dot_ok
+      - dot_total
+      - udp_ok
+      - udp_total
+      - resolvers_total
+      - subst_sub
+      - subst_total
+      - fakeip_sub
+      - failures
+      additionalProperties: false
+    DpiGroup2:
+      type: object
+      properties:
+        group:
+          const: 2
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              target:
+                $ref: '#/components/schemas/DpiGroup2PropertiesRowsItemsPropertiesTargetValue'
+              http:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+              http_detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+              tls12:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+              tls12_detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+              tls13:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+              tls13_detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+              quic:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+              quic_detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+            required:
+            - target
+            - http
+            - http_detail
+            - tls12
+            - tls12_detail
+            - tls13
+            - tls13_detail
+            - quic
+            - quic_detail
+            additionalProperties: false
+          maxItems: 6
+          minItems: 0
+      required:
+      - group
+      - rows
+      additionalProperties: false
+    DpiGroup3:
+      type: object
+      properties:
+        group:
+          const: 3
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              target:
+                $ref: '#/components/schemas/DpiGroup3PropertiesRowsItemsPropertiesTargetValue'
+              status:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+              detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+            required:
+            - target
+            - status
+            - detail
+            additionalProperties: false
+          maxItems: 8
+          minItems: 0
+      required:
+      - group
+      - rows
+      additionalProperties: false
+    DpiGroup4:
+      type: object
+      properties:
+        group:
+          const: 4
+        detected_as:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        found_as:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+      required:
+      - group
+      - detected_as
+      - found_as
+      additionalProperties: false
+    DpiGroup5:
+      type: object
+      properties:
+        group:
+          const: 5
+        download:
+          type: object
+          properties:
+            status:
+              $ref: '#/components/schemas/DpiGroup5PropertiesDownloadPropertiesStatusValue'
+            avg_bps:
+              type: number
+              minimum: 0
+              maximum: 1000000000000.0
+            peak_bps:
+              type: number
+              minimum: 0
+              maximum: 1000000000000.0
+            bytes:
+              type: integer
+              minimum: 0
+              maximum: 4294967295
+            drop_at_sec:
+              anyOf:
+              - type: integer
+                minimum: 0
+                maximum: 4294967295
+              - type: 'null'
+          required:
+          - status
+          - avg_bps
+          - peak_bps
+          - bytes
+          - drop_at_sec
+          additionalProperties: false
+        upload:
+          type: object
+          properties:
+            status:
+              $ref: '#/components/schemas/DpiGroup5PropertiesDownloadPropertiesStatusValue'
+            avg_bps:
+              type: number
+              minimum: 0
+              maximum: 1000000000000.0
+            peak_bps:
+              type: number
+              minimum: 0
+              maximum: 1000000000000.0
+            bytes:
+              type: integer
+              minimum: 0
+              maximum: 4294967295
+            drop_at_sec:
+              anyOf:
+              - type: integer
+                minimum: 0
+                maximum: 4294967295
+              - type: 'null'
+          required:
+          - status
+          - avg_bps
+          - peak_bps
+          - bytes
+          - drop_at_sec
+          additionalProperties: false
+        dc_reachable:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+        dc_total:
+          type: integer
+          minimum: 0
+          maximum: 4294967295
+      required:
+      - group
+      - download
+      - upload
+      - dc_reachable
+      - dc_total
+      additionalProperties: false
+    DpiGroup6:
+      type: object
+      properties:
+        group:
+          const: 6
+        attempts:
+          const: 4
+        gap_ms:
+          const: 250
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              target:
+                $ref: '#/components/schemas/DpiGroup2PropertiesRowsItemsPropertiesTargetValue'
+              profile:
+                $ref: '#/components/schemas/DpiGroup6PropertiesRowsItemsPropertiesProfileValue'
+              answered:
+                type: integer
+                minimum: 0
+                maximum: 4294967295
+              attempts:
+                type: integer
+                minimum: 0
+                maximum: 4
+              statuses:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesStatusValue'
+                maxItems: 4
+                minItems: 0
+              detail:
+                $ref: '#/components/schemas/DpiGroup1PropertiesFailuresItemsPropertiesDetailValue'
+            required:
+            - target
+            - profile
+            - answered
+            - attempts
+            - statuses
+            - detail
+            additionalProperties: false
+          maxItems: 24
+          minItems: 0
+      required:
+      - group
+      - attempts
+      - gap_ms
+      - rows
+      additionalProperties: false
+    DpiResultResponse:
+      type: object
+      properties:
+        type:
+          const: nfqws2_dpi
+        schema_version:
+          const: 1
+        detector_version:
+          const: v5.0.0-alpha.21
+        profile_sha256:
+          const: ded05adce47a4c562adf53b67a36dac6330152a4dbff28e10f1debb244ebaca6
+        origin:
+          const: router
+        started_at:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$
+          maxLength: 20
+        finished_at:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$
+          maxLength: 20
+        ip_family:
+          $ref: '#/components/schemas/DpiResultResponsePropertiesIp_familyValue'
+        state:
+          $ref: '#/components/schemas/DpiResultResponsePropertiesStateValue'
+        selected_tests:
+          type: array
+          items:
+            $ref: '#/components/schemas/DpiResultResponsePropertiesSelected_testsItemsValue'
+          maxItems: 7
+          minItems: 1
+          uniqueItems: true
+        groups:
+          type: array
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/DpiGroup0'
+            - $ref: '#/components/schemas/DpiGroup1'
+            - $ref: '#/components/schemas/DpiGroup2'
+            - $ref: '#/components/schemas/DpiGroup3'
+            - $ref: '#/components/schemas/DpiGroup4'
+            - $ref: '#/components/schemas/DpiGroup5'
+            - $ref: '#/components/schemas/DpiGroup6'
+          maxItems: 7
+          minItems: 0
+        context:
+          type: object
+          properties:
+            before:
+              type: object
+              properties:
+                nfqws:
+                  $ref: '#/components/schemas/DpiResultResponsePropertiesContextPropertiesBeforePropertiesNfqwsValue'
+                ark:
+                  $ref: '#/components/schemas/DpiResultResponsePropertiesContextPropertiesBeforePropertiesArkValue'
+                tun_observed:
+                  type: boolean
+              required:
+              - nfqws
+              - ark
+              - tun_observed
+              additionalProperties: false
+            after:
+              type: object
+              properties:
+                nfqws:
+                  $ref: '#/components/schemas/DpiResultResponsePropertiesContextPropertiesBeforePropertiesNfqwsValue'
+                ark:
+                  $ref: '#/components/schemas/DpiResultResponsePropertiesContextPropertiesBeforePropertiesArkValue'
+                tun_observed:
+                  type: boolean
+              required:
+              - nfqws
+              - ark
+              - tun_observed
+              additionalProperties: false
+            changed:
+              type: boolean
+          required:
+          - before
+          - after
+          - changed
+          additionalProperties: false
+        coverage:
+          type: object
+          properties:
+            limited:
+              const: true
+            dns:
+              const: 9
+            domains:
+              const: 6
+            tcp:
+              const: 8
+            sni:
+              const: 16
+          required:
+          - limited
+          - dns
+          - domains
+          - tcp
+          - sni
+          additionalProperties: false
+      required:
+      - type
+      - schema_version
+      - detector_version
+      - profile_sha256
+      - origin
+      - started_at
+      - finished_at
+      - ip_family
+      - state
+      - selected_tests
+      - groups
+      - context
+      - coverage
+      additionalProperties: false
+    DpiGroup1PropertiesFailuresItemsPropertiesTargetValue:
+      enum:
+      - google-udp
+      - google-doh
+      - google-dot
+      - cloudflare-udp
+      - cloudflare-doh
+      - cloudflare-dot
+      - quad9-udp
+      - quad9-doh
+      - quad9-dot
+    DpiGroup1PropertiesFailuresItemsPropertiesStatusValue:
+      enum:
+      - blocked
+      - connected
+      - detected
+      - dns_fail
+      - dns_fake
+      - err
+      - host_unreach
+      - http_payload
+      - init
+      - isp_page
+      - local_ip
+      - net_unreach
+      - no_ca_bundle
+      - no_tls13
+      - nxdomain
+      - ok
+      - os_err
+      - pool_timeout
+      - quic_closed
+      - quic_drop
+      - quic_ok
+      - quic_spoof
+      - quic_unsupported
+      - quic_vn
+      - read_timeout
+      - reading_data
+      - redir
+      - refused
+      - resolve
+      - send_timeout
+      - sending_data
+      - syn_dropped
+      - tcp16_20
+      - tcp_abort
+      - tcp_connect
+      - tcp_connected
+      - tcp_connecting
+      - tcp_rst
+      - timeout
+      - tls_abort
+      - tls_alert
+      - tls_block
+      - tls_client_hello_sent
+      - tls_connected
+      - tls_dropped
+      - tls_eof
+      - tls_err
+      - tls_handshake
+      - tls_handshake_done
+      - tls_rst
+      - tls_spoof
+      - unknown
+    DpiGroup1PropertiesFailuresItemsPropertiesDetailValue:
+      enum:
+      - access_denied
+      - bad_certificate
+      - bad_certificate_hash_value
+      - bad_certificate_status_response
+      - bad_record_mac
+      - certificate_expired
+      - certificate_required
+      - certificate_revoked
+      - certificate_unknown
+      - certificate_unobtainable
+      - close_notify
+      - decode_error
+      - decompression_failure
+      - decrypt_error
+      - decryption_failed
+      - encrypted_client_hello_required
+      - export_restriction
+      - handshake_failure
+      - illegal_parameter
+      - inappropriate_fallback
+      - inappropriate_handshake_message
+      - inappropriate_message
+      - insufficient_security
+      - internal_error
+      - invalid_message
+      - missing_extension
+      - no_application_protocol
+      - no_certificate
+      - no_renegotiation
+      - peer_misbehaved
+      - protocol_version
+      - record_overflow
+      - unexpected_message
+      - unknown
+      - unknown_ca
+      - unknown_psk_identity
+      - unrecognised_name
+      - unsupported_certificate
+      - unsupported_extension
+      - user_canceled
+    DpiGroup2PropertiesRowsItemsPropertiesTargetValue:
+      enum:
+      - example.com
+      - google.com
+      - youtube.com
+      - discord.com
+      - github.com
+      - t.me
+    DpiGroup3PropertiesRowsItemsPropertiesTargetValue:
+      enum:
+      - HE-01
+      - CF-01
+      - CDN-02
+      - AK-01
+      - AWS-02
+      - FST-03
+      - GC-01
+      - OVH-01
+    DpiGroup5PropertiesDownloadPropertiesStatusValue:
+      enum:
+      - ok
+      - slow
+      - stalled
+      - blocked
+      - error
+      - unknown
+    DpiGroup6PropertiesRowsItemsPropertiesProfileValue:
+      enum:
+      - rustls
+      - custom
+      - chrome
+      - safari
+    DpiResultResponsePropertiesIp_familyValue:
+      enum:
+      - ipv4
+      - ipv6
+      - dual
+      - unknown
+    DpiResultResponsePropertiesStateValue:
+      enum:
+      - completed
+      - partial
+      - cancelled
+      - timed_out
+      - failed
+      - interrupted
+    DpiResultResponsePropertiesSelected_testsItemsValue:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+    DpiResultResponsePropertiesContextPropertiesBeforePropertiesNfqwsValue:
+      enum:
+      - running
+      - stopped
+      - unknown
+    DpiResultResponsePropertiesContextPropertiesBeforePropertiesArkValue:
+      enum:
+      - loaded
+      - absent
+      - unknown
+
+    SupportBundlePrepareRequest:
+      type: object
+      required:
+      - cmd
+      - csrf_token
+      - report
+      - filename
+      - report_proof
+      - job_id
+      properties:
+        cmd:
+          type: string
+          enum:
+          - supportbundleprepare
+        csrf_token:
+          type: string
+          maxLength: 128
+        report:
+          type: string
+          maxLength: 1048576
+        filename:
+          type: string
+          maxLength: 128
+        report_proof:
+          type: string
+          maxLength: 256
+        job_id:
+          type: string
+          pattern: ^[a-f0-9]{32}$
+      additionalProperties: false
+    SupportBundleSendRequest:
+      type: object
+      required:
+      - cmd
+      - csrf_token
+      - envelope
+      - proof
+      - submission_id
+      - consent
+      properties:
+        cmd:
+          type: string
+          enum:
+          - supportbundlesend
+        csrf_token:
+          type: string
+          maxLength: 128
+        envelope:
+          type: string
+          maxLength: 2097152
+        proof:
+          type: string
+          maxLength: 256
+        submission_id:
+          type: string
+          format: uuid
+        consent:
+          type: string
+          enum:
+          - send
+      additionalProperties: false
+    SupportBundleType:
+      type: string
+      enum:
+      - report
+      - dpi
+    SupportBundleWireFile:
+      type: object
+      required:
+      - type
+      - filename
+      - byte_length
+      - sha256
+      - data_base64
+      properties:
+        type:
+          $ref: '#/components/schemas/SupportBundleType'
+        filename:
+          type: string
+          maxLength: 128
+        byte_length:
+          type: integer
+          minimum: 1
+          maximum: 1048576
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        data_base64:
+          type: string
+          maxLength: 1398104
+      additionalProperties: false
+    SupportBundleResponse:
+      type: object
+      required:
+      - files
+      - proof
+      properties:
+        files:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/SupportBundleWireFile'
+        proof:
+          type: string
+          maxLength: 256
+      additionalProperties: false
