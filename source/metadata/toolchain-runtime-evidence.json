@@ -1,0 +1,44 @@
+[
+  {
+    "target": "armv6-unknown-linux-musleabi",
+    "libc_candidates": [
+      "armv6-unknown-linux-musleabi/armv6-unknown-linux-musleabi/sysroot/usr/lib/libc.so"
+    ],
+    "libc": [
+      {
+        "file": "armv6-unknown-linux-musleabi/armv6-unknown-linux-musleabi/sysroot/usr/lib/libc.so",
+        "sha256": "762a4c17c6dd23d1a4354d80455a02b69f38f9e6c432418682f1c88841ae12f9",
+        "version_strings": [
+          "musl libc (arm)",
+          "1.2.5"
+        ]
+      }
+    ],
+    "gcc_version_strings": [
+      "15.2.0",
+      "15.2.0/../../../../armv6-unknown-linux-musleabi/include/finclude/",
+      "15.2.0/"
+    ]
+  },
+  {
+    "target": "aarch64-unknown-linux-musl",
+    "libc_candidates": [
+      "aarch64-unknown-linux-musl/aarch64-unknown-linux-musl/sysroot/usr/lib/libc.so"
+    ],
+    "libc": [
+      {
+        "file": "aarch64-unknown-linux-musl/aarch64-unknown-linux-musl/sysroot/usr/lib/libc.so",
+        "sha256": "357fc11fbc01218f664be1497727147f48c8510dc54e283f15bdd6cdd2a2b787",
+        "version_strings": [
+          "musl libc (aarch64)",
+          "1.2.5"
+        ]
+      }
+    ],
+    "gcc_version_strings": [
+      "15.2.0",
+      "15.2.0/../../../../aarch64-unknown-linux-musl/include/finclude/",
+      "15.2.0/"
+    ]
+  }
+]

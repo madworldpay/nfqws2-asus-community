@@ -1,0 +1,11 @@
+{
+  "commit": "26e1f3f17a2f29ba7cb9013c67142f8a8c8adfd7",
+  "kernel_tracked_files": 34751,
+  "sdk_header_tracked_files": 129,
+  "blobs_verified": 34880,
+  "bytes": 391879433,
+  "all_present": true,
+  "all_git_blob_hashes_match": true,
+  "untracked_generated_files_included": false,
+  "source_url": "https://github.com/RMerl/asuswrt-merlin.ng/tree/26e1f3f17a2f29ba7cb9013c67142f8a8c8adfd7"
+}

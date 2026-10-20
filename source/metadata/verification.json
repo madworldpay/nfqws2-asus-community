@@ -1,0 +1,39 @@
+{
+  "build": 62,
+  "kernel_archive": {
+    "upstream_commit": "26e1f3f17a2f29ba7cb9013c67142f8a8c8adfd7",
+    "verified_original_blobs": 34880,
+    "missing_or_changed": 0
+  },
+  "dpi_dependency_cache": {
+    "original_crates_matching_Cargo_lock": 208,
+    "armv5te_offline_locked_normal_build_dependency_tree_resolves": true,
+    "dependency_tree_lines": 439,
+    "inactive_other_platform_or_feature_lock_packages_not_cached": 33
+  },
+  "module_rebuild": {
+    "machine_code_modinfo_versions_relocations_symbol_tables_match": true,
+    "only_initial_difference": "20-byte GNU build-id from link-time debug data before --strip-debug",
+    "archive_recipe_uses_original_explicit_build_id": "793980be3bebe2b4ac7083dd45c5e6bdb0acaf38",
+    "expected_sha256": "1e5fd88ebf5830d56f6b151de0c791f02b3c3db0a539490fbf32709add0151ab",
+    "archive_recipe_rebuild_matches_distributed_sha256": true
+  },
+  "not_repeated": [
+    "Full independent BusyBox build",
+    "Full independent provider NFQWS2 engine build",
+    "Full fresh DPI compilation",
+    "Live router installation"
+  ],
+  "final_public_documentation": {
+    "files": 22,
+    "excluded": [
+      "SHA256SUMS"
+    ],
+    "includes": [
+      "DOMRU.md",
+      "domru.json"
+    ],
+    "json_parse": "valid"
+  },
+  "project_upstream_sha256": "29721ffd2ae32c1ff601512e075c4579ed2a463cd1365fb38ca847d7b6bdd97e"
+}

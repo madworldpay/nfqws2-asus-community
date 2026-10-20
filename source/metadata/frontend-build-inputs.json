@@ -1,0 +1,22 @@
+[
+  {
+    "file": "project/webui/web/package.json",
+    "sha256": "f643269526eb26e6e0013ea1d25fa217eb10b75c4240981d72c2fff14d7ee803",
+    "bytes": 2217
+  },
+  {
+    "file": "project/webui/web/yarn.lock",
+    "sha256": "bf5746ebe22eac43eb4ab457648ff9607f24a77b693e65ea500181c43167ecd8",
+    "bytes": 202891
+  },
+  {
+    "file": "project/webui/web/.yarnrc.yml",
+    "sha256": "8419946c833e8d8975c22eb4d804c27952683cb9347eb9bcdcb82cfcabb74e70",
+    "bytes": 66
+  },
+  {
+    "file": "project/webui/web/.yarn/releases/yarn-4.12.0.cjs",
+    "sha256": "1fe4e1193cbcd13a48d8f436bb17d3c672b049a5e32a758aab9866a073db1702",
+    "bytes": 2992863
+  }
+]

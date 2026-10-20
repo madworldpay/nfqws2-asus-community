@@ -1,0 +1,31 @@
+{
+  "original_file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz",
+  "original_sha256": "1e4a483cc690beec2c6f1b0c185360d27e54ba21e7813560f50998e09becee54",
+  "parts": [
+    {
+      "file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-001",
+      "sha256": "d4791073d3b2a24ff16bc4adc00fb47b31f148c657579d536278914a7ef66d3d",
+      "bytes": 20971520
+    },
+    {
+      "file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-002",
+      "sha256": "f622cef83da7edb396836e14ae1e1a00156b7ae733d7395b04d7b5108b4d043f",
+      "bytes": 20971520
+    },
+    {
+      "file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-003",
+      "sha256": "28b6e8a84ab8e3335a535363399fe9c6948893e3a6a510eb52972e1a6124366d",
+      "bytes": 20971520
+    },
+    {
+      "file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-004",
+      "sha256": "c181078fb1229c24b92cfd3f841447c49b6a1b6c3a6f383ac022f6a21410a20d",
+      "bytes": 20971520
+    },
+    {
+      "file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-005",
+      "sha256": "ce217297abeb936035539a34099bf523345c6f0f5ad81090f56efc5ee5920d7d",
+      "bytes": 8289968
+    }
+  ]
+}
