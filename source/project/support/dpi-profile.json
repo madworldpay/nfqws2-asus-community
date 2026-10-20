@@ -1,0 +1,371 @@
+{
+  "MAX_CONCURRENT": 2,
+  "IP_VERSION": "ipv4",
+  "TLS_FINGERPRINT": "rustls",
+  "PROXY_URL": null,
+  "TIMEOUT": 8.0,
+  "POOL_TIMEOUT": 2.0,
+  "STUB_IPS_TIMEOUT": 5.0,
+  "TCP_BLOCK_MIN_KB": 12,
+  "TCP_BLOCK_MAX_KB": 36,
+  "FAT_DEFAULT_SNI": "example.com",
+  "FAT_CONNECT_TIMEOUT": 8.0,
+  "FAT_READ_TIMEOUT": 12.0,
+  "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+  "WSAECONNRESET": 10054,
+  "WSAECONNREFUSED": 10061,
+  "WSAETIMEDOUT": 10060,
+  "WSAENETUNREACH": 10051,
+  "WSAEHOSTUNREACH": 10065,
+  "WSAECONNABORTED": 10053,
+  "DNS_CHECK_TIMEOUT": 5.0,
+  "DNS_AVAILABILITY_TIMEOUT": 10.0,
+  "DNS_CHECK_DOMAINS": [
+    "example.com",
+    "google.com",
+    "youtube.com",
+    "discord.com",
+    "github.com",
+    "t.me"
+  ],
+  "DNS_UDP_SERVERS": [
+    [
+      "8.8.8.8",
+      "Google"
+    ],
+    [
+      "1.1.1.1",
+      "Cloudflare"
+    ],
+    [
+      "9.9.9.9",
+      "Quad9"
+    ]
+  ],
+  "DNS_AVAILABILITY_DOMAINS": [
+    "example.com",
+    "google.com"
+  ],
+  "DNS_AVAILABILITY_SERVERS": [
+    [
+      "8.8.8.8",
+      "Google",
+      "udp"
+    ],
+    [
+      "https://dns.google/dns-query",
+      "Google",
+      "doh_wire"
+    ],
+    [
+      "dns.google",
+      "Google",
+      "dot"
+    ],
+    [
+      "1.1.1.1",
+      "Cloudflare",
+      "udp"
+    ],
+    [
+      "https://cloudflare-dns.com/dns-query",
+      "Cloudflare",
+      "doh_wire"
+    ],
+    [
+      "cloudflare-dns.com",
+      "Cloudflare",
+      "dot"
+    ],
+    [
+      "9.9.9.9",
+      "Quad9",
+      "udp"
+    ],
+    [
+      "https://dns.quad9.net/dns-query",
+      "Quad9",
+      "doh_wire"
+    ],
+    [
+      "dns.quad9.net",
+      "Quad9",
+      "dot"
+    ]
+  ],
+  "IP4_LOOKUP_URLS": [
+    "https://v4.ident.me",
+    "https://ipv4.icanhazip.com",
+    "http://v4.ident.me"
+  ],
+  "IP6_LOOKUP_URLS": [
+    "https://api64.ipify.org",
+    "https://icanhazip.com",
+    "https://ifconfig.me/ip",
+    "https://v6.ident.me"
+  ],
+  "IP_LOOKUP_URLS": [
+    "https://api4.ipify.org",
+    "https://api.ipify.org",
+    "https://icanhazip.com",
+    "https://ifconfig.me/ip"
+  ],
+  "CYMRU_DOH_SERVERS": [
+    "https://dns.google/dns-query",
+    "https://cloudflare-dns.com/dns-query",
+    "https://common.dot.dns.yandex.net/dns-query",
+    "https://dns.nextdns.io/dns-query",
+    "https://dns.opendns.com/dns-query"
+  ],
+  "DNS_EGRESS_CONCURRENCY": 2,
+  "DNS_ASN_CONCURRENCY": 2,
+  "ASN_CACHE_FILE": null,
+  "FAT_CHUNKS_COUNT": 10,
+  "FAT_CHUNK_SIZE": 4000,
+  "FAT_CHUNK_DELAY": 0.05,
+  "FAT_RANDOM_POOL_SIZE": 100000,
+  "SNI_BATCH_SIZE": 2,
+  "SNI_TOP_N": 16,
+  "TELEGRAM_MEDIA_URL": "https://telegram.org/img/Telegram200million.png",
+  "TELEGRAM_MEDIA_SIZE_MB": 30.97,
+  "TELEGRAM_UPLOAD_IP": "149.154.167.220",
+  "TELEGRAM_UPLOAD_PORT": 443,
+  "TELEGRAM_UPLOAD_SIZE_MB": 10,
+  "TELEGRAM_STALL_TIMEOUT": 10.0,
+  "TELEGRAM_TOTAL_TIMEOUT": 60.0,
+  "TELEGRAM_DC_PING_TIMEOUT": 5.0,
+  "TELEGRAM_DC_PORT": 443,
+  "TELEGRAM_DCS": [
+    [
+      "149.154.175.53",
+      "DC1"
+    ],
+    [
+      "149.154.167.51",
+      "DC2"
+    ],
+    [
+      "149.154.175.100",
+      "DC3"
+    ],
+    [
+      "149.154.167.91",
+      "DC4"
+    ],
+    [
+      "91.108.56.130",
+      "DC5"
+    ]
+  ],
+  "PIN_CACHE_MAX": 256,
+  "PIN_CACHE_TTL": 3600.0,
+  "CONCURRENCY_PRESETS": [
+    1,
+    5,
+    20,
+    50,
+    100
+  ],
+  "BYPASS_TOOLS": [
+    [
+      "zapret",
+      [
+        "nfqws",
+        "tpws",
+        "zapret",
+        "dvtws",
+        "dbproxy",
+        "winws"
+      ]
+    ],
+    [
+      "GoodbyeDPI",
+      [
+        "goodbyedpi",
+        "goodbye-dpi",
+        "windivert"
+      ]
+    ],
+    [
+      "ByeDPI",
+      [
+        "byedpi"
+      ]
+    ],
+    [
+      "SpoofDPI",
+      [
+        "spoofdpi"
+      ]
+    ],
+    [
+      "DPI-Blocker",
+      [
+        "dpi-blocker",
+        "dpiblocker"
+      ]
+    ],
+    [
+      "Green Tunnel",
+      [
+        "greentunnel",
+        "green-tunnel"
+      ]
+    ],
+    [
+      "PowerTunnel",
+      [
+        "powertunnel"
+      ]
+    ],
+    [
+      "Hysteria2",
+      [
+        "hysteria"
+      ]
+    ],
+    [
+      "TROJAN",
+      [
+        "trojan"
+      ]
+    ],
+    [
+      "NaiveProxy",
+      [
+        "naive"
+      ]
+    ],
+    [
+      "Wstunnel",
+      [
+        "wstunnel"
+      ]
+    ],
+    [
+      "UDP2RAW",
+      [
+        "udp2raw"
+      ]
+    ],
+    [
+      "dnscrypt-proxy",
+      [
+        "dnscrypt-proxy"
+      ]
+    ],
+    [
+      "xray",
+      [
+        "xray"
+      ]
+    ],
+    [
+      "FlClashX",
+      [
+        "flclashx",
+        "flclashcore"
+      ]
+    ],
+    [
+      "AmneziaWG",
+      [
+        "amneziawg"
+      ]
+    ],
+    [
+      "Clash",
+      [
+        "mihomo",
+        "clash-meta",
+        "clash-verge",
+        "clash_verge",
+        "verge-mihomo"
+      ]
+    ],
+    [
+      "sing-box",
+      [
+        "sing-box"
+      ]
+    ],
+    [
+      "Hiddify",
+      [
+        "hiddify"
+      ]
+    ],
+    [
+      "Tailscale",
+      [
+        "tailscale"
+      ]
+    ],
+    [
+      "ZeroTier",
+      [
+        "zerotier"
+      ]
+    ],
+    [
+      "Mullvad",
+      [
+        "mullvad"
+      ]
+    ],
+    [
+      "WARP",
+      [
+        "warp-svc",
+        "cloudflarewarp"
+      ]
+    ],
+    [
+      "NordVPN",
+      [
+        "nordvpn"
+      ]
+    ]
+  ],
+  "DNS_KNOWN_RESOLVER_NAMES": [
+    "google",
+    "cloudflarenet",
+    "i3dnet",
+    "cdn77",
+    "alibaba-cn-net",
+    "as-vultr",
+    "cdnext",
+    "xtom",
+    "tencent-net-ap-cn",
+    "misaka-cis-as",
+    "as-anexia",
+    "ru-jsciot",
+    "yandex",
+    "cisco",
+    "woodynet",
+    "e1-emea",
+    "gtt-backbone",
+    "level3",
+    "firstcolo",
+    "cloudflare",
+    "quad9",
+    "adguard",
+    "opendns",
+    "cleanbrowsing",
+    "nextdns",
+    "controld",
+    "mullvad",
+    "dns0",
+    "ahadns",
+    "comss",
+    "geohide"
+  ],
+  "DNS_HIJACK_EXEMPT_RESOLVERS": [
+    "MSK-IX",
+    "НСДИ"
+  ],
+  "DOMAINS_FILE": "domains.txt",
+  "TCP16_FILE": "tcp16.json",
+  "WHITELIST_SNI_FILE": "whitelist_sni.txt",
+  "QUIC_UNSUPPORTED_FILE": "quic_unsupported.txt"
+}
