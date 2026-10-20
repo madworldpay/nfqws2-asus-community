@@ -1,0 +1,35 @@
+[Unit]
+Description=Private signed NFQWS2 package feed
+After=network.target
+
+[Service]
+Type=simple
+User=nfqws-updates
+Group=nfqws-updates
+WorkingDirectory=/usr/local/lib/nfqws-updates
+ExecStart=/usr/bin/python3 /usr/local/lib/nfqws-updates/server.py
+LoadCredential=feed-config:/etc/nfqws-updates/feed-config.json
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+CapabilityBoundingSet=
+MemoryMax=160M
+TasksMax=20
+LimitNOFILE=64
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
