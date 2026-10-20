@@ -1,0 +1,46 @@
+{
+  "nfqws2-keenetic_1.3.1_aarch64-3.10.ipk": {
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.1/nfqws2-keenetic_1.3.1_aarch64-3.10.ipk",
+    "sha256": "9167d72053a83a78f48f6439af38432fb2d1d411fb22c0980240a949ace614df"
+  },
+  "busybox_1.37.0-6_aarch64-3.10.ipk": {
+    "url": "https://bin.entware.net/aarch64-k3.10/busybox_1.37.0-6_aarch64-3.10.ipk",
+    "sha256": "881b06cecc1c8c6b4a0658d551c2230034ea0a21354fab89ddbce744f3d51e24"
+  },
+  "lighttpd_1.4.82-2_aarch64-3.10.ipk": {
+    "url": "https://bin.entware.net/aarch64-k3.10/lighttpd_1.4.82-2_aarch64-3.10.ipk",
+    "sha256": "4226a6a731a479e4fa20d4c737f1f65cb021449a7ae5bf9e87c23b20da17563c"
+  },
+  "lighttpd-mod-cgi_1.4.82-2_aarch64-3.10.ipk": {
+    "url": "https://bin.entware.net/aarch64-k3.10/lighttpd-mod-cgi_1.4.82-2_aarch64-3.10.ipk",
+    "sha256": "479bf1a1da968574dc9fe727e4d8d4559634e757acfb35ee7566f32b53707009"
+  },
+  "nfqws2-keenetic_1.3.1_all_entware.ipk": {
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.1/nfqws2-keenetic_1.3.1_all_entware.ipk",
+    "sha256": "28af67f8e192c838e007f23517b52b1f8c20d030cef5b971dfc93b7f21a79054"
+  },
+  "busybox_1.37.0-6_armv7-3.2.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k3.2/busybox_1.37.0-6_armv7-3.2.ipk",
+    "sha256": "18ef2d6dd5d83419d73624f03aa4dc346c4e5cca499756b49b2931e69270e516"
+  },
+  "lighttpd_1.4.82-2_armv7-3.2.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k3.2/lighttpd_1.4.82-2_armv7-3.2.ipk",
+    "sha256": "169e1bc6c5fb98bb47af18b8a3669990cfdb7fa8499cdd4d5be541e70cec1185"
+  },
+  "lighttpd-mod-cgi_1.4.82-2_armv7-3.2.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k3.2/lighttpd-mod-cgi_1.4.82-2_armv7-3.2.ipk",
+    "sha256": "29d8062b3769b7e6c6c19f3800df63a8ce36c1d666c1c0ed93009275452f117d"
+  },
+  "busybox_1.36.1-1b_armv7-2.6.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k2.6/busybox_1.36.1-1b_armv7-2.6.ipk",
+    "sha256": "51644012a89a1fa0d4d54c6fe93381704a14446ed8abd470668ec8b1a88c249d"
+  },
+  "lighttpd_1.4.71-1_armv7-2.6.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k2.6/lighttpd_1.4.71-1_armv7-2.6.ipk",
+    "sha256": "65e458bb24de6de59ed5daf5e186b051fa8d6cd42a1573ac00448f74d1d8fd49"
+  },
+  "lighttpd-mod-cgi_1.4.71-1_armv7-2.6.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k2.6/lighttpd-mod-cgi_1.4.71-1_armv7-2.6.ipk",
+    "sha256": "31e677e119d09a7cbde11b5f58838052ab8602704c2de4d26c69f4507a47cf47"
+  }
+}
