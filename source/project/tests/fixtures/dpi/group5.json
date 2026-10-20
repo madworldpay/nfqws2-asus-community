@@ -1,0 +1,48 @@
+{
+  "raw": {
+    "schema_version": 1,
+    "version": "v5.0.0-alpha.21",
+    "profile": "ru",
+    "tls_fingerprint": "rustls",
+    "results": {
+      "telegram": {
+        "verdict": "PRIVATE_CANARY",
+        "download": {
+          "status": "ok",
+          "avg_bps": 10.5,
+          "peak_bps": 12,
+          "bytes": 100,
+          "drop_at_sec": null
+        },
+        "upload": {
+          "status": "blocked",
+          "avg_bps": 0,
+          "peak_bps": 0,
+          "bytes": 0,
+          "drop_at_sec": 0
+        },
+        "dc_reachable": 2,
+        "dc_total": 5
+      }
+    }
+  },
+  "expected": {
+    "group": 5,
+    "download": {
+      "status": "ok",
+      "avg_bps": 10.5,
+      "peak_bps": 12,
+      "bytes": 100,
+      "drop_at_sec": null
+    },
+    "upload": {
+      "status": "blocked",
+      "avg_bps": 0,
+      "peak_bps": 0,
+      "bytes": 0,
+      "drop_at_sec": 0
+    },
+    "dc_reachable": 2,
+    "dc_total": 5
+  }
+}

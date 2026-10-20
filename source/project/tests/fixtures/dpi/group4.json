@@ -1,0 +1,19 @@
+{
+  "raw": {
+    "schema_version": 1,
+    "version": "v5.0.0-alpha.21",
+    "profile": "ru",
+    "tls_fingerprint": "rustls",
+    "results": {
+      "whitelist_sni": {
+        "detected_as": 1,
+        "found_as": 2
+      }
+    }
+  },
+  "expected": {
+    "group": 4,
+    "detected_as": 1,
+    "found_as": 2
+  }
+}

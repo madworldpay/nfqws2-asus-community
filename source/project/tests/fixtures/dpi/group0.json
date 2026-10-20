@@ -1,0 +1,32 @@
+{
+  "raw": {
+    "schema_version": 1,
+    "version": "v5.0.0-alpha.21",
+    "profile": "ru",
+    "tls_fingerprint": "rustls",
+    "results": {
+      "network_info": {
+        "ipv4": {
+          "ip": "PRIVATE_CANARY",
+          "latency_ms": 12
+        },
+        "ipv6": null,
+        "v4_org": "PRIVATE_CANARY",
+        "tun": [
+          "PRIVATE_CANARY"
+        ],
+        "bypass_tools": [],
+        "gateway": "PRIVATE_CANARY"
+      }
+    }
+  },
+  "expected": {
+    "group": 0,
+    "ipv4": true,
+    "ipv6": false,
+    "ipv4_latency_ms": 12,
+    "ipv6_latency_ms": null,
+    "tun_observed": true,
+    "bypass_observed": false
+  }
+}

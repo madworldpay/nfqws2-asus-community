@@ -1,0 +1,40 @@
+{
+  "raw": {
+    "schema_version": 1,
+    "version": "v5.0.0-alpha.21",
+    "profile": "ru",
+    "tls_fingerprint": "rustls",
+    "results": {
+      "domain_inspection": [
+        {
+          "domain": "example.com",
+          "resolved": "PRIVATE_CANARY",
+          "http": "ok",
+          "http_detail": "",
+          "tls12": "ok",
+          "tls12_detail": "",
+          "tls13": "tls_dropped",
+          "tls13_detail": "PRIVATE_CANARY",
+          "quic": "timeout",
+          "quic_detail": "PRIVATE_CANARY"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "group": 2,
+    "rows": [
+      {
+        "target": "example.com",
+        "http": "ok",
+        "http_detail": "unknown",
+        "tls12": "ok",
+        "tls12_detail": "unknown",
+        "tls13": "tls_dropped",
+        "tls13_detail": "unknown",
+        "quic": "timeout",
+        "quic_detail": "unknown"
+      }
+    ]
+  }
+}
