@@ -1,0 +1,1115 @@
+{
+  "schema_version": 1,
+  "version": "v5.0.0-alpha.21",
+  "commit": "a09d03b58d452c71bd63a9b3d410713dd22049f6",
+  "config": {
+    "MAX_CONCURRENT": 50,
+    "IP_VERSION": "ipv4",
+    "TLS_FINGERPRINT": "rustls",
+    "PROXY_URL": null,
+    "TIMEOUT": 8.0,
+    "POOL_TIMEOUT": 2.0,
+    "STUB_IPS_TIMEOUT": 5.0,
+    "TCP_BLOCK_MIN_KB": 12,
+    "TCP_BLOCK_MAX_KB": 36,
+    "FAT_DEFAULT_SNI": "example.com",
+    "FAT_CONNECT_TIMEOUT": 8.0,
+    "FAT_READ_TIMEOUT": 12.0,
+    "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+    "WSAECONNRESET": 10054,
+    "WSAECONNREFUSED": 10061,
+    "WSAETIMEDOUT": 10060,
+    "WSAENETUNREACH": 10051,
+    "WSAEHOSTUNREACH": 10065,
+    "WSAECONNABORTED": 10053,
+    "DNS_CHECK_TIMEOUT": 5.0,
+    "DNS_AVAILABILITY_TIMEOUT": 10.0,
+    "DNS_CHECK_DOMAINS": [
+      "rutor.info",
+      "flibusta.is",
+      "clubtone.do.am",
+      "rezka.ag",
+      "shikimori.one"
+    ],
+    "DNS_UDP_SERVERS": [
+      [
+        "8.8.8.8",
+        "Google"
+      ],
+      [
+        "1.1.1.1",
+        "Cloudflare"
+      ],
+      [
+        "9.9.9.9",
+        "Quad9"
+      ],
+      [
+        "94.140.14.14",
+        "AdGuard"
+      ],
+      [
+        "77.88.8.8",
+        "Yandex"
+      ],
+      [
+        "223.5.5.5",
+        "Alibaba"
+      ],
+      [
+        "208.67.222.222",
+        "OpenDNS"
+      ],
+      [
+        "76.76.2.0",
+        "ControlD"
+      ],
+      [
+        "194.242.2.2",
+        "Mullvad"
+      ],
+      [
+        "185.228.168.9",
+        "CleanBrowsing"
+      ],
+      [
+        "76.76.19.19",
+        "Alternate DNS"
+      ],
+      [
+        "76.223.122.150",
+        "NextDNS"
+      ],
+      [
+        "185.222.222.222",
+        "DNS.SB"
+      ],
+      [
+        "176.9.93.198",
+        "dnsforge"
+      ],
+      [
+        "8.26.56.26",
+        "Comodo"
+      ],
+      [
+        "84.200.69.80",
+        "DNS Watch"
+      ],
+      [
+        "209.244.0.3",
+        "Level 3"
+      ]
+    ],
+    "DNS_AVAILABILITY_DOMAINS": [
+      "vk.ru",
+      "gosuslugi.ru"
+    ],
+    "DNS_AVAILABILITY_SERVERS": [
+      [
+        "94.140.14.14",
+        "AdGuard",
+        "udp"
+      ],
+      [
+        "94.140.15.15",
+        "AdGuard",
+        "udp"
+      ],
+      [
+        "94.140.14.15",
+        "AdGuard (F)",
+        "udp"
+      ],
+      [
+        "94.140.14.140",
+        "AdGuard (UN)",
+        "udp"
+      ],
+      [
+        "223.5.5.5",
+        "Alibaba",
+        "udp"
+      ],
+      [
+        "223.6.6.6",
+        "Alibaba",
+        "udp"
+      ],
+      [
+        "185.228.168.9",
+        "CleanBrowsing",
+        "udp"
+      ],
+      [
+        "185.228.169.9",
+        "CleanBrowsing",
+        "udp"
+      ],
+      [
+        "1.1.1.1",
+        "Cloudflare IP",
+        "udp"
+      ],
+      [
+        "1.0.0.1",
+        "Cloudflare IP 2",
+        "udp"
+      ],
+      [
+        "76.76.2.11",
+        "ControlD",
+        "udp"
+      ],
+      [
+        "76.76.10.11",
+        "ControlD",
+        "udp"
+      ],
+      [
+        "185.222.222.222",
+        "DNS.SB",
+        "udp"
+      ],
+      [
+        "45.11.45.11",
+        "DNS.SB",
+        "udp"
+      ],
+      [
+        "194.0.5.3",
+        "DNS4all",
+        "udp"
+      ],
+      [
+        "176.9.93.198",
+        "dnsforge",
+        "udp"
+      ],
+      [
+        "8.8.4.4",
+        "Google",
+        "udp"
+      ],
+      [
+        "8.8.8.8",
+        "Google",
+        "udp"
+      ],
+      [
+        "62.76.62.76",
+        "MSK-IX",
+        "udp"
+      ],
+      [
+        "62.76.76.62",
+        "MSK-IX",
+        "udp"
+      ],
+      [
+        "45.90.28.0",
+        "NextDNS",
+        "udp"
+      ],
+      [
+        "45.90.30.0",
+        "NextDNS",
+        "udp"
+      ],
+      [
+        "195.208.4.1",
+        "НСДИ",
+        "udp"
+      ],
+      [
+        "195.208.5.1",
+        "НСДИ",
+        "udp"
+      ],
+      [
+        "208.67.220.220",
+        "OpenDNS",
+        "udp"
+      ],
+      [
+        "208.67.222.222",
+        "OpenDNS",
+        "udp"
+      ],
+      [
+        "9.9.9.9",
+        "Quad9",
+        "udp"
+      ],
+      [
+        "149.112.112.112",
+        "Quad9",
+        "udp"
+      ],
+      [
+        "9.9.9.10",
+        "Quad9 (UN)",
+        "udp"
+      ],
+      [
+        "9.9.9.11",
+        "Quad9 (S)",
+        "udp"
+      ],
+      [
+        "9.9.9.12",
+        "Quad9 (UN2)",
+        "udp"
+      ],
+      [
+        "111.88.96.55",
+        "XboxDNS (RU)",
+        "udp"
+      ],
+      [
+        "77.88.8.1",
+        "Yandex",
+        "udp"
+      ],
+      [
+        "77.88.8.8",
+        "Yandex",
+        "udp"
+      ],
+      [
+        "45.155.204.190",
+        "Geohide",
+        "udp"
+      ],
+      [
+        "83.220.169.155",
+        "Comss.one",
+        "udp"
+      ],
+      [
+        "212.109.195.93",
+        "Comss.one",
+        "udp"
+      ],
+      [
+        "8.26.56.26",
+        "Comodo",
+        "udp"
+      ],
+      [
+        "8.20.247.20",
+        "Comodo 2",
+        "udp"
+      ],
+      [
+        "84.200.69.80",
+        "DNS Watch",
+        "udp"
+      ],
+      [
+        "84.200.70.40",
+        "DNS Watch 2",
+        "udp"
+      ],
+      [
+        "209.244.0.3",
+        "Level 3",
+        "udp"
+      ],
+      [
+        "209.244.0.4",
+        "Level 3",
+        "udp"
+      ],
+      [
+        "4.2.2.1",
+        "Level 3",
+        "udp"
+      ],
+      [
+        "4.2.2.2",
+        "Level 3",
+        "udp"
+      ],
+      [
+        "212.224.71.71",
+        "First Colo",
+        "udp"
+      ],
+      [
+        "79.133.62.62",
+        "First Colo",
+        "udp"
+      ],
+      [
+        "77.88.8.88",
+        "Yandex (Safe)",
+        "udp"
+      ],
+      [
+        "77.88.8.2",
+        "Yandex (Safe 2)",
+        "udp"
+      ],
+      [
+        "https://dns.adguard-dns.com/dns-query",
+        "AdGuard",
+        "doh_wire"
+      ],
+      [
+        "https://family.adguard-dns.com/dns-query",
+        "AdGuard (F)",
+        "doh_wire"
+      ],
+      [
+        "https://dns.adguard.com/dns-query",
+        "AdGuard (L)",
+        "doh_wire"
+      ],
+      [
+        "https://unfiltered.adguard-dns.com/dns-query",
+        "AdGuard (UN)",
+        "doh_wire"
+      ],
+      [
+        "https://dns.alidns.com/dns-query",
+        "Alibaba",
+        "doh_wire"
+      ],
+      [
+        "https://doh.cleanbrowsing.org/doh/security-filter",
+        "CleanBrowsing",
+        "doh_wire"
+      ],
+      [
+        "https://cloudflare-dns.com/dns-query",
+        "Cloudflare",
+        "doh_wire"
+      ],
+      [
+        "https://dns.cloudflare.com/dns-query",
+        "Cloudflare dns",
+        "doh_wire"
+      ],
+      [
+        "https://1.1.1.1/dns-query",
+        "Cloudflare IP",
+        "doh_wire"
+      ],
+      [
+        "https://1.0.0.1/dns-query",
+        "Cloudflare IP 2",
+        "doh_wire"
+      ],
+      [
+        "https://one.one.one.one/dns-query",
+        "Cloudflare one",
+        "doh_wire"
+      ],
+      [
+        "https://1dot1dot1dot1.cloudflare-dns.com/dns-query",
+        "Cloudflare dot",
+        "doh_wire"
+      ],
+      [
+        "https://mozilla.cloudflare-dns.com/dns-query",
+        "Cloudflare (M)",
+        "doh_wire"
+      ],
+      [
+        "https://security.cloudflare-dns.com/dns-query",
+        "Cloudflare (S)",
+        "doh_wire"
+      ],
+      [
+        "https://dns.comss.one/dns-query",
+        "Comss.one",
+        "doh_wire"
+      ],
+      [
+        "https://doh.comss.one/dns-query",
+        "Comss.one",
+        "doh_wire"
+      ],
+      [
+        "https://freedns.controld.com/p0",
+        "ControlD",
+        "doh_wire"
+      ],
+      [
+        "https://dns.digitale-gesellschaft.ch/dns-query",
+        "Gesellschaft",
+        "doh_wire"
+      ],
+      [
+        "https://dns.sb/dns-query",
+        "DNS.SB",
+        "doh_wire"
+      ],
+      [
+        "https://doh.dns4all.eu/dns-query",
+        "DNS4all",
+        "doh_wire"
+      ],
+      [
+        "https://dnsforge.de/dns-query",
+        "dnsforge",
+        "doh_wire"
+      ],
+      [
+        "https://dns.google/dns-query",
+        "Google",
+        "doh_wire"
+      ],
+      [
+        "https://doh.libredns.gr/dns-query",
+        "LibreDNS",
+        "doh_wire"
+      ],
+      [
+        "https://dns.mullvad.net/dns-query",
+        "Mullvad",
+        "doh_wire"
+      ],
+      [
+        "https://dns.nextdns.io/dns-query",
+        "NextDNS",
+        "doh_wire"
+      ],
+      [
+        "https://doh.opendns.com/dns-query",
+        "OpenDNS",
+        "doh_wire"
+      ],
+      [
+        "https://dns.opendns.com/dns-query",
+        "OpenDNS",
+        "doh_wire"
+      ],
+      [
+        "https://dns.quad9.net/dns-query",
+        "Quad9",
+        "doh_wire"
+      ],
+      [
+        "https://dns10.quad9.net/dns-query",
+        "Quad9 (UN)",
+        "doh_wire"
+      ],
+      [
+        "https://dns11.quad9.net/dns-query",
+        "Quad9 (S)",
+        "doh_wire"
+      ],
+      [
+        "https://dns12.quad9.net/dns-query",
+        "Quad9 (UN2)",
+        "doh_wire"
+      ],
+      [
+        "https://anycast.uncensoreddns.org/dns-query",
+        "UncensoredDNS",
+        "doh_wire"
+      ],
+      [
+        "https://wikimedia-dns.org/dns-query",
+        "Wikimedia",
+        "doh_wire"
+      ],
+      [
+        "https://xbox-dns.ru/dns-query",
+        "XboxDNS (RU)",
+        "doh_wire"
+      ],
+      [
+        "https://common.dot.dns.yandex.net/dns-query",
+        "Yandex",
+        "doh_wire"
+      ],
+      [
+        "https://dns.geohide.ru:444/dns-query",
+        "Geohide",
+        "doh_wire"
+      ],
+      [
+        "https://safe.dot.dns.yandex.net/dns-query",
+        "Yandex (Safe)",
+        "doh_wire"
+      ],
+      [
+        "dns.adguard-dns.com",
+        "AdGuard",
+        "dot"
+      ],
+      [
+        "family.adguard-dns.com",
+        "AdGuard (F)",
+        "dot"
+      ],
+      [
+        "unfiltered.adguard-dns.com",
+        "AdGuard (UN)",
+        "dot"
+      ],
+      [
+        "dns.adguard.com",
+        "AdGuard (L)",
+        "dot"
+      ],
+      [
+        "dns.alidns.com",
+        "Alibaba",
+        "dot"
+      ],
+      [
+        "security-filter-dns.cleanbrowsing.org",
+        "CleanBrowsing",
+        "dot"
+      ],
+      [
+        "1.1.1.1",
+        "Cloudflare IP",
+        "dot"
+      ],
+      [
+        "1.0.0.1",
+        "Cloudflare IP 2",
+        "dot"
+      ],
+      [
+        "one.one.one.one",
+        "Cloudflare one",
+        "dot"
+      ],
+      [
+        "1dot1dot1dot1.cloudflare-dns.com",
+        "Cloudflare dot",
+        "dot"
+      ],
+      [
+        "security.cloudflare-dns.com",
+        "Cloudflare (S)",
+        "dot"
+      ],
+      [
+        "dns.comss.one",
+        "Comss.one",
+        "dot"
+      ],
+      [
+        "freedns.controld.com",
+        "ControlD",
+        "dot"
+      ],
+      [
+        "dns.digitale-gesellschaft.ch",
+        "Gesellschaft",
+        "dot"
+      ],
+      [
+        "dot.sb",
+        "DNS.SB",
+        "dot"
+      ],
+      [
+        "dot.dns4all.eu",
+        "DNS4all",
+        "dot"
+      ],
+      [
+        "dnsforge.de",
+        "dnsforge",
+        "dot"
+      ],
+      [
+        "dns.google",
+        "Google",
+        "dot"
+      ],
+      [
+        "8.8.8.8",
+        "Google",
+        "dot"
+      ],
+      [
+        "8.8.4.4",
+        "Google",
+        "dot"
+      ],
+      [
+        "dns.mullvad.net",
+        "Mullvad",
+        "dot"
+      ],
+      [
+        "dns.nextdns.io",
+        "NextDNS",
+        "dot"
+      ],
+      [
+        "dns.opendns.com",
+        "OpenDNS",
+        "dot"
+      ],
+      [
+        "dns.quad9.net",
+        "Quad9",
+        "dot"
+      ],
+      [
+        "dns10.quad9.net",
+        "Quad9 (UN)",
+        "dot"
+      ],
+      [
+        "dns11.quad9.net",
+        "Quad9 (S)",
+        "dot"
+      ],
+      [
+        "dns12.quad9.net",
+        "Quad9 (UN2)",
+        "dot"
+      ],
+      [
+        "unicast.censurfridns.dk",
+        "UncensoredDNS",
+        "dot"
+      ],
+      [
+        "wikimedia-dns.org",
+        "Wikimedia",
+        "dot"
+      ],
+      [
+        "xbox-dns.ru",
+        "XboxDNS (RU)",
+        "dot"
+      ],
+      [
+        "common.dot.dns.yandex.net",
+        "Yandex",
+        "dot"
+      ],
+      [
+        "dns.geohide.ru",
+        "Geohide",
+        "dot"
+      ],
+      [
+        "dot.libredns.gr",
+        "LibreDNS",
+        "dot"
+      ],
+      [
+        "safe.dot.dns.yandex.net",
+        "Yandex (Safe)",
+        "dot"
+      ]
+    ],
+    "IP4_LOOKUP_URLS": [
+      "https://v4.ident.me",
+      "https://ipv4.icanhazip.com",
+      "http://v4.ident.me"
+    ],
+    "IP6_LOOKUP_URLS": [
+      "https://api64.ipify.org",
+      "https://icanhazip.com",
+      "https://ifconfig.me/ip",
+      "https://v6.ident.me"
+    ],
+    "IP_LOOKUP_URLS": [
+      "https://api4.ipify.org",
+      "https://api.ipify.org",
+      "https://icanhazip.com",
+      "https://ifconfig.me/ip"
+    ],
+    "CYMRU_DOH_SERVERS": [
+      "https://dns.google/dns-query",
+      "https://cloudflare-dns.com/dns-query",
+      "https://common.dot.dns.yandex.net/dns-query",
+      "https://dns.nextdns.io/dns-query",
+      "https://dns.opendns.com/dns-query"
+    ],
+    "DNS_EGRESS_CONCURRENCY": 10,
+    "DNS_ASN_CONCURRENCY": 8,
+    "ASN_CACHE_FILE": null,
+    "FAT_CHUNKS_COUNT": 10,
+    "FAT_CHUNK_SIZE": 4000,
+    "FAT_CHUNK_DELAY": 0.05,
+    "FAT_RANDOM_POOL_SIZE": 100000,
+    "SNI_BATCH_SIZE": 5,
+    "SNI_TOP_N": 3,
+    "TELEGRAM_MEDIA_URL": "https://telegram.org/img/Telegram200million.png",
+    "TELEGRAM_MEDIA_SIZE_MB": 30.97,
+    "TELEGRAM_UPLOAD_IP": "149.154.167.220",
+    "TELEGRAM_UPLOAD_PORT": 443,
+    "TELEGRAM_UPLOAD_SIZE_MB": 10,
+    "TELEGRAM_STALL_TIMEOUT": 10.0,
+    "TELEGRAM_TOTAL_TIMEOUT": 60.0,
+    "TELEGRAM_DC_PING_TIMEOUT": 5.0,
+    "TELEGRAM_DC_PORT": 443,
+    "TELEGRAM_DCS": [
+      [
+        "149.154.175.53",
+        "DC1"
+      ],
+      [
+        "149.154.167.51",
+        "DC2"
+      ],
+      [
+        "149.154.175.100",
+        "DC3"
+      ],
+      [
+        "149.154.167.91",
+        "DC4"
+      ],
+      [
+        "91.108.56.130",
+        "DC5"
+      ]
+    ],
+    "PIN_CACHE_MAX": 256,
+    "PIN_CACHE_TTL": 3600.0,
+    "CONCURRENCY_PRESETS": [
+      1,
+      5,
+      20,
+      50,
+      100
+    ],
+    "BYPASS_TOOLS": [
+      [
+        "zapret",
+        [
+          "nfqws",
+          "tpws",
+          "zapret",
+          "dvtws",
+          "dbproxy",
+          "winws"
+        ]
+      ],
+      [
+        "GoodbyeDPI",
+        [
+          "goodbyedpi",
+          "goodbye-dpi",
+          "windivert"
+        ]
+      ],
+      [
+        "ByeDPI",
+        [
+          "byedpi"
+        ]
+      ],
+      [
+        "SpoofDPI",
+        [
+          "spoofdpi"
+        ]
+      ],
+      [
+        "DPI-Blocker",
+        [
+          "dpi-blocker",
+          "dpiblocker"
+        ]
+      ],
+      [
+        "Green Tunnel",
+        [
+          "greentunnel",
+          "green-tunnel"
+        ]
+      ],
+      [
+        "PowerTunnel",
+        [
+          "powertunnel"
+        ]
+      ],
+      [
+        "Hysteria2",
+        [
+          "hysteria"
+        ]
+      ],
+      [
+        "TROJAN",
+        [
+          "trojan"
+        ]
+      ],
+      [
+        "NaiveProxy",
+        [
+          "naive"
+        ]
+      ],
+      [
+        "Wstunnel",
+        [
+          "wstunnel"
+        ]
+      ],
+      [
+        "UDP2RAW",
+        [
+          "udp2raw"
+        ]
+      ],
+      [
+        "dnscrypt-proxy",
+        [
+          "dnscrypt-proxy"
+        ]
+      ],
+      [
+        "xray",
+        [
+          "xray"
+        ]
+      ],
+      [
+        "FlClashX",
+        [
+          "flclashx",
+          "flclashcore"
+        ]
+      ],
+      [
+        "AmneziaWG",
+        [
+          "amneziawg"
+        ]
+      ],
+      [
+        "Clash",
+        [
+          "mihomo",
+          "clash-meta",
+          "clash-verge",
+          "clash_verge",
+          "verge-mihomo"
+        ]
+      ],
+      [
+        "sing-box",
+        [
+          "sing-box"
+        ]
+      ],
+      [
+        "Hiddify",
+        [
+          "hiddify"
+        ]
+      ],
+      [
+        "Tailscale",
+        [
+          "tailscale"
+        ]
+      ],
+      [
+        "ZeroTier",
+        [
+          "zerotier"
+        ]
+      ],
+      [
+        "Mullvad",
+        [
+          "mullvad"
+        ]
+      ],
+      [
+        "WARP",
+        [
+          "warp-svc",
+          "cloudflarewarp"
+        ]
+      ],
+      [
+        "NordVPN",
+        [
+          "nordvpn"
+        ]
+      ]
+    ],
+    "DNS_KNOWN_RESOLVER_NAMES": [
+      "google",
+      "cloudflarenet",
+      "i3dnet",
+      "cdn77",
+      "alibaba-cn-net",
+      "as-vultr",
+      "cdnext",
+      "xtom",
+      "tencent-net-ap-cn",
+      "misaka-cis-as",
+      "as-anexia",
+      "ru-jsciot",
+      "yandex",
+      "cisco",
+      "woodynet",
+      "e1-emea",
+      "gtt-backbone",
+      "level3",
+      "firstcolo",
+      "cloudflare",
+      "quad9",
+      "adguard",
+      "opendns",
+      "cleanbrowsing",
+      "nextdns",
+      "controld",
+      "mullvad",
+      "dns0",
+      "ahadns",
+      "comss",
+      "geohide"
+    ],
+    "DNS_HIJACK_EXEMPT_RESOLVERS": [
+      "MSK-IX",
+      "НСДИ"
+    ]
+  },
+  "config_keys": [
+    "MAX_CONCURRENT",
+    "IP_VERSION",
+    "TLS_FINGERPRINT",
+    "PROXY_URL",
+    "TIMEOUT",
+    "POOL_TIMEOUT",
+    "STUB_IPS_TIMEOUT",
+    "TCP_BLOCK_MIN_KB",
+    "TCP_BLOCK_MAX_KB",
+    "FAT_DEFAULT_SNI",
+    "FAT_CONNECT_TIMEOUT",
+    "FAT_READ_TIMEOUT",
+    "USER_AGENT",
+    "WSAECONNRESET",
+    "WSAECONNREFUSED",
+    "WSAETIMEDOUT",
+    "WSAENETUNREACH",
+    "WSAEHOSTUNREACH",
+    "WSAECONNABORTED",
+    "DNS_CHECK_TIMEOUT",
+    "DNS_AVAILABILITY_TIMEOUT",
+    "DNS_CHECK_DOMAINS",
+    "DNS_TRUTH_FALLBACK",
+    "DNS_UDP_SERVERS",
+    "DNS_AVAILABILITY_DOMAINS",
+    "DNS_AVAILABILITY_SERVERS",
+    "DNS_EGRESS_CONCURRENCY",
+    "DNS_ASN_CONCURRENCY",
+    "ASN_CACHE_FILE",
+    "FAT_CHUNKS_COUNT",
+    "FAT_CHUNK_SIZE",
+    "FAT_CHUNK_DELAY",
+    "FAT_RANDOM_POOL_SIZE",
+    "SNI_BATCH_SIZE",
+    "SNI_TOP_N",
+    "TELEGRAM_MEDIA_URL",
+    "TELEGRAM_MEDIA_SIZE_MB",
+    "TELEGRAM_UPLOAD_IP",
+    "TELEGRAM_UPLOAD_PORT",
+    "TELEGRAM_UPLOAD_SIZE_MB",
+    "TELEGRAM_STALL_TIMEOUT",
+    "TELEGRAM_TOTAL_TIMEOUT",
+    "TELEGRAM_DC_PING_TIMEOUT",
+    "TELEGRAM_DC_PORT",
+    "TELEGRAM_DCS",
+    "PIN_CACHE_MAX",
+    "PIN_CACHE_TTL",
+    "CONCURRENCY_PRESETS",
+    "BYPASS_TOOLS",
+    "DNS_KNOWN_RESOLVER_NAMES",
+    "DNS_HIJACK_EXEMPT_RESOLVERS",
+    "DNS_STUB_THRESHOLD",
+    "DEBUG",
+    "CYMRU_DOH_SERVERS",
+    "IP4_LOOKUP_URLS",
+    "IP6_LOOKUP_URLS",
+    "IP_LOOKUP_URLS"
+  ],
+  "fingerprints": [
+    "rustls",
+    "chrome146",
+    "chrome133",
+    "chrome131",
+    "chrome131android",
+    "chrome123",
+    "chrome116",
+    "chrome115pq",
+    "chrome107",
+    "chrome99android",
+    "chrome87",
+    "chrome72",
+    "chrome70",
+    "edge101",
+    "firefox147",
+    "firefox133",
+    "firefox120",
+    "firefox105",
+    "firefox99",
+    "firefox65",
+    "go127",
+    "safari260",
+    "safari260ios",
+    "safari184ios",
+    "safari180",
+    "safari172ios",
+    "safari170",
+    "safari155",
+    "safari153",
+    "tor145"
+  ],
+  "files": {
+    "domains.txt": "www.instagram.com\nwww.facebook.com\nx.com/i/api/1.1/graphql/user_flow.json\nwww.linkedin.com\ndiscord.com\ngateway.discord.gg\nmedia.discordapp.net\nwww.youtube.com\nsoundcloud.com\nmeduza.io\nwww.dw.com\nwww.svoboda.org\nholod.media\nwww.euronews.com\nwww.torproject.org\nprotonvpn.com\namnezia.org\nnnmclub.to\nhub.docker.com\nwww.intel.com\nwww.canva.com\nwww.coursera.org\naws.amazon.com\nwww.apkmirror.com\nwww.currenttime.tv\nwww.messenger.com\nwww.themoscowtimes.com\nwww.linuxserver.io\ndanbooru.donmai.us\nbrowserleaks.com\nwww.cdn77.com\nshikimori.io\nvk.ru\nwww.google.com\nfonts.gstatic.com\n",
+    "burst-domains.txt": "# Test 6 targets: ordinary sites, not the blocked ones test 2 measures.\n#\n# The burst test asks a different question — does the act of connecting to this\n# host N times in a row change the answer? — so it needs hosts that answer\n# normally on the first connection and are not censored by address or SNI. Two\n# ways a host fails that and has been dropped here: a blocked one fails every\n# attempt for a reason the test does not measure (reg.ru, whose TLS is intercepted\n# and answers UNKNOWN on every shape), and a host that only redirects measures a\n# redirect instead of a handshake (smartape.ru answers a 301 to its www form, so\n# the list carries the address the redirect lands on).\nezgame.su\namserg.com\nwww.smartape.ru\n",
+    "tcp16.json": "[\n    {\"id\": \"HE-01\", \"asn\": \"24940☆\", \"provider\": \"Hetzner\", \"ip\": \"91.98.156.82\", \"port\": 443},\n    {\"id\": \"HE-02\", \"asn\": \"24940☆\", \"provider\": \"Hetzner\", \"ip\": \"46.62.154.37\", \"port\": 443},\n    {\"id\": \"HE-02H\", \"asn\": \"24940☆\", \"provider\": \"Hetzner HTTP\", \"ip\": \"185.189.229.124\", \"port\": 80},\n    {\"id\": \"HE-03\", \"asn\": \"213230\", \"provider\": \"Hetzner Cloud 2\", \"ip\": \"5.161.249.234\", \"port\": 443},\n    {\"id\": \"HE-04\", \"asn\": \"213230\", \"provider\": \"Hetzner Cloud 2\", \"ip\": \"178.156.225.186\", \"port\": 443},\n    {\"id\": \"HE-05\", \"asn\": \"212317\", \"provider\": \"Hetzner Cloud 3\", \"ip\": \"5.78.155.139\", \"port\": 443},\n    {\"id\": \"HE-06\", \"asn\": \"212317\", \"provider\": \"Hetzner Cloud 3\", \"ip\": \"5.78.82.109\", \"port\": 443},\n    {\"id\": \"HE-07\", \"asn\": \"215859\", \"provider\": \"Hetzner Cloud 4\", \"ip\": \"5.223.56.99\", \"port\": 443},\n    {\"id\": \"HE-08\", \"asn\": \"215859\", \"provider\": \"Hetzner Cloud 4\", \"ip\": \"5.223.68.131\", \"port\": 443},\n\n    {\"id\": \"CF-01\", \"asn\": \"13335\", \"provider\": \"Cloudflare\", \"ip\": \"172.67.70.222\", \"port\": 443},\n    {\"id\": \"CF-02\", \"asn\": \"13335\", \"provider\": \"Cloudflare\", \"ip\": \"172.67.181.54\", \"port\": 443},\n    {\"id\": \"CF-03\", \"asn\": \"13335\", \"provider\": \"Cloudflare\", \"ip\": \"104.18.63.125\", \"port\": 443},\n    {\"id\": \"CF-04\", \"asn\": \"13335\", \"provider\": \"Cloudflare\", \"ip\": \"104.19.153.39\", \"port\": 443},\n    {\"id\": \"CF-05\", \"asn\": \"13335\", \"provider\": \"Cloudflare\", \"ip\": \"104.18.46.6\", \"port\": 443},\n    {\"id\": \"CF-06\", \"asn\": \"13335\", \"provider\": \"Cloudflare\", \"ip\": \"104.16.59.56\", \"port\": 443},\n\n    {\"id\": \"CDN-02\", \"asn\": \"60068\", \"provider\": \"CDN77 #1\", \"ip\": \"195.181.167.155\", \"port\": 443},\n    {\"id\": \"CDN-03\", \"asn\": \"60068\", \"provider\": \"CDN77 #1\", \"ip\": \"169.150.239.5\", \"port\": 443},\n    {\"id\": \"CDN-04\", \"asn\": \"60068\", \"provider\": \"CDN77 #1 HTTP\", \"ip\": \"84.17.50.100\", \"port\": 80},\n\n    {\"id\": \"CDN-05\", \"asn\": \"212238\", \"provider\": \"CDN77 #2\", \"ip\": \"136.0.114.217\", \"port\": 443},\n    {\"id\": \"CDN-06\", \"asn\": \"212238\", \"provider\": \"CDN77 #2\", \"ip\": \"194.32.146.68\", \"port\": 443},\n    {\"id\": \"CDN-07\", \"asn\": \"212238\", \"provider\": \"CDN77 #2\", \"ip\": \"85.237.223.203\", \"port\": 443},\n\n    {\"id\": \"AK-01\", \"asn\": \"20940☆\", \"provider\": \"Akamai 1\", \"ip\": \"23.222.76.4\", \"port\": 443},\n    {\"id\": \"AK-02\", \"asn\": \"20940☆\", \"provider\": \"Akamai 1\", \"ip\": \"23.46.144.6\", \"port\": 443},\n    {\"id\": \"AK-03\", \"asn\": \"20940☆\", \"provider\": \"Akamai 1 HTTP\", \"ip\": \"72.246.41.5\", \"port\": 80},\n    {\"id\": \"AK-04\", \"asn\": \"20940☆\", \"provider\": \"Akamai 1\", \"ip\": \"95.101.229.18\", \"port\": 443},\n    {\"id\": \"AK-05\", \"asn\": \"16625\", \"provider\": \"Akamai 2\", \"ip\": \"23.1.64.4\", \"port\": 443},\n    {\"id\": \"AK-06\", \"asn\": \"16625\", \"provider\": \"Akamai 2\", \"ip\": \"184.31.208.5\", \"port\": 443},\n    {\"id\": \"AK-07\", \"asn\": \"12222\", \"provider\": \"Akamai 3\", \"ip\": \"23.62.225.111\", \"port\": 443},\n    {\"id\": \"AK-08\", \"asn\": \"12222\", \"provider\": \"Akamai 3\", \"ip\": \"88.221.209.114\", \"port\": 443},\n    {\"id\": \"AK-09\", \"asn\": \"33905\", \"provider\": \"Akamai 4\", \"ip\": \"23.40.100.221\", \"port\": 443},\n\t{\"id\": \"AK-10\", \"asn\": \"33905\", \"provider\": \"Akamai 4\", \"ip\": \"23.7.244.221\", \"port\": 443},\n    {\"id\": \"AK-11\", \"asn\": \"63949\", \"provider\": \"Akamai Cloud\", \"ip\": \"172.236.2.30\", \"port\": 443},\n    {\"id\": \"AK-12\", \"asn\": \"63949\", \"provider\": \"Akamai Cloud\", \"ip\": \"212.71.233.10\", \"port\": 443},\n\n    {\"id\": \"AWS-02\", \"asn\": \"16509☆\", \"provider\": \"AWS 1\", \"ip\": \"3.165.188.250\", \"port\": 443},\n    {\"id\": \"AWS-03\", \"asn\": \"16509☆\", \"provider\": \"AWS 1\", \"ip\": \"168.100.27.4\", \"port\": 443},\n    {\"id\": \"AWS-04\", \"asn\": \"14618\", \"provider\": \"AWS 2\", \"ip\": \"54.196.100.238\", \"port\": 443},\n    {\"id\": \"AWS-05\", \"asn\": \"14618\", \"provider\": \"AWS 2\", \"ip\": \"148.5.72.176\", \"port\": 443},\n    {\"id\": \"AWS-06\", \"asn\": \"8987\", \"provider\": \"AWS 3\", \"ip\": \"52.119.209.76\", \"port\": 443},\n    {\"id\": \"AWS-07\", \"asn\": \"8987\", \"provider\": \"AWS 3\", \"ip\": \"170.85.83.22\", \"port\": 443},\n\n    {\"id\": \"CNT-01\", \"asn\": \"51167\", \"provider\": \"Contabo 1\", \"ip\": \"173.249.28.198\", \"port\": 443},\n    {\"id\": \"CNT-02\", \"asn\": \"51167\", \"provider\": \"Contabo 1\", \"ip\": \"207.180.221.131\", \"port\": 443},\n    {\"id\": \"CNT-03\", \"asn\": \"51167\", \"provider\": \"Contabo 1\", \"ip\": \"185.211.6.51\", \"port\": 443},\n    {\"id\": \"CNT-04\", \"asn\": \"51167\", \"provider\": \"Contabo 1\", \"ip\": \"5.189.159.58\", \"port\": 443},\n\n    {\"id\": \"CNT-05\", \"asn\": \"141995\", \"provider\": \"Contabo 2\", \"ip\": \"80.65.208.137\", \"port\": 443},\n    {\"id\": \"CNT-06\", \"asn\": \"141995\", \"provider\": \"Contabo 2\", \"ip\": \"147.93.153.44\", \"port\": 443},\n    {\"id\": \"CNT-07\", \"asn\": \"141995\", \"provider\": \"Contabo 2\", \"ip\": \"94.136.190.9\", \"port\": 443},\n\n    {\"id\": \"FST-01\", \"asn\": \"54113\", \"provider\": \"Fastly\", \"ip\": \"151.101.66.245\", \"port\": 443, \"sni\": \"www.jetblue.com\"},\n    {\"id\": \"FST-02\", \"asn\": \"54113\", \"provider\": \"Fastly\", \"ip\": \"151.101.194.114\", \"port\": 443, \"sni\": \"ssl.p.jwpcdn.com\"},\n    {\"id\": \"FST-03\", \"asn\": \"54113\", \"provider\": \"Fastly GitHub 108\", \"ip\": \"185.199.108.133\", \"port\": 443, \"sni\": \"release-assets.githubusercontent.com\"},\n    {\"id\": \"FST-04\", \"asn\": \"54113\", \"provider\": \"Fastly GitHub 109\", \"ip\": \"185.199.109.133\", \"port\": 443, \"sni\": \"release-assets.githubusercontent.com\"},\n    {\"id\": \"FST-05\", \"asn\": \"54113\", \"provider\": \"Fastly GitHub 110\", \"ip\": \"185.199.110.133\", \"port\": 443, \"sni\": \"release-assets.githubusercontent.com\"},\n    {\"id\": \"FST-06\", \"asn\": \"54113\", \"provider\": \"Fastly GitHub 111\", \"ip\": \"185.199.111.133\", \"port\": 443, \"sni\": \"release-assets.githubusercontent.com\"},\n    {\"id\": \"FST-07\", \"asn\": \"54113\", \"provider\": \"Fastly Gog\", \"ip\": \"151.101.1.55\", \"port\": 443, \"sni\": \"gog.com\"},\n\n    {\"id\": \"GC-01\", \"asn\": \"396982\", \"provider\": \"Google Cloud\", \"ip\": \"147.189.239.240\", \"port\": 443},\n    {\"id\": \"GC-02\", \"asn\": \"396982\", \"provider\": \"Google Cloud\", \"ip\": \"35.227.66.60\", \"port\": 443},\n\n    {\"id\": \"GCR-01\", \"asn\": \"199524\", \"provider\": \"Gcore 1\", \"ip\": \"62.112.221.146\", \"port\": 443},\n    {\"id\": \"GCR-02\", \"asn\": \"199524\", \"provider\": \"Gcore 1\", \"ip\": \"92.223.13.10\", \"port\": 443},\n    {\"id\": \"GCR-03\", \"asn\": \"199524\", \"provider\": \"Gcore 1\", \"ip\": \"185.145.113.133\", \"port\": 443},\n    {\"id\": \"GCR-04\", \"asn\": \"199524\", \"provider\": \"Gcore 1\", \"ip\": \"82.117.228.93\", \"port\": 443},\n\n    {\"id\": \"GCR-05\", \"asn\": \"202422\", \"provider\": \"Gcore 2\", \"ip\": \"5.8.34.27\", \"port\": 443},\n    {\"id\": \"GCR-06\", \"asn\": \"202422\", \"provider\": \"Gcore 2\", \"ip\": \"185.101.139.107\", \"port\": 443},\n\n    {\"id\": \"OR-01\", \"asn\": \"31898\", \"provider\": \"Oracle Cloud\", \"ip\": \"153.72.114.110\", \"port\": 443},\n    {\"id\": \"OR-02\", \"asn\": \"31898\", \"provider\": \"Oracle Cloud\", \"ip\": \"67.222.57.149\", \"port\": 443},\n    {\"id\": \"OR-03\", \"asn\": \"31898\", \"provider\": \"Oracle Cloud\", \"ip\": \"132.145.253.77\", \"port\": 443},\n    {\"id\": \"OR-04\", \"asn\": \"31898\", \"provider\": \"Oracle Cloud\", \"ip\": \"138.2.147.83\", \"port\": 443},\n\n    {\"id\": \"OR-05\", \"asn\": \"54253\", \"provider\": \"Oracle 1 HTTP\", \"ip\": \"158.180.162.112\", \"port\": 80},\n    {\"id\": \"OR-06\", \"asn\": \"54253\", \"provider\": \"Oracle 1\", \"ip\": \"158.178.160.240\", \"port\": 443},\n    {\"id\": \"OR-07\", \"asn\": \"54253\", \"provider\": \"Oracle 1\", \"ip\": \"217.142.192.157\", \"port\": 443},\n\n    {\"id\": \"OR-08\", \"asn\": \"6142\", \"provider\": \"Oracle 3\", \"ip\": \"139.87.80.96\", \"port\": 443},\n    {\"id\": \"OR-09\", \"asn\": \"6142\", \"provider\": \"Oracle 3\", \"ip\": \"139.87.117.158\", \"port\": 443},\n\n    {\"id\": \"OR-10\", \"asn\": \"14544\", \"provider\": \"Oracle 4\", \"ip\": \"207.127.85.89\", \"port\": 443},\n\n    {\"id\": \"OR-11\", \"asn\": \"20054\", \"provider\": \"Oracle 5\", \"ip\": \"155.248.28.213\", \"port\": 443},\n\n    {\"id\": \"OVH-01\", \"asn\": \"16276\", \"provider\": \"OVH\", \"ip\": \"5.196.63.68\", \"port\": 443},\n    {\"id\": \"OVH-02\", \"asn\": \"16276\", \"provider\": \"OVH\", \"ip\": \"141.95.228.164\", \"port\": 443},\n    {\"id\": \"OVH-03\", \"asn\": \"16276\", \"provider\": \"OVH\", \"ip\": \"51.75.18.27\", \"port\": 443},\n    {\"id\": \"OVH-04\", \"asn\": \"16276\", \"provider\": \"OVH\", \"ip\": \"40.160.45.210\", \"port\": 443},\n\t{\"id\": \"OVH-05\", \"asn\": \"16276\", \"provider\": \"OVH\", \"ip\": \"188.165.20.24\", \"port\": 443},\n    {\"id\": \"OVH-06\", \"asn\": \"16276\", \"provider\": \"OVH HTTP\", \"ip\": \"147.135.214.172\", \"port\": 80},\t\n\n    {\"id\": \"SW-01\", \"asn\": \"12876\", \"provider\": \"Scaleway 1\", \"ip\": \"62.4.10.75\", \"port\": 443},\n    {\"id\": \"SW-02\", \"asn\": \"12876\", \"provider\": \"Scaleway 1\", \"ip\": \"51.158.153.203\", \"port\": 443},\n    {\"id\": \"SW-03\", \"asn\": \"12876\", \"provider\": \"Scaleway 1\", \"ip\": \"212.83.152.108\", \"port\": 443},\n    {\"id\": \"SW-04\", \"asn\": \"12876\", \"provider\": \"Scaleway 1 HTTP\", \"ip\": \"163.172.223.99\", \"port\": 80},\n    {\"id\": \"SW-05\", \"asn\": \"29447\", \"provider\": \"Scaleway 2\", \"ip\": \"81.56.227.171\", \"port\": 443},\n    {\"id\": \"SW-06\", \"asn\": \"29447\", \"provider\": \"Scaleway 2\", \"ip\": \"83.158.240.200\", \"port\": 443},\n    {\"id\": \"SW-07\", \"asn\": \"29447\", \"provider\": \"Scaleway 2\", \"ip\": \"81.56.5.136\", \"port\": 443},\n    {\"id\": \"SW-08\", \"asn\": \"29447\", \"provider\": \"Scaleway 2\", \"ip\": \"81.56.32.219\", \"port\": 443},\n\n    {\"id\": \"DO-01\", \"asn\": \"14061\", \"provider\": \"DigitalOcean 1\", \"ip\": \"157.230.91.62\", \"port\": 443},\n    {\"id\": \"DO-02\", \"asn\": \"14061\", \"provider\": \"DigitalOcean 1\", \"ip\": \"138.68.63.162\", \"port\": 443},\n    {\"id\": \"DO-03\", \"asn\": \"14061\", \"provider\": \"DigitalOcean 1\", \"ip\": \"165.245.210.202\", \"port\": 443},\n    {\"id\": \"DO-04\", \"asn\": \"14061\", \"provider\": \"DigitalOcean 1\", \"ip\": \"147.182.168.41\", \"port\": 443},\n    {\"id\": \"DO-05\", \"asn\": \"14061\", \"provider\": \"DigitalOcean 1\", \"ip\": \"45.55.107.70\", \"port\": 443},\n\n    {\"id\": \"DO-06\", \"asn\": \"46652\", \"provider\": \"DigitalOcean 2\", \"ip\": \"141.0.173.188\", \"port\": 443},\n    {\"id\": \"DO-07\", \"asn\": \"46652\", \"provider\": \"DigitalOcean 2\", \"ip\": \"69.55.57.11\", \"port\": 443},\n\n    {\"id\": \"VLT-01\", \"asn\": \"20473\", \"provider\": \"Vultr\", \"ip\": \"209.250.243.50\", \"port\": 443, \"sni\": \"\"},\n    {\"id\": \"VLT-02\", \"asn\": \"20473\", \"provider\": \"Vultr\", \"ip\": \"64.176.188.124\", \"port\": 443, \"sni\": \"\"},\n    {\"id\": \"VLT-03\", \"asn\": \"20473\", \"provider\": \"Vultr\", \"ip\": \"108.61.167.59\", \"port\": 443, \"sni\": \"\"},\n    {\"id\": \"VLT-04\", \"asn\": \"20473\", \"provider\": \"Vultr\", \"ip\": \"173.199.115.182\", \"port\": 443, \"sni\": \"\"},\n\n    {\"id\": \"MBC-01\", \"asn\": \"8849\", \"provider\": \"Melbicom 1\", \"ip\": \"109.122.201.147\", \"port\": 443},\n    {\"id\": \"MBC-03\", \"asn\": \"56630\", \"provider\": \"Melbicom 2\", \"ip\": \"185.6.14.1\", \"port\": 443},\n\n    {\"id\": \"FT-01\", \"asn\": \"53667\", \"provider\": \"FranTech\", \"ip\": \"107.189.29.143\", \"port\": 443},\n    {\"id\": \"FT-02\", \"asn\": \"53667\", \"provider\": \"FranTech\", \"ip\": \"198.251.88.98\", \"port\": 443},\n\n    {\"id\": \"CV-01\", \"asn\": \"62240\", \"provider\": \"Clouvider\", \"ip\": \"185.42.222.195\", \"port\": 443},\n    {\"id\": \"CV-02\", \"asn\": \"62240\", \"provider\": \"Clouvider\", \"ip\": \"80.73.109.187\", \"port\": 443},\n\n    {\"id\": \"ME-01\", \"asn\": \"9009\", \"provider\": \"M247 Europe SRL\", \"ip\": \"146.70.158.22\", \"port\": 443},\n\n    {\"id\": \"IM-01\", \"asn\": \"20860\", \"provider\": \"IOMART 1\", \"ip\": \"162.33.28.242\", \"port\": 443},\n    {\"id\": \"IM-02\", \"asn\": \"21130\", \"provider\": \"IOMART 2\", \"ip\": \"185.224.199.82\", \"port\": 443},\n\n    {\"id\": \"ZL-01\", \"asn\": \"21859\", \"provider\": \"Zenlayer\", \"ip\": \"193.118.45.137\", \"port\": 443},\n\n    {\"id\": \"CN-01\", \"asn\": \"51765\", \"provider\": \"CreaNova\", \"ip\": \"185.112.82.170\", \"port\": 443},\n\n    {\"id\": \"SCA-01\", \"asn\": \"58061\", \"provider\": \"Scalaxy\", \"ip\": \"5.61.55.146\", \"port\": 443},\n    {\"id\": \"FRX-01\", \"asn\": \"48040\", \"provider\": \"Fornex\", \"ip\": \"199.68.199.16\", \"port\": 443}\n]\n",
+    "whitelist_sni.txt": "hcaptcha.com\nvk.com\n2gis.com\n2gis.ru\n300.ya.ru\nad.adriver.ru\n3475482542.mc.yandex.ru\n742231.ms.ok.ru\na.wb.ru\nad.mail.ru\nadm.mp.rzd.ru\nakashi.vk-portal.net\nalfabank.ru\nweb.max.ru\nams2-cdn.2gis.com\nan.yandex.ru\napi-maps.yandex.ru\napi.2gis.ru\napi.avito.ru\napi.browser.yandex.com\napi.browser.yandex.ru\napi.events.plus.yandex.net\napi.mindbox.ru\napi.photo.2gis.com\napi.reviews.2gis.com\navatars.mds.yandex.com\navatars.mds.yandex.net\navito.ru\nbanners-website.wildberries.ru\nbot.gosuslugi.ru\nbro-bg-store.s3.yandex.com\nbro-bg-store.s3.yandex.net\nbro-bg-store.s3.yandex.ru\nbrontp-pre.yandex.ru\nbrowser.yandex.com\nbrowser.yandex.ru\ncargo.rzd.ru\ncatalog.api.2gis.com\ncdn.lemanapro.ru\ncdn.yandex.ru\ncdnrhkgfkkpupuotntfj.svc.cdn.yandex.net\nchat-prod.wildberries.ru\nchat3.vtb.ru\ncloud.cdn.yandex.com\ncloud.cdn.yandex.net\ncloud.cdn.yandex.ru\ncloudcdn-ams19.cdn.yandex.net\ncollections.yandex.com\ncollections.yandex.ru\ncompany.rzd.ru\ncontacts.rzd.ru\ncontract.gosuslugi.ru\ncs.avito.ru\ncsp.yandex.net\nd-assets.2gis.ru\ndisk.2gis.com\ndisk.rzd.ru\ndmp.dmpkit.lemanapro.ru\ndr.yandex.net\ndr2.yandex.net\ndzen.ru\negress.yandex.net\neh.vk.com\nekmp-a-51.rzd.ru\nenterprise.api-maps.yandex.ru\nesia.gosuslugi.ru\nfavorites.api.2gis.com\nfavicon.yandex.com\nfavicon.yandex.net\nfavicon.yandex.ru\nfilekeeper-vod.2gis.com\nfrontend.vh.yandex.ru\ngosuslugi.ru\ni0.photo.2gis.com\ni1.photo.2gis.com\ni2.photo.2gis.com\ni3.photo.2gis.com\ni4.photo.2gis.com\ni5.photo.2gis.com\ni6.photo.2gis.com\ni7.photo.2gis.com\ni8.photo.2gis.com\ni9.photo.2gis.com\nid.sber.ru\njam.api.2gis.com\nkeys.api.2gis.com\nkiks.yandex.com\nkiks.yandex.ru\nlemanapro.ru\nlink.mp.rzd.ru\nlk.gosuslugi.ru\nlog.strm.yandex.ru\nlogin.vk.com\nm.avito.ru\nmail.yandex.com\nmail.yandex.ru\nmap.gosuslugi.ru\nmapgl.2gis.com\nmarket.rzd.ru\nmc.yandex.com\nmc.yandex.ru\nmddc.tinkoff.ru\nmediafeeds.yandex.com\nmediafeeds.yandex.ru\nmetrics.alfabank.ru\nmp.rzd.ru\nmy.rzd.ru\nneuro.translate.yandex.ru\nnovorossiya.gosuslugi.ru\nok.ru\nozon.ru\npartners.gosuslugi.ru\npartners.lemanapro.ru\npersonalization-web-stable.mindbox.ru\npos.gosuslugi.ru\nprivacy-cs.mail.ru\nprodvizhenie.rzd.ru\npublic-api.reviews.2gis.com\npulse.mp.rzd.ru\nqueuev4.vk.com\nrs.mail.ru\nrzd.ru\ns.vtb.ru\ns0.bss.2gis.com\ns1.bss.2gis.com\ns3.yandex.net\nsba.yandex.com\nsba.yandex.net\nsba.yandex.ru\nsecure-cloud.rzd.ru\nsecure.rzd.ru\nsfd.gosuslugi.ru\nsntr.avito.ru\nspeller.yandex.net\nsplitter.wb.ru\nsso-app4.vtb.ru\nsso-app5.vtb.ru\nsso.dzen.ru\nst-ok.cdn-vk.ru\nst.avito.ru\nstatic-mon.yandex.net\nstatic.lemanapro.ru\nstats.avito.ru\nstats.vk-portal.net\nstorage.ape.yandex.net\nstrm-rad-23.strm.yandex.net\nstrm-spbmiran-08.strm.yandex.net\nstrm.yandex.net\nstrm.yandex.ru\nstyles.api.2gis.com\nsuggest.dzen.ru\nsuggest.sso.dzen.ru\nsurveys.yandex.ru\nsync.browser.yandex.net\nteam.rzd.ru\nticket.rzd.ru\ntile0.maps.2gis.com\ntile1.maps.2gis.com\ntile2.maps.2gis.com\ntile3.maps.2gis.com\ntile4.maps.2gis.com\ntop-fwz1.mail.ru\ntravel.rzd.ru\nuser-geo-data.wildberries.ru\nvk-portal.net\nwap.yandex.com\nwap.yandex.ru\nwb.ru\nweb-static.mindbox.ru\nwelcome.rzd.ru\nwidgets.cbonds.ru\nwww.avito.ru\nwww.gosuslugi.ru\nwww.ozon.ru\nwww.rzd.ru\nwww.vtb.ru\nwww.wildberries.ru\nxapi.ozon.ru\nyabro-wbplugin.edadeal.yandex.ru\nyabs.yandex.ru\nyandex.com\nyandex.net\nyandex.ru\nyastatic.net\nzen-yabro-morda.mediascope.mc.yandex.ru\nzen.yandex.com\nzen.yandex.net\nzen.yandex.ru",
+    "quic_unsupported.txt": "# Hosts whose endpoint serves no HTTP/3 at all, so test 2 does not probe their\n# QUIC column: the cell prints a dash, the row keeps its TCP verdicts, and the\n# summary counts the QUIC column out of the hosts that can answer it instead of\n# the whole list.\n#\n# The rule is the two third-party testers agreeing on \"no HTTP/3\"\n# (`scripts/quic/online_h3.py` — intodns.ai and http3check.net, probing from\n# networks that are not ours; run 2026-10-02). A row where they disagree stays\n# probed: the disagreement is exactly the question this column asks.\n#\n# Caveat, recorded in scripts/quic/README.md: five of these hosts\n# (aws.amazon.com, soundcloud.com, vk.ru, www.currenttime.tv, www.svoboda.org)\n# do answer a handshake when one is forced on them — they just never advertise\n# HTTP/3, and a browser that is never told does not use it. They stay listed.\n#\n# Regenerate the data with:  python scripts/quic/online_h3.py\n#\n# One host per line, `#` starts a comment, the host is matched whole\n# (case-insensitive) against the domain's host part.\naws.amazon.com\nbrowserleaks.com\nprotonvpn.com\nshikimori.io\nsoundcloud.com\nvk.ru\nwww.canva.com\nwww.cdn77.com\nwww.coursera.org\nwww.currenttime.tv\nwww.linuxserver.io\nwww.svoboda.org\nwww.themoscowtimes.com\nwww.torproject.org\n"
+  },
+  "sha256": {
+    "config.yml": "462b3cb4413b948869854be889a8e536001d833e6ef9ec2a632e689a29705469",
+    "domains.txt": "4c64c7781c8d67298bee9e872d4cc3080bec2d1b8ddaaee7fd0a17a8226ed363",
+    "burst-domains.txt": "3c8e648352c26da55bc4b6e8a379ea2f89082a9494613db7570818a13f1a8e0b",
+    "tcp16.json": "546c14d6d3fd120884111bbc37da4a3367ee98f42716d58c6bb6d932a2dc7b12",
+    "whitelist_sni.txt": "0f85b93e7a15c8d5f53aa1abb02f81eade6d5645217f6cf155dbecbea73ffa41",
+    "quic_unsupported.txt": "936d1fcabed44dad3ced9f0a72f24e4945ea517380ebac673aa79e77b83ab4d8"
+  },
+  "profiles": {
+    "ru": null,
+    "global": [
+      "google.com",
+      "cloudflare.com",
+      "wikipedia.org",
+      "torproject.org",
+      "archive.org"
+    ],
+    "ir": [
+      "twitter.com",
+      "instagram.com",
+      "bbc.com",
+      "radiofarda.com",
+      "t.me",
+      "youtube.com",
+      "whatsapp.com"
+    ],
+    "cn": [
+      "google.com",
+      "wikipedia.org",
+      "youtube.com",
+      "nytimes.com",
+      "x.com",
+      "facebook.com"
+    ]
+  }
+}

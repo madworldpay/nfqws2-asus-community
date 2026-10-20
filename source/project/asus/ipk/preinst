@@ -1,0 +1,43 @@
+#!/bin/sh
+# Runs before this package's files are installed. ARMv7 has an explicit CPU/ABI gate.
+if [ -n "$IPKG_INSTROOT" ]; then
+    echo 'Install on the router OS, not into an offline root.' >&2
+    exit 1
+fi
+# The stock ASUS BusyBox can omit id; the private shell is not installed yet.
+# Read the effective UID using shell builtins, before unpacking any payload.
+uid=''
+while read -r key real effective rest; do
+    if [ "$key" = 'Uid:' ]; then uid=$effective; break; fi
+done < /proc/self/status
+[ "$uid" = 0 ] || exit 1
+ASUS_PACKAGE_ARCH='aarch64-3.10'
+case "$ASUS_PACKAGE_ARCH:$(uname -m)" in
+    aarch64-3.10:aarch64|armv7:armv7*|armv7:aarch64) ;;
+    *) echo 'Package CPU architecture is incompatible.' >&2; exit 1;;
+esac
+for cmd in nvram cru opkg awk; do
+    # ASUS stock /bin/sh can omit the POSIX `command` builtin.
+    found=0
+    saved_ifs=$IFS; IFS=:
+    for dir in $PATH; do
+        [ -x "${dir:-.}/$cmd" ] && found=1
+    done
+    IFS=$saved_ifs
+    [ "$found" = 1 ] || { echo "Missing ASUS/Entware command: $cmd" >&2; exit 1; }
+done
+# opkg owns its lock while running preinst/postinst. A nested opkg command
+# would abort even when it only reads architectures. Read declarations safely.
+. /opt/lib/nfqws2-asus/abi.sh
+asus_resolve_package_abi "$ASUS_PACKAGE_ARCH" >/dev/null || { echo "Unsupported Entware ABI for $ASUS_PACKAGE_ARCH." >&2; exit 1; }
+model=''
+for key in productid odmpid; do
+    candidate=$(nvram get "$key" 2>/dev/null)
+    [ -z "$model" ] && model=$candidate
+    case "$candidate" in
+        GT-BE19000|GT-BE19000AI) exit 0 ;;
+    esac
+done
+[ -n "$model" ] || { echo 'Cannot identify an ASUS router OS.' >&2; exit 1; }
+echo "WARNING: $model has not been tested. Use at your own risk; developers accept no liability for damage, data loss or connectivity loss." >&2
+exit 0

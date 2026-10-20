@@ -1,0 +1,1937 @@
+[
+  {
+    "path": "asus/S51nfqws2",
+    "bytes": 2044,
+    "sha256": "6cee47813a836b7c441345c032bd69e0cc139552cc92348a2b9558f91ce89b6b"
+  },
+  {
+    "path": "asus/S81nfqws-asus-web",
+    "bytes": 824,
+    "sha256": "3b23f70fa9b423417f15c0d4e7d8e8d191929740c1b8f7de740b1249522e807d"
+  },
+  {
+    "path": "asus/abi.sh",
+    "bytes": 4701,
+    "sha256": "aa8418eab45f4cb66b20ff57ba2799b3b77bc8b4ca275ffd80ad67f162abce81"
+  },
+  {
+    "path": "asus/assets.json",
+    "bytes": 2440,
+    "sha256": "52e53c6632175e76d29089d821ff894b554f5a9580acd759f8345b26554122e0"
+  },
+  {
+    "path": "asus/build.py",
+    "bytes": 24622,
+    "sha256": "165b8e18f1edccdcfb8196f1f04c6727ee2a5d39ff78a7b2ab3c7f363af95cd6"
+  },
+  {
+    "path": "asus/compatibility.sh",
+    "bytes": 3063,
+    "sha256": "5047bba11644e263e0ce5eef165da3b599f955fe1870d67ab9d7add8cd3bdb0e"
+  },
+  {
+    "path": "asus/diagnostics.sh",
+    "bytes": 3641,
+    "sha256": "7a3a02fa16b21f6a9e8f2b6defeadf5a1d6b2d8f3934840aa7938ea1e2795eb2"
+  },
+  {
+    "path": "asus/dpi/cli.php",
+    "bytes": 276,
+    "sha256": "479c05e826a292af64c016dbc749e67c57d2558594dcff465542b4f49b85e706"
+  },
+  {
+    "path": "asus/dpi/cli.sh",
+    "bytes": 387,
+    "sha256": "cef4a9d89f72bc7b6f5759203e2febe0f3a2faa3769749143a2a9ed155ce779a"
+  },
+  {
+    "path": "asus/dpi/drop.sh",
+    "bytes": 620,
+    "sha256": "15ab4e14e1a68a4738f06a0b7e857e25d98a8215195af6bcda8c59142d2d41e8"
+  },
+  {
+    "path": "asus/dpi/guard.sh",
+    "bytes": 5808,
+    "sha256": "c7c0dcb197959cf8ac4cf05d9606817537cb35725b77c41b15864fd78c6abd07"
+  },
+  {
+    "path": "asus/dpi/legacy/README.md",
+    "bytes": 4040,
+    "sha256": "e9537ceaea033007ad1a1716aaa975a99b194a0c98f0cf77fd1e79279a4b9117"
+  },
+  {
+    "path": "asus/dpi/legacy/build.py",
+    "bytes": 3027,
+    "sha256": "6cef84ab5b0e1ebf369a96b5de3ea078c3c050308f874860445e2160ba911bf7"
+  },
+  {
+    "path": "asus/dpi/legacy/dpi-detector-armv5te",
+    "bytes": 3778448,
+    "sha256": "c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863"
+  },
+  {
+    "path": "asus/dpi/probe.sh",
+    "bytes": 1407,
+    "sha256": "85ea1e437a0b9ef3fc18fa85dac14ab37eac99b8c330a2fac29eeea779215322"
+  },
+  {
+    "path": "asus/dpi/stop.sh",
+    "bytes": 1416,
+    "sha256": "be261d50d2e75fc699afa448bcd0cb80125959b5aeea598778e265b558a5f3f7"
+  },
+  {
+    "path": "asus/dpi/worker.php",
+    "bytes": 354,
+    "sha256": "745e170c912a6a23ca0ac93f1e1ea22b04535305b59d39a761f06a8f7c8ad747"
+  },
+  {
+    "path": "asus/ipk/core-postinst",
+    "bytes": 223,
+    "sha256": "c57dfcf8360830d095a36f77da67ae3aa0f5688d2c0711bee8ec62d1b3056b89"
+  },
+  {
+    "path": "asus/ipk/core-prerm",
+    "bytes": 108,
+    "sha256": "b094ee42bb113c7089e673f184147692165b21a3804526f009bc881f934c9891"
+  },
+  {
+    "path": "asus/ipk/defaults.sh",
+    "bytes": 2037,
+    "sha256": "863c5148f32803d0d133eefa3891c731d491b769c97c5139cf05f363a2c43960"
+  },
+  {
+    "path": "asus/ipk/migration.sh",
+    "bytes": 5814,
+    "sha256": "c9c1588cab814ab8eab1f756aaf6b2d531559da3c03fee0d4a39b78c91302a6a"
+  },
+  {
+    "path": "asus/ipk/postrm",
+    "bytes": 178,
+    "sha256": "4687d670ba7a465b81041a4beeaaaf9b847cd958209db170767e17ffd7fc246b"
+  },
+  {
+    "path": "asus/ipk/preinst",
+    "bytes": 1802,
+    "sha256": "c3d1004ddd0531d0fe2d7d8fb0649d940ec8dec539bf9ac31fd313a4542025c5"
+  },
+  {
+    "path": "asus/ipk/unified-postinst",
+    "bytes": 1122,
+    "sha256": "b4742c968e71c2c987bc4e362e5814f2bcefc7ee1b5cc6a314fb6c184d6345c8"
+  },
+  {
+    "path": "asus/ipk/unified-prerm",
+    "bytes": 875,
+    "sha256": "5d37690f7a0a7131799709c69edf83c2896088b49381d401a292cde351b7098c"
+  },
+  {
+    "path": "asus/ipk/web-postinst",
+    "bytes": 55,
+    "sha256": "0e3933b247b969607df9288fbbfb7e8880202e55932b98bbb95da8d85fb2bf26"
+  },
+  {
+    "path": "asus/ipk/web-prerm",
+    "bytes": 124,
+    "sha256": "5172c99fc5e2c0c555c853adbd3d3cdcda24d51efb29f9f69d92ce0233656686"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/COPYING",
+    "bytes": 18693,
+    "sha256": "af8067302947c01fd9eee72befa54c7e3ef8a48fecde7fd71277f2290b2bf0f7"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/Module.symvers",
+    "bytes": 213207,
+    "sha256": "1c9c5c246f2fa68659cd51224321c326937dabe189d92cd736586e873d13948a"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/README.md",
+    "bytes": 3727,
+    "sha256": "44a9ee69a35a3dda41f6a9d5ef189802224ce66030d22962f1843d8722110c01"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/build-module.py",
+    "bytes": 2282,
+    "sha256": "8e89c1c7ab7210a20b4a241d6fd8ae8ce07c445113e7426bd106493d659163b6"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/kernel.config",
+    "bytes": 49832,
+    "sha256": "f1beeed96009556134cc966c79840ec23da19999d3c0f19d03634a942f89d3ea"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/nfnetlink_queue.c",
+    "bytes": 22552,
+    "sha256": "dce5103a8e4e682e5559984626f079e581509c331bdf1fb9d5dc98ba7f3c543d"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/nfnetlink_queue.ko",
+    "bytes": 15604,
+    "sha256": "1e5fd88ebf5830d56f6b151de0c791f02b3c3db0a539490fbf32709add0151ab"
+  },
+  {
+    "path": "asus/legacy/rt-ac87u-384.13_10/target-flags.json",
+    "bytes": 1609,
+    "sha256": "8b57aa958571e37e5457be3c43f7328c34df95cde53d49088f5a1baea321af58"
+  },
+  {
+    "path": "asus/legacy.sh",
+    "bytes": 1288,
+    "sha256": "1d9a3df59557149a35730b1f3a93d8d8a613593807e6a1b2d16188945eba6c38"
+  },
+  {
+    "path": "asus/lifecycle.sh",
+    "bytes": 9732,
+    "sha256": "61246fe156d6df40a55ed57176f3b24fdb4fcf3fb253d073b8ba7e444ea07800"
+  },
+  {
+    "path": "asus/lua/local-guarded-ts.lua",
+    "bytes": 268,
+    "sha256": "a9c1b833a662e73dafffc26baed4f99e113acf45b82d664b89ac9eb2c10bd8ea"
+  },
+  {
+    "path": "asus/php-cgi.sh",
+    "bytes": 216,
+    "sha256": "a7487af189bc9e507f5490691fed937332edcc5bcc447fe13146f11dcef7af20"
+  },
+  {
+    "path": "asus/platform.sh",
+    "bytes": 11223,
+    "sha256": "aaa200934703daa357cd2efd26aea0d008139f89b9ae004d53bc6497f8daa8ea"
+  },
+  {
+    "path": "asus/share/bin/aarch64-location-launch",
+    "bytes": 1320,
+    "sha256": "bb51ca2af0e777a7190f729bac7b34ddd4c4d97e6c1a6cbf46732d8f5e94783b"
+  },
+  {
+    "path": "asus/share/bin/armv7-location-launch",
+    "bytes": 1064,
+    "sha256": "747db7dec51a7fb342b190182dd7b8d7c56b4c4af9a734831f42ff5a93bb4b36"
+  },
+  {
+    "path": "asus/share/bin/launchers.json",
+    "bytes": 800,
+    "sha256": "017d72205d7205611526c7adfe4280aa27f316062b052bd609837d4c29b34c39"
+  },
+  {
+    "path": "asus/share/build-launchers.py",
+    "bytes": 1787,
+    "sha256": "7a61aecdaf9c5d818c0b7f01de7c03da528046c769efd233817b3bb70f5fb06e"
+  },
+  {
+    "path": "asus/share/location-launch.c",
+    "bytes": 3339,
+    "sha256": "4928eee5b6d0910fef0c73883f82c3fcf64cdcf282018eac3d07ca3bd1708405"
+  },
+  {
+    "path": "asus/smartdns/bin/aarch64-dns-probe",
+    "bytes": 66136,
+    "sha256": "2c1de1acea01c626ed6fa8ce7c7c1a769868f60d4841ff13e4e11edf3b63e787"
+  },
+  {
+    "path": "asus/smartdns/bin/aarch64-session-owner",
+    "bytes": 1120,
+    "sha256": "a060d7b5f14fe171a375f1f7b78dcdcd99d56256f9814a7c06fd22132d39f948"
+  },
+  {
+    "path": "asus/smartdns/bin/armv7-dns-probe",
+    "bytes": 8668,
+    "sha256": "b1ae381176bcda53719658eadec128aaab835dd5d0698ca0b9da4ad7f0a718a2"
+  },
+  {
+    "path": "asus/smartdns/bin/armv7-session-owner",
+    "bytes": 924,
+    "sha256": "7f1905c1480efa94ae965145ddcd56c7087b503695054cef461aec4922b4eb04"
+  },
+  {
+    "path": "asus/smartdns/bin/owners.json",
+    "bytes": 843,
+    "sha256": "480ee62677a2ed33dd9bf4ad285b062ba0a88124bc71aabd499b6c6b90b8a1e0"
+  },
+  {
+    "path": "asus/smartdns/bin/probes.json",
+    "bytes": 843,
+    "sha256": "88c9e36e494788812ff91a60d774c7b20ede2af217e36ac9284cf5428900c738"
+  },
+  {
+    "path": "asus/smartdns/build-presets.py",
+    "bytes": 4299,
+    "sha256": "cb7ddfcccb1e3a7bae293e84115e42b98a33c435745c56c5985fe85e70f24801"
+  },
+  {
+    "path": "asus/smartdns/build-probe.py",
+    "bytes": 2273,
+    "sha256": "8294efb9c108fcd7bc134b98fd19f065142ee3c1514d9eed950c08468e90cbd5"
+  },
+  {
+    "path": "asus/smartdns/cli.php",
+    "bytes": 158,
+    "sha256": "e6532b649d789927aa1639571b922d1cb97ac9a9ef34bc65b0f58233af160ec3"
+  },
+  {
+    "path": "asus/smartdns/cli.sh",
+    "bytes": 304,
+    "sha256": "1f369493eaba0860cc446025d2a3daa1bac09a2b818eaec247adf51d8e9f17fd"
+  },
+  {
+    "path": "asus/smartdns/config-worker.php",
+    "bytes": 510,
+    "sha256": "6eb32d67154ea165608d3477e10fa7fa09d4838adc6f1c05be57f8a97ff682f3"
+  },
+  {
+    "path": "asus/smartdns/config-worker.sh",
+    "bytes": 5125,
+    "sha256": "43502148ed7058a750174c447e4b22dfcd00b2b0457d337793889a3c9a3f6081"
+  },
+  {
+    "path": "asus/smartdns/control-cli.sh",
+    "bytes": 213,
+    "sha256": "b3397d23e7a98abe4b93a132cb309e7b0a9b2c5dceaedb36ce60ab5fd490d581"
+  },
+  {
+    "path": "asus/smartdns/control.php",
+    "bytes": 3041,
+    "sha256": "8d28f539019457054bca3a26b951e532af7ee8bda4f127077c9d75f71b2745df"
+  },
+  {
+    "path": "asus/smartdns/control.sh",
+    "bytes": 658,
+    "sha256": "684ace3107366f98d9a115c49ea77d1342872dfad75dd15fc1ce2c169b28a22b"
+  },
+  {
+    "path": "asus/smartdns/dns-probe.c",
+    "bytes": 11677,
+    "sha256": "faee0fc24a8568ada99dd8b4a9bd348d242ca0e5e8e1ab14ad4ded382b17d30b"
+  },
+  {
+    "path": "asus/smartdns/forwarding.awk",
+    "bytes": 1066,
+    "sha256": "a22df8f7b8b6ad101371de98b2f05c0f3b4587b67e78b09b6f6f3d26d6443a40"
+  },
+  {
+    "path": "asus/smartdns/hook-edit.awk",
+    "bytes": 1279,
+    "sha256": "1d7235b7723eebc19540fdaac9989b300cc0645fe2f84b016ab1b85f2a8be7bc"
+  },
+  {
+    "path": "asus/smartdns/init.sh",
+    "bytes": 375,
+    "sha256": "13a98186a5e668ae46dc6521d69eaa1310a5836f37e48c50b09711bf92316279"
+  },
+  {
+    "path": "asus/smartdns/lifecycle.sh",
+    "bytes": 3735,
+    "sha256": "dc13d0d9989330bb45698d071d42e4d89cdf13b1caad65e84789949e01cf5fd5"
+  },
+  {
+    "path": "asus/smartdns/native-common.sh",
+    "bytes": 13788,
+    "sha256": "a63417a1ea894b4551d46c2c29bb23500434276deea96f86fb5e053b6b9714e9"
+  },
+  {
+    "path": "asus/smartdns/native-state.sh",
+    "bytes": 4640,
+    "sha256": "3423dbf441f26f4e0cfc3f3c1cf9af6aa5f457749295733d7b4e662356a7414b"
+  },
+  {
+    "path": "asus/smartdns/primary-dns.sh",
+    "bytes": 2353,
+    "sha256": "0419a90ae04a852b66f2a3099c52466e28a6a53bdae2a48fb4876133854099f8"
+  },
+  {
+    "path": "asus/smartdns/recovery.sh",
+    "bytes": 5347,
+    "sha256": "8d789fcdc39699008bc02ea3469ba1cdb0e1b29e81ad04b1bce42ffa926e6e21"
+  },
+  {
+    "path": "asus/smartdns/runtime.sh",
+    "bytes": 2146,
+    "sha256": "41666ab0e6b1860050c01808c964641dc390d37aa948588dd02ca5a55f99d5b6"
+  },
+  {
+    "path": "asus/smartdns/session-owner.c",
+    "bytes": 2218,
+    "sha256": "b3d72281427de1d0b1a8cb291c5dd3922e9deef63a77430f4e8d377ed2cbe903"
+  },
+  {
+    "path": "asus/smartdns/worker.php",
+    "bytes": 281,
+    "sha256": "718c4635fb6ba93e8aecbd46ae88b137ba0fb00eb711f58940f77a79b5f65c6d"
+  },
+  {
+    "path": "asus/smartdns/worker.sh",
+    "bytes": 2722,
+    "sha256": "f2ebeb397be1c02c0c0c63bff3c629f4a97dc2b25a3f4f81e6e6c61cbdb99ab4"
+  },
+  {
+    "path": "asus/support-relay.json",
+    "bytes": 27,
+    "sha256": "83245de6f52b98b36f4dd5674ab8a22a8082e4f2eea4498a4c3f03b4163e2e20"
+  },
+  {
+    "path": "asus/update/README.md",
+    "bytes": 1866,
+    "sha256": "0c89c1284389b0c5d508b6761e17d2201d264877f345c0b0dee62849b7346569"
+  },
+  {
+    "path": "asus/update/bin/aarch64-opkg-launch",
+    "bytes": 66152,
+    "sha256": "20734a078601018986ba8e6ea9f9f92059b35bfff1feb378e573e994339dbdb9"
+  },
+  {
+    "path": "asus/update/bin/armv7-opkg-launch",
+    "bytes": 1924,
+    "sha256": "f4e8e09bd795323d36b621324ee65b0b0c61b23206e215454e583373ed9e2357"
+  },
+  {
+    "path": "asus/update/bin/launchers.json",
+    "bytes": 800,
+    "sha256": "33a4c4748584cb126e5ff622ddd8ae861018bcfc3d17b1c9e970c2b9018aeb6e"
+  },
+  {
+    "path": "asus/update/build-launchers.py",
+    "bytes": 2103,
+    "sha256": "bff7eb070a66a86380305f16d71c36de848f18c0cb8544dff093f65bc672c5b3"
+  },
+  {
+    "path": "asus/update/check.sh",
+    "bytes": 300,
+    "sha256": "c5bfd8c9016b4adac7eff6e9ce699a9e70f1ea81906ad25759ab17ddb4e5b4f2"
+  },
+  {
+    "path": "asus/update/lifecycle.sh",
+    "bytes": 1167,
+    "sha256": "99674add8411016031dc1a73f7f1e9ec7da1dae489ee1a4b6e97de38bc8a7e06"
+  },
+  {
+    "path": "asus/update/opkg-launch.c",
+    "bytes": 5553,
+    "sha256": "1d2e7f1444aa6175d49049f35291aff5a86ca403a9315447449e77bb6425fe6b"
+  },
+  {
+    "path": "asus/update/worker.php",
+    "bytes": 2968,
+    "sha256": "828ac07a671b5cf5c93fa0b993309c3910e3ed984090187ac51272749ee47b12"
+  },
+  {
+    "path": "asus/update/worker.sh",
+    "bytes": 302,
+    "sha256": "308de8bcccadd5604e75e90a886851a25e10d4fbe41be88db14cc465e10e10d5"
+  },
+  {
+    "path": "asus/web-auth.json",
+    "bytes": 128,
+    "sha256": "aed0034928bb1bba0d579a176c237f1bef73887e154a359a8de3b877792d0369"
+  },
+  {
+    "path": "asus/web-lib.sh",
+    "bytes": 4915,
+    "sha256": "aec3c27a5c1419754be603fd57b930c682ec380cc65e6eb50fe0935ed1d5a0d4"
+  },
+  {
+    "path": "core/.github/ISSUE_TEMPLATE/bug_report.md",
+    "bytes": 966,
+    "sha256": "688b34c97fb55a64c3c920cfaa67ff1c5fc8e6eb1a8b1230bc19b9be8f38109b"
+  },
+  {
+    "path": "core/.github/ISSUE_TEMPLATE/feature_request.md",
+    "bytes": 246,
+    "sha256": "628d56abb36d9cfef45c7529acf255403fa306358c1423272620ffe260ffe275"
+  },
+  {
+    "path": "core/.github/workflows/build-nfqws2.yml",
+    "bytes": 8992,
+    "sha256": "030aec591da79629437ef7a3ed8838e148e7d65640bb14c72b58d936446ae984"
+  },
+  {
+    "path": "core/.github/workflows/notify.yml",
+    "bytes": 595,
+    "sha256": "97162e5fcc75614c2463d4d63c8a308b911230fd4b0f07191debfb85bdab4d39"
+  },
+  {
+    "path": "core/.github/workflows/release.yml",
+    "bytes": 9605,
+    "sha256": "b7fc4e8a1179002869d72559d4a97318bb744c64178d6766f661c77013638670"
+  },
+  {
+    "path": "core/.gitignore",
+    "bytes": 53,
+    "sha256": "0c758e53f2de06dde7f0deee20bc863e4f122109351558bb636887427aba1494"
+  },
+  {
+    "path": "core/LICENSE",
+    "bytes": 1062,
+    "sha256": "306576aa309eb45d994bfb8ecc1abe44a7692c5d817d8dcd10ebab6310bb2a6c"
+  },
+  {
+    "path": "core/Makefile",
+    "bytes": 302,
+    "sha256": "2063b4b7ce19c832db5ea4cd8abe6f5786de6e65b87a4b8a4f5609708bcb239c"
+  },
+  {
+    "path": "core/README.md",
+    "bytes": 27611,
+    "sha256": "06884a5886fb1036666d37a22ecf63d0515768cd0fe845a127bd7d0c6603d4f6"
+  },
+  {
+    "path": "core/VERSION",
+    "bytes": 6,
+    "sha256": "10e2e117b01523891ca271a615ae36e9d5e52348fd7d642f66727602c1b8dcbe"
+  },
+  {
+    "path": "core/common/ipk/conffiles",
+    "bytes": 201,
+    "sha256": "08a8d1d04e110e168b15b146e88792a565f055b89c1f6a4a404c94c521ef5abf"
+  },
+  {
+    "path": "core/common/ipk/postinst",
+    "bytes": 3178,
+    "sha256": "e1c298c1c598a8c7cd28665223854348fc7bd86e4f4bfd838e41a5ab96bac598"
+  },
+  {
+    "path": "core/common/ipk/postrm",
+    "bytes": 474,
+    "sha256": "655c97ca40fc75ddfd647d5beec777842d89f6dc973fce36b0a6955d7a00a494"
+  },
+  {
+    "path": "core/common/ipk/preinst",
+    "bytes": 993,
+    "sha256": "f0d4b0b17aeb26f1f4e9a60f9559c68c37fba4d50a8ef73b38c1f10f59072102"
+  },
+  {
+    "path": "core/common/ipk/prerm",
+    "bytes": 325,
+    "sha256": "49a190b5f68a027f277de61610dce046c18a73b12dc1a3a015c5900f05bed8ab"
+  },
+  {
+    "path": "core/etc/init.d/common",
+    "bytes": 12271,
+    "sha256": "2b3794fdbdac731374e441b6bc374e32a6bdcb06d698e66aac194dcedde7bdf7"
+  },
+  {
+    "path": "core/etc/init.d/entware-end",
+    "bytes": 933,
+    "sha256": "b0bd1e279e0a152729f69139d466357b00a439f4bf453a0893e491072d22cb61"
+  },
+  {
+    "path": "core/etc/init.d/entware-start",
+    "bytes": 223,
+    "sha256": "6b6f8541b092f5e40524e4beb44fa272f4f5af730508f5d0731db25e35382983"
+  },
+  {
+    "path": "core/etc/init.d/openwrt-end",
+    "bytes": 887,
+    "sha256": "898a35ec1f676f09d3194fe0104ceac6e35f9f6295c602e02abd03c452af482e"
+  },
+  {
+    "path": "core/etc/init.d/openwrt-start",
+    "bytes": 241,
+    "sha256": "c22e20d2cd0d81e72a9f7775571419d875353918881aff91ab9925c7d84d1bca"
+  },
+  {
+    "path": "core/etc/ndm/netfilter.d/100-nfqws2.sh",
+    "bytes": 288,
+    "sha256": "57770e0250100ca81a0af546ffee6a885b68eb5224963bca4574236b80f6b3ea"
+  },
+  {
+    "path": "core/etc/nfqws2/blobs/quic_initial.bin",
+    "bytes": 1200,
+    "sha256": "f4589c57749f956bb30538197a521d7005f8b0a8723b4707e72405e51ddac50a"
+  },
+  {
+    "path": "core/etc/nfqws2/blobs/tls_clienthello.bin",
+    "bytes": 681,
+    "sha256": "936c2bee4cfb80aa3c426b2dcbcc834b3fbcd1adb17172959dc569c73a14275c"
+  },
+  {
+    "path": "core/etc/nfqws2/lists/auto.list",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "core/etc/nfqws2/lists/exclude.list",
+    "bytes": 2989,
+    "sha256": "5fd105046e4a293c877a0547688054779bacdec44791049eb39434eca6f7c964"
+  },
+  {
+    "path": "core/etc/nfqws2/lists/ipset.list",
+    "bytes": 711,
+    "sha256": "88cfdebe5531fd14d3a1ff16e303ae28307563c2ecd0820090918bf92da90b88"
+  },
+  {
+    "path": "core/etc/nfqws2/lists/ipset_exclude.list",
+    "bytes": 104,
+    "sha256": "7f8a169c18d7b504d23b6405dd60826515a0826daebff7b865a4784cce974525"
+  },
+  {
+    "path": "core/etc/nfqws2/lists/user.list",
+    "bytes": 3695,
+    "sha256": "681d1278de09bbfef7d743de089c6e30bf7d52b82c91f03e91a0b595c5e76bb0"
+  },
+  {
+    "path": "core/etc/nfqws2/nfqws2.conf",
+    "bytes": 3770,
+    "sha256": "b994f88b865d9a42275f8201f9ec55f2b22b16d8ac3942d0c71f677de4d1b7c5"
+  },
+  {
+    "path": "core/keys/README",
+    "bytes": 602,
+    "sha256": "973e9471afbcfa5c88ff94495481b82190da7bf7427fcff67e69e4268e517378"
+  },
+  {
+    "path": "core/keys/public-key.pem",
+    "bytes": 178,
+    "sha256": "d64daf4a521e20804e288e4c448000123b95b7de38873e519dec17c9c8dc025c"
+  },
+  {
+    "path": "core/keys/public.key",
+    "bytes": 111,
+    "sha256": "9a9a7ae031f95bd6d7cdee73ec12d2de162d51721b3c459c50f4a290f9378a6b"
+  },
+  {
+    "path": "core/openwrt/entrypoint.sh",
+    "bytes": 358,
+    "sha256": "ae526351b1dcfdb1880c7f0605b614c0e4ac5d81aaab3bc1c000538dae5c179b"
+  },
+  {
+    "path": "core/openwrt/nfqws2-keenetic/Makefile",
+    "bytes": 1416,
+    "sha256": "0575f54622945d759d7393864b9151bccd5cc559176a7b801038fd6502704f00"
+  },
+  {
+    "path": "core/packages.mk",
+    "bytes": 6396,
+    "sha256": "6b6ad4d0b0a36a461160402673cc39786c4f6f7f84e6d5d61eb4b766008d9573"
+  },
+  {
+    "path": "core/patches/001-tls-reasm-fastpath.patch",
+    "bytes": 18855,
+    "sha256": "0931cfb0a334a0de61a8f4848ac0c5e38efc8d2aa3c3d9b0953b5ff2e9f94d4d"
+  },
+  {
+    "path": "core/patches/README.md",
+    "bytes": 3887,
+    "sha256": "4f46b907d6919d3e690402c62d8caf816ba0c415f124676db37d792e6545c455"
+  },
+  {
+    "path": "core/repository.mk",
+    "bytes": 3790,
+    "sha256": "0e9e874eccded228b29ceda6d1f754323aafc168fe56b7594d3d76b20894c0fd"
+  },
+  {
+    "path": "core/tests/test-packaging.sh",
+    "bytes": 2545,
+    "sha256": "f5d922c8b3605f1186bcbc9e40c5b57e9862e054f2464d83dffcab6c98137051"
+  },
+  {
+    "path": "webui/.github/ISSUE_TEMPLATE/bug_report.md",
+    "bytes": 838,
+    "sha256": "698d100bd017d205ef32f1dbd02ef47d737e89f19f46c1d4ab60f936e57fc5f0"
+  },
+  {
+    "path": "webui/.github/ISSUE_TEMPLATE/feature_request.md",
+    "bytes": 246,
+    "sha256": "628d56abb36d9cfef45c7529acf255403fa306358c1423272620ffe260ffe275"
+  },
+  {
+    "path": "webui/.github/workflows/notify.yml",
+    "bytes": 589,
+    "sha256": "9f670228af74300723d21f4fb5028d8eb0bdb3a8c33c9101531a477d70da45d1"
+  },
+  {
+    "path": "webui/.github/workflows/release.yml",
+    "bytes": 8941,
+    "sha256": "57b2c67426a8c3ac238dd3e4bbab56d7e1d89f56cf1eb5798bc1244b3ca7250e"
+  },
+  {
+    "path": "webui/.gitignore",
+    "bytes": 53,
+    "sha256": "0c758e53f2de06dde7f0deee20bc863e4f122109351558bb636887427aba1494"
+  },
+  {
+    "path": "webui/LICENSE",
+    "bytes": 1062,
+    "sha256": "306576aa309eb45d994bfb8ecc1abe44a7692c5d817d8dcd10ebab6310bb2a6c"
+  },
+  {
+    "path": "webui/Makefile",
+    "bytes": 176,
+    "sha256": "ac96de2bfadefd807c63f55607f4d860e9e3bb1ece3447ad156c0c03a07d84fd"
+  },
+  {
+    "path": "webui/README.md",
+    "bytes": 5010,
+    "sha256": "eddea3b7d47ef4b41bdaffbf98cea596a95a56461449174a41aae328c5e429e1"
+  },
+  {
+    "path": "webui/VERSION",
+    "bytes": 6,
+    "sha256": "8a3dad16d348c163566a456fcf650d85d7aeeda5e53d01ee1fa8dc15212915a7"
+  },
+  {
+    "path": "webui/etc/lighttpd/conf.d/entware.conf",
+    "bytes": 574,
+    "sha256": "d65d7dbd3d66bf518d83e30f7aa32578b9dcb43d958969a5063186a172071dd5"
+  },
+  {
+    "path": "webui/etc/lighttpd/conf.d/openwrt.conf",
+    "bytes": 528,
+    "sha256": "323bd0f28d77b559d01832c25793bcf5f5917d8e05cf677b2ade37a406e0019e"
+  },
+  {
+    "path": "webui/etc/nfqws_web.conf",
+    "bytes": 58,
+    "sha256": "6d026a91511f41b655a2f20913832c4f5e03ff33ab22baf0650aed0f007cac20"
+  },
+  {
+    "path": "webui/ipk/conffiles",
+    "bytes": 24,
+    "sha256": "90bc28663fc55b05c40174b9d588297f9384865d52f2327473109717656bbe77"
+  },
+  {
+    "path": "webui/ipk/postinst",
+    "bytes": 403,
+    "sha256": "fbc9bfab9b871239ddb43f18636eaca03e70e3722ec4c281b1a86e960c095a35"
+  },
+  {
+    "path": "webui/ipk/postinst-openwrt",
+    "bytes": 214,
+    "sha256": "3e77ddf00a6c9ba6de0baf231ac2580a362577380e6794bcb7c7994dac8a4458"
+  },
+  {
+    "path": "webui/keys/README",
+    "bytes": 600,
+    "sha256": "69919078b1cc3f0da14039d08146084783ec4893b235956c477de49b025eb58f"
+  },
+  {
+    "path": "webui/keys/public-key.pem",
+    "bytes": 178,
+    "sha256": "336612dc40562fc093fcc39e994b1c75b86c57d5b1ae6f55688ab5cd79f336df"
+  },
+  {
+    "path": "webui/keys/public.key",
+    "bytes": 114,
+    "sha256": "ba215e10a038f23b48aaf8f8de3d20eeb410018a5a4d0334c51e947f33782493"
+  },
+  {
+    "path": "webui/openwrt/entrypoint.sh",
+    "bytes": 373,
+    "sha256": "3ce6ca46a73df77744dc74198eb4ab3a8b1ccdb7ed4af7f63d0c7ed5874ccd22"
+  },
+  {
+    "path": "webui/openwrt/nfqws-keenetic-web/Makefile",
+    "bytes": 1184,
+    "sha256": "d9159e53e528d8f6e1978a34e0f9576e18374775158793445f71993ccbba503a"
+  },
+  {
+    "path": "webui/repository.mk",
+    "bytes": 3180,
+    "sha256": "72491d1e926aee7c51e690719b24b1e6b59776d89cdef8ebea8546bb161244a8"
+  },
+  {
+    "path": "webui/screenshot.jpg",
+    "bytes": 309972,
+    "sha256": "82bb9c4a32908bd3cbcc70adc0bab02b95cd10ba37236404d77fd293e14be730"
+  },
+  {
+    "path": "webui/web/.editorconfig",
+    "bytes": 219,
+    "sha256": "5b2cdaa3d05ecd33b95176b1ee7c82bfd00dda44e3ac2d9ac51fe35dd92336a8"
+  },
+  {
+    "path": "webui/web/.gitignore",
+    "bytes": 383,
+    "sha256": "4c54994d17905c7cd1dc59dacc17350a4667ed8d4db4eb84edea05c18d7460ae"
+  },
+  {
+    "path": "webui/web/.husky/pre-commit",
+    "bytes": 17,
+    "sha256": "69723eb387c8c3d800e8e91ec9635423589506071ad5b91a49819ce037ee09cb"
+  },
+  {
+    "path": "webui/web/.stylelintrc.js",
+    "bytes": 853,
+    "sha256": "09b02ebe123e869e3055e324694f844b198b7d25b96fb1d30177210695d58224"
+  },
+  {
+    "path": "webui/web/.yarn/releases/yarn-4.12.0.cjs",
+    "bytes": 2992863,
+    "sha256": "1fe4e1193cbcd13a48d8f436bb17d3c672b049a5e32a758aab9866a073db1702"
+  },
+  {
+    "path": "webui/web/.yarnrc.yml",
+    "bytes": 66,
+    "sha256": "8419946c833e8d8975c22eb4d804c27952683cb9347eb9bcdcb82cfcabb74e70"
+  },
+  {
+    "path": "webui/web/apis.yaml",
+    "bytes": 750,
+    "sha256": "28533364097ebfae7ac49bc0d1620569f03a8777d4d8ff0db2cc55e616f91711"
+  },
+  {
+    "path": "webui/web/eslint.config.js",
+    "bytes": 1749,
+    "sha256": "31b65730b22f30de3ff7a086a6b2bcefd2d7106ea1858db5418c4610c1767475"
+  },
+  {
+    "path": "webui/web/index.html",
+    "bytes": 933,
+    "sha256": "c2e9b4ce451c7bdaca0f27947f04bf0c279b7204d14821ea702ebdfd2cbdcae4"
+  },
+  {
+    "path": "webui/web/openapi.yaml",
+    "bytes": 42623,
+    "sha256": "20d5b41f4a98d7432a804cc8d252a3178ad765b2b465c6e130004c330015b903"
+  },
+  {
+    "path": "webui/web/package.json",
+    "bytes": 2217,
+    "sha256": "f643269526eb26e6e0013ea1d25fa217eb10b75c4240981d72c2fff14d7ee803"
+  },
+  {
+    "path": "webui/web/prettier.config.js",
+    "bytes": 801,
+    "sha256": "c24314269e347b102f00be2005b3b18b62e43b721615496542b7d84e08105e14"
+  },
+  {
+    "path": "webui/web/public/ark.php",
+    "bytes": 13597,
+    "sha256": "b380cbf2cc2c6e362a7899a0698ab594dbce6263c6995a1f191ca720f4654eee"
+  },
+  {
+    "path": "webui/web/public/asus-favicon.png",
+    "bytes": 5458,
+    "sha256": "5b6a6fe201f8f83109ebf040dd5182a2000f01b0fed65316ac63da58e5d5d7fe"
+  },
+  {
+    "path": "webui/web/public/asus.php",
+    "bytes": 4212,
+    "sha256": "522af07e48012646e12bdb1cd3879595dcd66d8bb06188d335a81579126737fe"
+  },
+  {
+    "path": "webui/web/public/community/export-e9a226cd.png",
+    "bytes": 2140746,
+    "sha256": "57fe7e7696ee3638b487a11168a88ea05b0d4c2596ca0afce551a41014e9d9a4"
+  },
+  {
+    "path": "webui/web/public/community/import-937c2946.png",
+    "bytes": 1999811,
+    "sha256": "892eeb1e98e6764ef69c52af1eef585c7059e9533e945109b02e46d90fe33224"
+  },
+  {
+    "path": "webui/web/public/community/rabbit-respect-once.gif",
+    "bytes": 4123299,
+    "sha256": "72835fe9b34e1ccf1da5b81d00262c8666638f9656380d12953081aa2efd839e"
+  },
+  {
+    "path": "webui/web/public/dpi-analysis.php",
+    "bytes": 7415,
+    "sha256": "1fbad8e6f17f39a797db378d286418f1052854e19d2f81a0f28c2b6627ba546c"
+  },
+  {
+    "path": "webui/web/public/dpi-api.php",
+    "bytes": 3811,
+    "sha256": "f6641a3c561760aa07e37ef315685b3870be298bbc97f6886d07ab428f117697"
+  },
+  {
+    "path": "webui/web/public/dpi-catalog.php",
+    "bytes": 655,
+    "sha256": "2bd0582db97e648e3fb701dca757740eacb1d3e49bb92e3c16e4274eda5118de"
+  },
+  {
+    "path": "webui/web/public/dpi-install.php",
+    "bytes": 13926,
+    "sha256": "f59aa7ff4ce302ba8c00768a42886fccf60b7e3b92aaaa2e9aba86b0645046b4"
+  },
+  {
+    "path": "webui/web/public/dpi-jobs.php",
+    "bytes": 13143,
+    "sha256": "c8846e2c7226cae7ff6345deb45610b3953cc1a65fc21968d19173fd64fe0c17"
+  },
+  {
+    "path": "webui/web/public/dpi-native.php",
+    "bytes": 1774,
+    "sha256": "ddd3c8e0afdfe6a8e9512d48723b759969b25d121cf01a94a346356b6fea3c22"
+  },
+  {
+    "path": "webui/web/public/dpi-normalize.php",
+    "bytes": 7625,
+    "sha256": "fef5eba9c939c2b461eff9ba91ccf477841898177d88c4e4654024f1ae0288ec"
+  },
+  {
+    "path": "webui/web/public/dpi-options.php",
+    "bytes": 12964,
+    "sha256": "a676320f9c84332caf8e7db516e05a4b9f1eb27c0b78755e0e405f9a9355d28a"
+  },
+  {
+    "path": "webui/web/public/dpi-runtime.php",
+    "bytes": 9040,
+    "sha256": "527f1548cc81300ef394c6225fa48edc9def4f6953e88b4c9b0f45357684bfdd"
+  },
+  {
+    "path": "webui/web/public/dpi-saved-projector.php",
+    "bytes": 8468,
+    "sha256": "19aff68ad2ef8ca1c918fda930b7b8da854e80899bb6d446b061911af4c0718c"
+  },
+  {
+    "path": "webui/web/public/dpi-saved-store.php",
+    "bytes": 13748,
+    "sha256": "4d19304d8258f5c389f3ffa08570e1801f1b4bf48ac2bbf279e74e9c8cb0c550"
+  },
+  {
+    "path": "webui/web/public/dpi-store.php",
+    "bytes": 16071,
+    "sha256": "34ab9d21197f63e2657caa5b08931535b35ef914028657dfc7290ae9b3b5e7e2"
+  },
+  {
+    "path": "webui/web/public/import-api.php",
+    "bytes": 5879,
+    "sha256": "a52fd3f1dec0499b1d61d4637727b708bc45dafe8158a7a28e20a58c7c7ca7c2"
+  },
+  {
+    "path": "webui/web/public/import-config.php",
+    "bytes": 4619,
+    "sha256": "5d888eabb14d93c391e9a9a3587b1331032a3b9a294f953a1acb9e21e3c25528"
+  },
+  {
+    "path": "webui/web/public/import-document.php",
+    "bytes": 4009,
+    "sha256": "1d52e794700acddf845750adc6d1cf67fbdf0a8c391ef4ade7d5cec189f46ee4"
+  },
+  {
+    "path": "webui/web/public/import-plan.php",
+    "bytes": 15576,
+    "sha256": "26aa1307a625370338324e7852705627c46baf4ad8a314d730ba1f7f99f17968"
+  },
+  {
+    "path": "webui/web/public/import-store.php",
+    "bytes": 6555,
+    "sha256": "05b7acea5c85168fec81f5d8ccc5544c2743f64d192d9b4a125702ec263f7b64"
+  },
+  {
+    "path": "webui/web/public/import-transaction.php",
+    "bytes": 14844,
+    "sha256": "f01b26c8ab02a5e69cbc15d5c9fd90639b0dfea13cb42ad48dcf188d452aa1ab"
+  },
+  {
+    "path": "webui/web/public/index.php",
+    "bytes": 27418,
+    "sha256": "6fca225a7dfde2f97016afcace50d992fd37bbf2b437227305849e494ddb2c9e"
+  },
+  {
+    "path": "webui/web/public/logo.woff2",
+    "bytes": 1068,
+    "sha256": "658b42daa71bd3d63696b9ab9072e2eb25b601de1923f1cef30108374db6b7ec"
+  },
+  {
+    "path": "webui/web/public/manifest.json",
+    "bytes": 347,
+    "sha256": "f21707c32da8dc3b0749d100fccd3fa4fb97d250e6965781b95fab7a81331331"
+  },
+  {
+    "path": "webui/web/public/mockServiceWorker.js",
+    "bytes": 9120,
+    "sha256": "9eba0ce4d83446881710d890803b58ba097a8680a1ae9e337073c118918d2a68"
+  },
+  {
+    "path": "webui/web/public/models.woff2",
+    "bytes": 9476,
+    "sha256": "ee9eda0bff22892ec88c596d25e483c2e4e6fd0a88d8a56679569f0f13497ecc"
+  },
+  {
+    "path": "webui/web/public/router-checkup.php",
+    "bytes": 13675,
+    "sha256": "d36594f12c09035ebee158dfd6ce9f386ef9e632f9b62f140a2e664ead8963f3"
+  },
+  {
+    "path": "webui/web/public/router-wan.php",
+    "bytes": 2605,
+    "sha256": "6096333da81246abb72d22cf7fdbe420aa2f3b25342744717eac7837ff58eac1"
+  },
+  {
+    "path": "webui/web/public/share-api.php",
+    "bytes": 9954,
+    "sha256": "1c8357060368c4c24cc98970393430dcf4a7e0685ef0687cf13bfe7c7bdc3941"
+  },
+  {
+    "path": "webui/web/public/share-bundle-v4.php",
+    "bytes": 4848,
+    "sha256": "bc3f34794ff489765f82bf8f82eafb26ff67a1af8861824a0138adae34745ce0"
+  },
+  {
+    "path": "webui/web/public/share-bundle.php",
+    "bytes": 5336,
+    "sha256": "79526418a2f3150c4cd807bd2ce7f45b8de4c53f2f18aaf786801be9be98a6d5"
+  },
+  {
+    "path": "webui/web/public/share-contributions.php",
+    "bytes": 8663,
+    "sha256": "c4f988e76acd1e888fc0f6b08bb032bf01dc1dfed3ffe01cc24e5ddd25ea8254"
+  },
+  {
+    "path": "webui/web/public/share-dependencies.php",
+    "bytes": 6944,
+    "sha256": "77b62046cc0421523b2d7b5fcb88037ac68187fc8b4e575d40d2124ce8086f9c"
+  },
+  {
+    "path": "webui/web/public/share-dns.php",
+    "bytes": 12452,
+    "sha256": "8b4129961097b5fd2e32e0a66b5e30509f38b1e18510a25832aa3d2e6f36a2b6"
+  },
+  {
+    "path": "webui/web/public/share-location-worker.php",
+    "bytes": 715,
+    "sha256": "81223a0449a674d4da97c475b1c1aaead39bad8c12394001f3090462a88a5f82"
+  },
+  {
+    "path": "webui/web/public/share-read.php",
+    "bytes": 3416,
+    "sha256": "1d785ccb5f3c30089468730683c8f101e4288a1ba36836c115ea914f9845373a"
+  },
+  {
+    "path": "webui/web/public/share-resources.php",
+    "bytes": 6696,
+    "sha256": "634b83e18f4041f11769205f74195d451b7dc0163c5d0b1c6b4f99adc42bdad0"
+  },
+  {
+    "path": "webui/web/public/share-source.php",
+    "bytes": 4155,
+    "sha256": "f856fc04ca23e0b0abb5e17250881e4ee43f762606d62488cde43719f4abe7c7"
+  },
+  {
+    "path": "webui/web/public/share-strategy.php",
+    "bytes": 16516,
+    "sha256": "b374fda291469aa0cb73a8ef6db685726dc751e284dfb595bec0b9f15b8eb8de"
+  },
+  {
+    "path": "webui/web/public/share-v4.php",
+    "bytes": 4269,
+    "sha256": "f8545e8ca3417993fb340ee9b9c32b9b1eea9bdc3fc0a09e785a7845164e2740"
+  },
+  {
+    "path": "webui/web/public/smartdns-api.php",
+    "bytes": 8068,
+    "sha256": "9c6d3706741f0b3b96d7e58d012025b226205b27b117fdd9185a9c986ec922da"
+  },
+  {
+    "path": "webui/web/public/smartdns-baseline.php",
+    "bytes": 8937,
+    "sha256": "b067872e1d18f2ced09d9bd37a234cb573e3432a62e73c7870bb3ab0eab2c310"
+  },
+  {
+    "path": "webui/web/public/smartdns-candidate.php",
+    "bytes": 14489,
+    "sha256": "46600bd18025e6e72d39286a5a49baa3f3f3bda59450d7751f7fa1afe12640be"
+  },
+  {
+    "path": "webui/web/public/smartdns-config-api.php",
+    "bytes": 6371,
+    "sha256": "06db041e05f22adaee8482e5fe64e7eacc09d2d8babc93170415adc318824248"
+  },
+  {
+    "path": "webui/web/public/smartdns-config-jobs.php",
+    "bytes": 16427,
+    "sha256": "c2d506a84117fda1b4366845483e37b6453970197ee180552c4fef68c2c28326"
+  },
+  {
+    "path": "webui/web/public/smartdns-connect.php",
+    "bytes": 13945,
+    "sha256": "d85bdbdc60cb9882dced6750911b38de23dcbd4dc0a9eb8100824e5ca4471308"
+  },
+  {
+    "path": "webui/web/public/smartdns-install.php",
+    "bytes": 12964,
+    "sha256": "43d40aa8fcb077b241f6f7ba1b54037eedf7ae777035106ed23c4fb257cdf6ee"
+  },
+  {
+    "path": "webui/web/public/smartdns-lifecycle.php",
+    "bytes": 5511,
+    "sha256": "798eca971a1b4ff87c54b0bb2bf84e8b4ebb686f47f0a1072bc9d89d23611678"
+  },
+  {
+    "path": "webui/web/public/smartdns-native.php",
+    "bytes": 23764,
+    "sha256": "74b6060b434dfd5b38cca657d7a76b46b056696dc0dfa6c5302b2afcdf986610"
+  },
+  {
+    "path": "webui/web/public/smartdns-probe.php",
+    "bytes": 7267,
+    "sha256": "56a5739e0ae394958253e92ea39d6d25bcc7123550e9f2911f1ac4016b314fe3"
+  },
+  {
+    "path": "webui/web/public/smartdns-profile.php",
+    "bytes": 10775,
+    "sha256": "4c112bf78cc3d77fc15fa92b13cc5bde902852865b59184c62f04032d80a59e3"
+  },
+  {
+    "path": "webui/web/public/smartdns-report.php",
+    "bytes": 2419,
+    "sha256": "6b457c0e81f6b7800b51c77a0cdff38b5e5af59c130e57dae7bdfe292a48a24f"
+  },
+  {
+    "path": "webui/web/public/smartdns-store.php",
+    "bytes": 19493,
+    "sha256": "225a872db2510ddfbe566981426aef8a4aae511ad2504327555fef9b1f169d1a"
+  },
+  {
+    "path": "webui/web/public/smartdns-validation.php",
+    "bytes": 3469,
+    "sha256": "06e6cb95c408135bcf56c0e5b50e7618dffb7fddd788883a1bbb312ab7886fd4"
+  },
+  {
+    "path": "webui/web/public/support-bundle.php",
+    "bytes": 4350,
+    "sha256": "7df079a22797276f58625b4a928f361ac52dfcc308d1baf4b2fdee83555ec7be"
+  },
+  {
+    "path": "webui/web/public/support-json-schema.php",
+    "bytes": 8164,
+    "sha256": "3d88155423a781b0f71b5b58ffaf394d54b7cd3015f79aa1e02198958e32497f"
+  },
+  {
+    "path": "webui/web/public/support-mail-proof.php",
+    "bytes": 1166,
+    "sha256": "0f6851cd60b9032d60c3c00d1cd5cfead622de976574d638c6a221d909277458"
+  },
+  {
+    "path": "webui/web/public/support-mail.php",
+    "bytes": 12707,
+    "sha256": "1edb7e047d17d32e22095a47a903b9c843ce20f7290625662e52fe7c90873eff"
+  },
+  {
+    "path": "webui/web/public/support-report-dns.php",
+    "bytes": 6934,
+    "sha256": "ba4ad25ccdab84baaeb0d237e077f0c073dc8b24bc162b95eb7bd2a24d4b21db"
+  },
+  {
+    "path": "webui/web/public/support-report-io.php",
+    "bytes": 17362,
+    "sha256": "90b28775289045308ca3b05772c5f867beee99732ca4964132e6aaa209f1977c"
+  },
+  {
+    "path": "webui/web/public/support-report-network.php",
+    "bytes": 12473,
+    "sha256": "b5e7c6f1e5ae2f0f5988578b56bddf2e95fff4c24d9557ab26c81c4f517d32a7"
+  },
+  {
+    "path": "webui/web/public/support-report-platform.php",
+    "bytes": 16060,
+    "sha256": "7a95defb35620b54efbd0183e295d6cf080f18beb89c4f8acda2d870f30fa924"
+  },
+  {
+    "path": "webui/web/public/support-report-values.php",
+    "bytes": 8458,
+    "sha256": "2f248239f364087fdf03679037377e44b82498ce9715ac3c9279852e99217989"
+  },
+  {
+    "path": "webui/web/public/support-report.php",
+    "bytes": 9344,
+    "sha256": "9893a18e7a5aee9063fadf9c6ed33ff31f396596b590dff7672305fce844193e"
+  },
+  {
+    "path": "webui/web/public/update-api.php",
+    "bytes": 2984,
+    "sha256": "d37a1d646b48d84d85597bad01573a6057f091478687a5a278999c006e36e772"
+  },
+  {
+    "path": "webui/web/public/update-check.php",
+    "bytes": 7705,
+    "sha256": "bbc4981050cd17eee7b5929a74206dbe8951f3c6ea5a93a0716f70fb76a9dab2"
+  },
+  {
+    "path": "webui/web/public/update-deadline.php",
+    "bytes": 1152,
+    "sha256": "3a0ce04258de2e68237043f98d964aeae06bebd1ae3813d69b14945ff86d29e2"
+  },
+  {
+    "path": "webui/web/public/update-dispatch.php",
+    "bytes": 4428,
+    "sha256": "364688bb3bda93b7336fdc42d42e6b5b2e3b03d5e26c77a53cae6a1850bde9fc"
+  },
+  {
+    "path": "webui/web/public/update-guard.php",
+    "bytes": 5605,
+    "sha256": "83c9c5c5bfe68950c319a6fa9c63ed6ffcece3172e87ffe8c9ffa15992e35a1b"
+  },
+  {
+    "path": "webui/web/public/update-lifecycle.php",
+    "bytes": 5175,
+    "sha256": "115ab11f20ba8af5d782b8c1633067db10d02402250d8167df7139e049b5a8b6"
+  },
+  {
+    "path": "webui/web/public/update-manifest.php",
+    "bytes": 3900,
+    "sha256": "a0f46f6d2b37654cd240bd1a95b48db0f5b4b4735dad2e05bbaa06b0d32bbfd4"
+  },
+  {
+    "path": "webui/web/public/update-prepare.php",
+    "bytes": 23211,
+    "sha256": "f794254a5d42c50a4fd1bad41811937cc63567e3adae3578de8aca30827a192c"
+  },
+  {
+    "path": "webui/web/public/update-runtime.php",
+    "bytes": 13210,
+    "sha256": "c8bb8a0a4b53e8c40c6d1d99d538a2b8e26b26122b9d676a8c8be078d7064514"
+  },
+  {
+    "path": "webui/web/public/update-store.php",
+    "bytes": 15598,
+    "sha256": "5804fffa1f282b3246f789f71a14a5fa28bd6ddc7d140d32399192b84de3739f"
+  },
+  {
+    "path": "webui/web/public/update-transport.php",
+    "bytes": 7577,
+    "sha256": "16b6c8f24450f24d410230107d8c4f0186eadd0d54e6899e63cb70a8b8def945"
+  },
+  {
+    "path": "webui/web/public/update-watchdog.php",
+    "bytes": 4631,
+    "sha256": "c4152d7f3f9a8415414ab2afd3a98b44760563c8cb3e96dabc84666e74367e95"
+  },
+  {
+    "path": "webui/web/public/update-worker.php",
+    "bytes": 10719,
+    "sha256": "4c1cb6cf0f55d60a39e228a82b151d31f3afe442801274a00c4d6b85d20dab80"
+  },
+  {
+    "path": "webui/web/src/api/.gitignore",
+    "bytes": 87,
+    "sha256": "a1285f471ecbfb1486d6b2c2b137049efe93eb29531af4f2daed355240a7c63a"
+  },
+  {
+    "path": "webui/web/src/api/baseUrl.ts",
+    "bytes": 47,
+    "sha256": "cd0b5b83d60533eaa18ad1b6c6dd93698d5305c946ce0485a7356618a12615c0"
+  },
+  {
+    "path": "webui/web/src/api/bulkSelection.ts",
+    "bytes": 3036,
+    "sha256": "e367edc597d0059a02a65c8a0d7b8214caecd45d4f91b176d2214a9675ee7a11"
+  },
+  {
+    "path": "webui/web/src/api/client.tsx",
+    "bytes": 4631,
+    "sha256": "b7530903cefa2dfff48ee46d1922dcf3d81691ed080a9ee4d49d74f13b93e037"
+  },
+  {
+    "path": "webui/web/src/api/create-api-client.ts",
+    "bytes": 1677,
+    "sha256": "af307203bd49f52722c6e7c4e5246e7ef6dcd992c888c54ed1f5274b43b65d5a"
+  },
+  {
+    "path": "webui/web/src/api/create-router-api-client-base.ts",
+    "bytes": 2759,
+    "sha256": "5e16cee993510c589a4f82f34be86185d71021617cf0da81e8921bebe240406d"
+  },
+  {
+    "path": "webui/web/src/api/createRouterAPIClient.ts",
+    "bytes": 388,
+    "sha256": "2cd7c82527dcccf14d7aa6b99794510eb28c442baa737b985abe01e76664e728"
+  },
+  {
+    "path": "webui/web/src/api/dpiClient.ts",
+    "bytes": 9938,
+    "sha256": "2945eec3366076478e36e21bda16864da64176397d068bf0e298a5a02fa7dc56"
+  },
+  {
+    "path": "webui/web/src/api/dpiOptions.ts",
+    "bytes": 3857,
+    "sha256": "051cc9d65bdad06d24c8f146b8e1446f513575c6fab7ccb410c48d4bc0862bb1"
+  },
+  {
+    "path": "webui/web/src/api/dpiPresentation.ts",
+    "bytes": 5990,
+    "sha256": "67e602f117532d5e6a1b5766ff908de2c5415d4191d4942e108bab7b7a570aa9"
+  },
+  {
+    "path": "webui/web/src/api/importClient.ts",
+    "bytes": 9213,
+    "sha256": "795e3f17ccf81fc9b910b6d769dc10e912448d97efcb39db808f3225a9a77e02"
+  },
+  {
+    "path": "webui/web/src/api/importPaths.ts",
+    "bytes": 3756,
+    "sha256": "a9c7f8ecd4afd3d96edf032d59fcb5aea549c449f4a66d534a5d65e9b7df6c2a"
+  },
+  {
+    "path": "webui/web/src/api/index.ts",
+    "bytes": 414,
+    "sha256": "da56378c60425f4f8471f837740f48915171e6dfaa7c6b198ebbbc06e63b6fb4"
+  },
+  {
+    "path": "webui/web/src/api/packageUpdates.ts",
+    "bytes": 9486,
+    "sha256": "e49d7abf307b662798bdb0099ce72b1757a12ec9df5a7ceef1f7bab8f2a9ea9d"
+  },
+  {
+    "path": "webui/web/src/api/routerWan.ts",
+    "bytes": 1907,
+    "sha256": "ee518c4231078b185674adb09936bb67d65d986b6c265d68e7657796a2df142a"
+  },
+  {
+    "path": "webui/web/src/api/schema.ts",
+    "bytes": 46250,
+    "sha256": "a81fb4963acc757e629be9ec6ddf26eb3aa263264872b30b837e9724e65763c6"
+  },
+  {
+    "path": "webui/web/src/api/services/IndexPhpService.ts",
+    "bytes": 37635,
+    "sha256": "27bb9f730fd188fd2a5862374d3f3edfbc848cd4fb25a44f5303cc620257735a"
+  },
+  {
+    "path": "webui/web/src/api/services/index.ts",
+    "bytes": 339,
+    "sha256": "228fb9d7cc16997c6d5e92046029beb26b3116f7a03996058deedb2bf617b84f"
+  },
+  {
+    "path": "webui/web/src/api/shareClient.ts",
+    "bytes": 21018,
+    "sha256": "56eccbabfb939ae86b9e26ba93a2a5e130207b36877d6d51ed4a4fa7417081ce"
+  },
+  {
+    "path": "webui/web/src/api/shareResourcesClient.ts",
+    "bytes": 9529,
+    "sha256": "bc96f321638bcaae3d0ac72ad4b942502fb3e781a67dab57ab40987006d28f12"
+  },
+  {
+    "path": "webui/web/src/api/smartDnsClient.ts",
+    "bytes": 1189,
+    "sha256": "7049f9cd146838477b67f9d6ebb1c180f7282e051cd423a4fcb9cd453ca7fb75"
+  },
+  {
+    "path": "webui/web/src/api/smartDnsConfigClient.ts",
+    "bytes": 4256,
+    "sha256": "785b39a31201e7b204694ad8e55dc7be19576ea04ed8de9ab6ed21b143325904"
+  },
+  {
+    "path": "webui/web/src/api/smartDnsPresets.json",
+    "bytes": 22086,
+    "sha256": "9b1e7893b73a092181be5c28bee691cebb77d225c1de282ae0d1d8794269d792"
+  },
+  {
+    "path": "webui/web/src/api/smartDnsPresets.ts",
+    "bytes": 1320,
+    "sha256": "e323b15320c57f989e49c4280af0ecee00b283041518903a320510f62010b6fa"
+  },
+  {
+    "path": "webui/web/src/api/smartDnsProfile.ts",
+    "bytes": 2267,
+    "sha256": "f10bbf39316d0ee8ceda3710d0a203fe887516adecd15432918a2f4ef3ef2d67"
+  },
+  {
+    "path": "webui/web/src/api/startProgress.ts",
+    "bytes": 2068,
+    "sha256": "55c95836dec9766530ec1b0dc502705010c59218a96b1b92dd55280856483769"
+  },
+  {
+    "path": "webui/web/src/api/supportBundle.ts",
+    "bytes": 7520,
+    "sha256": "87aad4aad9429ec99840698d7135426ef256fc0ce7e3294a5cd78620ab6e978c"
+  },
+  {
+    "path": "webui/web/src/api/supportDigest.ts",
+    "bytes": 2590,
+    "sha256": "2ba4ae8023f613cfd1a251520a73b440f33ffe557de261bf2285cb664d675d77"
+  },
+  {
+    "path": "webui/web/src/api/supportReport.ts",
+    "bytes": 13531,
+    "sha256": "c491d608689a3d7fac24b588e0bd50c16fbc401ae459783f3f3f555507b35a52"
+  },
+  {
+    "path": "webui/web/src/app.d.ts",
+    "bytes": 332,
+    "sha256": "56edd290a7a6516dda445d94c8f42c6c2f097c6aa7123c67e495217b9650f60b"
+  },
+  {
+    "path": "webui/web/src/components/App.tsx",
+    "bytes": 2129,
+    "sha256": "6933c42126bf2567771183e7d43a30fe4df295d7a0df1f7941b43866d0c05856"
+  },
+  {
+    "path": "webui/web/src/components/AppRouterProvider.tsx",
+    "bytes": 555,
+    "sha256": "1a15c180656d95d97bccd163dff6a079a69fe97daf7dcb6d14eaac36da221027"
+  },
+  {
+    "path": "webui/web/src/components/ArkDialog.tsx",
+    "bytes": 13462,
+    "sha256": "9733c056f8125686f31f41fb65669c3f08d118ad6960df725577b51a7babd317"
+  },
+  {
+    "path": "webui/web/src/components/CommunityActions.tsx",
+    "bytes": 1985,
+    "sha256": "0456389906b4999645188e7a87824e4e76e63f55765ff7c26d1f566c2253e8aa"
+  },
+  {
+    "path": "webui/web/src/components/ConfirmationDialog.tsx",
+    "bytes": 1009,
+    "sha256": "1a0ceb998ee66c9674da56129d3b58e41c716b792709b5b646ad32e1c79089c8"
+  },
+  {
+    "path": "webui/web/src/components/CreateFileDialog.tsx",
+    "bytes": 2738,
+    "sha256": "ffe223bdd2a8de2ef622458ac0b5d7e3262dea40e3af656e24a5ea07b480c2c0"
+  },
+  {
+    "path": "webui/web/src/components/CurrentVersion.tsx",
+    "bytes": 2037,
+    "sha256": "fda9727e1770c4cba100f14c33ccf030a7761fffe8babf5692a0222f288cf667"
+  },
+  {
+    "path": "webui/web/src/components/Editor.tsx",
+    "bytes": 9942,
+    "sha256": "45b261d2655d5bc0338ecacbc89e315ec37472460b07156788760db9a5633e18"
+  },
+  {
+    "path": "webui/web/src/components/Error404.tsx",
+    "bytes": 536,
+    "sha256": "72e43961757701df33ff10d3e0f4ff67da0203bc585060e09654fc5c75908ff0"
+  },
+  {
+    "path": "webui/web/src/components/FieldHelp.tsx",
+    "bytes": 606,
+    "sha256": "cd9b5c338543bcc09517803991345885b1b933f6648c82e5eaf2113e49047a28"
+  },
+  {
+    "path": "webui/web/src/components/FilesTabs.tsx",
+    "bytes": 7901,
+    "sha256": "5197d23fe7f0040cf81fc2f6d59ab9ff2f0ecde11d10f3bc755e5756c1ab0eaf"
+  },
+  {
+    "path": "webui/web/src/components/Footer.tsx",
+    "bytes": 6154,
+    "sha256": "a3b8fe3f954628a6afe11744ff4ee81d1b84f4d0f2a3377bdcf6b4f5339edba2"
+  },
+  {
+    "path": "webui/web/src/components/FormEditor.tsx",
+    "bytes": 1556,
+    "sha256": "9a7b160c8bd3b6d741952d90859f94963eb7f233e0c9119f71c76b72d05efca7"
+  },
+  {
+    "path": "webui/web/src/components/Header.tsx",
+    "bytes": 13392,
+    "sha256": "b96e5572dba8b452645987ba60d755b5ab3cf2b097ca88855be0488ded90dc05"
+  },
+  {
+    "path": "webui/web/src/components/ImportDialog.tsx",
+    "bytes": 10757,
+    "sha256": "a1d35864271a32e2b16878398a6ae7f19fc2fc2d8502935ca463aaa7bece080a"
+  },
+  {
+    "path": "webui/web/src/components/ImportPreview.tsx",
+    "bytes": 4021,
+    "sha256": "0079395936b6d8939a0724d4a53c1c8d2bcda5285fe2ef5e5af0cd6278eec481"
+  },
+  {
+    "path": "webui/web/src/components/ImportSelection.tsx",
+    "bytes": 12582,
+    "sha256": "7fe0b917264871bb8296d8c462e170da069921df133f028b7273ffa73017c61b"
+  },
+  {
+    "path": "webui/web/src/components/InlineHelp.tsx",
+    "bytes": 1117,
+    "sha256": "e1450b57a2f096fcc62afc3156a466e2127286800872358443ce5c012605af97"
+  },
+  {
+    "path": "webui/web/src/components/Layout.tsx",
+    "bytes": 4257,
+    "sha256": "458521bb6c2c0d45e34ef4510f3e237b4dbcd2e5cdda7bd7ac6d67ad1feaf62a"
+  },
+  {
+    "path": "webui/web/src/components/LoginDialog.tsx",
+    "bytes": 2444,
+    "sha256": "6ea0a528a8ae0d23a5bd79522f17ddf3b87cda03f605d5af6576c44fa991f457"
+  },
+  {
+    "path": "webui/web/src/components/MainTabs.tsx",
+    "bytes": 3304,
+    "sha256": "dbd9a1a6e4ee4fc968ae50f4aa51b00c7ee3bee14a8bc0a1499fcf9bf2e2acef"
+  },
+  {
+    "path": "webui/web/src/components/OutputLogDialog.tsx",
+    "bytes": 1197,
+    "sha256": "8e55a407f9f091e58db534fbba17082b7c22dae9fa35ba06f8609e633bb9df01"
+  },
+  {
+    "path": "webui/web/src/components/PackageUpdateDialog.tsx",
+    "bytes": 4688,
+    "sha256": "eed7bb9ea8ed9bbfd0615ed0382623a744c5401e4271ff1a00be80c0e5168ce3"
+  },
+  {
+    "path": "webui/web/src/components/PasswordDialog.tsx",
+    "bytes": 3364,
+    "sha256": "e2c0642ccb94e76614b9584f2086db5112dd3e43a3b33d47b07260c6e630285d"
+  },
+  {
+    "path": "webui/web/src/components/ReportPreview.tsx",
+    "bytes": 1842,
+    "sha256": "71b0fa25262e998ca03193130d1ec049584da8b4d53c2fd00527e64e035ba3f7"
+  },
+  {
+    "path": "webui/web/src/components/RequirementsDialog.tsx",
+    "bytes": 6074,
+    "sha256": "e33ddcbef0af76465baf1f375d924658e0ce649267e4508290003230c0d92f93"
+  },
+  {
+    "path": "webui/web/src/components/RouterCheckup.tsx",
+    "bytes": 7529,
+    "sha256": "cb85561924248c77eb0ce44fcd14a7ec4de3bd144190545482026c3d5c16c694"
+  },
+  {
+    "path": "webui/web/src/components/RouterTrafficHelp.tsx",
+    "bytes": 1932,
+    "sha256": "c7b977c35ea8a37d62f771e02dc119bae757048a06c8587641332671c156d0b7"
+  },
+  {
+    "path": "webui/web/src/components/RouterWanInfo.tsx",
+    "bytes": 3180,
+    "sha256": "78a849697a2bee7a958e5f2cc0cc6ce77e53e8236648b3f01d5549f82e6bca49"
+  },
+  {
+    "path": "webui/web/src/components/ShareContextSection.tsx",
+    "bytes": 3587,
+    "sha256": "a8e5cc3cea639b09e0863cc7017ccc0671b3b0f98ee0b42f665df9e90f147e0b"
+  },
+  {
+    "path": "webui/web/src/components/ShareDialog.tsx",
+    "bytes": 19272,
+    "sha256": "af4753f478a5cd39ab28c62751071ea3d1b04d64205e6f2875333fe09625fd1c"
+  },
+  {
+    "path": "webui/web/src/components/ShareDnsSection.tsx",
+    "bytes": 19744,
+    "sha256": "95f0839360a6d4eafdc243fbe06dcc71eaf2af7d27e324fd3679507ba459fbea"
+  },
+  {
+    "path": "webui/web/src/components/ShareDpiSection.tsx",
+    "bytes": 7969,
+    "sha256": "1895f7a4fb8cdb5df411107b0ee94d56dbabf7914a329f7954e70aa596b38281"
+  },
+  {
+    "path": "webui/web/src/components/ShareFilesSection.tsx",
+    "bytes": 10711,
+    "sha256": "5fddd7c2976e6afafed9be6a96a648090d93f50414506f8646ba24c965fb6e82"
+  },
+  {
+    "path": "webui/web/src/components/SharePreview.tsx",
+    "bytes": 2309,
+    "sha256": "6bd00fd029cef8a6bf26741a065c3b8f5e734d240c21c4c5671350e5b8d9f629"
+  },
+  {
+    "path": "webui/web/src/components/ShareResourcesPreview.tsx",
+    "bytes": 2075,
+    "sha256": "9880256a6e6494b3d9e8f8c2db70034c24b4c896de90366d49997b8fbb12216d"
+  },
+  {
+    "path": "webui/web/src/components/ShareStrategySection.tsx",
+    "bytes": 5388,
+    "sha256": "d8374fe9fe3480c93ab0f5fc18d3cd8dffbb7f3477c700ff3cc5553c857ad2d1"
+  },
+  {
+    "path": "webui/web/src/components/ShareThanks.tsx",
+    "bytes": 3081,
+    "sha256": "e8d5bd14dabe39f7f79418a7a161566ee097c974f5bbebdb6ab9c58736b29321"
+  },
+  {
+    "path": "webui/web/src/components/SmartDnsConfigurator.tsx",
+    "bytes": 11863,
+    "sha256": "b20302649806f5b1f5c6b1699de02d0bd35668451ff07cd336f761983dc6c035"
+  },
+  {
+    "path": "webui/web/src/components/SmartDnsPanel.tsx",
+    "bytes": 4844,
+    "sha256": "415c18b68456c8087474b93ff8903ee3106b400013bfd04cc3c88a1b9ee2aefb"
+  },
+  {
+    "path": "webui/web/src/components/SmartDnsPreview.tsx",
+    "bytes": 3030,
+    "sha256": "c0d8d3549abdab3c660990489088fd6f31118f66a4dab337a54966d87f402408"
+  },
+  {
+    "path": "webui/web/src/components/SmartDnsProfileForm.tsx",
+    "bytes": 19531,
+    "sha256": "ff08a9f21546c209bffd0bdcde223a5e5bdfcfb239a17de93e2ea83abcc95c08"
+  },
+  {
+    "path": "webui/web/src/components/ThemeMenu.tsx",
+    "bytes": 1329,
+    "sha256": "1f8cd09eef4f1e1842401064efaf5d4b50d368101ba9359990454722e880f0d5"
+  },
+  {
+    "path": "webui/web/src/components/Trans.tsx",
+    "bytes": 327,
+    "sha256": "2afe24df048ce8c774ebe5831e272e99f219290fc0b3bf770c7a4bdc0e050f87"
+  },
+  {
+    "path": "webui/web/src/config/useConfig.tsx",
+    "bytes": 840,
+    "sha256": "f1a6f614ec7aec05b963599c0d15dd16230bed916691737ad6d1bdba9da08740"
+  },
+  {
+    "path": "webui/web/src/context/TranslationContext.tsx",
+    "bytes": 187,
+    "sha256": "7f8e59b12f16119450a0fd4340b9ffc502ad53d7f19ac9f2547cb10edf72d547"
+  },
+  {
+    "path": "webui/web/src/context/TranslationProvider.tsx",
+    "bytes": 4570,
+    "sha256": "9863bb7d377a81b9a9fb1d08a717d87398ffc3fbf9abaa1682f5a9c87ba295fe"
+  },
+  {
+    "path": "webui/web/src/hooks/useFileNames.ts",
+    "bytes": 1474,
+    "sha256": "c5699cccf33141aede754cd2ed97563f9d9da5a0de8711738203499aa03bd8b1"
+  },
+  {
+    "path": "webui/web/src/hooks/usePackageUpdates.ts",
+    "bytes": 4440,
+    "sha256": "67413ab85de49be0a868ea445674ca89b3e6d0010e18e1e8ac456a808c30317d"
+  },
+  {
+    "path": "webui/web/src/hooks/useStatus.tsx",
+    "bytes": 2430,
+    "sha256": "7e27ea501cb6fcf02073590ed7aa0aab7a9bc6d72f7ec3a3783407a3f635dd5a"
+  },
+  {
+    "path": "webui/web/src/hooks/useStorage.ts",
+    "bytes": 395,
+    "sha256": "6796ee5e0ee9399f0c0fb6ca6989bebdab77fe502ffbf829d8f6995e45b72e08"
+  },
+  {
+    "path": "webui/web/src/hooks/useTranslation.tsx",
+    "bytes": 322,
+    "sha256": "ee510d94f5f1462e08b448f8d6ae388bbb50fd988a18ca9dbe4983eb8245eda4"
+  },
+  {
+    "path": "webui/web/src/index.css",
+    "bytes": 626,
+    "sha256": "0e51eb1bfab539479c4444e763a9039f4ba5b64703976c8cf3d41ab7d2604987"
+  },
+  {
+    "path": "webui/web/src/main.tsx",
+    "bytes": 887,
+    "sha256": "f523434bded527b92bb6a80c899172e581a909b09902ebb861cc24b93a2d3434"
+  },
+  {
+    "path": "webui/web/src/mocks/browser.js",
+    "bytes": 131,
+    "sha256": "6fabe711a8a22234eb7ff299c9df221e48abb0fb410c14f5ed68e6375cde1560"
+  },
+  {
+    "path": "webui/web/src/mocks/handlers.js",
+    "bytes": 2671,
+    "sha256": "ed791aca15c9997e80e35264ecc0df3949f90060e9fc5a22f36d82e659cd20c6"
+  },
+  {
+    "path": "webui/web/src/routeTree.generated.ts",
+    "bytes": 3051,
+    "sha256": "bce26dc3197dbcde67e244e248875ceed7f864cf7f2a49d90ccf1ec284665e39"
+  },
+  {
+    "path": "webui/web/src/routes/$tab.{-$filename}.tsx",
+    "bytes": 2681,
+    "sha256": "07d4700f444bacaa987b77e138483d4eabe85801a0dbffdb81cdb5db7a3ce45c"
+  },
+  {
+    "path": "webui/web/src/routes/__root.tsx",
+    "bytes": 476,
+    "sha256": "e2d46b6191be6f0e667024bdce84673286462b16dc4277a4c34de8f97e42f3a3"
+  },
+  {
+    "path": "webui/web/src/routes/index.tsx",
+    "bytes": 9731,
+    "sha256": "d4f7cd11b939de6587d2442b3786b41ba6d7f3513688c42ad6755368490b6550"
+  },
+  {
+    "path": "webui/web/src/routes/smartdns.tsx",
+    "bytes": 355,
+    "sha256": "971ae729c4c4693f122c77d99cedbf3c38bfe84032c31ba951002d1dc7b9f208"
+  },
+  {
+    "path": "webui/web/src/store/useAppStore.tsx",
+    "bytes": 679,
+    "sha256": "66ed73c0825a6139643ca81bb6668a02c375513e86e987550c61b33f54937256"
+  },
+  {
+    "path": "webui/web/src/store/useAppearanceStore.ts",
+    "bytes": 683,
+    "sha256": "f6d5da4c70ea0c0de81230dd3648af1ce87954f64e4659dc4e98a897825f3efc"
+  },
+  {
+    "path": "webui/web/src/translations/en.json",
+    "bytes": 58105,
+    "sha256": "d70b557172e96761b11f2b4547a52fda75f275506e4002f23e4d37766c0535ca"
+  },
+  {
+    "path": "webui/web/src/translations/ru.json",
+    "bytes": 95571,
+    "sha256": "97e42b73759dab988c146351d0a6f7e398c194733d330e678863986a65d9957f"
+  },
+  {
+    "path": "webui/web/src/types/types.ts",
+    "bytes": 144,
+    "sha256": "14adea0e44cd08aee7bb352a6de1ef7d2a52965d7a481a823f0930879704ec26"
+  },
+  {
+    "path": "webui/web/src/utils/arkReadiness.ts",
+    "bytes": 4319,
+    "sha256": "acc558fd7989af254923962865157a40cd64dcba32f12066efc2130d9968246f"
+  },
+  {
+    "path": "webui/web/src/utils/codeMirrorLangList.ts",
+    "bytes": 1036,
+    "sha256": "0ca431a523d367c956cebac12a72decfd254cc7506402f153c8ff573e333aec5"
+  },
+  {
+    "path": "webui/web/src/utils/codeMirrorLangLog.ts",
+    "bytes": 5190,
+    "sha256": "c6b10f45d0e273677d2f68597d2ad829e3d4459a2e4639ed4955ae0f2f38d45d"
+  },
+  {
+    "path": "webui/web/src/utils/codeMirrorLangNfqws.ts",
+    "bytes": 10845,
+    "sha256": "63482470a6715c0ee22d3ed962892c97bddb3f81846fe32eeeee489b03e47da3"
+  },
+  {
+    "path": "webui/web/src/utils/configParser.ts",
+    "bytes": 7784,
+    "sha256": "37183befa15262032239669f40d809266cb9c8fb1930d6211a090692558d95ab"
+  },
+  {
+    "path": "webui/web/src/utils/createAppRouter.tsx",
+    "bytes": 335,
+    "sha256": "8ecf7d09628c85cdae9d0c1174b8d263cc2c37936263097d8a79d901cdf5e80b"
+  },
+  {
+    "path": "webui/web/src/utils/createRouterProviderContext.tsx",
+    "bytes": 407,
+    "sha256": "ff8bfc9d53c35a9e787d0d4db5eb3d56321b2e51ac9b5df773d4833163e9fb3a"
+  },
+  {
+    "path": "webui/web/src/utils/getFileTypeForTab.ts",
+    "bytes": 375,
+    "sha256": "dc991ed0a1f81d167bd850b5e8c01cc75e9b7c4c6c41caa6754bcd41a79cef9a"
+  },
+  {
+    "path": "webui/web/src/utils/newlineMarkers.ts",
+    "bytes": 1577,
+    "sha256": "1480a00eb995d0742d771a892286f88cf98f4baf14ec0c624681b279473caa17"
+  },
+  {
+    "path": "webui/web/src/utils/packageVersion.ts",
+    "bytes": 848,
+    "sha256": "8518ca43a1d29e337d1975b26973df67057eebf64594c33a372f33bd63ef5031"
+  },
+  {
+    "path": "webui/web/src/utils/queueSamples.ts",
+    "bytes": 973,
+    "sha256": "65fb6e61eeace0c12fc42bad6a4d83b6966bd454d9da07821893c5c3f9ba3503"
+  },
+  {
+    "path": "webui/web/src/utils/quoteDiagnostics.ts",
+    "bytes": 3141,
+    "sha256": "7bd4cba9c157d2ea93ef88f66197b920d5e009e2409183de63bd9741dcd7d0ca"
+  },
+  {
+    "path": "webui/web/src/vite-env.d.ts",
+    "bytes": 38,
+    "sha256": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5"
+  },
+  {
+    "path": "webui/web/tsconfig.app.json",
+    "bytes": 764,
+    "sha256": "1cb76c707e8d5aec72a7200ac5bba6ebf99d69eedc2ad39b5cf753817726c873"
+  },
+  {
+    "path": "webui/web/tsconfig.common.json",
+    "bytes": 140,
+    "sha256": "9c4ec14f321afe9c12d36b30994878388d6f5ec8602e55c6aa2967a53195e73f"
+  },
+  {
+    "path": "webui/web/tsconfig.json",
+    "bytes": 119,
+    "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+  },
+  {
+    "path": "webui/web/tsconfig.node.json",
+    "bytes": 629,
+    "sha256": "08fe2d1b7ff735b567858204f22ce6fa2ef23c8e08d65effb03e11292c705e03"
+  },
+  {
+    "path": "webui/web/tsr.config.json",
+    "bytes": 175,
+    "sha256": "266e453f44f83d29536331362fccdeddbe94745b8ef2e010908756b93c60018b"
+  },
+  {
+    "path": "webui/web/vite.config.ts",
+    "bytes": 1593,
+    "sha256": "33af89b26e25fa019a35fd5eb25eb5cc32792add012c8d15e222d9b85b35e203"
+  },
+  {
+    "path": "webui/web/yarn.lock",
+    "bytes": 202891,
+    "sha256": "bf5746ebe22eac43eb4ab457648ff9607f24a77b693e65ea500181c43167ecd8"
+  },
+  {
+    "path": "webui/web.mk",
+    "bytes": 2822,
+    "sha256": "0f9588302be7453137e206eeea977cb5f2178bdb4d181402f9d4ee10b3fa7b2a"
+  },
+  {
+    "path": "support/dns-share.schema.json",
+    "bytes": 7919,
+    "sha256": "15cbd3d78c5aa71b4acd2763001513a492fa0ffde03486c641e2ec47578909eb"
+  },
+  {
+    "path": "support/dpi-analysis-v2.schema.json",
+    "bytes": 80626,
+    "sha256": "33904d646baf2bf6d6b5b52092a32c7ae03f37c485ca6e3e50b0d99fe72cc143"
+  },
+  {
+    "path": "support/dpi-catalog.json",
+    "bytes": 7513,
+    "sha256": "52707b3e160db4402d8b84d79b735a5c83c704195c3f292e66f9227f81354f6c"
+  },
+  {
+    "path": "support/dpi-detector-MIT.txt",
+    "bytes": 1066,
+    "sha256": "4388d45f8991e92b72eee74917664fb4d5bb1340ad63e3f6b0eac8854fd39152"
+  },
+  {
+    "path": "support/dpi-envelope.schema.json",
+    "bytes": 2570,
+    "sha256": "a2ea87ee5f251629a12882742d97168b16de0347bd552553ff59a1ce7cca6d2f"
+  },
+  {
+    "path": "support/dpi-native-defaults.json",
+    "bytes": 39743,
+    "sha256": "f273f8d65cd0077ea53075f2f952879675335058def1bacc3d4747b0b054b5c5"
+  },
+  {
+    "path": "support/dpi-profile.json",
+    "bytes": 6029,
+    "sha256": "20cd83c3c4504f852a787bb7afa3ac463c345209d410bd8fd80a0798c5d76887"
+  },
+  {
+    "path": "support/dpi-report.schema.json",
+    "bytes": 85377,
+    "sha256": "2f903f40bf961d4f22bc8ea8ce710f63a4efc744bb0703927a5376724198c976"
+  },
+  {
+    "path": "support/dpi-saved.schema.json",
+    "bytes": 70761,
+    "sha256": "ef2bdf708f48f5ef487672912c45707735aa593e9ec651b37541f28c9a6b36c6"
+  },
+  {
+    "path": "support/report.schema.json",
+    "bytes": 140567,
+    "sha256": "548878032aeba1c24ef5052e7caa9c17609fc5287911e078aed156d98300a145"
+  },
+  {
+    "path": "support/resources.schema.json",
+    "bytes": 5793,
+    "sha256": "04b4e2810f7083f14b59ae45eec93bad3ffaf2039e27619759810f5783896e0c"
+  },
+  {
+    "path": "support/share-envelope.schema.json",
+    "bytes": 4196,
+    "sha256": "69e463c16cf7ffe1a1bfbc7e077bed07f6a90980b9ab6978a45a6e95af3de2b4"
+  },
+  {
+    "path": "support/share-v4.schema.json",
+    "bytes": 4202,
+    "sha256": "f8c3d5c9fc7b304e2c427eedecd9659b3edf103602a7c806263f06851c6eb6ea"
+  },
+  {
+    "path": "support/smartdns-catalog.json",
+    "bytes": 2312,
+    "sha256": "c725f601175c60f985934d05be0508ef2a219dba48de9bf834f6242cd060cc5a"
+  },
+  {
+    "path": "support/smartdns-preset-bootstrap.json",
+    "bytes": 1404,
+    "sha256": "e307beac3efc4de94271d235afdc7089470b03bd3c242ff4f77d85c2b878242b"
+  },
+  {
+    "path": "support/strategy-v2.schema.json",
+    "bytes": 3619,
+    "sha256": "7de23e3365cbff8101401e5fde6d685d154b2c5f557b68b8924e773a68e3b8f5"
+  },
+  {
+    "path": "support/strategy.schema.json",
+    "bytes": 3110,
+    "sha256": "727a688c6ae2039ab6fbe2c0debce61a344cabaf724846de079c56428bc1c823"
+  },
+  {
+    "path": "licenses/busybox-GPL2.txt",
+    "bytes": 18348,
+    "sha256": "bbfc9843646d483c334664f651c208b9839626891d8f17604db2146962f43548"
+  },
+  {
+    "path": "licenses/busybox-bzip2.txt",
+    "bytes": 1999,
+    "sha256": "b5a136ed67798e51fe2e0ca0b2a21cb01b904ff0c9f7d563a6292e276607e58f"
+  },
+  {
+    "path": "licenses/lighttpd-BSD.txt",
+    "bytes": 1503,
+    "sha256": "5c98cad2fbaf5c5e2562bcbab401a7c557c1bb1bac9914ecc63730925052fb13"
+  },
+  {
+    "path": "licenses/nfqws-upstream-MIT.txt",
+    "bytes": 1062,
+    "sha256": "306576aa309eb45d994bfb8ecc1abe44a7692c5d817d8dcd10ebab6310bb2a6c"
+  },
+  {
+    "path": "licenses/zapret2-MIT.txt",
+    "bytes": 1069,
+    "sha256": "d089978dd77d53cb6aa5dff51cfdbff617e52dd44af1ac44a6df02c6644f17d5"
+  },
+  {
+    "path": "BUILD_NUMBER",
+    "bytes": 3,
+    "sha256": "606b7d0891b4db74edb21c241c302f298bf6ca4a6158deca6b58c15c950ab5f2"
+  },
+  {
+    "path": "VERSION",
+    "bytes": 6,
+    "sha256": "8a3dad16d348c163566a456fcf650d85d7aeeda5e53d01ee1fa8dc15212915a7"
+  },
+  {
+    "path": "LICENSE",
+    "bytes": 1778,
+    "sha256": "7ba68d733517c49e0a84fac9331d46a1bbd8997edb302b9b69e09da6c30a479c"
+  },
+  {
+    "path": "THIRD-PARTY-NOTICES.txt",
+    "bytes": 4151210,
+    "sha256": "05cbef1762140a78a8f3b80b67bd602e521eb2ef68e1c622ff23a9b7e01604c6"
+  },
+  {
+    "path": "UPSTREAM.md",
+    "bytes": 9350,
+    "sha256": "29721ffd2ae32c1ff601512e075c4579ed2a463cd1365fb38ca847d7b6bdd97e"
+  },
+  {
+    "path": "docs/USAGE.md",
+    "bytes": 5563,
+    "sha256": "c5afaf03c8f599d56fecc61b9f7e5e846b01e1dbfb51a293aa28e3d4e3235c98"
+  },
+  {
+    "path": "docs/IMPORT.md",
+    "bytes": 7424,
+    "sha256": "288f546e518a3ad878ed9b5eb6536c7a77b65c4e557ca2b57ce44e564d5183e7"
+  },
+  {
+    "path": "updates/package-manifest.schema.json",
+    "bytes": 2051,
+    "sha256": "55e2e485ffead63c0df94133004315af664e1edfccc282fbf9a4422587aa99a4"
+  },
+  {
+    "path": "updates/trusted-release-key.pem",
+    "bytes": 625,
+    "sha256": "6f8572dc3bada188fdd1c3aa7df9306d0206553e7456c55945a0ebc92c875103"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "file": "aarch64-unknown-linux-musl.tar.xz",
+    "url": "https://github.com/bol-van/musl-cross/releases/download/latest/aarch64-unknown-linux-musl.tar.xz",
+    "sha256": "c2562204e63e46b670ff55b91e9c9b6033bed9b013ca17aaa0bb9ad464fca63a",
+    "bytes": 39813224,
+    "updated_at": "2026-03-01T17:13:03Z"
+  },
+  {
+    "file": "armv6-unknown-linux-musleabi.tar.xz",
+    "url": "https://github.com/bol-van/musl-cross/releases/download/latest/armv6-unknown-linux-musleabi.tar.xz",
+    "sha256": "2a92a8d71ed22ad0a984d5a1377a30bbbe0aaaf7492a1861d9417f1476243ecf",
+    "bytes": 33663320,
+    "updated_at": "2026-03-01T17:13:03Z"
+  }
+]

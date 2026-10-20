@@ -1,0 +1,35 @@
+[Unit]
+Description=NFQWS2 diagnostic mail relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nfqws-support
+Group=nfqws-support
+WorkingDirectory=/usr/local/lib/nfqws-support
+Environment=PYTHONPATH=/usr/local/lib/nfqws-support/support-relay/src
+ExecStart=/usr/local/lib/nfqws-support/venv/bin/gunicorn --bind 127.0.0.1:8875 --workers 2 --worker-class sync --timeout 25 --worker-tmp-dir /var/lib/nfqws-support --error-logfile /dev/null nfqws_support.app:load_app()
+LoadCredentialEncrypted=relay-config:/etc/credstore.encrypted/nfqws-support.cred
+StateDirectory=nfqws-support
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadOnlyPaths=/tmp /var/tmp
+ReadWritePaths=/var/lib/nfqws-support
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=128M
+LimitCORE=0
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

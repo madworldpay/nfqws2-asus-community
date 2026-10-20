@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "provider_aliases": {
+    "AdGuard (L)": "AdGuard",
+    "Cloudflare": "Cloudflare IP",
+    "Cloudflare dns": "Cloudflare IP",
+    "Cloudflare one": "Cloudflare IP",
+    "Cloudflare dot": "Cloudflare IP",
+    "Cloudflare (M)": "Cloudflare IP"
+  },
+  "ip_tls_names": {
+    "1.1.1.1": "cloudflare-dns.com",
+    "1.0.0.1": "cloudflare-dns.com",
+    "8.8.8.8": "dns.google",
+    "8.8.4.4": "dns.google"
+  },
+  "hosts": {
+    "security.cloudflare-dns.com": {
+      "addresses": ["1.1.1.2", "1.0.0.2"],
+      "source": "https://developers.cloudflare.com/1.1.1.1/setup/"
+    },
+    "dns.digitale-gesellschaft.ch": {
+      "addresses": ["185.95.218.42", "185.95.218.43"],
+      "source": "https://www.digitale-gesellschaft.ch/dns/"
+    },
+    "dot.libredns.gr": {
+      "addresses": ["116.202.176.26"],
+      "source": "https://libredns.gr/"
+    },
+    "doh.libredns.gr": {
+      "addresses": ["116.202.176.26"],
+      "source": "https://libreops.cc/2020/10/14/libredns-ios/"
+    },
+    "anycast.uncensoreddns.org": {
+      "addresses": ["91.239.100.100"],
+      "source": "https://blog.uncensoreddns.org/"
+    },
+    "unicast.censurfridns.dk": {
+      "addresses": ["89.233.43.71"],
+      "source": "https://blog.uncensoreddns.org/"
+    },
+    "wikimedia-dns.org": {
+      "addresses": ["185.71.138.138"],
+      "source": "https://meta.wikimedia.org/wiki/Wikimedia_DNS/en"
+    }
+  }
+}

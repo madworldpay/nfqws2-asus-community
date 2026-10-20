@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+mkdir -p /opt/var/log /opt/var/run
+if [ "${NFQWS_ASUS_NO_START:-0}" = 1 ]; then
+    echo 'Diagnostic install: start NFQWS2 after selecting a test client.'
+    exit 0
+fi
+exec /opt/etc/init.d/S51nfqws2 start

@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ -x /opt/etc/init.d/S81nfqws-asus-web ]; then
+    /opt/etc/init.d/S81nfqws-asus-web stop || exit $?
+fi
+exit 0

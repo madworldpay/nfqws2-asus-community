@@ -1,0 +1,25 @@
+#!/opt/libexec/nfqws2-asus/busybox sh
+PATH=/opt/lib/nfqws2-asus/bin:/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+umask 077
+set -f
+. /opt/lib/nfqws2-asus/platform.sh
+. /opt/lib/nfqws2-asus/lifecycle.sh
+. /opt/lib/nfqws-asus-web/web-lib.sh
+WEB_RUN=/tmp/nfqws-asus-web
+web_runtime || exit 1
+RUN_DIR=$WEB_RUN
+[ "$(id -u)" = 0 ] || exit 1
+if [ "$1" != status ] && [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
+    . /opt/lib/nfqws2-asus/update/lifecycle.sh || exit $?
+    asus_update_enter web "$1" || exit $?
+fi
+asus_lock || exit $?
+case "$1" in
+    start) web_start ;;
+    stop) web_stop ;;
+    restart) web_stop && web_start ;;
+    status) web_running && echo 'NFQWS2 ASUS web is running' ;;
+    reconcile) web_reconcile ;;
+    *) echo "Usage: $0 {start|stop|restart|status|reconcile}"; exit 2 ;;
+esac

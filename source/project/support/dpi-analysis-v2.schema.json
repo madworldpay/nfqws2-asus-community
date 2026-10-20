@@ -1,0 +1,2233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nfqws2.invalid/dpi-analysis-v2.schema.json",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "nfqws2_dpi"
+    },
+    "detector_version": {
+      "const": "v5.0.0-alpha.21"
+    },
+    "origin": {
+      "const": "router"
+    },
+    "started_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "maxLength": 20
+    },
+    "finished_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "maxLength": 20
+    },
+    "state": {
+      "enum": [
+        "completed",
+        "partial",
+        "cancelled",
+        "timed_out",
+        "failed",
+        "interrupted"
+      ]
+    },
+    "selected_tests": {
+      "type": "array",
+      "items": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "type": "object",
+          "properties": {
+            "nfqws": {
+              "enum": [
+                "running",
+                "stopped",
+                "unknown"
+              ]
+            },
+            "ark": {
+              "enum": [
+                "loaded",
+                "absent",
+                "unknown"
+              ]
+            },
+            "tun_observed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "nfqws",
+            "ark",
+            "tun_observed"
+          ],
+          "additionalProperties": false
+        },
+        "after": {
+          "type": "object",
+          "properties": {
+            "nfqws": {
+              "enum": [
+                "running",
+                "stopped",
+                "unknown"
+              ]
+            },
+            "ark": {
+              "enum": [
+                "loaded",
+                "absent",
+                "unknown"
+              ]
+            },
+            "tun_observed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "nfqws",
+            "ark",
+            "tun_observed"
+          ],
+          "additionalProperties": false
+        },
+        "changed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "before",
+        "after",
+        "changed"
+      ],
+      "additionalProperties": false
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "ipv4_latency_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "ipv6_latency_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "doh_ok": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "doh_total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "dot_ok": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "dot_total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "udp_ok": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "udp_total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "resolvers_total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "subst_sub": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "subst_total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "fakeip_sub": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "ok": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "detected_as": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "found_as": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "avg_bps": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "peak_bps": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "bytes": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "drop_at_sec": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "dc_reachable": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "dc_total": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "answered": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "attempts": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "gap_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "timeout_secs": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "elapsed_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "kb": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "received_kb": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "duration_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "read_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "connect_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "max_concurrent": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              },
+              "timeout": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1000000000000.0
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "rows": {
+            "type": "array",
+            "maxItems": 16000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "pattern": "^(?:dns|domain|tcp|sni|burst|transfer)-[1-9][0-9]{0,3}$"
+                },
+                "metrics": {
+                  "type": "object",
+                  "properties": {
+                    "ipv4_latency_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "ipv6_latency_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "doh_ok": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "doh_total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "dot_ok": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "dot_total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "udp_ok": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "udp_total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "resolvers_total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "subst_sub": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "subst_total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "fakeip_sub": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "ok": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "detected_as": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "found_as": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "avg_bps": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "peak_bps": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "bytes": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "drop_at_sec": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "dc_reachable": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "dc_total": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "answered": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "attempts": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "gap_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "timeout_secs": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "elapsed_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "kb": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "received_kb": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "duration_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "read_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "connect_ms": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "max_concurrent": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    },
+                    "timeout": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1000000000000.0
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": false
+                },
+                "protocol": {
+                  "enum": [
+                    "udp",
+                    "doh_wire",
+                    "dot",
+                    "unknown"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "blocked",
+                    "connected",
+                    "detected",
+                    "dns_fail",
+                    "dns_fake",
+                    "err",
+                    "host_unreach",
+                    "http_payload",
+                    "init",
+                    "isp_page",
+                    "local_ip",
+                    "net_unreach",
+                    "no_ca_bundle",
+                    "no_tls13",
+                    "nxdomain",
+                    "ok",
+                    "os_err",
+                    "pool_timeout",
+                    "quic_closed",
+                    "quic_drop",
+                    "quic_ok",
+                    "quic_spoof",
+                    "quic_unsupported",
+                    "quic_vn",
+                    "read_timeout",
+                    "reading_data",
+                    "redir",
+                    "refused",
+                    "resolve",
+                    "send_timeout",
+                    "sending_data",
+                    "syn_dropped",
+                    "tcp16_20",
+                    "tcp_abort",
+                    "tcp_connect",
+                    "tcp_connected",
+                    "tcp_connecting",
+                    "tcp_rst",
+                    "timeout",
+                    "tls_abort",
+                    "tls_alert",
+                    "tls_block",
+                    "tls_client_hello_sent",
+                    "tls_connected",
+                    "tls_dropped",
+                    "tls_eof",
+                    "tls_err",
+                    "tls_handshake",
+                    "tls_handshake_done",
+                    "tls_rst",
+                    "tls_spoof",
+                    "unknown",
+                    "slow",
+                    "stalled",
+                    "error"
+                  ]
+                },
+                "detail": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "none",
+                        "unclassified",
+                        "tcp_rst_on_client_hello",
+                        "dpi_closed_after_client_hello",
+                        "tcp_rst_on_connect",
+                        "tls_drop_handshake",
+                        "timeout_connection",
+                        "tls_rst_after_client_hello",
+                        "response_spoofing_wrong_version",
+                        "response_spoofing_garbage_data",
+                        "sni_block_unrecognized_name",
+                        "dpi_alert_handshake_failure",
+                        "protocol_version_alert",
+                        "fake_tls_alert",
+                        "no_root_certificates",
+                        "cert_expired",
+                        "self_signed_cert",
+                        "hostname_mismatch",
+                        "cert_spoofing",
+                        "transfer_eof",
+                        "handshake_eof",
+                        "server_has_no_tls13",
+                        "socket_pool_timeout",
+                        "tls_handshake_timeout",
+                        "tcp_syn_timeout",
+                        "syn_timeout",
+                        "timeout",
+                        "read_timeout_word",
+                        "write_timeout_word",
+                        "domain_not_found",
+                        "dns_timeout_unavailable",
+                        "dns_error",
+                        "tcp_connection_refused",
+                        "tcp_rst_after_handshake",
+                        "tcp_connection_reset",
+                        "connection_aborted",
+                        "tcp_connection_aborted",
+                        "net_unreachable",
+                        "host_unreachable",
+                        "icmp_admin_prohibited",
+                        "icmp_time_exceeded",
+                        "icmp_frag_needed",
+                        "icmp_parameter_problem",
+                        "unknown_connection_failure",
+                        "ipv6_unsupported",
+                        "quic_server_hello",
+                        "quic_retry",
+                        "quic_forged_retry",
+                        "quic_stateless_reset",
+                        "quic_version_negotiation",
+                        "quic_timeout",
+                        "quic_unreadable_reply",
+                        "quic_answered_without_handshake",
+                        "quic_port_unreachable",
+                        "isp_blockpage",
+                        "local_ip",
+                        "redirect_to_host",
+                        "upgrade_https",
+                        "http",
+                        "elapsed",
+                        "quic_close",
+                        "alert_close_notify",
+                        "alert_unexpected_message",
+                        "alert_bad_record_mac",
+                        "alert_decryption_failed",
+                        "alert_record_overflow",
+                        "alert_decompression_failure",
+                        "alert_handshake_failure",
+                        "alert_no_certificate",
+                        "alert_bad_certificate",
+                        "alert_unsupported_certificate",
+                        "alert_certificate_revoked",
+                        "alert_certificate_expired",
+                        "alert_certificate_unknown",
+                        "alert_illegal_parameter",
+                        "alert_unknown_ca",
+                        "alert_access_denied",
+                        "alert_decode_error",
+                        "alert_decrypt_error",
+                        "alert_export_restriction",
+                        "alert_protocol_version",
+                        "alert_insufficient_security",
+                        "alert_internal_error",
+                        "alert_inappropriate_fallback",
+                        "alert_user_canceled",
+                        "alert_no_renegotiation",
+                        "alert_missing_extension",
+                        "alert_unsupported_extension",
+                        "alert_certificate_unobtainable",
+                        "alert_unrecognised_name",
+                        "alert_bad_certificate_status_response",
+                        "alert_bad_certificate_hash_value",
+                        "alert_unknown_psk_identity",
+                        "alert_certificate_required",
+                        "alert_no_application_protocol",
+                        "alert_encrypted_client_hello_required",
+                        "tls_decrypt_error",
+                        "tls_invalid_message",
+                        "tls_inappropriate_message",
+                        "tls_inappropriate_handshake_message",
+                        "tls_peer_misbehaved",
+                        "tls_no_application_protocol"
+                      ]
+                    },
+                    "http_status": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 999
+                    },
+                    "elapsed_ms": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 999999999
+                    },
+                    "at_kib": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1000000.0
+                    },
+                    "quic_error_code": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 999999999
+                    }
+                  },
+                  "required": [
+                    "code"
+                  ],
+                  "additionalProperties": false
+                },
+                "values": {
+                  "type": "object",
+                  "properties": {
+                    "http": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "blocked",
+                            "connected",
+                            "detected",
+                            "dns_fail",
+                            "dns_fake",
+                            "err",
+                            "host_unreach",
+                            "http_payload",
+                            "init",
+                            "isp_page",
+                            "local_ip",
+                            "net_unreach",
+                            "no_ca_bundle",
+                            "no_tls13",
+                            "nxdomain",
+                            "ok",
+                            "os_err",
+                            "pool_timeout",
+                            "quic_closed",
+                            "quic_drop",
+                            "quic_ok",
+                            "quic_spoof",
+                            "quic_unsupported",
+                            "quic_vn",
+                            "read_timeout",
+                            "reading_data",
+                            "redir",
+                            "refused",
+                            "resolve",
+                            "send_timeout",
+                            "sending_data",
+                            "syn_dropped",
+                            "tcp16_20",
+                            "tcp_abort",
+                            "tcp_connect",
+                            "tcp_connected",
+                            "tcp_connecting",
+                            "tcp_rst",
+                            "timeout",
+                            "tls_abort",
+                            "tls_alert",
+                            "tls_block",
+                            "tls_client_hello_sent",
+                            "tls_connected",
+                            "tls_dropped",
+                            "tls_eof",
+                            "tls_err",
+                            "tls_handshake",
+                            "tls_handshake_done",
+                            "tls_rst",
+                            "tls_spoof",
+                            "unknown",
+                            "slow",
+                            "stalled",
+                            "error"
+                          ]
+                        },
+                        "detail": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "none",
+                                "unclassified",
+                                "tcp_rst_on_client_hello",
+                                "dpi_closed_after_client_hello",
+                                "tcp_rst_on_connect",
+                                "tls_drop_handshake",
+                                "timeout_connection",
+                                "tls_rst_after_client_hello",
+                                "response_spoofing_wrong_version",
+                                "response_spoofing_garbage_data",
+                                "sni_block_unrecognized_name",
+                                "dpi_alert_handshake_failure",
+                                "protocol_version_alert",
+                                "fake_tls_alert",
+                                "no_root_certificates",
+                                "cert_expired",
+                                "self_signed_cert",
+                                "hostname_mismatch",
+                                "cert_spoofing",
+                                "transfer_eof",
+                                "handshake_eof",
+                                "server_has_no_tls13",
+                                "socket_pool_timeout",
+                                "tls_handshake_timeout",
+                                "tcp_syn_timeout",
+                                "syn_timeout",
+                                "timeout",
+                                "read_timeout_word",
+                                "write_timeout_word",
+                                "domain_not_found",
+                                "dns_timeout_unavailable",
+                                "dns_error",
+                                "tcp_connection_refused",
+                                "tcp_rst_after_handshake",
+                                "tcp_connection_reset",
+                                "connection_aborted",
+                                "tcp_connection_aborted",
+                                "net_unreachable",
+                                "host_unreachable",
+                                "icmp_admin_prohibited",
+                                "icmp_time_exceeded",
+                                "icmp_frag_needed",
+                                "icmp_parameter_problem",
+                                "unknown_connection_failure",
+                                "ipv6_unsupported",
+                                "quic_server_hello",
+                                "quic_retry",
+                                "quic_forged_retry",
+                                "quic_stateless_reset",
+                                "quic_version_negotiation",
+                                "quic_timeout",
+                                "quic_unreadable_reply",
+                                "quic_answered_without_handshake",
+                                "quic_port_unreachable",
+                                "isp_blockpage",
+                                "local_ip",
+                                "redirect_to_host",
+                                "upgrade_https",
+                                "http",
+                                "elapsed",
+                                "quic_close",
+                                "alert_close_notify",
+                                "alert_unexpected_message",
+                                "alert_bad_record_mac",
+                                "alert_decryption_failed",
+                                "alert_record_overflow",
+                                "alert_decompression_failure",
+                                "alert_handshake_failure",
+                                "alert_no_certificate",
+                                "alert_bad_certificate",
+                                "alert_unsupported_certificate",
+                                "alert_certificate_revoked",
+                                "alert_certificate_expired",
+                                "alert_certificate_unknown",
+                                "alert_illegal_parameter",
+                                "alert_unknown_ca",
+                                "alert_access_denied",
+                                "alert_decode_error",
+                                "alert_decrypt_error",
+                                "alert_export_restriction",
+                                "alert_protocol_version",
+                                "alert_insufficient_security",
+                                "alert_internal_error",
+                                "alert_inappropriate_fallback",
+                                "alert_user_canceled",
+                                "alert_no_renegotiation",
+                                "alert_missing_extension",
+                                "alert_unsupported_extension",
+                                "alert_certificate_unobtainable",
+                                "alert_unrecognised_name",
+                                "alert_bad_certificate_status_response",
+                                "alert_bad_certificate_hash_value",
+                                "alert_unknown_psk_identity",
+                                "alert_certificate_required",
+                                "alert_no_application_protocol",
+                                "alert_encrypted_client_hello_required",
+                                "tls_decrypt_error",
+                                "tls_invalid_message",
+                                "tls_inappropriate_message",
+                                "tls_inappropriate_handshake_message",
+                                "tls_peer_misbehaved",
+                                "tls_no_application_protocol"
+                              ]
+                            },
+                            "http_status": {
+                              "type": "integer",
+                              "minimum": 100,
+                              "maximum": 999
+                            },
+                            "elapsed_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            },
+                            "at_kib": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1000000.0
+                            },
+                            "quic_error_code": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            }
+                          },
+                          "required": [
+                            "code"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "detail"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "tls12": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "blocked",
+                            "connected",
+                            "detected",
+                            "dns_fail",
+                            "dns_fake",
+                            "err",
+                            "host_unreach",
+                            "http_payload",
+                            "init",
+                            "isp_page",
+                            "local_ip",
+                            "net_unreach",
+                            "no_ca_bundle",
+                            "no_tls13",
+                            "nxdomain",
+                            "ok",
+                            "os_err",
+                            "pool_timeout",
+                            "quic_closed",
+                            "quic_drop",
+                            "quic_ok",
+                            "quic_spoof",
+                            "quic_unsupported",
+                            "quic_vn",
+                            "read_timeout",
+                            "reading_data",
+                            "redir",
+                            "refused",
+                            "resolve",
+                            "send_timeout",
+                            "sending_data",
+                            "syn_dropped",
+                            "tcp16_20",
+                            "tcp_abort",
+                            "tcp_connect",
+                            "tcp_connected",
+                            "tcp_connecting",
+                            "tcp_rst",
+                            "timeout",
+                            "tls_abort",
+                            "tls_alert",
+                            "tls_block",
+                            "tls_client_hello_sent",
+                            "tls_connected",
+                            "tls_dropped",
+                            "tls_eof",
+                            "tls_err",
+                            "tls_handshake",
+                            "tls_handshake_done",
+                            "tls_rst",
+                            "tls_spoof",
+                            "unknown",
+                            "slow",
+                            "stalled",
+                            "error"
+                          ]
+                        },
+                        "detail": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "none",
+                                "unclassified",
+                                "tcp_rst_on_client_hello",
+                                "dpi_closed_after_client_hello",
+                                "tcp_rst_on_connect",
+                                "tls_drop_handshake",
+                                "timeout_connection",
+                                "tls_rst_after_client_hello",
+                                "response_spoofing_wrong_version",
+                                "response_spoofing_garbage_data",
+                                "sni_block_unrecognized_name",
+                                "dpi_alert_handshake_failure",
+                                "protocol_version_alert",
+                                "fake_tls_alert",
+                                "no_root_certificates",
+                                "cert_expired",
+                                "self_signed_cert",
+                                "hostname_mismatch",
+                                "cert_spoofing",
+                                "transfer_eof",
+                                "handshake_eof",
+                                "server_has_no_tls13",
+                                "socket_pool_timeout",
+                                "tls_handshake_timeout",
+                                "tcp_syn_timeout",
+                                "syn_timeout",
+                                "timeout",
+                                "read_timeout_word",
+                                "write_timeout_word",
+                                "domain_not_found",
+                                "dns_timeout_unavailable",
+                                "dns_error",
+                                "tcp_connection_refused",
+                                "tcp_rst_after_handshake",
+                                "tcp_connection_reset",
+                                "connection_aborted",
+                                "tcp_connection_aborted",
+                                "net_unreachable",
+                                "host_unreachable",
+                                "icmp_admin_prohibited",
+                                "icmp_time_exceeded",
+                                "icmp_frag_needed",
+                                "icmp_parameter_problem",
+                                "unknown_connection_failure",
+                                "ipv6_unsupported",
+                                "quic_server_hello",
+                                "quic_retry",
+                                "quic_forged_retry",
+                                "quic_stateless_reset",
+                                "quic_version_negotiation",
+                                "quic_timeout",
+                                "quic_unreadable_reply",
+                                "quic_answered_without_handshake",
+                                "quic_port_unreachable",
+                                "isp_blockpage",
+                                "local_ip",
+                                "redirect_to_host",
+                                "upgrade_https",
+                                "http",
+                                "elapsed",
+                                "quic_close",
+                                "alert_close_notify",
+                                "alert_unexpected_message",
+                                "alert_bad_record_mac",
+                                "alert_decryption_failed",
+                                "alert_record_overflow",
+                                "alert_decompression_failure",
+                                "alert_handshake_failure",
+                                "alert_no_certificate",
+                                "alert_bad_certificate",
+                                "alert_unsupported_certificate",
+                                "alert_certificate_revoked",
+                                "alert_certificate_expired",
+                                "alert_certificate_unknown",
+                                "alert_illegal_parameter",
+                                "alert_unknown_ca",
+                                "alert_access_denied",
+                                "alert_decode_error",
+                                "alert_decrypt_error",
+                                "alert_export_restriction",
+                                "alert_protocol_version",
+                                "alert_insufficient_security",
+                                "alert_internal_error",
+                                "alert_inappropriate_fallback",
+                                "alert_user_canceled",
+                                "alert_no_renegotiation",
+                                "alert_missing_extension",
+                                "alert_unsupported_extension",
+                                "alert_certificate_unobtainable",
+                                "alert_unrecognised_name",
+                                "alert_bad_certificate_status_response",
+                                "alert_bad_certificate_hash_value",
+                                "alert_unknown_psk_identity",
+                                "alert_certificate_required",
+                                "alert_no_application_protocol",
+                                "alert_encrypted_client_hello_required",
+                                "tls_decrypt_error",
+                                "tls_invalid_message",
+                                "tls_inappropriate_message",
+                                "tls_inappropriate_handshake_message",
+                                "tls_peer_misbehaved",
+                                "tls_no_application_protocol"
+                              ]
+                            },
+                            "http_status": {
+                              "type": "integer",
+                              "minimum": 100,
+                              "maximum": 999
+                            },
+                            "elapsed_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            },
+                            "at_kib": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1000000.0
+                            },
+                            "quic_error_code": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            }
+                          },
+                          "required": [
+                            "code"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "detail"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "tls13": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "blocked",
+                            "connected",
+                            "detected",
+                            "dns_fail",
+                            "dns_fake",
+                            "err",
+                            "host_unreach",
+                            "http_payload",
+                            "init",
+                            "isp_page",
+                            "local_ip",
+                            "net_unreach",
+                            "no_ca_bundle",
+                            "no_tls13",
+                            "nxdomain",
+                            "ok",
+                            "os_err",
+                            "pool_timeout",
+                            "quic_closed",
+                            "quic_drop",
+                            "quic_ok",
+                            "quic_spoof",
+                            "quic_unsupported",
+                            "quic_vn",
+                            "read_timeout",
+                            "reading_data",
+                            "redir",
+                            "refused",
+                            "resolve",
+                            "send_timeout",
+                            "sending_data",
+                            "syn_dropped",
+                            "tcp16_20",
+                            "tcp_abort",
+                            "tcp_connect",
+                            "tcp_connected",
+                            "tcp_connecting",
+                            "tcp_rst",
+                            "timeout",
+                            "tls_abort",
+                            "tls_alert",
+                            "tls_block",
+                            "tls_client_hello_sent",
+                            "tls_connected",
+                            "tls_dropped",
+                            "tls_eof",
+                            "tls_err",
+                            "tls_handshake",
+                            "tls_handshake_done",
+                            "tls_rst",
+                            "tls_spoof",
+                            "unknown",
+                            "slow",
+                            "stalled",
+                            "error"
+                          ]
+                        },
+                        "detail": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "none",
+                                "unclassified",
+                                "tcp_rst_on_client_hello",
+                                "dpi_closed_after_client_hello",
+                                "tcp_rst_on_connect",
+                                "tls_drop_handshake",
+                                "timeout_connection",
+                                "tls_rst_after_client_hello",
+                                "response_spoofing_wrong_version",
+                                "response_spoofing_garbage_data",
+                                "sni_block_unrecognized_name",
+                                "dpi_alert_handshake_failure",
+                                "protocol_version_alert",
+                                "fake_tls_alert",
+                                "no_root_certificates",
+                                "cert_expired",
+                                "self_signed_cert",
+                                "hostname_mismatch",
+                                "cert_spoofing",
+                                "transfer_eof",
+                                "handshake_eof",
+                                "server_has_no_tls13",
+                                "socket_pool_timeout",
+                                "tls_handshake_timeout",
+                                "tcp_syn_timeout",
+                                "syn_timeout",
+                                "timeout",
+                                "read_timeout_word",
+                                "write_timeout_word",
+                                "domain_not_found",
+                                "dns_timeout_unavailable",
+                                "dns_error",
+                                "tcp_connection_refused",
+                                "tcp_rst_after_handshake",
+                                "tcp_connection_reset",
+                                "connection_aborted",
+                                "tcp_connection_aborted",
+                                "net_unreachable",
+                                "host_unreachable",
+                                "icmp_admin_prohibited",
+                                "icmp_time_exceeded",
+                                "icmp_frag_needed",
+                                "icmp_parameter_problem",
+                                "unknown_connection_failure",
+                                "ipv6_unsupported",
+                                "quic_server_hello",
+                                "quic_retry",
+                                "quic_forged_retry",
+                                "quic_stateless_reset",
+                                "quic_version_negotiation",
+                                "quic_timeout",
+                                "quic_unreadable_reply",
+                                "quic_answered_without_handshake",
+                                "quic_port_unreachable",
+                                "isp_blockpage",
+                                "local_ip",
+                                "redirect_to_host",
+                                "upgrade_https",
+                                "http",
+                                "elapsed",
+                                "quic_close",
+                                "alert_close_notify",
+                                "alert_unexpected_message",
+                                "alert_bad_record_mac",
+                                "alert_decryption_failed",
+                                "alert_record_overflow",
+                                "alert_decompression_failure",
+                                "alert_handshake_failure",
+                                "alert_no_certificate",
+                                "alert_bad_certificate",
+                                "alert_unsupported_certificate",
+                                "alert_certificate_revoked",
+                                "alert_certificate_expired",
+                                "alert_certificate_unknown",
+                                "alert_illegal_parameter",
+                                "alert_unknown_ca",
+                                "alert_access_denied",
+                                "alert_decode_error",
+                                "alert_decrypt_error",
+                                "alert_export_restriction",
+                                "alert_protocol_version",
+                                "alert_insufficient_security",
+                                "alert_internal_error",
+                                "alert_inappropriate_fallback",
+                                "alert_user_canceled",
+                                "alert_no_renegotiation",
+                                "alert_missing_extension",
+                                "alert_unsupported_extension",
+                                "alert_certificate_unobtainable",
+                                "alert_unrecognised_name",
+                                "alert_bad_certificate_status_response",
+                                "alert_bad_certificate_hash_value",
+                                "alert_unknown_psk_identity",
+                                "alert_certificate_required",
+                                "alert_no_application_protocol",
+                                "alert_encrypted_client_hello_required",
+                                "tls_decrypt_error",
+                                "tls_invalid_message",
+                                "tls_inappropriate_message",
+                                "tls_inappropriate_handshake_message",
+                                "tls_peer_misbehaved",
+                                "tls_no_application_protocol"
+                              ]
+                            },
+                            "http_status": {
+                              "type": "integer",
+                              "minimum": 100,
+                              "maximum": 999
+                            },
+                            "elapsed_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            },
+                            "at_kib": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1000000.0
+                            },
+                            "quic_error_code": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            }
+                          },
+                          "required": [
+                            "code"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "detail"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "quic": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "blocked",
+                            "connected",
+                            "detected",
+                            "dns_fail",
+                            "dns_fake",
+                            "err",
+                            "host_unreach",
+                            "http_payload",
+                            "init",
+                            "isp_page",
+                            "local_ip",
+                            "net_unreach",
+                            "no_ca_bundle",
+                            "no_tls13",
+                            "nxdomain",
+                            "ok",
+                            "os_err",
+                            "pool_timeout",
+                            "quic_closed",
+                            "quic_drop",
+                            "quic_ok",
+                            "quic_spoof",
+                            "quic_unsupported",
+                            "quic_vn",
+                            "read_timeout",
+                            "reading_data",
+                            "redir",
+                            "refused",
+                            "resolve",
+                            "send_timeout",
+                            "sending_data",
+                            "syn_dropped",
+                            "tcp16_20",
+                            "tcp_abort",
+                            "tcp_connect",
+                            "tcp_connected",
+                            "tcp_connecting",
+                            "tcp_rst",
+                            "timeout",
+                            "tls_abort",
+                            "tls_alert",
+                            "tls_block",
+                            "tls_client_hello_sent",
+                            "tls_connected",
+                            "tls_dropped",
+                            "tls_eof",
+                            "tls_err",
+                            "tls_handshake",
+                            "tls_handshake_done",
+                            "tls_rst",
+                            "tls_spoof",
+                            "unknown",
+                            "slow",
+                            "stalled",
+                            "error"
+                          ]
+                        },
+                        "detail": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "none",
+                                "unclassified",
+                                "tcp_rst_on_client_hello",
+                                "dpi_closed_after_client_hello",
+                                "tcp_rst_on_connect",
+                                "tls_drop_handshake",
+                                "timeout_connection",
+                                "tls_rst_after_client_hello",
+                                "response_spoofing_wrong_version",
+                                "response_spoofing_garbage_data",
+                                "sni_block_unrecognized_name",
+                                "dpi_alert_handshake_failure",
+                                "protocol_version_alert",
+                                "fake_tls_alert",
+                                "no_root_certificates",
+                                "cert_expired",
+                                "self_signed_cert",
+                                "hostname_mismatch",
+                                "cert_spoofing",
+                                "transfer_eof",
+                                "handshake_eof",
+                                "server_has_no_tls13",
+                                "socket_pool_timeout",
+                                "tls_handshake_timeout",
+                                "tcp_syn_timeout",
+                                "syn_timeout",
+                                "timeout",
+                                "read_timeout_word",
+                                "write_timeout_word",
+                                "domain_not_found",
+                                "dns_timeout_unavailable",
+                                "dns_error",
+                                "tcp_connection_refused",
+                                "tcp_rst_after_handshake",
+                                "tcp_connection_reset",
+                                "connection_aborted",
+                                "tcp_connection_aborted",
+                                "net_unreachable",
+                                "host_unreachable",
+                                "icmp_admin_prohibited",
+                                "icmp_time_exceeded",
+                                "icmp_frag_needed",
+                                "icmp_parameter_problem",
+                                "unknown_connection_failure",
+                                "ipv6_unsupported",
+                                "quic_server_hello",
+                                "quic_retry",
+                                "quic_forged_retry",
+                                "quic_stateless_reset",
+                                "quic_version_negotiation",
+                                "quic_timeout",
+                                "quic_unreadable_reply",
+                                "quic_answered_without_handshake",
+                                "quic_port_unreachable",
+                                "isp_blockpage",
+                                "local_ip",
+                                "redirect_to_host",
+                                "upgrade_https",
+                                "http",
+                                "elapsed",
+                                "quic_close",
+                                "alert_close_notify",
+                                "alert_unexpected_message",
+                                "alert_bad_record_mac",
+                                "alert_decryption_failed",
+                                "alert_record_overflow",
+                                "alert_decompression_failure",
+                                "alert_handshake_failure",
+                                "alert_no_certificate",
+                                "alert_bad_certificate",
+                                "alert_unsupported_certificate",
+                                "alert_certificate_revoked",
+                                "alert_certificate_expired",
+                                "alert_certificate_unknown",
+                                "alert_illegal_parameter",
+                                "alert_unknown_ca",
+                                "alert_access_denied",
+                                "alert_decode_error",
+                                "alert_decrypt_error",
+                                "alert_export_restriction",
+                                "alert_protocol_version",
+                                "alert_insufficient_security",
+                                "alert_internal_error",
+                                "alert_inappropriate_fallback",
+                                "alert_user_canceled",
+                                "alert_no_renegotiation",
+                                "alert_missing_extension",
+                                "alert_unsupported_extension",
+                                "alert_certificate_unobtainable",
+                                "alert_unrecognised_name",
+                                "alert_bad_certificate_status_response",
+                                "alert_bad_certificate_hash_value",
+                                "alert_unknown_psk_identity",
+                                "alert_certificate_required",
+                                "alert_no_application_protocol",
+                                "alert_encrypted_client_hello_required",
+                                "tls_decrypt_error",
+                                "tls_invalid_message",
+                                "tls_inappropriate_message",
+                                "tls_inappropriate_handshake_message",
+                                "tls_peer_misbehaved",
+                                "tls_no_application_protocol"
+                              ]
+                            },
+                            "http_status": {
+                              "type": "integer",
+                              "minimum": 100,
+                              "maximum": 999
+                            },
+                            "elapsed_ms": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            },
+                            "at_kib": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1000000.0
+                            },
+                            "quic_error_code": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 999999999
+                            }
+                          },
+                          "required": [
+                            "code"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "detail"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": false
+                },
+                "direction": {
+                  "enum": [
+                    "download",
+                    "upload"
+                  ]
+                },
+                "profile": {
+                  "enum": [
+                    "rustls",
+                    "chrome146",
+                    "chrome133",
+                    "chrome131",
+                    "chrome131android",
+                    "chrome123",
+                    "chrome116",
+                    "chrome115pq",
+                    "chrome107",
+                    "chrome99android",
+                    "chrome87",
+                    "chrome72",
+                    "chrome70",
+                    "edge101",
+                    "firefox147",
+                    "firefox133",
+                    "firefox120",
+                    "firefox105",
+                    "firefox99",
+                    "firefox65",
+                    "go127",
+                    "safari260",
+                    "safari260ios",
+                    "safari184ios",
+                    "safari180",
+                    "safari172ios",
+                    "safari170",
+                    "safari155",
+                    "safari153",
+                    "tor145",
+                    "unknown"
+                  ]
+                },
+                "statuses": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "blocked",
+                      "connected",
+                      "detected",
+                      "dns_fail",
+                      "dns_fake",
+                      "err",
+                      "host_unreach",
+                      "http_payload",
+                      "init",
+                      "isp_page",
+                      "local_ip",
+                      "net_unreach",
+                      "no_ca_bundle",
+                      "no_tls13",
+                      "nxdomain",
+                      "ok",
+                      "os_err",
+                      "pool_timeout",
+                      "quic_closed",
+                      "quic_drop",
+                      "quic_ok",
+                      "quic_spoof",
+                      "quic_unsupported",
+                      "quic_vn",
+                      "read_timeout",
+                      "reading_data",
+                      "redir",
+                      "refused",
+                      "resolve",
+                      "send_timeout",
+                      "sending_data",
+                      "syn_dropped",
+                      "tcp16_20",
+                      "tcp_abort",
+                      "tcp_connect",
+                      "tcp_connected",
+                      "tcp_connecting",
+                      "tcp_rst",
+                      "timeout",
+                      "tls_abort",
+                      "tls_alert",
+                      "tls_block",
+                      "tls_client_hello_sent",
+                      "tls_connected",
+                      "tls_dropped",
+                      "tls_eof",
+                      "tls_err",
+                      "tls_handshake",
+                      "tls_handshake_done",
+                      "tls_rst",
+                      "tls_spoof",
+                      "unknown",
+                      "slow",
+                      "stalled",
+                      "error"
+                    ]
+                  },
+                  "maxItems": 100
+                }
+              },
+              "required": [
+                "target",
+                "metrics"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "observations": {
+            "type": "object",
+            "properties": {
+              "ipv4": {
+                "type": "boolean"
+              },
+              "ipv6": {
+                "type": "boolean"
+              },
+              "tun_observed": {
+                "type": "boolean"
+              },
+              "bypass_observed": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "ipv4",
+              "ipv6",
+              "tun_observed",
+              "bypass_observed"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "group",
+          "metrics",
+          "rows"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "dns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "domains": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "tcp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "sni": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "burst_domains": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "quic_unsupported": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "enum": [
+            "ru",
+            "ir",
+            "cn",
+            "global"
+          ]
+        },
+        "proxy_configured": {
+          "type": "boolean"
+        },
+        "interface_selected": {
+          "type": "boolean"
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "ipv4_latency_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "ipv6_latency_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "doh_ok": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "doh_total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "dot_ok": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "dot_total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "udp_ok": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "udp_total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "resolvers_total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "subst_sub": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "subst_total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "fakeip_sub": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "ok": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "detected_as": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "found_as": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "avg_bps": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "peak_bps": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "bytes": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "drop_at_sec": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "dc_reachable": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "dc_total": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "answered": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "attempts": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "gap_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "timeout_secs": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "elapsed_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "kb": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "received_kb": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "duration_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "read_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "connect_ms": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "max_concurrent": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            },
+            "timeout": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1000000000000.0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "profile",
+        "proxy_configured",
+        "interface_selected",
+        "metrics"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "type",
+    "detector_version",
+    "origin",
+    "started_at",
+    "finished_at",
+    "state",
+    "selected_tests",
+    "context",
+    "schema_version",
+    "groups",
+    "coverage",
+    "settings"
+  ],
+  "additionalProperties": false
+}

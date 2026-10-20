@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "release": "Release48.4",
+  "source": "https://github.com/pymumu/smartdns/tree/Release48.4",
+  "artifacts": {
+    "arm": {
+      "version": "1.2026.08.05-0921",
+      "url": "https://github.com/pymumu/smartdns/releases/download/Release48.4/smartdns.1.2026.08.05-0921.arm-optware-all.ipk",
+      "size": 8972782,
+      "sha256": "023aaafa1fa23f56c8a0246aca3bc30f288ca84f5a50e1a931d427e521034915",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "files": {
+        "lib/libatomic.so.1": {
+          "size": 165208,
+          "sha256": "f426d725a0c1288f3d5961e5ce16ca5b233463c00ca9d33885eaf4c6857ffc92"
+        },
+        "lib/libc.so": {
+          "size": 848536,
+          "sha256": "dd00054fbf810607cce398287998c006874524deed8a26b91441317412bc7d76"
+        },
+        "lib/libgcc_s.so.1": {
+          "size": 2740956,
+          "sha256": "d27d49a762b4b5c04867809c92f8de03ba8bf307a836329627aeb8388b39191c"
+        },
+        "smartdns": {
+          "size": 4655624,
+          "sha256": "5f53842e615d990ed912a38b9d7ac3ad6267a29870cfddad17e8660930cc349c"
+        }
+      },
+      "links": {
+        "lib/ld-musl-arm.so.1": "libc.so",
+        "lib/ld-linux.so": "ld-musl-arm.so.1"
+      },
+      "version_output": "smartdns 1.2026.08.05-0921 (Release48.4)"
+    },
+    "aarch64": {
+      "version": "1.2026.08.05-0921",
+      "url": "https://github.com/pymumu/smartdns/releases/download/Release48.4/smartdns.1.2026.08.05-0921.aarch64-optware-all.ipk",
+      "size": 9177430,
+      "sha256": "e194cde4e8c98ded79af509e98d90512bc078e0397317af2b69155144c087caf",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "files": {
+        "lib/libc.so": {
+          "size": 937808,
+          "sha256": "dba738c9938219a7e9a6887d8a9230ef6f48312c0f49bfd6a2b92a78f45a939e"
+        },
+        "lib/libgcc_s.so.1": {
+          "size": 452640,
+          "sha256": "75888f6711761ffb9b365b99b71d081576f168262746f3b9224fae2e1a22e139"
+        },
+        "smartdns": {
+          "size": 5709576,
+          "sha256": "8f15b9c37a256ed6bb08ae2dc398f61e932a6486ab08fa19e22f8f63f7758b2a"
+        }
+      },
+      "links": {
+        "lib/ld-musl-aarch64.so.1": "libc.so",
+        "lib/ld-linux.so": "ld-musl-aarch64.so.1"
+      },
+      "version_output": "smartdns 1.2026.08.05-0921 (Release48.4)"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "raw": {
+    "schema_version": 1,
+    "version": "v5.0.0-alpha.21",
+    "profile": "ru",
+    "tls_fingerprint": "rustls",
+    "results": {
+      "fingerprint_burst": {
+        "attempts": 4,
+        "tls": "PRIVATE_CANARY",
+        "alpn": "PRIVATE_CANARY",
+        "timeout_secs": 4,
+        "gap_ms": 250,
+        "profiles": [
+          "rustls"
+        ],
+        "domains": [
+          {
+            "domain": "example.com",
+            "resolved": "PRIVATE_CANARY",
+            "profiles": {
+              "rustls": {
+                "answered": 3,
+                "attempts": 4,
+                "statuses": [
+                  "ok",
+                  "ok",
+                  "ok",
+                  "PRIVATE_CANARY"
+                ],
+                "detail": "PRIVATE_CANARY"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "expected": {
+    "group": 6,
+    "attempts": 4,
+    "gap_ms": 250,
+    "rows": [
+      {
+        "target": "example.com",
+        "profile": "rustls",
+        "answered": 3,
+        "attempts": 4,
+        "statuses": [
+          "ok",
+          "ok",
+          "ok",
+          "unknown"
+        ],
+        "detail": "unknown"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Entware startup script
+
+PATH=/opt/sbin:/opt/bin:/opt/usr/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+NFQWS_BIN="/opt/usr/bin/nfqws2"
+CONFFILE="/opt/etc/nfqws2/nfqws2.conf"
+PIDFILE="/opt/var/run/nfqws2.pid"

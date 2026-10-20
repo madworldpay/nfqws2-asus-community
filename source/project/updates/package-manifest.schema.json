@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NFQWS2 ASUS signed package manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_version",
+    "core_version",
+    "web_version",
+    "build",
+    "notes",
+    "packages"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "package_version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]{0,5})\\.(?:0|[1-9][0-9]{0,5})\\.(?:0|[1-9][0-9]{0,5})-asus[1-9][0-9]{0,5}\\+b[1-9][0-9]{0,9}$",
+      "maxLength": 80
+    },
+    "core_version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]{0,5})\\.(?:0|[1-9][0-9]{0,5})\\.(?:0|[1-9][0-9]{0,5})-asus[1-9][0-9]{0,5}$",
+      "maxLength": 64
+    },
+    "web_version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]{0,5})\\.(?:0|[1-9][0-9]{0,5})\\.(?:0|[1-9][0-9]{0,5})$",
+      "maxLength": 32
+    },
+    "build": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "family",
+          "filename",
+          "size",
+          "sha256"
+        ],
+        "properties": {
+          "family": {
+            "enum": [
+              "aarch64-3.10",
+              "armv7"
+            ]
+          },
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^nfqws2-asus_[A-Za-z0-9.+-]+_(?:armv7|aarch64-3\\.10)\\.ipk$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 33554432
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "nfqws2_resources"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "\\S"
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "\\S"
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "purpose",
+        "operator",
+        "comment"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{32}$"
+          },
+          "kind": {
+            "enum": [
+              "lists",
+              "lua",
+              "blobs"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^/\\\\\u0000-\u001f]+$"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          },
+          "source_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_length": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 262144
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "data_base64": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+            "maxLength": 349528
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:RESOURCE|BLOB)_[1-9][0-9]{0,2}$"
+            },
+            "minItems": 0,
+            "maxItems": 128
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "encoding",
+          "source_sha256",
+          "byte_length",
+          "sha256",
+          "data_base64",
+          "aliases"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 128
+    },
+    "audit": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "enum": [
+            "static_explicit_references",
+            "files_only"
+          ]
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^dependency_[1-9][0-9]{0,2}$"
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:RESOURCE|BLOB)_[1-9][0-9]{0,2}$"
+                },
+                "minItems": 0,
+                "maxItems": 128
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "state": {
+                "enum": [
+                  "included",
+                  "not_selected",
+                  "missing",
+                  "outside",
+                  "unavailable"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "aliases",
+              "resource_id",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "kind": {
+                "enum": [
+                  "unsupported_syntax",
+                  "token_limit",
+                  "reference_limit",
+                  "unresolved_path",
+                  "missing_operand",
+                  "inline_lua",
+                  "duplicate_blob",
+                  "unresolved_blob_definition",
+                  "unresolved_variable",
+                  "unbound_blob",
+                  "inventory_partial"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            },
+            "required": [
+              "source",
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "missing_reason": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "complete": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scope",
+        "references",
+        "unresolved",
+        "missing_reason",
+        "complete"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "type",
+    "schema_version",
+    "context",
+    "files",
+    "audit"
+  ],
+  "additionalProperties": false
+}

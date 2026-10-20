@@ -1,0 +1,58 @@
+{
+  "raw": {
+    "schema_version": 1,
+    "version": "v5.0.0-alpha.21",
+    "profile": "ru",
+    "tls_fingerprint": "rustls",
+    "results": {
+      "dns_availability": {
+        "doh_ok": 2,
+        "doh_total": 3,
+        "dot_ok": 3,
+        "dot_total": 3,
+        "udp_ok": 3,
+        "udp_total": 3,
+        "resolvers_total": 9,
+        "subst_sub": 0,
+        "subst_total": 6,
+        "fakeip_sub": 0,
+        "hijacked_brands": [
+          "PRIVATE_CANARY"
+        ],
+        "failures": [
+          {
+            "provider": "Google",
+            "protocol": "doh_wire",
+            "endpoint": "PRIVATE_CANARY",
+            "ok": 0,
+            "total": 6,
+            "status": "tls_dropped",
+            "detail": "PRIVATE_CANARY"
+          }
+        ]
+      }
+    }
+  },
+  "expected": {
+    "group": 1,
+    "doh_ok": 2,
+    "doh_total": 3,
+    "dot_ok": 3,
+    "dot_total": 3,
+    "udp_ok": 3,
+    "udp_total": 3,
+    "resolvers_total": 9,
+    "subst_sub": 0,
+    "subst_total": 6,
+    "fakeip_sub": 0,
+    "failures": [
+      {
+        "target": "google-doh",
+        "ok": 0,
+        "total": 6,
+        "status": "tls_dropped",
+        "detail": "unknown"
+      }
+    ]
+  }
+}

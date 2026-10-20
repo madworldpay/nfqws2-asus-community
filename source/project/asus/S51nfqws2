@@ -1,0 +1,62 @@
+#!/opt/libexec/nfqws2-asus/busybox sh
+PATH=/opt/lib/nfqws2-asus/bin:/opt/sbin:/opt/bin:/opt/usr/sbin:/opt/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+umask 077
+set -f
+NFQWS_BIN=/opt/usr/bin/nfqws2
+CONFFILE=/opt/etc/nfqws2/nfqws2.conf
+# Runtime state stays in RAM even if Entware resides on a USB flash drive.
+RUN_DIR=/tmp/nfqws2-asus
+PIDFILE=$RUN_DIR/pid
+. /opt/lib/nfqws2-asus/platform.sh
+. /opt/lib/nfqws2-asus/lifecycle.sh
+. /opt/lib/nfqws2-asus/diagnostics.sh
+if [ "$1" = diagnostics ]; then
+    [ "$#" = 1 ] || exit 2
+    ASUS_DIAGNOSTIC_PROCESS=$(asus_diagnostic_process)
+    config=$CONFFILE
+    [ "$ASUS_DIAGNOSTIC_PROCESS" != true ] || config=$RUN_DIR/runtime.conf
+    queue=$(asus_diagnostic_queue "$config")
+    asus_diagnostics_json "$queue"
+    exit $?
+fi
+. /opt/lib/nfqws2-asus/compatibility.sh
+. /opt/lib/nfqws2-asus/legacy.sh
+asus_read_compatibility || :
+. /opt/lib/nfqws2-asus/args.sh
+
+case "$1" in
+    start|restart|check) config=$CONFFILE ;;
+    status|reconcile) config=$RUN_DIR/runtime.conf ;;
+    stop) config='' ;;
+    *) echo "Usage: $0 {start|stop|restart|status|check|reconcile|diagnostics}"; exit 2 ;;
+esac
+ASUS_CLIENT_MODE=all
+ASUS_CLIENTS4=''
+ASUS_CLIENTS6=''
+IPV6_ENABLED=0
+# Strategy-only imports may omit these package settings. Explicit config
+# values still override the defaults, including invalid values we must reject.
+NFQUEUE_NUM=300
+USER=nobody
+LOG_LEVEL=0
+if [ -n "$config" ] && [ -f "$config" ]; then
+    sh -n "$config" || exit 1
+    . "$config"
+elif [ "$1" != stop ] && [ "$1" != status ] && [ "$1" != reconcile ]; then
+    asus_error "Configuration missing: $config"; exit 1
+fi
+
+if [ "$1" = status ]; then asus_status; exit $?; fi
+if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
+    . /opt/lib/nfqws2-asus/update/lifecycle.sh || exit $?
+    asus_update_enter core "$1" || exit $?
+fi
+asus_lock || exit $?
+case "$1" in
+    check) asus_check ;;
+    start) asus_start ;;
+    stop) asus_stop ;;
+    restart) asus_validate && asus_stop && asus_start ;;
+    reconcile) asus_reconcile ;;
+esac

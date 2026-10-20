@@ -1,0 +1,28 @@
+<?php
+require __DIR__.'/support_report_fixture.php';
+require __DIR__.'/../webui/web/public/support-report-platform.php';
+require __DIR__.'/../webui/web/public/support-report-network.php';
+$io=new ReportFixtureIO();$v=new AsusReportValues();
+$io->commands['nvram']="wan0_state_t=2\nwan0_proto=pppoe\nwan0_pppoe_ifname=missing\nwan0_gw_ifname=private-iface\n";
+$io->commands['links']="2: private-iface: <BROADCAST,UP,LOWER_UP> mtu 1500\n3: private-lan: <UP> mtu 1500\n";
+$io->commands['addr4']="2: private-iface inet 192.168.1.1/24 brd 192.168.1.255 scope global private-iface\n";
+$io->commands['addr6']='';
+$io->commands['route4']="default via 192.168.1.254 dev private-iface\n192.168.1.0/24 dev private-iface scope link\n";
+$io->commands['route6']='';
+$io->files['tables4']="mangle\nnat\n";$io->files['tables6']='';
+$io->commands['rules4-mangle']="*mangle\n:PREROUTING ACCEPT [0:0]\n:nfqa_pre - [0:0]\n[1:1] -A PREROUTING -s 192.168.100.1 -m comment --comment CANARY -j ACCEPT\n[7:512] -A PREROUTING -j nfqa_pre\n[4294967296:18446744073709551615] -A nfqa_pre -i private-iface -s 192.168.1.9/32 -p tcp --dport 443 -j NFQUEUE --queue-num 300 --queue-bypass\nCOMMIT\n";
+$io->commands['rules4-nat']="*nat\nCOMMIT\n";
+$settings=['ISP_INTERFACE'=>'','ASUS_CLIENT_MODE'=>'include','ASUS_CLIENTS4'=>'192.168.1.9','ASUS_CLIENTS6'=>'','IPV6_ENABLED'=>'0','NFQUEUE_NUM'=>'300','TCP_PORTS'=>'443','UDP_PORTS'=>''];
+$s=(new AsusReportNetwork($io,$v))->collect($settings,$settings);
+reportCheck($s['network']['data']['wan']['auto']===true,'auto WAN');
+reportCheck($s['network']['data']['wan']['discovered']===['WAN_1'],'PPPoE fallback');
+reportCheck($s['network']['data']['clients'][0]['interface_overlap']===true,'client relationship');
+reportCheck($s['settings']['data']['saved']['ipv6_enabled']===false,'IPv6 processing');
+$rules=$s['rules']['data']['items'];
+reportCheck(count($rules)===2 && $rules[1]['packets']==='4294967296' && $rules[1]['bytes']==='18446744073709551615','exact counters and own rules only');
+reportCheck($rules[0]['preceding_terminal_count']===1,'parent aggregates');
+$json=json_encode($s);foreach(['192.168','private-iface','private-lan','CANARY'] as $bad) reportCheck(!str_contains($json,$bad),'no '.$bad);
+unset($io->commands['rules4-mangle']);
+$s=(new AsusReportNetwork($io,new AsusReportValues()))->collect($settings,[]);
+reportCheck($s['rules']['state']==='partial','unsupported save command gives partial');
+echo "PASS network/rules/privacy\n";

@@ -1,0 +1,30 @@
+# Enforce unique operationIds across all operations
+rules:
+  operation-operationId-unique:
+    severity: 'error'
+
+x-openapi-qraft:
+  plugin:
+    tanstack-query-react: true
+    openapi-typescript: true
+  clean: true
+apis:
+  nfqws:
+    root: openapi.yaml
+    x-openapi-qraft:
+      output-dir: src/api
+      explicit-component-exports: true
+      enum-values: true
+      queryable-write-operations: true
+      create-api-client-fn:
+        createAPIClient:
+          filename: create-api-client
+          services: all
+          callbacks: all
+        createRouterAPIClientBase:
+          filename: create-router-api-client-base
+          services: all
+          callbacks:
+            - ensureQueryData
+            - fetchQuery
+            - useQuery

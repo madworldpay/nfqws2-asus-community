@@ -1,0 +1,22 @@
+[
+  {
+    "file": "zlib-1.3.2-LICENSE.txt",
+    "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2",
+    "bytes": 1002
+  },
+  {
+    "file": "musl-1.2.5-COPYRIGHT.txt",
+    "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+    "bytes": 6204
+  },
+  {
+    "file": "gcc-15.2.0-COPYING3.txt",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "bytes": 35147
+  },
+  {
+    "file": "gcc-15.2.0-COPYING.RUNTIME.txt",
+    "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+    "bytes": 3324
+  }
+]

@@ -1,0 +1,25 @@
+<?php
+require __DIR__ . '/support_report_fixture.php';
+require __DIR__ . '/../webui/web/public/support-report-platform.php';
+$io = new ReportFixtureIO();
+$io->commands['nvram'] = "productid=GT-BE19000AI\nfirmver=3.0.0.6\nbuildno=102\nextendno=9_0\nsw_mode=1\nark_qoe_enable=1\nsecret=CANARY_SECRET\n";
+$io->files = ['kernel'=>"4.19.294\n",'modules'=>"ark 123 1 - Live 0xdeadbeef\n",'uptime'=>"1234.56 234\n",'pid'=>"345\n",'boot'=>'private-boot-uuid','baseline'=>json_encode(['schema_version'=>1,'package_version'=>'1.3.1-asus6+b3','engine'=>['sha256'=>str_repeat('a',64),'version'=>'1.0.5.2','provider'=>'nfqws2-keenetic'],'resources'=>[]])];
+$io->process[345] = ['exe'=>'/opt/usr/bin/nfqws2','status'=>"State:\tS (sleeping)\nUid:\t65534\t65534\t65534\t65534\n",'stat'=>'345 (secret process) S '.implode(' ',array_fill(0,18,'1')).' 999 0 0'];
+$io->inventory['list'] = ['CANARY_LIST.list'=>"example.invalid\nprivate.example\n"];
+$p=new AsusReportPlatform($io,new AsusReportValues()); $s=$p->collect();
+reportCheck($s['platform']['data']['model']==='GT-BE19000AI','model');
+reportCheck($s['ark']['data']['loaded']==='loaded','ARK runtime');
+reportCheck($s['ark']['data']['flags']['ark_qoe_enable']['value']==='1','ARK fixed value');
+reportCheck($s['ark']['data']['flags']['ark_ids_enable']['presence']==='absent','absent differs from empty');
+reportCheck($s['process']['data']['running']===true && $s['process']['data']['uid']===65534,'verified process');
+reportCheck($s['engine']['data']['baseline_match']===true,'manifest match');
+$encoded=json_encode($s);
+foreach (['CANARY','example.invalid','private-boot-uuid','secret process','0xdeadbeef','/opt/'] as $bad) reportCheck(!str_contains($encoded,$bad),'privacy '.$bad);
+$io->commands['nvram']="productid=CANARY_SECRET\nark_qoe_enable=CANARY_SECRET\n";
+$p=new AsusReportPlatform($io,new AsusReportValues());
+$s=$p->collect(); reportCheck($s['platform']['data']['model']==='ASUS-unknown','unknown model');
+reportCheck(!str_contains(json_encode($s),'CANARY'),'unknown values not exported');
+$io=new ReportFixtureIO(); $s=(new AsusReportPlatform($io,new AsusReportValues()))->collect();
+reportCheck($s['ark']['data']['loaded']==='unknown','missing modules means unknown');
+reportCheck($s['ark']['data']['flags']['ark_qoe_enable']['presence']==='unknown','unreadable NVRAM not absent');
+echo "PASS platform/privacy\n";

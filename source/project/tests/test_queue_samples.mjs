@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+assert.ok(existsSync(new URL('../webui/web/src/utils/queueSamples.ts', import.meta.url)), 'queue comparison behavior is missing');
+const { compareQueueSamples } = await import('../webui/web/src/utils/queueSamples.ts');
+const sample = (queue_number, sequence, state='bound') => ({queue_number, sequence, state});
+assert.deepEqual(compareQueueSamples(sample(300, 0), sample(300, 7)), {result:'increased', before:0, after:7, delta:7});
+assert.deepEqual(compareQueueSamples(sample(300, 0), sample(300, 0)), {result:'unchanged', before:0, after:0, delta:0});
+assert.deepEqual(compareQueueSamples(sample(300, 2147483648), sample(300, 4294967295)), {result:'increased', before:2147483648, after:4294967295, delta:2147483647});
+assert.deepEqual(compareQueueSamples(sample(300, 100), sample(300, 0)), {result:'reset'});
+assert.deepEqual(compareQueueSamples(sample(300, 1), sample(301, 2)), {result:'reset'});
+assert.deepEqual(compareQueueSamples(sample(300, null, 'unknown'), sample(300, 1)), {result:'unavailable'});
+assert.deepEqual(compareQueueSamples(sample(300, null, 'unbound'), sample(300, 1)), {result:'unavailable'});
+assert.deepEqual(compareQueueSamples(undefined, undefined), {result:'unavailable'});
+console.log('PASS: queue reception comparison (zero/uint32/reset/unknown)');

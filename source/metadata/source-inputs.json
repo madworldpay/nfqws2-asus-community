@@ -1,0 +1,124 @@
+[
+  {
+    "file": "busybox-1.37.0.tar.bz2",
+    "url": "https://busybox.net/downloads/busybox-1.37.0.tar.bz2",
+    "sha256": "3311dff32e746499f4df0d5df04d7eb396382d7e108bb9250e7b519b837043a4",
+    "bytes": 2565764,
+    "tar_members": 3047
+  },
+  {
+    "file": "busybox-1.36.1.tar.bz2",
+    "url": "https://busybox.net/downloads/busybox-1.36.1.tar.bz2",
+    "sha256": "b8cc24c9574d809e7279c3be349795c5d5ceb6fdf19ca709f80cde50e47de314",
+    "bytes": 2525473,
+    "tar_members": 2955
+  },
+  {
+    "file": "entware-36db8558.tar.gz",
+    "url": "https://codeload.github.com/Entware/Entware/tar.gz/36db8558ac7840d993cb11df1e47e0326d681077",
+    "sha256": "87bdd04df26846d8ac691da0a69209ad26ced1db910bb6050be5f11639d3aef0",
+    "bytes": 2622426,
+    "tar_members": 3071
+  },
+  {
+    "file": "entware-legacy-cb2ce7f6.tar.gz",
+    "url": "https://codeload.github.com/Entware/Entware/tar.gz/cb2ce7f6f062ed4342a686aa68d895d16ba91f64",
+    "sha256": "9be696556ae68050477b5ec78f8b4ddee5d7f23783c55c5c936467dd6e9a20f2",
+    "bytes": 2134315,
+    "tar_members": 2695
+  },
+  {
+    "file": "zapret2-6b6c63e3.tar.gz",
+    "url": "https://codeload.github.com/bol-van/zapret2/tar.gz/6b6c63e3385fa73f8af3be4a69171e947f5a319d",
+    "sha256": "389a833121ee19979a9f5bf6f9c8d0c12cc1ceeacc1244d1bf23f7728b621f70",
+    "bytes": 651456,
+    "tar_members": 298
+  },
+  {
+    "file": "luajit2-2.1-20250826.tar.gz",
+    "url": "https://codeload.github.com/openresty/luajit2/tar.gz/refs/tags/v2.1-20250826",
+    "sha256": "5a49743ad6ce4b7f19aac71b55a08052c1feb62750f051982082c12bf62f39c0",
+    "bytes": 1164966,
+    "tar_members": 273
+  },
+  {
+    "file": "zlib-1.3.2.tar.gz",
+    "url": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.2",
+    "sha256": "b99a0b86c0ba9360ec7e78c4f1e43b1cbdf1e6936c8fa0f6835c0cd694a495a1",
+    "bytes": 1566911,
+    "tar_members": 299
+  },
+  {
+    "file": "musl-cross-bcd3603b.tar.gz",
+    "url": "https://codeload.github.com/bol-van/musl-cross/tar.gz/bcd3603b026c7c6d25b022a1c32d26be69673aa6",
+    "sha256": "31df6b08e478b3818650b7d3d7a2c3b94498df30464210dab4bbfd2a90ad11d5",
+    "bytes": 5898706,
+    "tar_members": 2866
+  },
+  {
+    "file": "musl-1.2.5.tar.gz",
+    "url": "https://musl.libc.org/releases/musl-1.2.5.tar.gz",
+    "sha256": "a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4",
+    "bytes": 1080786,
+    "tar_members": 2933
+  },
+  {
+    "file": "lighttpd-1.4.82.tar.xz",
+    "url": "https://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-1.4.82.tar.xz",
+    "sha256": "abfe74391f9cbd66ab154ea07e64f194dbe7e906ef4ed47eb3b0f3b46246c962",
+    "bytes": 883352,
+    "tar_members": 357
+  },
+  {
+    "file": "lighttpd-1.4.71.tar.xz",
+    "url": "https://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-1.4.71.tar.xz",
+    "sha256": "b8b6915da20396fdc354df3324d5e440169b2e5ea7859e3a775213841325afac",
+    "bytes": 1070904,
+    "tar_members": 362
+  },
+  {
+    "file": "libmnl-1.0.5.tar.bz2",
+    "url": "https://www.netfilter.org/pub/libmnl/libmnl-1.0.5.tar.bz2",
+    "sha256": "274b9b919ef3152bfb3da3a13c950dd60d6e2bcd54230ffeca298d03b40d0525",
+    "bytes": 314791
+  },
+  {
+    "file": "libnfnetlink-1.0.2.tar.bz2",
+    "url": "https://www.netfilter.org/pub/libnfnetlink/libnfnetlink-1.0.2.tar.bz2",
+    "sha256": "b064c7c3d426efb4786e60a8e6859b82ee2f2c5e49ffeea640cfe4fe33cbc376",
+    "bytes": 298844
+  },
+  {
+    "file": "libnetfilter_queue-1.0.5.tar.bz2",
+    "url": "https://www.netfilter.org/pub/libnetfilter_queue/libnetfilter_queue-1.0.5.tar.bz2",
+    "sha256": "f9ff3c11305d6e03d81405957bdc11aea18e0d315c3e3f48da53a24ba251b9f5",
+    "bytes": 313856
+  },
+  {
+    "file": "dpi-detector-a09d03b5-source.tar.gz",
+    "url": "https://github.com/Runnin4ik/dpi-detector/tree/a09d03b58d452c71bd63a9b3d410713dd22049f6",
+    "sha256": "baeb1f8fe0624224b7079c2fac5da40bf15350447774117720cfaa3a4c4657d4",
+    "bytes": 1590761,
+    "note": "Original source archive, unchanged; upstream public AGENTS.md retained."
+  },
+  {
+    "file": "linux-merlin-26e1f3f1-kernel-sdk.tar.gz",
+    "sha256": "1e4a483cc690beec2c6f1b0c185360d27e54ba21e7813560f50998e09becee54",
+    "bytes": 92176048,
+    "note": "Locally assembled from verified public upstream source inputs."
+  },
+  {
+    "file": "dpi-cargo-cache-linux-arm.tar.gz",
+    "sha256": "396ad3e0148f10715cdfa9d00d46b0b49a03804045c8a998848cb69ffbcbe855",
+    "bytes": 20181402,
+    "note": "Locally assembled from verified public upstream source inputs."
+  },
+  {
+    "file": "smartdns-Release48.4-source.tar.gz",
+    "url": "https://codeload.github.com/pymumu/smartdns/tar.gz/21c940edc65520849ba03544c5cf8d9cf326e680",
+    "commit": "21c940edc65520849ba03544c5cf8d9cf326e680",
+    "tag": "Release48.4",
+    "sha256": "f4cb3ec5d2c49bf9752f717cfa1ae2e393df0a001de7ab626b9039cc0bf3ef52",
+    "bytes": 906935
+  }
+]

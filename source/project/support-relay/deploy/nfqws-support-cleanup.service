@@ -1,0 +1,25 @@
+[Unit]
+Description=Expire NFQWS2 relay metadata
+
+[Service]
+Type=oneshot
+User=nfqws-support
+Group=nfqws-support
+WorkingDirectory=/usr/local/lib/nfqws-support
+Environment=PYTHONPATH=/usr/local/lib/nfqws-support/support-relay/src
+ExecStart=/usr/local/lib/nfqws-support/venv/bin/python -m nfqws_support.cleanup
+StateDirectory=nfqws-support
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadOnlyPaths=/tmp /var/tmp
+ReadWritePaths=/var/lib/nfqws-support
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+CapabilityBoundingSet=
+MemoryMax=128M
+LimitCORE=0

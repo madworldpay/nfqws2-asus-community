@@ -1,0 +1,730 @@
+{
+  "schema_version": 1,
+  "source": "DPI Detector v5.0.0-alpha.21",
+  "source_commit": "a09d03b58d452c71bd63a9b3d410713dd22049f6",
+  "source_sha256": "52707b3e160db4402d8b84d79b735a5c83c704195c3f292e66f9227f81354f6c",
+  "native_source_sha256": "f273f8d65cd0077ea53075f2f952879675335058def1bacc3d4747b0b054b5c5",
+  "bootstrap_source_sha256": "e307beac3efc4de94271d235afdc7089470b03bd3c242ff4f77d85c2b878242b",
+  "presets": [
+    {
+      "id": "google-doh",
+      "label": "Google — DoH",
+      "protocol": "doh",
+      "address": "dns.google",
+      "port": 443,
+      "tls_name": "dns.google",
+      "url": "https://dns.google/dns-query",
+      "bootstrap": ["8.8.8.8"]
+    },
+    {
+      "id": "google-dot",
+      "label": "Google — DoT",
+      "protocol": "dot",
+      "address": "dns.google",
+      "port": 853,
+      "tls_name": "dns.google",
+      "url": "",
+      "bootstrap": ["8.8.8.8"]
+    },
+    {
+      "id": "cloudflare-doh",
+      "label": "Cloudflare — DoH",
+      "protocol": "doh",
+      "address": "cloudflare-dns.com",
+      "port": 443,
+      "tls_name": "cloudflare-dns.com",
+      "url": "https://cloudflare-dns.com/dns-query",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "cloudflare-dot",
+      "label": "Cloudflare — DoT",
+      "protocol": "dot",
+      "address": "cloudflare-dns.com",
+      "port": 853,
+      "tls_name": "cloudflare-dns.com",
+      "url": "",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "quad9-doh",
+      "label": "Quad9 — DoH",
+      "protocol": "doh",
+      "address": "dns.quad9.net",
+      "port": 443,
+      "tls_name": "dns.quad9.net",
+      "url": "https://dns.quad9.net/dns-query",
+      "bootstrap": ["9.9.9.9"]
+    },
+    {
+      "id": "quad9-dot",
+      "label": "Quad9 — DoT",
+      "protocol": "dot",
+      "address": "dns.quad9.net",
+      "port": 853,
+      "tls_name": "dns.quad9.net",
+      "url": "",
+      "bootstrap": ["9.9.9.9"]
+    },
+    {
+      "id": "dpi-doh-74f48bdf58d0",
+      "label": "AdGuard (F) — DOH · family.adguard-dns.com",
+      "protocol": "doh",
+      "address": "family.adguard-dns.com",
+      "port": 443,
+      "tls_name": "family.adguard-dns.com",
+      "url": "https://family.adguard-dns.com/dns-query",
+      "bootstrap": ["94.140.14.15"]
+    },
+    {
+      "id": "dpi-dot-e4a4a40c97c1",
+      "label": "AdGuard (F) — DOT · family.adguard-dns.com",
+      "protocol": "dot",
+      "address": "family.adguard-dns.com",
+      "port": 853,
+      "tls_name": "family.adguard-dns.com",
+      "url": "",
+      "bootstrap": ["94.140.14.15"]
+    },
+    {
+      "id": "dpi-doh-32c6b015030e",
+      "label": "AdGuard (L) — DOH · dns.adguard.com",
+      "protocol": "doh",
+      "address": "dns.adguard.com",
+      "port": 443,
+      "tls_name": "dns.adguard.com",
+      "url": "https://dns.adguard.com/dns-query",
+      "bootstrap": ["94.140.14.14", "94.140.15.15"]
+    },
+    {
+      "id": "dpi-dot-870411710ff9",
+      "label": "AdGuard (L) — DOT · dns.adguard.com",
+      "protocol": "dot",
+      "address": "dns.adguard.com",
+      "port": 853,
+      "tls_name": "dns.adguard.com",
+      "url": "",
+      "bootstrap": ["94.140.14.14", "94.140.15.15"]
+    },
+    {
+      "id": "dpi-doh-6e44898cdc25",
+      "label": "AdGuard (UN) — DOH · unfiltered.adguard-dns.com",
+      "protocol": "doh",
+      "address": "unfiltered.adguard-dns.com",
+      "port": 443,
+      "tls_name": "unfiltered.adguard-dns.com",
+      "url": "https://unfiltered.adguard-dns.com/dns-query",
+      "bootstrap": ["94.140.14.140"]
+    },
+    {
+      "id": "dpi-dot-498b88d2a26e",
+      "label": "AdGuard (UN) — DOT · unfiltered.adguard-dns.com",
+      "protocol": "dot",
+      "address": "unfiltered.adguard-dns.com",
+      "port": 853,
+      "tls_name": "unfiltered.adguard-dns.com",
+      "url": "",
+      "bootstrap": ["94.140.14.140"]
+    },
+    {
+      "id": "dpi-doh-33e891008b1a",
+      "label": "AdGuard — DOH · dns.adguard-dns.com",
+      "protocol": "doh",
+      "address": "dns.adguard-dns.com",
+      "port": 443,
+      "tls_name": "dns.adguard-dns.com",
+      "url": "https://dns.adguard-dns.com/dns-query",
+      "bootstrap": ["94.140.14.14", "94.140.15.15"]
+    },
+    {
+      "id": "dpi-dot-c6dbd530283f",
+      "label": "AdGuard — DOT · dns.adguard-dns.com",
+      "protocol": "dot",
+      "address": "dns.adguard-dns.com",
+      "port": 853,
+      "tls_name": "dns.adguard-dns.com",
+      "url": "",
+      "bootstrap": ["94.140.14.14", "94.140.15.15"]
+    },
+    {
+      "id": "dpi-doh-8fb2538f1414",
+      "label": "Alibaba — DOH · dns.alidns.com",
+      "protocol": "doh",
+      "address": "dns.alidns.com",
+      "port": 443,
+      "tls_name": "dns.alidns.com",
+      "url": "https://dns.alidns.com/dns-query",
+      "bootstrap": ["223.5.5.5", "223.6.6.6"]
+    },
+    {
+      "id": "dpi-dot-32fcc8c18505",
+      "label": "Alibaba — DOT · dns.alidns.com",
+      "protocol": "dot",
+      "address": "dns.alidns.com",
+      "port": 853,
+      "tls_name": "dns.alidns.com",
+      "url": "",
+      "bootstrap": ["223.5.5.5", "223.6.6.6"]
+    },
+    {
+      "id": "dpi-doh-e690612909be",
+      "label": "CleanBrowsing — DOH · doh.cleanbrowsing.org",
+      "protocol": "doh",
+      "address": "doh.cleanbrowsing.org",
+      "port": 443,
+      "tls_name": "doh.cleanbrowsing.org",
+      "url": "https://doh.cleanbrowsing.org/doh/security-filter",
+      "bootstrap": ["185.228.168.9", "185.228.169.9"]
+    },
+    {
+      "id": "dpi-dot-9bc2f434f4ce",
+      "label": "CleanBrowsing — DOT · security-filter-dns.cleanbrowsing.org",
+      "protocol": "dot",
+      "address": "security-filter-dns.cleanbrowsing.org",
+      "port": 853,
+      "tls_name": "security-filter-dns.cleanbrowsing.org",
+      "url": "",
+      "bootstrap": ["185.228.168.9", "185.228.169.9"]
+    },
+    {
+      "id": "dpi-doh-89de1781c71d",
+      "label": "Cloudflare (M) — DOH · mozilla.cloudflare-dns.com",
+      "protocol": "doh",
+      "address": "mozilla.cloudflare-dns.com",
+      "port": 443,
+      "tls_name": "mozilla.cloudflare-dns.com",
+      "url": "https://mozilla.cloudflare-dns.com/dns-query",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-doh-692701ec53a8",
+      "label": "Cloudflare (S) — DOH · security.cloudflare-dns.com",
+      "protocol": "doh",
+      "address": "security.cloudflare-dns.com",
+      "port": 443,
+      "tls_name": "security.cloudflare-dns.com",
+      "url": "https://security.cloudflare-dns.com/dns-query",
+      "bootstrap": ["1.1.1.2", "1.0.0.2"]
+    },
+    {
+      "id": "dpi-dot-08786feee754",
+      "label": "Cloudflare (S) — DOT · security.cloudflare-dns.com",
+      "protocol": "dot",
+      "address": "security.cloudflare-dns.com",
+      "port": 853,
+      "tls_name": "security.cloudflare-dns.com",
+      "url": "",
+      "bootstrap": ["1.1.1.2", "1.0.0.2"]
+    },
+    {
+      "id": "dpi-doh-657086b51566",
+      "label": "Cloudflare dns — DOH · dns.cloudflare.com",
+      "protocol": "doh",
+      "address": "dns.cloudflare.com",
+      "port": 443,
+      "tls_name": "dns.cloudflare.com",
+      "url": "https://dns.cloudflare.com/dns-query",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-doh-ef45bc4697b2",
+      "label": "Cloudflare dot — DOH · 1dot1dot1dot1.cloudflare-dns.com",
+      "protocol": "doh",
+      "address": "1dot1dot1dot1.cloudflare-dns.com",
+      "port": 443,
+      "tls_name": "1dot1dot1dot1.cloudflare-dns.com",
+      "url": "https://1dot1dot1dot1.cloudflare-dns.com/dns-query",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-dot-fc0575c2d6e8",
+      "label": "Cloudflare dot — DOT · 1dot1dot1dot1.cloudflare-dns.com",
+      "protocol": "dot",
+      "address": "1dot1dot1dot1.cloudflare-dns.com",
+      "port": 853,
+      "tls_name": "1dot1dot1dot1.cloudflare-dns.com",
+      "url": "",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-doh-fb82cb819cc2",
+      "label": "Cloudflare IP 2 — DOH · 1.0.0.1",
+      "protocol": "doh",
+      "address": "1.0.0.1",
+      "port": 443,
+      "tls_name": "cloudflare-dns.com",
+      "url": "https://1.0.0.1/dns-query",
+      "bootstrap": ["1.0.0.1"]
+    },
+    {
+      "id": "dpi-dot-4e908f91d8f2",
+      "label": "Cloudflare IP 2 — DOT · 1.0.0.1",
+      "protocol": "dot",
+      "address": "1.0.0.1",
+      "port": 853,
+      "tls_name": "cloudflare-dns.com",
+      "url": "",
+      "bootstrap": ["1.0.0.1"]
+    },
+    {
+      "id": "dpi-doh-21b8d4e809e5",
+      "label": "Cloudflare IP — DOH · 1.1.1.1",
+      "protocol": "doh",
+      "address": "1.1.1.1",
+      "port": 443,
+      "tls_name": "cloudflare-dns.com",
+      "url": "https://1.1.1.1/dns-query",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-dot-8bf704a0b632",
+      "label": "Cloudflare IP — DOT · 1.1.1.1",
+      "protocol": "dot",
+      "address": "1.1.1.1",
+      "port": 853,
+      "tls_name": "cloudflare-dns.com",
+      "url": "",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-doh-c0d6f5a01c30",
+      "label": "Cloudflare one — DOH · one.one.one.one",
+      "protocol": "doh",
+      "address": "one.one.one.one",
+      "port": 443,
+      "tls_name": "one.one.one.one",
+      "url": "https://one.one.one.one/dns-query",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-dot-1ebc82ac6191",
+      "label": "Cloudflare one — DOT · one.one.one.one",
+      "protocol": "dot",
+      "address": "one.one.one.one",
+      "port": 853,
+      "tls_name": "one.one.one.one",
+      "url": "",
+      "bootstrap": ["1.1.1.1"]
+    },
+    {
+      "id": "dpi-doh-58cadc2d68a8",
+      "label": "Comss.one — DOH · dns.comss.one",
+      "protocol": "doh",
+      "address": "dns.comss.one",
+      "port": 443,
+      "tls_name": "dns.comss.one",
+      "url": "https://dns.comss.one/dns-query",
+      "bootstrap": ["83.220.169.155", "212.109.195.93"]
+    },
+    {
+      "id": "dpi-doh-418ef0e714db",
+      "label": "Comss.one — DOH · doh.comss.one",
+      "protocol": "doh",
+      "address": "doh.comss.one",
+      "port": 443,
+      "tls_name": "doh.comss.one",
+      "url": "https://doh.comss.one/dns-query",
+      "bootstrap": ["83.220.169.155", "212.109.195.93"]
+    },
+    {
+      "id": "dpi-dot-62f1af3762d8",
+      "label": "Comss.one — DOT · dns.comss.one",
+      "protocol": "dot",
+      "address": "dns.comss.one",
+      "port": 853,
+      "tls_name": "dns.comss.one",
+      "url": "",
+      "bootstrap": ["83.220.169.155", "212.109.195.93"]
+    },
+    {
+      "id": "dpi-doh-58cbd38d5988",
+      "label": "ControlD — DOH · freedns.controld.com",
+      "protocol": "doh",
+      "address": "freedns.controld.com",
+      "port": 443,
+      "tls_name": "freedns.controld.com",
+      "url": "https://freedns.controld.com/p0",
+      "bootstrap": ["76.76.2.11", "76.76.10.11"]
+    },
+    {
+      "id": "dpi-dot-27d15c146e94",
+      "label": "ControlD — DOT · freedns.controld.com",
+      "protocol": "dot",
+      "address": "freedns.controld.com",
+      "port": 853,
+      "tls_name": "freedns.controld.com",
+      "url": "",
+      "bootstrap": ["76.76.2.11", "76.76.10.11"]
+    },
+    {
+      "id": "dpi-doh-7b89e76335a6",
+      "label": "DNS.SB — DOH · dns.sb",
+      "protocol": "doh",
+      "address": "dns.sb",
+      "port": 443,
+      "tls_name": "dns.sb",
+      "url": "https://dns.sb/dns-query",
+      "bootstrap": ["185.222.222.222", "45.11.45.11"]
+    },
+    {
+      "id": "dpi-dot-1408d2c68e0d",
+      "label": "DNS.SB — DOT · dot.sb",
+      "protocol": "dot",
+      "address": "dot.sb",
+      "port": 853,
+      "tls_name": "dot.sb",
+      "url": "",
+      "bootstrap": ["185.222.222.222", "45.11.45.11"]
+    },
+    {
+      "id": "dpi-doh-477d0ed0dce1",
+      "label": "DNS4all — DOH · doh.dns4all.eu",
+      "protocol": "doh",
+      "address": "doh.dns4all.eu",
+      "port": 443,
+      "tls_name": "doh.dns4all.eu",
+      "url": "https://doh.dns4all.eu/dns-query",
+      "bootstrap": ["194.0.5.3"]
+    },
+    {
+      "id": "dpi-dot-5b6dd83163a6",
+      "label": "DNS4all — DOT · dot.dns4all.eu",
+      "protocol": "dot",
+      "address": "dot.dns4all.eu",
+      "port": 853,
+      "tls_name": "dot.dns4all.eu",
+      "url": "",
+      "bootstrap": ["194.0.5.3"]
+    },
+    {
+      "id": "dpi-doh-39820413851e",
+      "label": "dnsforge — DOH · dnsforge.de",
+      "protocol": "doh",
+      "address": "dnsforge.de",
+      "port": 443,
+      "tls_name": "dnsforge.de",
+      "url": "https://dnsforge.de/dns-query",
+      "bootstrap": ["176.9.93.198"]
+    },
+    {
+      "id": "dpi-dot-bda4642d4d9d",
+      "label": "dnsforge — DOT · dnsforge.de",
+      "protocol": "dot",
+      "address": "dnsforge.de",
+      "port": 853,
+      "tls_name": "dnsforge.de",
+      "url": "",
+      "bootstrap": ["176.9.93.198"]
+    },
+    {
+      "id": "dpi-doh-65c2861b9186",
+      "label": "Geohide — DOH · dns.geohide.ru",
+      "protocol": "doh",
+      "address": "dns.geohide.ru",
+      "port": 444,
+      "tls_name": "dns.geohide.ru",
+      "url": "https://dns.geohide.ru:444/dns-query",
+      "bootstrap": ["45.155.204.190"]
+    },
+    {
+      "id": "dpi-dot-d6eed3fc6273",
+      "label": "Geohide — DOT · dns.geohide.ru",
+      "protocol": "dot",
+      "address": "dns.geohide.ru",
+      "port": 853,
+      "tls_name": "dns.geohide.ru",
+      "url": "",
+      "bootstrap": ["45.155.204.190"]
+    },
+    {
+      "id": "dpi-doh-ad18c79dda58",
+      "label": "Gesellschaft — DOH · dns.digitale-gesellschaft.ch",
+      "protocol": "doh",
+      "address": "dns.digitale-gesellschaft.ch",
+      "port": 443,
+      "tls_name": "dns.digitale-gesellschaft.ch",
+      "url": "https://dns.digitale-gesellschaft.ch/dns-query",
+      "bootstrap": ["185.95.218.42", "185.95.218.43"]
+    },
+    {
+      "id": "dpi-dot-3a54adec3a8b",
+      "label": "Gesellschaft — DOT · dns.digitale-gesellschaft.ch",
+      "protocol": "dot",
+      "address": "dns.digitale-gesellschaft.ch",
+      "port": 853,
+      "tls_name": "dns.digitale-gesellschaft.ch",
+      "url": "",
+      "bootstrap": ["185.95.218.42", "185.95.218.43"]
+    },
+    {
+      "id": "dpi-dot-9ee48efafbb0",
+      "label": "Google — DOT · 8.8.4.4",
+      "protocol": "dot",
+      "address": "8.8.4.4",
+      "port": 853,
+      "tls_name": "dns.google",
+      "url": "",
+      "bootstrap": ["8.8.4.4"]
+    },
+    {
+      "id": "dpi-dot-34e7c3b3b29e",
+      "label": "Google — DOT · 8.8.8.8",
+      "protocol": "dot",
+      "address": "8.8.8.8",
+      "port": 853,
+      "tls_name": "dns.google",
+      "url": "",
+      "bootstrap": ["8.8.8.8"]
+    },
+    {
+      "id": "dpi-doh-f9ebdfa9d2b9",
+      "label": "LibreDNS — DOH · doh.libredns.gr",
+      "protocol": "doh",
+      "address": "doh.libredns.gr",
+      "port": 443,
+      "tls_name": "doh.libredns.gr",
+      "url": "https://doh.libredns.gr/dns-query",
+      "bootstrap": ["116.202.176.26"]
+    },
+    {
+      "id": "dpi-dot-c4364fbc9398",
+      "label": "LibreDNS — DOT · dot.libredns.gr",
+      "protocol": "dot",
+      "address": "dot.libredns.gr",
+      "port": 853,
+      "tls_name": "dot.libredns.gr",
+      "url": "",
+      "bootstrap": ["116.202.176.26"]
+    },
+    {
+      "id": "dpi-doh-51725bdb1224",
+      "label": "Mullvad — DOH · dns.mullvad.net",
+      "protocol": "doh",
+      "address": "dns.mullvad.net",
+      "port": 443,
+      "tls_name": "dns.mullvad.net",
+      "url": "https://dns.mullvad.net/dns-query",
+      "bootstrap": ["194.242.2.2"]
+    },
+    {
+      "id": "dpi-dot-b058d38cda37",
+      "label": "Mullvad — DOT · dns.mullvad.net",
+      "protocol": "dot",
+      "address": "dns.mullvad.net",
+      "port": 853,
+      "tls_name": "dns.mullvad.net",
+      "url": "",
+      "bootstrap": ["194.242.2.2"]
+    },
+    {
+      "id": "dpi-doh-7c95e2fda9d3",
+      "label": "NextDNS — DOH · dns.nextdns.io",
+      "protocol": "doh",
+      "address": "dns.nextdns.io",
+      "port": 443,
+      "tls_name": "dns.nextdns.io",
+      "url": "https://dns.nextdns.io/dns-query",
+      "bootstrap": ["45.90.28.0", "45.90.30.0"]
+    },
+    {
+      "id": "dpi-dot-85f6a1519144",
+      "label": "NextDNS — DOT · dns.nextdns.io",
+      "protocol": "dot",
+      "address": "dns.nextdns.io",
+      "port": 853,
+      "tls_name": "dns.nextdns.io",
+      "url": "",
+      "bootstrap": ["45.90.28.0", "45.90.30.0"]
+    },
+    {
+      "id": "dpi-doh-38a8a55286ec",
+      "label": "OpenDNS — DOH · dns.opendns.com",
+      "protocol": "doh",
+      "address": "dns.opendns.com",
+      "port": 443,
+      "tls_name": "dns.opendns.com",
+      "url": "https://dns.opendns.com/dns-query",
+      "bootstrap": ["208.67.220.220", "208.67.222.222"]
+    },
+    {
+      "id": "dpi-doh-3bfe576fea8f",
+      "label": "OpenDNS — DOH · doh.opendns.com",
+      "protocol": "doh",
+      "address": "doh.opendns.com",
+      "port": 443,
+      "tls_name": "doh.opendns.com",
+      "url": "https://doh.opendns.com/dns-query",
+      "bootstrap": ["208.67.220.220", "208.67.222.222"]
+    },
+    {
+      "id": "dpi-dot-98d37b890ff9",
+      "label": "OpenDNS — DOT · dns.opendns.com",
+      "protocol": "dot",
+      "address": "dns.opendns.com",
+      "port": 853,
+      "tls_name": "dns.opendns.com",
+      "url": "",
+      "bootstrap": ["208.67.220.220", "208.67.222.222"]
+    },
+    {
+      "id": "dpi-doh-c857d73d7d3f",
+      "label": "Quad9 (S) — DOH · dns11.quad9.net",
+      "protocol": "doh",
+      "address": "dns11.quad9.net",
+      "port": 443,
+      "tls_name": "dns11.quad9.net",
+      "url": "https://dns11.quad9.net/dns-query",
+      "bootstrap": ["9.9.9.11"]
+    },
+    {
+      "id": "dpi-dot-b34c8ef2edc2",
+      "label": "Quad9 (S) — DOT · dns11.quad9.net",
+      "protocol": "dot",
+      "address": "dns11.quad9.net",
+      "port": 853,
+      "tls_name": "dns11.quad9.net",
+      "url": "",
+      "bootstrap": ["9.9.9.11"]
+    },
+    {
+      "id": "dpi-doh-37e9101e5da8",
+      "label": "Quad9 (UN) — DOH · dns10.quad9.net",
+      "protocol": "doh",
+      "address": "dns10.quad9.net",
+      "port": 443,
+      "tls_name": "dns10.quad9.net",
+      "url": "https://dns10.quad9.net/dns-query",
+      "bootstrap": ["9.9.9.10"]
+    },
+    {
+      "id": "dpi-dot-2a7c95ff9368",
+      "label": "Quad9 (UN) — DOT · dns10.quad9.net",
+      "protocol": "dot",
+      "address": "dns10.quad9.net",
+      "port": 853,
+      "tls_name": "dns10.quad9.net",
+      "url": "",
+      "bootstrap": ["9.9.9.10"]
+    },
+    {
+      "id": "dpi-doh-1c746bc25fb5",
+      "label": "Quad9 (UN2) — DOH · dns12.quad9.net",
+      "protocol": "doh",
+      "address": "dns12.quad9.net",
+      "port": 443,
+      "tls_name": "dns12.quad9.net",
+      "url": "https://dns12.quad9.net/dns-query",
+      "bootstrap": ["9.9.9.12"]
+    },
+    {
+      "id": "dpi-dot-a3adfe51ccca",
+      "label": "Quad9 (UN2) — DOT · dns12.quad9.net",
+      "protocol": "dot",
+      "address": "dns12.quad9.net",
+      "port": 853,
+      "tls_name": "dns12.quad9.net",
+      "url": "",
+      "bootstrap": ["9.9.9.12"]
+    },
+    {
+      "id": "dpi-doh-8bc1a93dfae9",
+      "label": "UncensoredDNS — DOH · anycast.uncensoreddns.org",
+      "protocol": "doh",
+      "address": "anycast.uncensoreddns.org",
+      "port": 443,
+      "tls_name": "anycast.uncensoreddns.org",
+      "url": "https://anycast.uncensoreddns.org/dns-query",
+      "bootstrap": ["91.239.100.100"]
+    },
+    {
+      "id": "dpi-dot-b1643e3830e8",
+      "label": "UncensoredDNS — DOT · unicast.censurfridns.dk",
+      "protocol": "dot",
+      "address": "unicast.censurfridns.dk",
+      "port": 853,
+      "tls_name": "unicast.censurfridns.dk",
+      "url": "",
+      "bootstrap": ["89.233.43.71"]
+    },
+    {
+      "id": "dpi-doh-097cf6051d25",
+      "label": "Wikimedia — DOH · wikimedia-dns.org",
+      "protocol": "doh",
+      "address": "wikimedia-dns.org",
+      "port": 443,
+      "tls_name": "wikimedia-dns.org",
+      "url": "https://wikimedia-dns.org/dns-query",
+      "bootstrap": ["185.71.138.138"]
+    },
+    {
+      "id": "dpi-dot-0b93ae7e7017",
+      "label": "Wikimedia — DOT · wikimedia-dns.org",
+      "protocol": "dot",
+      "address": "wikimedia-dns.org",
+      "port": 853,
+      "tls_name": "wikimedia-dns.org",
+      "url": "",
+      "bootstrap": ["185.71.138.138"]
+    },
+    {
+      "id": "dpi-doh-5a458ea8a216",
+      "label": "XboxDNS (RU) — DOH · xbox-dns.ru",
+      "protocol": "doh",
+      "address": "xbox-dns.ru",
+      "port": 443,
+      "tls_name": "xbox-dns.ru",
+      "url": "https://xbox-dns.ru/dns-query",
+      "bootstrap": ["111.88.96.55"]
+    },
+    {
+      "id": "dpi-dot-78d48a061f32",
+      "label": "XboxDNS (RU) — DOT · xbox-dns.ru",
+      "protocol": "dot",
+      "address": "xbox-dns.ru",
+      "port": 853,
+      "tls_name": "xbox-dns.ru",
+      "url": "",
+      "bootstrap": ["111.88.96.55"]
+    },
+    {
+      "id": "dpi-doh-a2ec8ec2e460",
+      "label": "Yandex (Safe) — DOH · safe.dot.dns.yandex.net",
+      "protocol": "doh",
+      "address": "safe.dot.dns.yandex.net",
+      "port": 443,
+      "tls_name": "safe.dot.dns.yandex.net",
+      "url": "https://safe.dot.dns.yandex.net/dns-query",
+      "bootstrap": ["77.88.8.88"]
+    },
+    {
+      "id": "dpi-dot-5bb3f2c732aa",
+      "label": "Yandex (Safe) — DOT · safe.dot.dns.yandex.net",
+      "protocol": "dot",
+      "address": "safe.dot.dns.yandex.net",
+      "port": 853,
+      "tls_name": "safe.dot.dns.yandex.net",
+      "url": "",
+      "bootstrap": ["77.88.8.88"]
+    },
+    {
+      "id": "dpi-doh-ef5118bd0067",
+      "label": "Yandex — DOH · common.dot.dns.yandex.net",
+      "protocol": "doh",
+      "address": "common.dot.dns.yandex.net",
+      "port": 443,
+      "tls_name": "common.dot.dns.yandex.net",
+      "url": "https://common.dot.dns.yandex.net/dns-query",
+      "bootstrap": ["77.88.8.1", "77.88.8.8"]
+    },
+    {
+      "id": "dpi-dot-719f9d529336",
+      "label": "Yandex — DOT · common.dot.dns.yandex.net",
+      "protocol": "dot",
+      "address": "common.dot.dns.yandex.net",
+      "port": 853,
+      "tls_name": "common.dot.dns.yandex.net",
+      "url": "",
+      "bootstrap": ["77.88.8.1", "77.88.8.8"]
+    }
+  ]
+}

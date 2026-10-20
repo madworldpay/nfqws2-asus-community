@@ -1,0 +1,118 @@
+{
+  "files": [
+    {
+      "file": "BUILD-IMPACT.md",
+      "bytes": 2296,
+      "sha256": "4f44073493ac85542c578e6fd70c87ef266c065ed981078e98c718410c5f2c39"
+    },
+    {
+      "file": "CHANGELOG.md",
+      "bytes": 1912,
+      "sha256": "1c46128aacaf50210eb0030a128e8b64983880813708e3fc3cf5f8bdff56a2f3"
+    },
+    {
+      "file": "COMPATIBILITY.md",
+      "bytes": 2062,
+      "sha256": "0c20283b46df58574314fbd7ce2639a12714a8247979175cc22c86092128bd3e"
+    },
+    {
+      "file": "DIAGNOSTICS.md",
+      "bytes": 2174,
+      "sha256": "73d41c3efdc850c38e20d5911a8ffc83b44bb25feda8a548f51dc201cdcabea0"
+    },
+    {
+      "file": "DOMRU.md",
+      "bytes": 2230,
+      "sha256": "afee7e82098e8227d3d12aabfb0164c18dee9300626676b00b6531f5377e0aeb"
+    },
+    {
+      "file": "DOWNLOADS.md",
+      "bytes": 1127,
+      "sha256": "7c1ef0341d098575288bed91ee4c61abd696d273653f2c8f3e09cf1dd14fd545"
+    },
+    {
+      "file": "DPI-DETECTOR.md",
+      "bytes": 1972,
+      "sha256": "31e45331afff05367d319e32f17ed5d7851e2264509dc754b58c25f6bed1e063"
+    },
+    {
+      "file": "IMPORT.md",
+      "bytes": 3366,
+      "sha256": "c3bd9dde57cc3039c34a32db0f2e67279891e98fa285523606067e6cc41071c3"
+    },
+    {
+      "file": "INSTALL.md",
+      "bytes": 3366,
+      "sha256": "5920dc30aca7105f426c208fb4a4307ec0f32cdd55508319cc885021e73c3625"
+    },
+    {
+      "file": "LICENSE",
+      "bytes": 1778,
+      "sha256": "7ba68d733517c49e0a84fac9331d46a1bbd8997edb302b9b69e09da6c30a479c"
+    },
+    {
+      "file": "PACKAGE-UPDATES.md",
+      "bytes": 2405,
+      "sha256": "296edb5f769dba5494ad3a33fa746f538a81ff6666e09432da0804c4b399df85"
+    },
+    {
+      "file": "QUICKSTART.md",
+      "bytes": 2331,
+      "sha256": "2216ea4c0520e7c434cfec0479550fabc1e768f939bd31c31ec07edd9e81ee53"
+    },
+    {
+      "file": "README.md",
+      "bytes": 3145,
+      "sha256": "b72eb4dbbf4f5bad7eff60553a2647dff355ab5b4fe43b4df18754e63e20eaed"
+    },
+    {
+      "file": "ROADMAP.md",
+      "bytes": 647,
+      "sha256": "f623d0d73a56b22744e7103343b2e8ae4ae0fe1375526e02d4282bdee28aa5d3"
+    },
+    {
+      "file": "SMARTDNS.md",
+      "bytes": 6756,
+      "sha256": "9ac9ba055fef52cc534b29ca4354dbe8b66916251a8df84a229e49ea2894b4ab"
+    },
+    {
+      "file": "THIRD-PARTY-NOTICES.txt",
+      "bytes": 4151210,
+      "sha256": "05cbef1762140a78a8f3b80b67bd602e521eb2ef68e1c622ff23a9b7e01604c6"
+    },
+    {
+      "file": "UPSTREAM.md",
+      "bytes": 9350,
+      "sha256": "29721ffd2ae32c1ff601512e075c4579ed2a463cd1365fb38ca847d7b6bdd97e"
+    },
+    {
+      "file": "USAGE.md",
+      "bytes": 2358,
+      "sha256": "680f251979ee29ed6d98d8fc83ca75a49c56abe5b90efcc75a11ac76d0dec3b4"
+    },
+    {
+      "file": "build.svg",
+      "bytes": 424,
+      "sha256": "f5720bca5cfe4494c2cb346231e4763db0013d39d7f5efb71312a057009298d1"
+    },
+    {
+      "file": "domru.json",
+      "bytes": 77229,
+      "sha256": "ba8b3b1b42a1d269249c6681a2a8e72623b3dfd93f0859502c2e260f7a5844b6"
+    },
+    {
+      "file": "status.svg",
+      "bytes": 401,
+      "sha256": "bb1f7093adb04e800866547c4d20c39c01bdb98c7d6f91beb64e80894e1eeae4"
+    },
+    {
+      "file": "version.svg",
+      "bytes": 418,
+      "sha256": "28f28c48fd2ea5f95aaa92b467c2895997124d35d8c74a29524345a5d5356b88"
+    }
+  ],
+  "excluded": [
+    "SHA256SUMS"
+  ],
+  "reason": "The distribution checksum list is generated externally after the final source archive to avoid a circular digest."
+}

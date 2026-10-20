@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ -x /opt/etc/init.d/S51nfqws2 ]; then
+    /opt/etc/init.d/S51nfqws2 stop || exit $?
+fi
+exit 0

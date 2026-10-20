@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "version": "v5.0.0-alpha.21",
+  "commit": "a09d03b58d452c71bd63a9b3d410713dd22049f6",
+  "profile_version": 1,
+  "profile_sha256": "ded05adce47a4c562adf53b67a36dac6330152a4dbff28e10f1debb244ebaca6",
+  "default_groups": [
+    1,
+    2
+  ],
+  "groups": [
+    {
+      "id": 0,
+      "key": "network_info",
+      "heavy": false
+    },
+    {
+      "id": 1,
+      "key": "dns_availability",
+      "heavy": false
+    },
+    {
+      "id": 2,
+      "key": "domain_inspection",
+      "heavy": false
+    },
+    {
+      "id": 3,
+      "key": "tcp16",
+      "heavy": false
+    },
+    {
+      "id": 4,
+      "key": "whitelist_sni",
+      "heavy": false
+    },
+    {
+      "id": 5,
+      "key": "telegram",
+      "heavy": true
+    },
+    {
+      "id": 6,
+      "key": "fingerprint_burst",
+      "heavy": true
+    }
+  ],
+  "profile": {
+    "dns": [
+      {
+        "id": "google-udp",
+        "provider": "Google",
+        "protocol": "udp",
+        "endpoint": "8.8.8.8"
+      },
+      {
+        "id": "google-doh",
+        "provider": "Google",
+        "protocol": "doh_wire",
+        "endpoint": "https://dns.google/dns-query"
+      },
+      {
+        "id": "google-dot",
+        "provider": "Google",
+        "protocol": "dot",
+        "endpoint": "dns.google"
+      },
+      {
+        "id": "cloudflare-udp",
+        "provider": "Cloudflare",
+        "protocol": "udp",
+        "endpoint": "1.1.1.1"
+      },
+      {
+        "id": "cloudflare-doh",
+        "provider": "Cloudflare",
+        "protocol": "doh_wire",
+        "endpoint": "https://cloudflare-dns.com/dns-query"
+      },
+      {
+        "id": "cloudflare-dot",
+        "provider": "Cloudflare",
+        "protocol": "dot",
+        "endpoint": "cloudflare-dns.com"
+      },
+      {
+        "id": "quad9-udp",
+        "provider": "Quad9",
+        "protocol": "udp",
+        "endpoint": "9.9.9.9"
+      },
+      {
+        "id": "quad9-doh",
+        "provider": "Quad9",
+        "protocol": "doh_wire",
+        "endpoint": "https://dns.quad9.net/dns-query"
+      },
+      {
+        "id": "quad9-dot",
+        "provider": "Quad9",
+        "protocol": "dot",
+        "endpoint": "dns.quad9.net"
+      }
+    ],
+    "domains": [
+      "example.com",
+      "google.com",
+      "youtube.com",
+      "discord.com",
+      "github.com",
+      "t.me"
+    ],
+    "tcp": [
+      {
+        "id": "HE-01",
+        "asn": "24940☆",
+        "provider": "Hetzner",
+        "ip": "91.98.156.82",
+        "port": 443
+      },
+      {
+        "id": "CF-01",
+        "asn": "13335",
+        "provider": "Cloudflare",
+        "ip": "172.67.70.222",
+        "port": 443
+      },
+      {
+        "id": "CDN-02",
+        "asn": "60068",
+        "provider": "CDN77 #1",
+        "ip": "195.181.167.155",
+        "port": 443
+      },
+      {
+        "id": "AK-01",
+        "asn": "20940☆",
+        "provider": "Akamai 1",
+        "ip": "23.222.76.4",
+        "port": 443
+      },
+      {
+        "id": "AWS-02",
+        "asn": "16509☆",
+        "provider": "AWS 1",
+        "ip": "3.165.188.250",
+        "port": 443
+      },
+      {
+        "id": "FST-03",
+        "asn": "54113",
+        "provider": "Fastly GitHub 108",
+        "ip": "185.199.108.133",
+        "port": 443,
+        "sni": "release-assets.githubusercontent.com"
+      },
+      {
+        "id": "GC-01",
+        "asn": "396982",
+        "provider": "Google Cloud",
+        "ip": "147.189.239.240",
+        "port": 443
+      },
+      {
+        "id": "OVH-01",
+        "asn": "16276",
+        "provider": "OVH",
+        "ip": "5.196.63.68",
+        "port": 443
+      }
+    ],
+    "sni": [
+      "hcaptcha.com",
+      "vk.com",
+      "2gis.com",
+      "2gis.ru",
+      "300.ya.ru",
+      "ad.adriver.ru",
+      "3475482542.mc.yandex.ru",
+      "742231.ms.ok.ru",
+      "a.wb.ru",
+      "ad.mail.ru",
+      "adm.mp.rzd.ru",
+      "akashi.vk-portal.net",
+      "alfabank.ru",
+      "web.max.ru",
+      "ams2-cdn.2gis.com",
+      "an.yandex.ru"
+    ]
+  },
+  "statuses": [
+    "blocked",
+    "connected",
+    "detected",
+    "dns_fail",
+    "dns_fake",
+    "err",
+    "host_unreach",
+    "http_payload",
+    "init",
+    "isp_page",
+    "local_ip",
+    "net_unreach",
+    "no_ca_bundle",
+    "no_tls13",
+    "nxdomain",
+    "ok",
+    "os_err",
+    "pool_timeout",
+    "quic_closed",
+    "quic_drop",
+    "quic_ok",
+    "quic_spoof",
+    "quic_unsupported",
+    "quic_vn",
+    "read_timeout",
+    "reading_data",
+    "redir",
+    "refused",
+    "resolve",
+    "send_timeout",
+    "sending_data",
+    "syn_dropped",
+    "tcp16_20",
+    "tcp_abort",
+    "tcp_connect",
+    "tcp_connected",
+    "tcp_connecting",
+    "tcp_rst",
+    "timeout",
+    "tls_abort",
+    "tls_alert",
+    "tls_block",
+    "tls_client_hello_sent",
+    "tls_connected",
+    "tls_dropped",
+    "tls_eof",
+    "tls_err",
+    "tls_handshake",
+    "tls_handshake_done",
+    "tls_rst",
+    "tls_spoof",
+    "unknown"
+  ],
+  "details": [
+    "access_denied",
+    "bad_certificate",
+    "bad_certificate_hash_value",
+    "bad_certificate_status_response",
+    "bad_record_mac",
+    "certificate_expired",
+    "certificate_required",
+    "certificate_revoked",
+    "certificate_unknown",
+    "certificate_unobtainable",
+    "close_notify",
+    "decode_error",
+    "decompression_failure",
+    "decrypt_error",
+    "decryption_failed",
+    "encrypted_client_hello_required",
+    "export_restriction",
+    "handshake_failure",
+    "illegal_parameter",
+    "inappropriate_fallback",
+    "inappropriate_handshake_message",
+    "inappropriate_message",
+    "insufficient_security",
+    "internal_error",
+    "invalid_message",
+    "missing_extension",
+    "no_application_protocol",
+    "no_certificate",
+    "no_renegotiation",
+    "peer_misbehaved",
+    "protocol_version",
+    "record_overflow",
+    "unexpected_message",
+    "unknown",
+    "unknown_ca",
+    "unknown_psk_identity",
+    "unrecognised_name",
+    "unsupported_certificate",
+    "unsupported_extension",
+    "user_canceled"
+  ],
+  "fingerprints": [
+    "rustls",
+    "custom",
+    "chrome",
+    "safari"
+  ],
+  "artifacts": {
+    "aarch64-3.10": {
+      "name": "dpi-detector-linux-arm64",
+      "size": 6339000,
+      "sha256": "721e005cee83a72d17b403a26bd051fed280f9fd44218d517329f0a60f8ea27a",
+      "elf_machine": 183,
+      "elf_class": 2,
+      "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-arm64"
+    },
+    "armv7-2.6": {
+      "name": "dpi-detector-armv5te",
+      "size": 3778448,
+      "sha256": "c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863",
+      "elf_machine": 40,
+      "elf_class": 1,
+      "source": "bundled-legacy",
+      "source_commit": "a09d03b58d452c71bd63a9b3d410713dd22049f6",
+      "build_target": "armv5te-unknown-linux-musleabi",
+      "accepted_installed": [
+        {
+          "name": "dpi-detector-linux-armv7",
+          "size": 3762124,
+          "sha256": "296fb0305c7e11addeaf74724f8884a3d0bfcd3efad88a10d54b3384e0d1f896",
+          "elf_machine": 40,
+          "elf_class": 1,
+          "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-armv7"
+        }
+      ]
+    },
+    "armv7-3.2": {
+      "name": "dpi-detector-linux-armv7",
+      "size": 3762124,
+      "sha256": "296fb0305c7e11addeaf74724f8884a3d0bfcd3efad88a10d54b3384e0d1f896",
+      "elf_machine": 40,
+      "elf_class": 1,
+      "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-armv7"
+    }
+  }
+}

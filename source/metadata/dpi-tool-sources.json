@@ -1,0 +1,26 @@
+{
+  "rust": {
+    "version": "1.98.1 (48a229cea 2026-09-01)",
+    "source": {
+      "available": true,
+      "url": "https://static.rust-lang.org/dist/2026-09-03/rust-src-1.98.1.tar.gz",
+      "hash": "411c3dccf3782ed6eb784357999cd1bffeb65a6dd55196817992a6421c0f9689",
+      "xz_url": "https://static.rust-lang.org/dist/2026-09-03/rust-src-1.98.1.tar.xz",
+      "xz_hash": "5c846ebcebcc7e2e0777a4cdaa12051691593f16a7e94edbae5e6241cc62d98c"
+    }
+  },
+  "zig": {
+    "version": "0.13.0",
+    "source": {
+      "tarball": "https://ziglang.org/download/0.13.0/zig-0.13.0.tar.xz",
+      "shasum": "06c73596beeccb71cc073805bdb9c0e05764128f16478fa53bf17dfabc1d4318",
+      "size": "17220728"
+    },
+    "build_host_binary_reference_only": {
+      "tarball": "https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz",
+      "shasum": "d45312e61ebcc48032b77bc4cf7fd6915c11fa16e4aad116b66c9468211230ea",
+      "size": "47082308"
+    }
+  },
+  "note": "Compiler binaries are not included in this kit. Source references describe build tools; runtime notices remain in project/THIRD-PARTY-NOTICES.txt."
+}

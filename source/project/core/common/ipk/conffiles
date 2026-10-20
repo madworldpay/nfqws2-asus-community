@@ -1,0 +1,6 @@
+/opt/etc/nfqws2/nfqws2.conf
+/opt/etc/nfqws2/lists/user.list
+/opt/etc/nfqws2/lists/auto.list
+/opt/etc/nfqws2/lists/exclude.list
+/opt/etc/nfqws2/lists/ipset.list
+/opt/etc/nfqws2/lists/ipset_exclude.list
