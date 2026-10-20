@@ -1,0 +1,61 @@
+start() {
+  if is_running; then
+    echo 'Service NFQWS2 is already running' >&2
+    return 1
+  fi
+
+  validate_config || return 1
+  create_running_config
+  kernel_modules
+
+  $NFQWS_BIN --daemon --pidfile=$PIDFILE $(_startup_args)
+
+  firewall_iptables
+  firewall_ip6tables
+  system_config
+
+  echo 'Started NFQWS2 service'
+}
+
+stop() {
+  firewall_stop
+
+  if ! is_running; then
+    echo 'Service NFQWS2 is not running' >&2
+    return 1
+  fi
+
+  echo 'Stopping NFQWS2 service...'
+  kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
+  remove_running_config
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status_service
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  firewall_iptables)
+    firewall_iptables
+    ;;
+  firewall_ip6tables)
+    firewall_ip6tables
+    ;;
+  firewall_stop)
+    firewall_stop
+    ;;
+  kernel_modules)
+    kernel_modules
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+esac
