@@ -154,7 +154,7 @@
       "runtime_clear": "The ARK module is not loaded. You can check NFQUEUE packet reception and the service you need.",
       "unavailable_flags_note": "{{disabled}} of 9 functions are confirmed disabled. Some settings are absent or unavailable on this firmware; this does not mean ARK is enabled. See the table below for details.",
       "ready": "All 9 ARK features are disabled and the ARK module is not loaded. Preparation is confirmed. Check packet reception and bypass separately.",
-      "reboot_required": "All 9 ARK features are disabled, but the ARK module is still loaded. Reboot ASUS manually through its stock panel, then click “Check ARK”.",
+      "reboot_required": "Preparation is complete. Reboot ASUS manually through its stock panel: all 9 features are disabled, but the ARK module is still loaded. Then click “Check ARK”.",
       "runtime_unknown": "All 9 ARK features are disabled, but the module state is unknown. Preparation is not confirmed. Click “Check ARK” again.",
       "flags_enabled": "Enabled ARK features: {{enabled}} of 9. Preparation is not confirmed. ARK module: {{runtime}}. Use backup and preparation below, then reboot ASUS manually and check again.",
       "flags_unknown": "{{disabled}} of 9 ARK features are confirmed disabled. Other settings are absent or unavailable; disabling all features is not confirmed. ARK module: {{runtime}}. Check again.",
@@ -218,7 +218,9 @@
     "queue_reset": "The queue or counter changed/reset. Repeat the check.",
     "queue_unavailable": "Cannot check: the queue is unbound or its counter is unavailable.",
     "internal_flag_help_title": "Why is the IDS value unknown?",
-    "internal_flag_help": "Unknown means that the firmware did not expose this internal flag or its value could not be read. It does not confirm that IDS is enabled or that a fault was detected. The ARK module state and actual NFQUEUE packet reception are shown separately."
+    "internal_flag_help": "Unknown means that the firmware did not expose this internal flag or its value could not be read. It does not confirm that IDS is enabled or that a fault was detected. The ARK module state and actual NFQUEUE packet reception are shown separately.",
+    "runtime_loaded_title": "ARK is loaded",
+    "runtime_loaded_hint": "The ARK module may prevent packets from reaching NFQUEUE. Open “ASUS preparation”. A running NFQWS2 process alone does not confirm bypass."
   },
   "requirements": {
     "title": "Getting started",
@@ -456,7 +458,7 @@
     "link_installation": "Link to previous submissions",
     "link_help": "Includes a random code for this installation to connect repeat reports. It is not derived from an IP, MAC or serial number. Unchecked means no code is sent. Model and firmware help compare results; a submitted strategy is not yet verified.",
     "preview": "Preview",
-    "preview_steps": "First click Preview and review the files — this enables Send. If you change your selection or text, preview the files again.",
+    "preview_steps": "First click Preview and review the files. Sending requires a preview and a configured channel with format v4 support. Preview again after changing your selection or text.",
     "preview_hint": "These are the materials sent only after you click Send. Review text and comments: free text may contain personal information you entered.",
     "source": "Model, firmware and submission details",
     "partial": "These are the available results. A partial report does not mean other tests failed.",
@@ -562,8 +564,15 @@
     "clear_selection": "Clear selection",
     "select_blobs": "Select all blobs",
     "clear_blobs": "Clear blobs",
-    "preview_help": "Select at least one item. For strategies, files or DNS, enter the purpose and provider. Preview shows only your selection; download and sending become available afterwards. Preview again after editing.",
-    "resources_help": "Lists contain domains or IPs. Blobs are packet templates used by certain strategy methods. You can select just one file; other files are not attached automatically. Bundled Lua is already part of the package."
+    "preview_help": "Select at least one item. For strategies, files or DNS, enter the purpose and provider. Preview shows only your selection and lets you save JSON. Sending also requires a configured channel with v4 support. Preview again after editing.",
+    "resources_help": "Lists contain domains or IPs. Blobs are packet templates used by certain strategy methods. You can select just one file; other files are not attached automatically. Bundled Lua is already part of the package.",
+    "mail_availability": {
+      "not_configured": "Sending channel is not configured. Preview and JSON saving remain available; sending requires channel configuration on the router.",
+      "v4_unsupported": "The channel is configured, but format v4 is not enabled. Preview and JSON saving remain available; update the channel settings to send.",
+      "https_unavailable": "Sending is unavailable: HTTPS (TLS) or trusted certificates are unavailable on the router. Preview and JSON saving remain available.",
+      "invalid_config": "Invalid sending configuration. Check it on the router. Preview and JSON saving remain available.",
+      "unavailable": "Sending is currently unavailable. Preview and JSON saving remain available. Refresh the panel status."
+    }
   },
   "smartdns": {
     "intro": "SmartDNS is a separate utility installed and configured by this panel. Assign DNS to specific sites and pin IP addresses: up to 32 DNS servers, 256 domain-to-DNS assignments and 64 fixed replies.",
@@ -651,7 +660,8 @@
       "busy": "Another operation is in progress. Wait for it to finish and refresh the status.",
       "timed_out": "The operation timed out. The panel is reading the actual router state; check the DNS restoration message.",
       "restart": "dnsmasq did not confirm the switch. Check the DNS state and retry.",
-      "memory": "Not enough memory to run the check. Retry later or use a smaller profile. Router DNS was not switched."
+      "memory": "Not enough memory to run the check. Retry later or use a smaller profile. Router DNS was not switched.",
+      "hook_permissions": "Check the DNS script owner and permissions: root ownership and no group or other write access are required (usually 755). The panel did not change DNS."
     },
     "checkup": {
       "title": "Router checkup",
