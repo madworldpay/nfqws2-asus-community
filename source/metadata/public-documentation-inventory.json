@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 2772,
-      "sha256": "932f3827b9d68c9122200b74665e99a28d775195ca671c22ca9377e9dc90de5b"
+      "bytes": 3956,
+      "sha256": "7a2a69ca3f6658133f6e9a032ba9dc342fa43b4d291d71d83bb9d81484494ad7"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -17,8 +17,8 @@
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 2174,
-      "sha256": "73d41c3efdc850c38e20d5911a8ffc83b44bb25feda8a548f51dc201cdcabea0"
+      "bytes": 2660,
+      "sha256": "cdd6290c87b0b8bb2f26059df08fbb8078cd98466ade216a123c1d8e38d13fd8"
     },
     {
       "file": "DOMRU.md",
@@ -28,7 +28,7 @@
     {
       "file": "DOWNLOADS.md",
       "bytes": 1199,
-      "sha256": "6c1438ac8456ac44823b35cb1d7cc7d1fa5254271fd895ff374b514ed6611ed1"
+      "sha256": "93e88137aa8cf9578c4e38ba4d4116f7c839ae0ff7d3c2d2a80479bf3f71d628"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -42,8 +42,8 @@
     },
     {
       "file": "INSTALL.md",
-      "bytes": 3597,
-      "sha256": "93a41765b59dff915e72e71a67efc7a86f6871c5214860e01fc9d2c4f53e7bf6"
+      "bytes": 3888,
+      "sha256": "22e6e651db49aa3292322cfcb2a38a55550a13a24d2469a63f11c3cae6821060"
     },
     {
       "file": "LICENSE",
@@ -52,8 +52,8 @@
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 3033,
-      "sha256": "156ff1cdc1b5bfe869a9282b6c466c181ecd3c4e798e5ddd79f07c7bfab3d5c8"
+      "bytes": 3329,
+      "sha256": "0aaf385ca59bbe5a81600d7219b49f987271a5985ab161cde0faae0afca48347"
     },
     {
       "file": "QUICKSTART.md",
@@ -63,7 +63,7 @@
     {
       "file": "README.md",
       "bytes": 3297,
-      "sha256": "22176d9a310980765d0215892d6162de42bd1399ed8b92ad4d27d08e0ed2b9d0"
+      "sha256": "3b91584439b7057d68381ef31cf09c4d0d04a02349562adff27f5ba3ea85b8ab"
     },
     {
       "file": "ROADMAP.md",
@@ -93,7 +93,7 @@
     {
       "file": "build.svg",
       "bytes": 385,
-      "sha256": "3c72bdab0491914cdb2759962e876bec1c78b9f239ee2be48617ff76f5c60805"
+      "sha256": "24a8aee9148bcad1c44e8361dda0e031c4854043ce5ea9245ca34b58da9da461"
     },
     {
       "file": "domru.json",
@@ -113,5 +113,6 @@
   ],
   "excluded": [
     "SHA256SUMS"
-  ]
+  ],
+  "checksum_note": "Archive documentation checksum snapshot covers unchanged release IPKs and profile. Canonical full release SHA256SUMS is generated after archive verification and signing."
 }

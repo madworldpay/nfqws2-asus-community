@@ -1,79 +1,70 @@
 {
-  "build": 64,
-  "inherited_component_verification": "verification-build62.json",
-  "project_files": 585,
+  "build": 65,
+  "inherited_component_verification": "verification-build64.json",
+  "project_files": 588,
   "package_reproduced_byte_for_byte": [
     "aarch64-3.10",
     "armv7"
   ],
+  "changes": [
+    "missing config and required default lists recovery with atomic publication",
+    "specific safe SmartDNS baseline errors",
+    "nullable ARK runtime status and warning",
+    "manual Send channel and availability reasons"
+  ],
   "physical_router_evidence": {
-    "routers": [
-      "RT-AC87U",
-      "GT-BE19000AI"
-    ],
-    "reboot_performed": false,
-    "pc_routes_vpn_changed": false,
-    "user_config_lists_auth_unchanged": true,
-    "release": "1.3.1-asus6+b64",
     "rt_ac87u": {
-      "normal_remove_then_install": true,
-      "private_busybox_absent_before_install": true,
-      "without_force": true,
-      "core_restored_running_queue_bound": true,
-      "smartdns_reconnected_after_test_from_previous_saved_intent": true
+      "ordinary_upgrade64_to65": true,
+      "tested_artifact": "first65 candidate before channel-default-only respin",
+      "final_executable_code_byte_identical": true,
+      "final_delta": "support-relay.json default and control Installed-Size only",
+      "preserved_operator_conffile_equals_final_default": true,
+      "core_running_queue300_bound_nonzero": true,
+      "web_running": true,
+      "managed_smartdns_profile_preserved_and_confirmed": true,
+      "saved_settings_bytes_owner_mode_preserved": true,
+      "reboot_performed": false
     },
-    "gt_be19000ai": {
-      "normal_upgrade": true,
-      "previously_stopped_core_preserved": true,
-      "smartdns_restored_confirmed": true
-    },
-    "smartdns_profiles": {
-      "servers": 15,
-      "records": 10,
-      "profile_hash_preserved_on_both": true,
-      "fresh_native_dns53_answers_on_both": true
-    },
-    "ui": {
-      "default_reset_changes_form_only": true,
-      "startup_and_ipset_preserved": true,
-      "custom_strategy_reset_empty": true,
-      "complete_config_clipboard_equal_live_file": true,
-      "copied_bytes": 6695,
-      "single_editor": true,
-      "fold_gutter_absent": true
-    },
-    "scope": "Install, migration, update transport and UI validation. Not evidence of sustained bypass, video, UDP or IPv6."
+    "aarch64_exact_final_artifact": "not physically verified at this local preparation checkpoint",
+    "missing_config_branch": "real offline opkg and engine preflight; no deliberate live userdata deletion",
+    "scope": "Not evidence of application bypass, speed, UDP/IPv6 or long-term stability."
   },
   "test_evidence": {
-    "package_update": {
-      "per_runtime": 154,
+    "fresh_final_package_conffile_reinstall_tests": {
+      "tests": 43,
+      "skipped": 0,
+      "result": "pass"
+    },
+    "independent_smartdns_connect_api_baseline": {
+      "tests_per_runtime": 37,
       "runtimes": [
         "aarch64",
         "armv7-3.2",
         "armv7-2.6"
       ],
-      "total": 462,
+      "total": 111,
       "result": "pass"
     },
-    "migration_host_and_real_control_elf_regressions": {
-      "tests": 28,
+    "independent_runtime_status": {
+      "tests_per_runtime": 2,
+      "runtimes": [
+        "aarch64",
+        "armv7-3.2",
+        "armv7-2.6"
+      ],
+      "total": 6,
       "result": "pass"
     },
-    "package_structure": {
-      "tests": 16,
-      "result": "pass"
-    },
-    "frontend_node_suites": {
-      "suites": 26,
-      "result": "pass"
-    },
-    "frontend_typescript_eslint_production_build": "pass",
-    "independent_reviews": [
-      "update database parser and public transport",
-      "control bootstrap reader bounds",
-      "migration and reinstall behavior",
-      "selective config save and visual section spacing"
+    "independent_node_ui_suites": [
+      "ark_readiness",
+      "share_availability",
+      "share_ui"
     ],
-    "ipk_reproduction": "byte-for-byte for both families"
+    "native_Send_or_email_attempted": false,
+    "reviews": [
+      "atomic defaults/reinstall",
+      "safe DNS error mapping",
+      "UI/status/privacy/manual-Send gates"
+    ]
   }
 }
