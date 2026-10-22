@@ -4,6 +4,12 @@ Separate operator service; it is never included in the router IPK. The community
 package provides a fixed HTTPS endpoint for manual submissions. Mailbox settings
 and credentials remain private on the relay and never enter the router package.
 
+Fresh installs have the public channel ready. Upgrades preserve the active
+channel configuration, including `enabled:false`. A legacy blank channel can
+be connected explicitly with “Подключить отправку” in Share; this only changes
+local configuration. Preview, JSON saving and sending remain separate actions.
+The button does not replace a custom operator channel.
+
 The service accepts only the closed `support/report.schema.json` collector
 format and a filename matching its model and timestamp. It mails the original
 bytes as one JSON attachment. The separately consented DPI bundle adds one
@@ -166,4 +172,4 @@ DB-IP City Lite is provided under CC BY 4.0. Preserve attribution
 
 `/nfqws-support/v4/reports` accepts an ordered subset of report, DPI, strategy, resources and DNS attachments (at most five, envelope at most 4 MiB). Legacy v1–v3 routes and file schemas remain available. Strategy schema2 includes shared BASE/EXTRA/IPSET declarations for selected blocks. The resources attachment carries explicit copies, source and outgoing hashes, aliases and a bounded static dependency audit. DNS separates active, draft and legacy sources, including deliberate standalone nondefault cards. Neither validator executes submitted files. URL credentials and authentication query parameters are rejected.
 
-Deploy the compatible relay and 4 MiB in-memory nginx route before enabling `sharing_v4_enabled` in the router’s root-only operator config. The community package supplies its verified HTTPS channel with v4 enabled; operator-modified conffiles remain preserved by opkg. This enables the manual Send action, never automatic submission. `sharestates` exposes local capability without contacting the relay. The flag is independent of `sharing_v3_enabled`. Local preparation/download remain available without mail. SMTP sends the exact reviewed JSON bytes; resources/DNS contributions use the existing strategies label and do not create extra mailbox folders. Per-source/global limits, receipt deduplication and retention are unchanged.
+Deploy the compatible relay and 4 MiB in-memory nginx route before enabling `sharing_v4_enabled` in the router’s root-only operator config. Fresh installs receive the verified HTTPS channel with v4 enabled; upgrades preserve the active conffile, including disabled settings. This enables the manual Send action, never automatic submission. `sharestates` exposes local capability without contacting the relay. The flag is independent of `sharing_v3_enabled`. Local preparation/download remain available without mail. SMTP sends the exact reviewed JSON bytes; resources/DNS contributions use the existing strategies label and do not create extra mailbox folders. Per-source/global limits, receipt deduplication and retention are unchanged.
