@@ -51,12 +51,20 @@ export const ArkReadinessSummary = ({
       severity={
         checking
           ? 'info'
-          : readiness.result === 'ready' || unloadedWithMissingFlags
-            ? 'success'
-            : 'warning'
+          : readiness.runtime === 'loaded'
+            ? 'error'
+            : readiness.result === 'ready' || unloadedWithMissingFlags
+              ? 'success'
+              : 'warning'
       }
     >
-      <AlertTitle>{t('ark.check_title')}</AlertTitle>
+      <AlertTitle>
+        {t(
+          !checking && readiness.runtime === 'loaded'
+            ? 'ark.runtime_loaded_title'
+            : 'ark.check_title',
+        )}
+      </AlertTitle>
       {checking
         ? t('ark.checking')
         : unloadedWithMissingFlags
@@ -231,6 +239,7 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
       setError('read_failed');
     } finally {
       setCheckingArk(false);
+      void API.invalidateStatus();
     }
   }, []);
   useEffect(() => {
@@ -258,6 +267,7 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
     } finally {
       setCheckingQueue(false);
       setPending(false);
+      void API.invalidateStatus();
     }
   };
 
@@ -286,6 +296,7 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
       setConfirm(null);
     } finally {
       setPending(false);
+      void API.invalidateStatus();
     }
   };
 

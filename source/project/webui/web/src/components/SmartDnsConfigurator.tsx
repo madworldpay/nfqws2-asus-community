@@ -172,6 +172,8 @@ export const SmartDnsConfigurator = ({
       return data.status;
     });
   const explanation = (code: string) => {
+    if (code === 'hook_permissions')
+      return t('smartdns.errors.hook_permissions');
     if (
       [
         'native_fallback_unavailable',
