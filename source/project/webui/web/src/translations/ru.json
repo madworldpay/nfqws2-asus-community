@@ -77,6 +77,14 @@
     "update_available": "Доступно обновление {{app}}: {{version}}"
   },
   "form": {
+    "section_wan": "WAN",
+    "section_startup": "Запуск",
+    "section_strategies": "Стратегии",
+    "section_scope": "Режим и порты",
+    "section_clients": "Устройства и IPv6",
+    "strategy_default": "По умолчанию",
+    "strategy_default_hint": "Вернуть штатные TCP, QUIC и UDP, очистить пользовательскую стратегию. Применить — кнопкой «Сохранить».",
+    "strategy_default_unavailable": "Не удалось прочитать штатную стратегию. Поля не изменены.",
     "ISP_INTERFACE": "Интерфейсы WAN (ISP_INTERFACE)",
     "ISP_INTERFACE_AUTO": "Автоматически",
     "ISP_INTERFACE_HELP": "Оставьте поле пустым для автоматического выбора активных WAN-интерфейсов ASUS. Для ручного выбора укажите интерфейс или несколько через пробел.",
