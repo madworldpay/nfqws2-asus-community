@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "eecd262c3ecab667b61ebb70835f3b181a1d1530d3ebc0ef99a3a8dc3d5b193f"
+    "sha256": "913f5d1da2feaf4deeccc9e55cbb350a20f12b3f507e87be85dbb77fdd3cb9bc"
   },
   {
     "path": "LICENSE",
@@ -12,7 +12,7 @@
   {
     "path": "README.md",
     "bytes": 1126,
-    "sha256": "2cb53c1f93ec36cee4d6e34428c9814ce44d9021e8a420328a90c0b0698f7776"
+    "sha256": "947d2fd4229405912110ac2ebdfd05eb46f9725f70d962f85604611f22eb6718"
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
@@ -51,8 +51,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 24622,
-    "sha256": "165b8e18f1edccdcfb8196f1f04c6727ee2a5d39ff78a7b2ab3c7f363af95cd6"
+    "bytes": 25224,
+    "sha256": "6ab12823ab0591d6f0c1eadc562b3d74ba85e7e40f29923f2ab6dcac4328cc16"
   },
   {
     "path": "asus/compatibility.sh",
@@ -131,8 +131,8 @@
   },
   {
     "path": "asus/ipk/migration.sh",
-    "bytes": 5814,
-    "sha256": "c9c1588cab814ab8eab1f756aaf6b2d531559da3c03fee0d4a39b78c91302a6a"
+    "bytes": 9321,
+    "sha256": "27505d446db89e2cd2286a5d8a42ed8957da3403076a39ec0fbf6fafa1ea9fe0"
   },
   {
     "path": "asus/ipk/postrm",
@@ -141,8 +141,8 @@
   },
   {
     "path": "asus/ipk/preinst",
-    "bytes": 1802,
-    "sha256": "c3d1004ddd0531d0fe2d7d8fb0649d940ec8dec539bf9ac31fd313a4542025c5"
+    "bytes": 1811,
+    "sha256": "88294374eb13bd8acc94080d70e86e103412b1606f6ca69f10dd7b4d2a35dfa5"
   },
   {
     "path": "asus/ipk/unified-postinst",
@@ -661,8 +661,8 @@
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
-    "bytes": 2941,
-    "sha256": "d90e23db8f7cf57a60e9cd002faebcbc86fa1899d7715d42003a4c37d17356a0"
+    "bytes": 3031,
+    "sha256": "8c49621dc966895253015f864a3ebd3840c4f538d2f147da8e7dec24c79c363a"
   },
   {
     "path": "docs/USAGE.md",
@@ -995,6 +995,11 @@
     "sha256": "d14071bbd8e7f96ef018d8497d78d6db68488ee5a34c1ee8c02ede00c110b384"
   },
   {
+    "path": "tests/test_config_settings.mjs",
+    "bytes": 8892,
+    "sha256": "4eeb90b2b4d4e2beb3a7b0945d16a64290aebb63754c0863d20d2d4b99a6f762"
+  },
+  {
     "path": "tests/test_diagnostics.py",
     "bytes": 5683,
     "sha256": "1a306ec31e64a804fc4baa631f0f504ac52ce650e986a6ac2df0ffd6e8beebeb"
@@ -1161,8 +1166,13 @@
   },
   {
     "path": "tests/test_migration.py",
-    "bytes": 12131,
-    "sha256": "89c27427b17b6aab45ad808f5487493e9eb599d8c500c5a85207170b12fc3de0"
+    "bytes": 11831,
+    "sha256": "81735fd011afbb79b814b2c94425fa6b99639c2edfd639fe92dc70c72ff229b5"
+  },
+  {
+    "path": "tests/test_migration_reinstall.py",
+    "bytes": 17064,
+    "sha256": "4d1d197172d82a840dc07bba0884eaf02c0c06a4248abe7d2cf669e4ddc00d24"
   },
   {
     "path": "tests/test_native_args.py",
@@ -1211,8 +1221,8 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 21935,
-    "sha256": "44f6ca553f5e5b613f880f72380b30bf3c0e940d1575d7c0c5075afb5c80c11d"
+    "bytes": 25812,
+    "sha256": "a2b52176ad5c3d9650f95bfe14eb018bd5f41be6f4e7f8d437b9b81c01b7634e"
   },
   {
     "path": "tests/test_package_update_runtime.py",
@@ -2296,8 +2306,8 @@
   },
   {
     "path": "webui/web/public/update-prepare.php",
-    "bytes": 23699,
-    "sha256": "a0fafd1b456a1a49052ae1b94a7a19c86d6d7b92617d2df86148487535cc440d"
+    "bytes": 24730,
+    "sha256": "59f8594cadb8327cde2f6bda104e1f7e1219481410932d7d020ddc544f373aaa"
   },
   {
     "path": "webui/web/public/update-runtime.php",
@@ -2511,8 +2521,8 @@
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
-    "bytes": 9942,
-    "sha256": "45b261d2655d5bc0338ecacbc89e315ec37472460b07156788760db9a5633e18"
+    "bytes": 10248,
+    "sha256": "85e0df5df808aebf320ff2c528813196db092d4a8fc8ff2581ae4a32f4af14fc"
   },
   {
     "path": "webui/web/src/components/Error404.tsx",
@@ -2771,8 +2781,8 @@
   },
   {
     "path": "webui/web/src/routes/index.tsx",
-    "bytes": 9731,
-    "sha256": "d4f7cd11b939de6587d2442b3786b41ba6d7f3513688c42ad6755368490b6550"
+    "bytes": 13254,
+    "sha256": "d67a3d2c07cebadcc82de2b9f8f40dbd89ff6bbd738d27d4a3911b62f05ed993"
   },
   {
     "path": "webui/web/src/routes/smartdns.tsx",
@@ -2791,13 +2801,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 58105,
-    "sha256": "d70b557172e96761b11f2b4547a52fda75f275506e4002f23e4d37766c0535ca"
+    "bytes": 58537,
+    "sha256": "a133e6c3f71f904a9d61e42234c64beab5fa6f7687215afabd46c8490b81f497"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 95571,
-    "sha256": "97e42b73759dab988c146351d0a6f7e398c194733d330e678863986a65d9957f"
+    "bytes": 96196,
+    "sha256": "20ab9ef03cb0cdc1c42d7f7b731fbbe1d1612e5d39c04f34ea3f411d76cc665e"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -2826,8 +2836,13 @@
   },
   {
     "path": "webui/web/src/utils/configParser.ts",
-    "bytes": 7784,
-    "sha256": "37183befa15262032239669f40d809266cb9c8fb1930d6211a090692558d95ab"
+    "bytes": 11544,
+    "sha256": "40c0f399e7b722461e5f808c2da2b75705bb09823c118889d1e374ddbd92593b"
+  },
+  {
+    "path": "webui/web/src/utils/configSectionSpacing.ts",
+    "bytes": 805,
+    "sha256": "bebe5c3c3789350e082561c3082b0ccdd0459a4c206cd9a3acdd32673d1ae637"
   },
   {
     "path": "webui/web/src/utils/createAppRouter.tsx",
