@@ -53,6 +53,20 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         self.assertIn('value',self.call(status=self.status().replace('install ok installed','install user installed')))
         self.assertEqual(self.call(status=self.status().replace('install ok installed','install hold installed')),{'error':'pending_packages'})
 
+    def test_obsolete_uninstalled_version_does_not_shadow_the_installed_package(self):
+        obsolete='Package: nfqws2-asus\nVersion: 1.3.1-asus6+b7\nStatus: install prefer,user not-installed\n\n'
+        for status in [obsolete+self.status(),self.status()+obsolete]:
+            with self.subTest(status=status):self.assertIn('value',self.call(status=status))
+
+    def test_uninstalled_record_cannot_hide_pending_or_unknown_flags(self):
+        for state in ['install hold not-installed','install unknown not-installed','install user unpacked']:
+            with self.subTest(state=state):
+                record='Package: nfqws2-asus\nVersion: 1.3.1-asus6+b7\nStatus: '+state+'\n\n'
+                self.assertEqual(self.call(status=self.status()+record),{'error':'pending_packages'})
+
+    def test_two_installed_versions_are_still_an_invalid_database(self):
+        self.assertEqual(self.call(status=self.status()+self.status().split('\n\n')[0]+'\n\n'),{'error':'pending_packages'})
+
     def test_old_dependency_removal_and_foreign_pending_configuration_are_refused(self):
         self.assertEqual(self.call(status=self.status('iptables, libc, old-auto-dep')),{'error':'dependency_change'})
         self.assertEqual(self.call(status=self.status(other='Package: other\nVersion: 1\nStatus: install ok unpacked\n')),{'error':'pending_packages'})
