@@ -2,6 +2,7 @@
 import importlib.util
 import os
 import re
+import shlex
 from pathlib import Path
 import stat
 import subprocess
@@ -10,8 +11,9 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('builder',ROOT/'asus/build.py');b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
 OPKG=Path(os.environ.get('OPKG_TEST_BINARY',ROOT/'.work/packaging-audit-20261012/opkg-x64'))
+BUSYBOX=Path(os.environ.get('MIGRATION_BUSYBOX_TEST_BINARY','/bin/busybox'))
 
-@unittest.skipUnless(OPKG.exists(),'matching test opkg not supplied')
+@unittest.skipUnless(OPKG.exists() and BUSYBOX.exists(),'matching test opkg/BusyBox not supplied')
 class MigrationTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
@@ -33,12 +35,9 @@ class MigrationTests(unittest.TestCase):
                 migration=ROOT/'asus/ipk/migration.sh'
                 self.assertTrue(migration.exists(),'persistent migration snapshot missing')
                 code=migration.read_text().replace('/opt/',str(self.root)+'/opt/').replace('ASUS_MIGRATION_OWNER=0',f'ASUS_MIGRATION_OWNER={os.getuid()}')
-                code=code.replace('ASUS_MIGRATION_BUSYBOX=/opt/libexec/nfqws2-asus/busybox', 'ASUS_MIGRATION_BUSYBOX=busybox')
-                # Host busybox optional: helper argv falls back to native tools in this fixture.
-                if os.environ.get('MIGRATION_BUSYBOX_TEST_BINARY'):
-                    code=re.sub(r'(?m)^ASUS_MIGRATION_BUSYBOX=.*$', 'ASUS_MIGRATION_BUSYBOX='+os.environ['MIGRATION_BUSYBOX_TEST_BINARY'],code)
-                else:
-                    code=code.replace('"$ASUS_MIGRATION_BUSYBOX" "$@"','"$@"').replace('"$ASUS_MIGRATION_BUSYBOX" sha256sum', 'sha256sum').replace('"$ASUS_MIGRATION_BUSYBOX" rm', 'rm').replace('[ ! -x "$ASUS_MIGRATION_BUSYBOX" ]', '[ 0 = 1 ]')
+                # These upgrade fixtures have an existing runtime. Exercise its
+                # real applets; missing-runtime reinstall has separate coverage.
+                code=re.sub(r'(?m)^ASUS_MIGRATION_BUSYBOX=.*$', 'ASUS_MIGRATION_BUSYBOX='+shlex.quote(str(BUSYBOX)),code)
                 body+=code+'\nasus_migration_'+('save' if action=='preinst' else 'restore')+' || exit $?\n'
                 if action=='postinst':
                     defaults=ROOT/'asus/ipk/defaults.sh'
