@@ -21,8 +21,14 @@ final class AsusUpdatePackage
     public static function database(string $raw): array
     {
         if(strlen($raw)>2097152)throw new RuntimeException('pending_packages');$db=[];
-        foreach(preg_split('/\n[ \t]*\n/',trim($raw)) as $section){$p=self::fields($section);$name=$p['Package']??'';if(!preg_match('/^[a-z0-9][a-z0-9+.-]{0,80}$/D',$name)||isset($db[$name]))throw new RuntimeException('pending_packages');
-            $status=preg_split('/\s+/',trim($p['Status']??''));if(count($status)!==3||!in_array($status[2],['installed','not-installed','config-files'],true)||!in_array($status[1],['ok','user'],true))throw new RuntimeException('pending_packages');$db[$name]=$p;
+        foreach(preg_split('/\n[ \t]*\n/',trim($raw)) as $section){$p=self::fields($section);$name=$p['Package']??'';if(!preg_match('/^[a-z0-9][a-z0-9+.-]{0,80}$/D',$name))throw new RuntimeException('pending_packages');
+            $status=preg_split('/\s+/',trim($p['Status']??''));if(count($status)!==3||!in_array($status[2],['installed','not-installed','config-files'],true))throw new RuntimeException('pending_packages');
+            // Opkg retains superseded versions with preference/user flags. They
+            // are absent packages, not an interrupted installation or the active version.
+            if($status[2]==='not-installed'){
+                $flags=explode(',',$status[1]);if(count($flags)!==count(array_unique($flags))||array_diff($flags,['ok','user','prefer']))throw new RuntimeException('pending_packages');continue;
+            }
+            if(isset($db[$name])||!in_array($status[1],['ok','user'],true))throw new RuntimeException('pending_packages');$db[$name]=$p;
         }return $db;
     }
     private static function header(string $h): ?array
