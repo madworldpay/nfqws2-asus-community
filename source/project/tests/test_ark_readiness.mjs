@@ -272,8 +272,9 @@ try {
     snapshot({ ark_loaded: true, diagnostics: undefined }),
     "ru",
   );
-  assert.match(rebootMarkup, /MuiAlert-standardWarning/);
-  assert.match(visible(rebootMarkup), /Перезагрузите ASUS вручную/);
+  assert.match(rebootMarkup, /MuiAlert-standardError/);
+  assert.match(visible(rebootMarkup), /Подготовка выполнена\. Перезагрузите ASUS вручную/);
+  assert.match(visible(rebootMarkup), /ARK загружен/);
   assert.match(visible(rebootMarkup), /Проверить ARK/);
   assert.match(
     visible(renderReadiness(missing, "ru")),
