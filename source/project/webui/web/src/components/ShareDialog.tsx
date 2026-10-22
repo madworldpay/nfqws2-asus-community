@@ -22,6 +22,7 @@ import { readBulkResources, selectAllDns } from '@/api/bulkSelection';
 import { API } from '@/api/client';
 import {
   autoLocation,
+  connectShareChannel,
   getShareState,
   getStrategyDraft,
   prepareShare,
@@ -89,6 +90,25 @@ export const ShareMailNotice = ({ mail }: { mail?: ShareState['mail'] }) => {
   const reason = shareMailUnavailableReason(mail);
   return reason && reason !== 'loading' ? (
     <Alert severity="info">{t(`share.mail_availability.${reason}`)}</Alert>
+  ) : null;
+};
+
+export const ShareConnectButton = ({
+  mail,
+  busy,
+  onConnect,
+}: {
+  mail?: ShareState['mail'];
+  busy: boolean;
+  onConnect: VoidFunction;
+}) => {
+  const { t } = useTranslation();
+  return mail?.public_setup_available === true &&
+    mail.configured === false &&
+    mail.code === 'not_configured' ? (
+    <Button disabled={busy} onClick={onConnect}>
+      {t('share.connect_channel')}
+    </Button>
   ) : null;
 };
 
@@ -424,6 +444,12 @@ export const ShareDialog = ({
         if (value.state === 'accepted') onSent();
       }
     });
+  const connectChannel = () =>
+    perform('connect', async () => {
+      await connectShareChannel(token);
+      const status = await getShareState(token);
+      if (mounted.current) setState(status);
+    });
   // Invoke the picker synchronously from this click before awaiting other work.
   const save = () => {
     if (!snapshot || pending.current) return;
@@ -460,6 +486,11 @@ export const ShareDialog = ({
         <Stack spacing={2}>
           <Typography variant="body2">{t('share.intro')}</Typography>
           <ShareMailNotice mail={state?.mail} />
+          <ShareConnectButton
+            mail={state?.mail}
+            busy={disabled || !token}
+            onConnect={() => void connectChannel()}
+          />
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Button
               disabled={disabled || !token || !state}
