@@ -192,6 +192,16 @@ function removeFile(string $filename): bool
   }
 }
 
+/** Cheap runtime check only; polling status must not dump NVRAM. */
+function nfqwsArkLoaded(): ?bool
+{
+  if (is_dir('/sys/module/ark')) return true;
+  if (!is_readable('/sys/module') || !is_executable('/sys/module')) return null;
+  $modules = @file_get_contents('/proc/modules', false, null, 0, 262145);
+  if ($modules === false || strlen($modules) > 262144) return null;
+  return preg_match('/^ark[ \t]/m', $modules) === 1;
+}
+
 function nfqwsServiceStatus(): array
 {
   $output = null;
@@ -510,7 +520,7 @@ function main(): void
 
     case 'status':
       $status = nfqwsServiceStatus();
-      $response = array('status' => $status['status'], 'service' => $status['service'], 'nfqws2' => NFQWS2, 'version' => nfqwsInstalledVersion(), 'anonym' => !$authEnabled, 'authenticated' => $authEnabled && $sessionValid, 'csrf_token' => $_SESSION['csrf_token'], 'username' => $sessionValid ? $_SESSION['auth_username'] : $auth['username']);
+      $response = array('status' => $status['status'], 'service' => $status['service'], 'ark_loaded' => nfqwsArkLoaded(), 'nfqws2' => NFQWS2, 'version' => nfqwsInstalledVersion(), 'anonym' => !$authEnabled, 'authenticated' => $authEnabled && $sessionValid, 'csrf_token' => $_SESSION['csrf_token'], 'username' => $sessionValid ? $_SESSION['auth_username'] : $auth['username']);
       break;
 
     case 'filenames':
