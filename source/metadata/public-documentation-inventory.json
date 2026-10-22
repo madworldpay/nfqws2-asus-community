@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 1912,
-      "sha256": "1c46128aacaf50210eb0030a128e8b64983880813708e3fc3cf5f8bdff56a2f3"
+      "bytes": 2772,
+      "sha256": "932f3827b9d68c9122200b74665e99a28d775195ca671c22ca9377e9dc90de5b"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -27,8 +27,8 @@
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 1127,
-      "sha256": "7c1ef0341d098575288bed91ee4c61abd696d273653f2c8f3e09cf1dd14fd545"
+      "bytes": 1199,
+      "sha256": "6c1438ac8456ac44823b35cb1d7cc7d1fa5254271fd895ff374b514ed6611ed1"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -42,8 +42,8 @@
     },
     {
       "file": "INSTALL.md",
-      "bytes": 3366,
-      "sha256": "5920dc30aca7105f426c208fb4a4307ec0f32cdd55508319cc885021e73c3625"
+      "bytes": 3597,
+      "sha256": "93a41765b59dff915e72e71a67efc7a86f6871c5214860e01fc9d2c4f53e7bf6"
     },
     {
       "file": "LICENSE",
@@ -52,18 +52,18 @@
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 2405,
-      "sha256": "296edb5f769dba5494ad3a33fa746f538a81ff6666e09432da0804c4b399df85"
+      "bytes": 3033,
+      "sha256": "156ff1cdc1b5bfe869a9282b6c466c181ecd3c4e798e5ddd79f07c7bfab3d5c8"
     },
     {
       "file": "QUICKSTART.md",
-      "bytes": 2331,
-      "sha256": "2216ea4c0520e7c434cfec0479550fabc1e768f939bd31c31ec07edd9e81ee53"
+      "bytes": 2552,
+      "sha256": "a736204ffcf638fc6be652dcd140001784ed368ba8469442caa1a9d50bef1173"
     },
     {
       "file": "README.md",
-      "bytes": 3145,
-      "sha256": "b72eb4dbbf4f5bad7eff60553a2647dff355ab5b4fe43b4df18754e63e20eaed"
+      "bytes": 3297,
+      "sha256": "22176d9a310980765d0215892d6162de42bd1399ed8b92ad4d27d08e0ed2b9d0"
     },
     {
       "file": "ROADMAP.md",
@@ -83,7 +83,7 @@
     {
       "file": "UPSTREAM.md",
       "bytes": 9350,
-      "sha256": "29721ffd2ae32c1ff601512e075c4579ed2a463cd1365fb38ca847d7b6bdd97e"
+      "sha256": "8fa25a66b32bc8cf50421e05fe68ad5bf8c97ffef3fcc51b7e789ce1dc7036e5"
     },
     {
       "file": "USAGE.md",
@@ -92,8 +92,8 @@
     },
     {
       "file": "build.svg",
-      "bytes": 424,
-      "sha256": "f5720bca5cfe4494c2cb346231e4763db0013d39d7f5efb71312a057009298d1"
+      "bytes": 385,
+      "sha256": "3c72bdab0491914cdb2759962e876bec1c78b9f239ee2be48617ff76f5c60805"
     },
     {
       "file": "domru.json",
@@ -113,6 +113,5 @@
   ],
   "excluded": [
     "SHA256SUMS"
-  ],
-  "reason": "The distribution checksum list is generated externally after the final source archive to avoid a circular digest."
+  ]
 }

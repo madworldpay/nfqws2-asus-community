@@ -7,7 +7,9 @@ import {
 } from 'react';
 import { useConfig } from '@/config/useConfig';
 import {
+  Alert,
   Box,
+  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -15,6 +17,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Stack,
   TextField,
   Typography,
   type SelectChangeEvent,
@@ -35,8 +38,10 @@ import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import {
+  changedConfigKeys,
   formatConfig,
   parseConfig,
+  resetStrategyConfig,
   type NfqwsConfig,
 } from '@/utils/configParser';
 
@@ -50,6 +55,10 @@ function RouteComponent() {
   const { confFile } = useConfig(nfqws2);
   const { auth } = useAppStore();
   const { data: originalConfig, isPending } = API.fileContent(confFile, auth);
+  const { data: defaultConfig, isPending: defaultsPending } = API.fileContent(
+    `${confFile}.notactive`,
+    auth,
+  );
   const { setNeedSave, needSave, setOnSave } = useAppStore();
 
   const { t } = useTranslation();
@@ -57,6 +66,11 @@ function RouteComponent() {
   const [originalConfigParsed, setOriginalConfigParsed] =
     useState<NfqwsConfig | null>(null);
   const [form, setForm] = useState<NfqwsConfig | null>(null);
+  const [strategyBaseline, setStrategyBaseline] = useState<NfqwsConfig | null>(
+    null,
+  );
+  const [strategyRevision, setStrategyRevision] = useState(0);
+  const [resetError, setResetError] = useState(false);
 
   const originalConfigRef = useRef<string | null>(null);
   const formRef = useRef<NfqwsConfig | null>(null);
@@ -79,7 +93,11 @@ function RouteComponent() {
       return;
     }
 
-    const newConfig = formatConfig(oc, f);
+    const newConfig = formatConfig(
+      oc,
+      f,
+      changedConfigKeys(parseConfig(oc), f),
+    );
     if (oc !== newConfig) {
       const { data } = await API.saveFile(confFile, newConfig);
       if (data?.status === 0) {
@@ -97,6 +115,9 @@ function RouteComponent() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOriginalConfigParsed(parsed);
       setForm(parsed);
+      formRef.current = parsed;
+      setStrategyBaseline(null);
+      setResetError(false);
     }
   }, [originalConfig?.content]);
 
@@ -126,9 +147,31 @@ function RouteComponent() {
         value = isCheckbox ? Boolean(target.checked) : target.value;
       }
 
-      setNeedSave(value !== originalConfigParsed?.[key]);
-      setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
+      const previous = formRef.current;
+      if (!previous || !originalConfigParsed) return;
+      const next = { ...previous, [key]: value };
+      formRef.current = next;
+      setForm(next);
+      setNeedSave(changedConfigKeys(originalConfigParsed, next).length > 0);
     };
+
+  const resetStrategies = () => {
+    if (!formRef.current || !originalConfigParsed) return;
+    try {
+      const next = resetStrategyConfig(
+        formRef.current,
+        defaultConfig?.content ?? '',
+      );
+      formRef.current = next;
+      setForm(next);
+      setStrategyBaseline(next);
+      setStrategyRevision((revision) => revision + 1);
+      setNeedSave(changedConfigKeys(originalConfigParsed, next).length > 0);
+      setResetError(false);
+    } catch {
+      setResetError(true);
+    }
+  };
 
   if (isPending || !originalConfigParsed || !form) {
     return <App />;
@@ -172,6 +215,13 @@ function RouteComponent() {
             },
           }}
         >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}
+          >
+            {t('form.section_wan')}
+          </Typography>
           <TextField
             id="ISP_INTERFACE"
             label={t('form.ISP_INTERFACE')}
@@ -184,37 +234,88 @@ function RouteComponent() {
           />
 
           {nfqws2 && (
-            <FormEditor
-              label={t('form.NFQWS_BASE_ARGS')}
-              value={originalConfigParsed.NFQWS_BASE_ARGS}
-              onChange={changeHandler('NFQWS_BASE_ARGS')}
-            />
+            <>
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}
+              >
+                {t('form.section_startup')}
+              </Typography>
+              <FormEditor
+                label={t('form.NFQWS_BASE_ARGS')}
+                value={originalConfigParsed.NFQWS_BASE_ARGS}
+                onChange={changeHandler('NFQWS_BASE_ARGS')}
+              />
+            </>
           )}
 
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              useFlexGap
+              flexWrap="wrap"
+              gap={1}
+            >
+              <Typography variant="subtitle1" component="h2">
+                {t('form.section_strategies')}
+              </Typography>
+              <Button
+                type="button"
+                size="small"
+                variant="outlined"
+                disabled={!auth || defaultsPending}
+                onClick={resetStrategies}
+              >
+                {t('form.strategy_default')}
+              </Button>
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              {t('form.strategy_default_hint')}
+            </Typography>
+          </Box>
+          {resetError && (
+            <Alert severity="warning" role="alert">
+              {t('form.strategy_default_unavailable')}
+            </Alert>
+          )}
           <FormEditor
+            key={`tcp-${strategyRevision}`}
             label={t('form.NFQWS_ARGS')}
-            value={originalConfigParsed.NFQWS_ARGS}
+            value={(strategyBaseline ?? originalConfigParsed).NFQWS_ARGS}
             onChange={changeHandler('NFQWS_ARGS')}
           />
 
           <FormEditor
+            key={`quic-${strategyRevision}`}
             label={t('form.NFQWS_ARGS_QUIC')}
-            value={originalConfigParsed.NFQWS_ARGS_QUIC}
+            value={(strategyBaseline ?? originalConfigParsed).NFQWS_ARGS_QUIC}
             onChange={changeHandler('NFQWS_ARGS_QUIC')}
           />
 
           <FormEditor
+            key={`udp-${strategyRevision}`}
             label={t('form.NFQWS_ARGS_UDP')}
-            value={originalConfigParsed.NFQWS_ARGS_UDP}
+            value={(strategyBaseline ?? originalConfigParsed).NFQWS_ARGS_UDP}
             onChange={changeHandler('NFQWS_ARGS_UDP')}
           />
 
           <FormEditor
+            key={`custom-${strategyRevision}`}
             label={t('form.NFQWS_ARGS_CUSTOM')}
-            value={originalConfigParsed.NFQWS_ARGS_CUSTOM}
+            value={(strategyBaseline ?? originalConfigParsed).NFQWS_ARGS_CUSTOM}
             onChange={changeHandler('NFQWS_ARGS_CUSTOM')}
           />
 
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}
+          >
+            {t('form.section_scope')}
+          </Typography>
           <FormEditor
             label={t('form.NFQWS_ARGS_IPSET')}
             value={originalConfigParsed.NFQWS_ARGS_IPSET}
@@ -254,6 +355,13 @@ function RouteComponent() {
             onChange={changeHandler('UDP_PORTS')}
             spellCheck={false}
           />
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ borderBottom: 1, borderColor: 'divider', pb: 1 }}
+          >
+            {t('form.section_clients')}
+          </Typography>
           <FormControl fullWidth>
             <InputLabel id="asus-client-mode-label">
               {t('form.ASUS_CLIENT_MODE')}

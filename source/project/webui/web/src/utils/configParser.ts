@@ -195,7 +195,11 @@ const toRawValue = (
   if (key === 'NFQWS_EXTRA_ARGS') {
     return `$${value}`;
   }
-  if (key === 'IPV6_ENABLED' || key === 'POLICY_EXCLUDE' || key === 'LOG_LEVEL') {
+  if (
+    key === 'IPV6_ENABLED' ||
+    key === 'POLICY_EXCLUDE' ||
+    key === 'LOG_LEVEL'
+  ) {
     return value ? '1' : '0';
   }
   return String(value ?? '');
@@ -234,7 +238,7 @@ const stringifyValue = (
 const readBlock = (lines: string[], startIndex: number): LineBlock => {
   const line = lines[startIndex];
   const eqIndex = line.indexOf('=');
-  const valuePart = eqIndex === -1 ? '' : line.slice(eqIndex + 1).trim();
+  const valuePart = eqIndex === -1 ? '' : line.slice(eqIndex + 1).trimStart();
   const quote =
     valuePart.startsWith('"') || valuePart.startsWith("'")
       ? (valuePart[0] as '"' | "'")
@@ -242,24 +246,16 @@ const readBlock = (lines: string[], startIndex: number): LineBlock => {
   let end = startIndex;
   let indent = '';
   let hadMultiline = false;
-
-  if (quote) {
-    const first = valuePart.slice(1);
-    if (!first.includes(quote)) {
+  let openQuote = '';
+  for (let i = startIndex; i < lines.length; i++) {
+    if (i > startIndex) {
       hadMultiline = true;
-      let i = startIndex + 1;
-      while (i < lines.length) {
-        const nextLine = lines[i];
-        if (!indent) {
-          indent = nextLine.match(/^[ \t]*/)?.[0] ?? '';
-        }
-        if (nextLine.includes(quote)) {
-          end = i;
-          break;
-        }
-        i += 1;
-      }
+      if (!indent) indent = lines[i].match(/^[ \t]*/)?.[0] ?? '';
     }
+    const scanned = scanConfigLine(lines[i], openQuote);
+    openQuote = scanned.quote;
+    end = i;
+    if (!openQuote && !scanned.continued) break;
   }
 
   return {
@@ -271,8 +267,13 @@ const readBlock = (lines: string[], startIndex: number): LineBlock => {
   };
 };
 
-export const formatConfig = (source: string, config: NfqwsConfig): string => {
+export const formatConfig = (
+  source: string,
+  config: NfqwsConfig,
+  changedKeys?: (keyof NfqwsConfig)[],
+): string => {
   const lines = source.split('\n');
+  const keys = changedKeys ?? NFQWS_CONFIG_KEYS;
   const seen = new Set<keyof NfqwsConfig>();
   let i = 0;
 
@@ -291,13 +292,13 @@ export const formatConfig = (source: string, config: NfqwsConfig): string => {
     }
 
     const key = line.slice(0, eqIndex).trim() as keyof NfqwsConfig;
-    if (!NFQWS_CONFIG_KEYS.includes(key)) {
-      i += 1;
+    const block = readBlock(lines, i);
+    if (!keys.includes(key)) {
+      i = block.end + 1;
       continue;
     }
 
     seen.add(key);
-    const block = readBlock(lines, i);
     const newValue = stringifyValue(key, config[key], block);
     const prefix = line.slice(0, eqIndex + 1);
     lines[i] = `${prefix}${newValue}`;
@@ -310,10 +311,133 @@ export const formatConfig = (source: string, config: NfqwsConfig): string => {
   }
 
   // Configs from the IPv4-only release lack these restored settings.
-  for (const key of ['IPV6_ENABLED', 'ASUS_CLIENTS6'] as const) {
+  for (const key of changedKeys ??
+    (['IPV6_ENABLED', 'ASUS_CLIENTS6'] as const)) {
     if (!seen.has(key)) {
       lines.push(`${key}=${stringifyValue(key, config[key], null)}`);
     }
   }
   return lines.join('\n');
 };
+
+export const STRATEGY_CONFIG_KEYS = [
+  'NFQWS_ARGS',
+  'NFQWS_ARGS_QUIC',
+  'NFQWS_ARGS_UDP',
+  'NFQWS_ARGS_CUSTOM',
+] as const;
+
+export const changedConfigKeys = (original: NfqwsConfig, form: NfqwsConfig) =>
+  NFQWS_CONFIG_KEYS.filter((key) => original[key] !== form[key]);
+
+function scanConfigLine(line: string, initialQuote: string) {
+  let quote = initialQuote;
+  let continued = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (quote === "'") {
+      if (char === "'") quote = '';
+    } else if (char === '\\') {
+      if (i === line.length - 1) continued = true;
+      i++;
+    } else if (quote) {
+      if (char === quote) quote = '';
+    } else if (char === '#' && (i === 0 || /\s/.test(line[i - 1]))) break;
+    else if (char === '"' || char === "'") quote = char;
+  }
+  return { quote, continued };
+}
+
+/** Top-level assignments only: apparent keys inside multiline values are data. */
+function assignmentLines(source: string) {
+  const assignments: { key: string; from: number; heading: number }[] = [];
+  let quote = '';
+  let offset = 0;
+  let heading: number | null = null;
+  let continued = false;
+  for (const line of source.split('\n')) {
+    if (!quote && !continued) {
+      if (line.trimStart().startsWith('#')) heading ??= offset;
+      else {
+        const match = line.match(/^\s*([A-Z][A-Z0-9_]*)\s*=/);
+        if (match)
+          assignments.push({
+            key: match[1],
+            from: offset,
+            heading: heading ?? offset,
+          });
+        heading = null;
+      }
+    }
+    const scanned = scanConfigLine(line, quote);
+    quote = scanned.quote;
+    continued = scanned.continued;
+    offset += line.length + 1;
+  }
+  return { assignments, closed: !quote && !continued };
+}
+
+export function resetStrategyConfig(
+  form: NfqwsConfig,
+  template: string,
+): NfqwsConfig {
+  const { assignments, closed } = assignmentLines(template);
+  const keys = new Set(assignments.map(({ key }) => key));
+  if (
+    !template ||
+    template.length > 262144 ||
+    !closed ||
+    STRATEGY_CONFIG_KEYS.some((key) => !keys.has(key))
+  ) {
+    throw new Error('default_strategy_unavailable');
+  }
+  const defaults = parseConfig(template);
+  if (STRATEGY_CONFIG_KEYS.slice(0, 3).some((key) => !defaults[key].trim())) {
+    throw new Error('default_strategy_unavailable');
+  }
+  return {
+    ...form,
+    NFQWS_ARGS: defaults.NFQWS_ARGS,
+    NFQWS_ARGS_QUIC: defaults.NFQWS_ARGS_QUIC,
+    NFQWS_ARGS_UDP: defaults.NFQWS_ARGS_UDP,
+    NFQWS_ARGS_CUSTOM: defaults.NFQWS_ARGS_CUSTOM,
+  };
+}
+
+/** Positions for visual spacing, without inserting any document characters. */
+export function configSectionStarts(source: string): number[] {
+  const groups: Record<string, string> = {
+    ISP_INTERFACE: 'wan',
+    NFQWS_BASE_ARGS: 'startup',
+    NFQWS_ARGS: 'tcp',
+    NFQWS_ARGS_QUIC: 'quic',
+    NFQWS_ARGS_UDP: 'udp',
+    MODE_LIST: 'mode',
+    MODE_ALL: 'mode',
+    MODE_AUTO: 'mode',
+    NFQWS_EXTRA_ARGS: 'mode',
+    NFQWS_ARGS_IPSET: 'ipset',
+    NFQWS_ARGS_CUSTOM: 'custom',
+    IPV6_ENABLED: 'ports',
+    TCP_PORTS: 'ports',
+    UDP_PORTS: 'ports',
+    POLICY_NAME: 'clients',
+    POLICY_EXCLUDE: 'clients',
+    ASUS_CLIENT_MODE: 'clients',
+    ASUS_CLIENTS4: 'clients',
+    ASUS_CLIENTS6: 'clients',
+    LOG_LEVEL: 'logging',
+    LOG_DEBUG_PATH: 'logging',
+    NFQUEUE_NUM: 'runtime',
+    USER: 'runtime',
+    CONFIG_VERSION: 'runtime',
+  };
+  let previous: string | undefined;
+  const starts: number[] = [];
+  for (const { key, heading } of assignmentLines(source).assignments) {
+    const group = groups[key];
+    if (group && group !== previous) starts.push(heading);
+    if (group) previous = group;
+  }
+  return starts;
+}

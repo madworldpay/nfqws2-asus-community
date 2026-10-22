@@ -29,7 +29,7 @@ done
 # opkg owns its lock while running preinst/postinst. A nested opkg command
 # would abort even when it only reads architectures. Read declarations safely.
 . /opt/lib/nfqws2-asus/abi.sh
-asus_resolve_package_abi "$ASUS_PACKAGE_ARCH" >/dev/null || { echo "Unsupported Entware ABI for $ASUS_PACKAGE_ARCH." >&2; exit 1; }
+ASUS_PACKAGE_ABI=$(asus_resolve_package_abi "$ASUS_PACKAGE_ARCH") || { echo "Unsupported Entware ABI for $ASUS_PACKAGE_ARCH." >&2; exit 1; }
 model=''
 for key in productid odmpid; do
     candidate=$(nvram get "$key" 2>/dev/null)

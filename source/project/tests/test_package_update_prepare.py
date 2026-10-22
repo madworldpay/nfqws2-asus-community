@@ -33,6 +33,67 @@ class PackageUpdatePrepareTests(unittest.TestCase):
     def status(self, depends='iptables, libc', other=''):
         return 'Package: nfqws2-asus\nVersion: 1.3.1-asus6+b10\nArchitecture: aarch64-3.10\nStatus: install ok installed\nDepends: '+depends+'\n\n'+''.join('Package: '+p+'\nVersion: 1\nStatus: install ok installed\n\n' for p in ['iptables','libc'])+other
 
+    def add_control_members(self, members):
+        with tarfile.open(self.pkg) as outer:
+            original={m.name:outer.extractfile(m).read() for m in outer if m.isfile()}
+        stream=io.BytesIO()
+        with tarfile.open(fileobj=stream,mode='w:gz') as target:
+            with tarfile.open(fileobj=io.BytesIO(original['control.tar.gz'])) as source:
+                for member in source:
+                    target.addfile(member,source.extractfile(member))
+            for name,data,kind in members:
+                info=tarfile.TarInfo(name);info.mode=0o755;info.type=kind
+                if kind==tarfile.SYMTYPE:info.linkname='/bin/sh'
+                else:info.size=len(data)
+                target.addfile(info,io.BytesIO(data) if info.isfile() else None)
+        original['control.tar.gz']=stream.getvalue()
+        with tarfile.open(self.pkg,'w:gz') as target:
+            for name,data in original.items():
+                info=tarfile.TarInfo(name);info.size=len(data);target.addfile(info,io.BytesIO(data))
+        self.candidate['package'].update(size=self.pkg.stat().st_size,sha256=hashlib.sha256(self.pkg.read_bytes()).hexdigest())
+
+    @staticmethod
+    def helper_elf(arm=False, size=64):
+        # Header-only fixtures are inspected as bytes and never executed.
+        header=bytearray(20);header[:4]=b'\x7fELF';header[4]=1 if arm else 2;header[5]=1
+        header[18:20]=(40 if arm else 183).to_bytes(2,'little')
+        return bytes(header)+os.urandom(size-20)
+
+    def test_reinstall_bootstrap_is_inspected_without_execution(self):
+        self.add_control_members([('busybox-migration-aarch64-3.10',self.helper_elf(size=400000),tarfile.REGTYPE)])
+        self.assertIn('value',self.call())
+        self.candidate['package']['family']='armv7';self.package(Architecture='all')
+        self.add_control_members([(name,self.helper_elf(arm=True),tarfile.REGTYPE) for name in ['busybox-migration-armv7-2.6','busybox-migration-armv7-3.2']])
+        for abi in ['armv7-2.6','armv7-3.2']:self.assertIn('value',self.call(abi=abi,machine='armv7l'))
+
+    def test_bootstrap_unknown_foreign_malformed_and_links_are_refused(self):
+        for name,data,kind in [
+            ('busybox-migration-other',self.helper_elf(),tarfile.REGTYPE),
+            ('busybox-migration-armv7-2.6',self.helper_elf(arm=True),tarfile.REGTYPE),
+            ('busybox-migration-aarch64-3.10',self.helper_elf(arm=True),tarfile.REGTYPE),
+            ('busybox-migration-aarch64-3.10',b'#!/bin/sh\nexit 0',tarfile.REGTYPE),
+            ('busybox-migration-aarch64-3.10',b'',tarfile.SYMTYPE),
+        ]:
+            with self.subTest(name=name,kind=kind):
+                self.package();self.add_control_members([(name,data,kind)])
+                self.assertEqual(self.call(),{'error':'invalid_package'})
+
+    def test_bootstrap_and_script_size_limits_remain_bounded(self):
+        for name,data in [('busybox-migration-aarch64-3.10',self.helper_elf(size=1048577)),('preinst',b'x'*131073)]:
+            self.package();self.add_control_members([(name,data,tarfile.REGTYPE)])
+            self.assertEqual(self.call(),{'error':'invalid_package'})
+
+    def test_decompressed_control_cannot_exceed_four_mib_even_by_one_byte(self):
+        with tarfile.open(self.pkg) as outer:
+            members={m.name:outer.extractfile(m).read() for m in outer if m.isfile()}
+        raw=gzip.decompress(members['control.tar.gz'])
+        members['control.tar.gz']=gzip.compress(raw+b'\0'*(4194305-len(raw)))
+        with tarfile.open(self.pkg,'w:gz') as outer:
+            for name,data in members.items():
+                info=tarfile.TarInfo(name);info.size=len(data);outer.addfile(info,io.BytesIO(data))
+        self.candidate['package'].update(size=self.pkg.stat().st_size,sha256=hashlib.sha256(self.pkg.read_bytes()).hexdigest())
+        self.assertEqual(self.call(),{'error':'invalid_package'})
+
     def call(self, action='inspect', **kwargs):
         payload={'action':action,'candidate':self.candidate,'status':self.status(), 'abi':'aarch64-3.10','machine':'aarch64',**kwargs}
         code='''if(!is_file($argv[1].'/update-prepare.php')){echo json_encode(['error'=>'missing_prepare']);exit;}
@@ -52,6 +113,20 @@ class PackageUpdatePrepareTests(unittest.TestCase):
     def test_user_installed_flag_is_healthy_but_hold_is_not_automatically_changed(self):
         self.assertIn('value',self.call(status=self.status().replace('install ok installed','install user installed')))
         self.assertEqual(self.call(status=self.status().replace('install ok installed','install hold installed')),{'error':'pending_packages'})
+
+    def test_obsolete_uninstalled_version_does_not_shadow_the_installed_package(self):
+        obsolete='Package: nfqws2-asus\nVersion: 1.3.1-asus6+b7\nStatus: install prefer,user not-installed\n\n'
+        for status in [obsolete+self.status(),self.status()+obsolete]:
+            with self.subTest(status=status):self.assertIn('value',self.call(status=status))
+
+    def test_uninstalled_record_cannot_hide_pending_or_unknown_flags(self):
+        for state in ['install hold not-installed','install unknown not-installed','install user unpacked']:
+            with self.subTest(state=state):
+                record='Package: nfqws2-asus\nVersion: 1.3.1-asus6+b7\nStatus: '+state+'\n\n'
+                self.assertEqual(self.call(status=self.status()+record),{'error':'pending_packages'})
+
+    def test_two_installed_versions_are_still_an_invalid_database(self):
+        self.assertEqual(self.call(status=self.status()+self.status().split('\n\n')[0]+'\n\n'),{'error':'pending_packages'})
 
     def test_old_dependency_removal_and_foreign_pending_configuration_are_refused(self):
         self.assertEqual(self.call(status=self.status('iptables, libc, old-auto-dep')),{'error':'dependency_change'})

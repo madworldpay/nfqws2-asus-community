@@ -1,39 +1,79 @@
 {
-  "build": 62,
-  "kernel_archive": {
-    "upstream_commit": "26e1f3f17a2f29ba7cb9013c67142f8a8c8adfd7",
-    "verified_original_blobs": 34880,
-    "missing_or_changed": 0
-  },
-  "dpi_dependency_cache": {
-    "original_crates_matching_Cargo_lock": 208,
-    "armv5te_offline_locked_normal_build_dependency_tree_resolves": true,
-    "dependency_tree_lines": 439,
-    "inactive_other_platform_or_feature_lock_packages_not_cached": 33
-  },
-  "module_rebuild": {
-    "machine_code_modinfo_versions_relocations_symbol_tables_match": true,
-    "only_initial_difference": "20-byte GNU build-id from link-time debug data before --strip-debug",
-    "archive_recipe_uses_original_explicit_build_id": "793980be3bebe2b4ac7083dd45c5e6bdb0acaf38",
-    "expected_sha256": "1e5fd88ebf5830d56f6b151de0c791f02b3c3db0a539490fbf32709add0151ab",
-    "archive_recipe_rebuild_matches_distributed_sha256": true
-  },
-  "not_repeated": [
-    "Full independent BusyBox build",
-    "Full independent provider NFQWS2 engine build",
-    "Full fresh DPI compilation",
-    "Live router installation"
+  "build": 64,
+  "inherited_component_verification": "verification-build62.json",
+  "project_files": 585,
+  "package_reproduced_byte_for_byte": [
+    "aarch64-3.10",
+    "armv7"
   ],
-  "final_public_documentation": {
-    "files": 22,
-    "excluded": [
-      "SHA256SUMS"
+  "physical_router_evidence": {
+    "routers": [
+      "RT-AC87U",
+      "GT-BE19000AI"
     ],
-    "includes": [
-      "DOMRU.md",
-      "domru.json"
-    ],
-    "json_parse": "valid"
+    "reboot_performed": false,
+    "pc_routes_vpn_changed": false,
+    "user_config_lists_auth_unchanged": true,
+    "release": "1.3.1-asus6+b64",
+    "rt_ac87u": {
+      "normal_remove_then_install": true,
+      "private_busybox_absent_before_install": true,
+      "without_force": true,
+      "core_restored_running_queue_bound": true,
+      "smartdns_reconnected_after_test_from_previous_saved_intent": true
+    },
+    "gt_be19000ai": {
+      "normal_upgrade": true,
+      "previously_stopped_core_preserved": true,
+      "smartdns_restored_confirmed": true
+    },
+    "smartdns_profiles": {
+      "servers": 15,
+      "records": 10,
+      "profile_hash_preserved_on_both": true,
+      "fresh_native_dns53_answers_on_both": true
+    },
+    "ui": {
+      "default_reset_changes_form_only": true,
+      "startup_and_ipset_preserved": true,
+      "custom_strategy_reset_empty": true,
+      "complete_config_clipboard_equal_live_file": true,
+      "copied_bytes": 6695,
+      "single_editor": true,
+      "fold_gutter_absent": true
+    },
+    "scope": "Install, migration, update transport and UI validation. Not evidence of sustained bypass, video, UDP or IPv6."
   },
-  "project_upstream_sha256": "29721ffd2ae32c1ff601512e075c4579ed2a463cd1365fb38ca847d7b6bdd97e"
+  "test_evidence": {
+    "package_update": {
+      "per_runtime": 154,
+      "runtimes": [
+        "aarch64",
+        "armv7-3.2",
+        "armv7-2.6"
+      ],
+      "total": 462,
+      "result": "pass"
+    },
+    "migration_host_and_real_control_elf_regressions": {
+      "tests": 28,
+      "result": "pass"
+    },
+    "package_structure": {
+      "tests": 16,
+      "result": "pass"
+    },
+    "frontend_node_suites": {
+      "suites": 26,
+      "result": "pass"
+    },
+    "frontend_typescript_eslint_production_build": "pass",
+    "independent_reviews": [
+      "update database parser and public transport",
+      "control bootstrap reader bounds",
+      "migration and reinstall behavior",
+      "selective config save and visual section spacing"
+    ],
+    "ipk_reproduction": "byte-for-byte for both families"
+  }
 }

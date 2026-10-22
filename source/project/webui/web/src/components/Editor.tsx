@@ -33,6 +33,7 @@ import {
   codeMirrorLangNfqws,
   codeMirrorLangNfqwsArgs,
 } from '@/utils/codeMirrorLangNfqws';
+import { configSectionSpacing } from '@/utils/configSectionSpacing';
 import { newlineMarkers } from '@/utils/newlineMarkers';
 import { findUnclosedQuotes, type QuoteIssue } from '@/utils/quoteDiagnostics';
 
@@ -105,7 +106,7 @@ export const Editor = ({
       );
     }
     if (type === 'conf') {
-      result.push(codeMirrorLangNfqws());
+      result.push(codeMirrorLangNfqws(), configSectionSpacing);
     } else if (type === 'arg') {
       result.push(codeMirrorLangNfqwsArgs());
     } else if (type === 'list') {
@@ -245,6 +246,11 @@ export const Editor = ({
           '& .cm-lineNumbers .cm-gutterElement': {
             paddingLeft: '13px !important',
           },
+          '& .cm-line.cm-config-section': {
+            paddingTop: '0.85em',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          },
         }}
       >
         <ReactCodeMirror
@@ -262,7 +268,8 @@ export const Editor = ({
           }}
           basicSetup={{
             lineNumbers: true,
-            foldGutter: true,
+            foldGutter: type !== 'conf',
+            foldKeymap: type !== 'conf',
             history: false, // enabled in extensions
             historyKeymap: true,
           }}

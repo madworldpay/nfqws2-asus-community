@@ -7,14 +7,20 @@ interface AsusUpdateSource
     public function manifest(): array;
     public function download(array $package,string $destination): void;
 }
+require_once __DIR__.'/update-github.php';
 final class AsusUpdateTransport implements AsusUpdateSource
 {
     private string $origin;
     private string $token;
+    private ?AsusUpdateSource $publicSource=null;
     public function __construct(?string $config=null,private int $owner=0,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt',private array $timeouts=['metadata'=>15,'download'=>180])
     {
+        $default=$config===null;
         $config=$config??AsusDpiStore::optPath('/etc/nfqws-asus-web').'/update-channel.json';
-        if(!file_exists($config)&&!is_link($config))throw new RuntimeException('channel_unconfigured');
+        if(!file_exists($config)&&!is_link($config)){
+            if(!$default)throw new RuntimeException('channel_unconfigured');
+            $this->publicSource=new AsusGithubUpdateSource($owner,$ca,$timeouts);return;
+        }
         try{
             for($p=$config;$p!=='/'&&$p!=='.';$p=dirname($p))if(is_link($p))throw new RuntimeException();
             $s=lstat($config);
@@ -69,6 +75,7 @@ final class AsusUpdateTransport implements AsusUpdateSource
 
     public function manifest(): array
     {
+        if($this->publicSource!==null)return $this->publicSource->manifest();
         $deadline=microtime(true)+$this->timeouts['metadata'];
         $json=$this->request('manifest.json',32768,$deadline);
         $signature=$this->request('manifest.sig',1024,$deadline,null,['If-Match'=>'"'.hash('sha256',$json).'"']);
@@ -77,6 +84,7 @@ final class AsusUpdateTransport implements AsusUpdateSource
 
     public function download(array $package,string $destination): void
     {
+        if($this->publicSource!==null){$this->publicSource->download($package,$destination);return;}
         if(!is_string($package['filename']??null)||!preg_match('/^nfqws2-asus_[A-Za-z0-9.+-]{1,80}_(?:aarch64-3\.10|armv7)\.ipk$/D',$package['filename'])||
             !is_int($package['size']??null)||$package['size']<1||$package['size']>33554432||!is_string($package['sha256']??null)||!preg_match('/^[a-f0-9]{64}$/D',$package['sha256']))throw new RuntimeException('invalid_manifest');
         for($p=$destination;$p!=='/'&&$p!=='.';$p=dirname($p))if(is_link($p))throw new RuntimeException('invalid_state');

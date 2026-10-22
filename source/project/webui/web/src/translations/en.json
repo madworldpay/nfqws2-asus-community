@@ -77,6 +77,14 @@
     "update_available": "{{app}} update available: {{version}}"
   },
   "form": {
+    "section_wan": "WAN",
+    "section_startup": "Startup",
+    "section_strategies": "Strategies",
+    "section_scope": "Mode and ports",
+    "section_clients": "Devices and IPv6",
+    "strategy_default": "Default",
+    "strategy_default_hint": "Restore stock TCP, QUIC and UDP; clear the custom strategy. Use Save to apply.",
+    "strategy_default_unavailable": "Could not read the default strategy. Fields were left unchanged.",
     "ISP_INTERFACE": "WAN interfaces (ISP_INTERFACE)",
     "ISP_INTERFACE_AUTO": "Automatic",
     "ISP_INTERFACE_HELP": "Leave empty to automatically select active ASUS WAN interfaces. For manual selection, enter one interface name or several names separated by spaces.",
