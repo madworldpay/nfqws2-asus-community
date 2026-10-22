@@ -195,6 +195,14 @@ def package(output, name, version, depends, conflicts, payload, prefix, conffile
             if script == 'preinst':
                 source_bytes = source_bytes.replace(b"model=''", b"asus_migration_save || exit $?\nmodel=''", 1)
             scripts[script] = source_bytes, 0o755
+    if prefix == 'unified':
+        # These exact, pinned payload tools are also available to preinst before
+        # unpacking. Reinstall must back up retained data after remove deleted
+        # the private runtime; stock ASUS BusyBox may lack SHA256 and stat.
+        helpers = ({'aarch64-3.10': 'opt/libexec/nfqws2-asus/busybox'} if (family or arch) == 'aarch64-3.10' else
+                   {abi: f'opt/libexec/nfqws2-asus/{abi}/busybox' for abi in ['armv7-2.6', 'armv7-3.2']})
+        for abi, source in helpers.items():
+            scripts['busybox-migration-'+abi] = payload[source][0], 0o755
     if conffiles:
         scripts['conffiles'] = conffiles.encode(), 0o644
     result = compressed_tar({
