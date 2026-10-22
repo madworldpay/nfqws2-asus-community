@@ -1,0 +1,79 @@
+{
+  "build": 64,
+  "inherited_component_verification": "verification-build62.json",
+  "project_files": 585,
+  "package_reproduced_byte_for_byte": [
+    "aarch64-3.10",
+    "armv7"
+  ],
+  "physical_router_evidence": {
+    "routers": [
+      "RT-AC87U",
+      "GT-BE19000AI"
+    ],
+    "reboot_performed": false,
+    "pc_routes_vpn_changed": false,
+    "user_config_lists_auth_unchanged": true,
+    "release": "1.3.1-asus6+b64",
+    "rt_ac87u": {
+      "normal_remove_then_install": true,
+      "private_busybox_absent_before_install": true,
+      "without_force": true,
+      "core_restored_running_queue_bound": true,
+      "smartdns_reconnected_after_test_from_previous_saved_intent": true
+    },
+    "gt_be19000ai": {
+      "normal_upgrade": true,
+      "previously_stopped_core_preserved": true,
+      "smartdns_restored_confirmed": true
+    },
+    "smartdns_profiles": {
+      "servers": 15,
+      "records": 10,
+      "profile_hash_preserved_on_both": true,
+      "fresh_native_dns53_answers_on_both": true
+    },
+    "ui": {
+      "default_reset_changes_form_only": true,
+      "startup_and_ipset_preserved": true,
+      "custom_strategy_reset_empty": true,
+      "complete_config_clipboard_equal_live_file": true,
+      "copied_bytes": 6695,
+      "single_editor": true,
+      "fold_gutter_absent": true
+    },
+    "scope": "Install, migration, update transport and UI validation. Not evidence of sustained bypass, video, UDP or IPv6."
+  },
+  "test_evidence": {
+    "package_update": {
+      "per_runtime": 154,
+      "runtimes": [
+        "aarch64",
+        "armv7-3.2",
+        "armv7-2.6"
+      ],
+      "total": 462,
+      "result": "pass"
+    },
+    "migration_host_and_real_control_elf_regressions": {
+      "tests": 28,
+      "result": "pass"
+    },
+    "package_structure": {
+      "tests": 16,
+      "result": "pass"
+    },
+    "frontend_node_suites": {
+      "suites": 26,
+      "result": "pass"
+    },
+    "frontend_typescript_eslint_production_build": "pass",
+    "independent_reviews": [
+      "update database parser and public transport",
+      "control bootstrap reader bounds",
+      "migration and reinstall behavior",
+      "selective config save and visual section spacing"
+    ],
+    "ipk_reproduction": "byte-for-byte for both families"
+  }
+}

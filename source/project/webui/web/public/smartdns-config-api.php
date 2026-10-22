@@ -85,7 +85,7 @@ final class AsusSmartDnsConfigApi
         $codes=['busy','invalid_request','invalid_state','invalid_configuration','invalid_profile','consent_required','request_conflict',
             'not_installed','unsupported_runtime','unsupported_binary','unsupported_abi','insufficient_memory','insufficient_space','invalid_clock',
             'stale_draft','stale_preview','stale_baseline','stale_state','restore_required','baseline_unavailable','guard_unavailable','recovery_unavailable',
-            'native_fallback_unavailable','primary_dns_unverified','existing_dns_rules','hook_conflict','dns_restart_failed','dns_validation_failed',
+            'native_fallback_unavailable','primary_dns_unverified','existing_dns_rules','hook_permissions','hook_conflict','dns_restart_failed','dns_validation_failed',
             'runtime_stop_failed','port_busy','timed_out','interrupted','output_limit','validation_failed','connection_failed','storage_unavailable','launch_failed'];
         return ['error'=>in_array($e->getMessage(),$codes,true)?$e->getMessage():'internal_error'];
     }

@@ -30,8 +30,8 @@ import {queryClient} from '@/api/client';import {createAPIClient} from '@/api/cr
 import {Header} from '@/components/Header';import {ShareStrategySection} from '@/components/ShareStrategySection';import {ShareDpiSection} from '@/components/ShareDpiSection';import {SharePreview} from '@/components/SharePreview';
 import {TranslationContext} from '@/context/TranslationContext';import ru from '@/translations/ru.json';import en from '@/translations/en.json';
 function local(Component,props,language){const pack=language==='ru'?ru:en;const t=path=>path.split('.').reduce((v,k)=>v[k],pack);return h(TranslationContext.Provider,{value:{t,langcode:language,setLanguage(){}}},h(Component,props));}
-export function renderHeader(language,path,anonymous){
- const key=createAPIClient().indexPhp.postIndexCmd.getQueryKey({body:{cmd:'status'}});queryClient.setQueryData(key,{status:0,anonym:anonymous,authenticated:true,nfqws2:true,service:true,version:'1.3.1-asus6+b16',csrf_token:'fixture-csrf'});
+export function renderHeader(language,path,anonymous,runtime={}){
+ const key=createAPIClient().indexPhp.postIndexCmd.getQueryKey({body:{cmd:'status'}});queryClient.setQueryData(key,{status:0,anonym:anonymous,authenticated:true,nfqws2:true,service:true,version:'1.3.1-asus6+b16',csrf_token:'fixture-csrf',...runtime});
  queryClient.setQueryData(['package-update-overview','fixture-csrf'],{check:{state:'current',candidate:null,code:null,installed_version:'1.3.1-asus6+b16'},operation:null});
  const initial=useAppStore.getInitialState();useAppStore.getInitialState=()=>({...initial,auth:true});useAppStore.setState({auth:true});
  const router=createRouter({routeTree:createRootRoute(),history:createMemoryHistory({initialEntries:[path]})});
@@ -48,6 +48,12 @@ if(process.env.NFQWS_HEADER_PREVIEW)await writeFile(process.env.NFQWS_HEADER_PRE
 globalThis.fetch=async()=>{throw Error('render must not request or send anything');};
 for(const lang of ['ru','en']){
  for(const path of ['/','/scripts','/lists'])for(const anonymous of [true,false]){const html=render.renderHeader(lang,path,anonymous);const title=lang==='ru'?'Экспорт / поделиться':'Export / share';assert.equal((html.match(new RegExp('aria-label=\"'+title+'\"','g'))||[]).length,1,`one Share in ${lang} ${path}, anonymous=${anonymous}`);assert.ok(html.includes('/community/export-e9a226cd.png'));assert.ok(html.includes('/community/import-937c2946.png'));assert.doesNotMatch(html,/>Поделиться<|>Share</);const importLabel=lang==='ru'?'Импорт стратегий':'Import strategies';assert.match(html,new RegExp('<button[^>]*aria-label=\"'+importLabel+'\"'));assert.doesNotMatch(html,new RegExp('<button[^>]*disabled=\"\"[^>]*aria-label=\"'+importLabel+'\"'));}
+ for (const ark_loaded of [true,false,null,undefined,'true']) {
+  const html=render.renderHeader(lang,'/',false,{ark_loaded});
+  const label=lang==='ru'?'ARK загружен':'ARK is loaded';
+  assert.equal(html.includes(label),ark_loaded===true,'Header warns only for a confirmed loaded ARK module');
+  if(ark_loaded===true)assert.match(html,/MuiAlert-standardError/);
+ }
  const strategy=render.renderPart('strategy',lang);assert.equal((strategy.match(/ required=""/g)||[]).length,2);assert.doesNotMatch(strategy,/ checked=""/);assert.match(strategy,/https:\/\/db-ip.com/);
  const dpi=render.renderPart('dpi',lang);assert.match(dpi,/\/opt\/bin\/nfqws2-dpi/);assert.doesNotMatch(dpi,/startDpi|DpiSettings/);
  const preview=render.renderPart('preview',lang);assert.ok(preview.includes('&lt;script&gt;PRIVATE_HTML_CANARY&lt;/script&gt;'));assert.ok(!preview.includes('<script>PRIVATE_HTML_CANARY'));

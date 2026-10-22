@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "913f5d1da2feaf4deeccc9e55cbb350a20f12b3f507e87be85dbb77fdd3cb9bc"
+    "sha256": "979b894f2d91bf199766571d58024f020d1a44a417da5f48e1fa1cdf554a14f5"
   },
   {
     "path": "LICENSE",
@@ -11,8 +11,8 @@
   },
   {
     "path": "README.md",
-    "bytes": 1126,
-    "sha256": "947d2fd4229405912110ac2ebdfd05eb46f9725f70d962f85604611f22eb6718"
+    "bytes": 1125,
+    "sha256": "5e72a54b2b58c887e48266ad84591eaf2164f717c3e5b4eecf3e9ec14d105511"
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
@@ -126,8 +126,8 @@
   },
   {
     "path": "asus/ipk/defaults.sh",
-    "bytes": 2037,
-    "sha256": "863c5148f32803d0d133eefa3891c731d491b769c97c5139cf05f363a2c43960"
+    "bytes": 4845,
+    "sha256": "7834061cadbb0ffc12c7963f05157908af726c4070ac872a494a96a1b582ea0a"
   },
   {
     "path": "asus/ipk/migration.sh",
@@ -396,8 +396,8 @@
   },
   {
     "path": "asus/support-relay.json",
-    "bytes": 27,
-    "sha256": "83245de6f52b98b36f4dd5674ab8a22a8082e4f2eea4498a4c3f03b4163e2e20"
+    "bytes": 160,
+    "sha256": "5df01a204190b91a63350702d115c43af4c449700821c93fd0fb4c70ab7a1692"
   },
   {
     "path": "asus/update/README.md",
@@ -781,8 +781,8 @@
   },
   {
     "path": "support-relay/README.md",
-    "bytes": 11960,
-    "sha256": "52511ebe89b8caacb09852d8e9613a1d01ffd3a85400252106d2d96e4e148c23"
+    "bytes": 12122,
+    "sha256": "c380cc0297c8d7789ab592641e474b2e2a4c8468a84fc4be2ce7f792a53f9637"
   },
   {
     "path": "support-relay/deploy/credential-config.example.json",
@@ -951,8 +951,8 @@
   },
   {
     "path": "tests/test_ark_readiness.mjs",
-    "bytes": 14655,
-    "sha256": "703f9907362f61cb691f942bd0578ddc0ad6887db8cb840f0be68ac488b2b7be"
+    "bytes": 14758,
+    "sha256": "1f2e334d40088766602028a653afb2047b6aaf137e9d37ed1dfd9014b9a941e3"
   },
   {
     "path": "tests/test_arm_runtime.py",
@@ -1171,8 +1171,8 @@
   },
   {
     "path": "tests/test_migration_reinstall.py",
-    "bytes": 17064,
-    "sha256": "4d1d197172d82a840dc07bba0884eaf02c0c06a4248abe7d2cf669e4ddc00d24"
+    "bytes": 34520,
+    "sha256": "3519690a9582a225b2ab8a1a20934740926b6c2d6b6f40e0f99a1eedcf515f26"
   },
   {
     "path": "tests/test_native_args.py",
@@ -1300,9 +1300,19 @@
     "sha256": "f19c18aadb3efb74697caaad6571637f9c8b5d217cf13f7a113ca8bcb0684b13"
   },
   {
+    "path": "tests/test_runtime_status.py",
+    "bytes": 2632,
+    "sha256": "3e9a26e8a4111526c0078ed52395f3f89f2387e3e95d2696b9eb4955ecb55dec"
+  },
+  {
     "path": "tests/test_service.py",
     "bytes": 9629,
     "sha256": "696a2c7c05ebc182111dceddf1119e11ec93e0ac2a9ba8b88175f1883dfb68fc"
+  },
+  {
+    "path": "tests/test_share_availability.mjs",
+    "bytes": 4337,
+    "sha256": "516e21106d49e63740a95e9781fd4213a11f32c1f4fd872cfd8b90c69ec35d4a"
   },
   {
     "path": "tests/test_share_bundle_api.py",
@@ -1396,8 +1406,8 @@
   },
   {
     "path": "tests/test_share_ui.mjs",
-    "bytes": 8381,
-    "sha256": "b9bfcfa3b5a8f78ec1c197247c89f1bf79de219a79e345f24b6913c0be3931eb"
+    "bytes": 8777,
+    "sha256": "382db6f942f3ff8ec4d00092c303b367a286568d3d39a90305f0dc3258f3169e"
   },
   {
     "path": "tests/test_share_v4.py",
@@ -1416,8 +1426,8 @@
   },
   {
     "path": "tests/test_smartdns_config_api.py",
-    "bytes": 3149,
-    "sha256": "2e524a88fc69dd41624e552b5ada895b0cc5835a2480027289756174e0d2ec8f"
+    "bytes": 3599,
+    "sha256": "b1ddbfcf93c144e2647816d8121e9a7d834b115ce1ebda4cc08fe03daa60a9b3"
   },
   {
     "path": "tests/test_smartdns_config_guard.py",
@@ -1436,8 +1446,8 @@
   },
   {
     "path": "tests/test_smartdns_connect.py",
-    "bytes": 14565,
-    "sha256": "4acedb43debb0dc9c9012d99e516d007b46554e47013245790dd2240c60ee950"
+    "bytes": 15689,
+    "sha256": "cf9d5153faf377f145fe5d7b626a3fccf87acfd73ed93dc7ec4fd4174bf54808"
   },
   {
     "path": "tests/test_smartdns_dns_probe.py",
@@ -1596,8 +1606,8 @@
   },
   {
     "path": "tests/test_support_mail_dependencies.py",
-    "bytes": 1589,
-    "sha256": "6ae017306465d6831a9bfb405cb5df3b2f919856f43fc7eb627c2aaff79cdc74"
+    "bytes": 5640,
+    "sha256": "e73cd0e249c01ff78473efda32f7efee78242b01b6971c4444443b869765a64b"
   },
   {
     "path": "tests/test_support_mail_router_http.py",
@@ -1916,8 +1926,8 @@
   },
   {
     "path": "webui/web/openapi.yaml",
-    "bytes": 42623,
-    "sha256": "20d5b41f4a98d7432a804cc8d252a3178ad765b2b465c6e130004c330015b903"
+    "bytes": 42761,
+    "sha256": "bbe81cc66e9fd32d0e9a63d1426d410c8709df5c794df67e00bbe90462c052d9"
   },
   {
     "path": "webui/web/package.json",
@@ -2051,8 +2061,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 27418,
-    "sha256": "6fca225a7dfde2f97016afcace50d992fd37bbf2b437227305849e494ddb2c9e"
+    "bytes": 27881,
+    "sha256": "88b804879443f0a17c251bf17ceb341d670691795a199ecd939c29a733190773"
   },
   {
     "path": "webui/web/public/logo.woff2",
@@ -2161,8 +2171,8 @@
   },
   {
     "path": "webui/web/public/smartdns-config-api.php",
-    "bytes": 6371,
-    "sha256": "06db041e05f22adaee8482e5fe64e7eacc09d2d8babc93170415adc318824248"
+    "bytes": 6390,
+    "sha256": "bfc98d33c3074f3a02207e8da3a361ed63be95951e5ea00fedb5fa72815b1c70"
   },
   {
     "path": "webui/web/public/smartdns-config-jobs.php",
@@ -2171,8 +2181,8 @@
   },
   {
     "path": "webui/web/public/smartdns-connect.php",
-    "bytes": 13945,
-    "sha256": "d85bdbdc60cb9882dced6750911b38de23dcbd4dc0a9eb8100824e5ca4471308"
+    "bytes": 14328,
+    "sha256": "743af5c5402d99467f3b36b011934f8642b78ce946cee7905a079dc3571e510a"
   },
   {
     "path": "webui/web/public/smartdns-install.php",
@@ -2411,8 +2421,8 @@
   },
   {
     "path": "webui/web/src/api/schema.ts",
-    "bytes": 46250,
-    "sha256": "a81fb4963acc757e629be9ec6ddf26eb3aa263264872b30b837e9724e65763c6"
+    "bytes": 46372,
+    "sha256": "6146010f80f4306965fd9b1618fab05e79991cac4d730604c6fc06b949907aaa"
   },
   {
     "path": "webui/web/src/api/services/IndexPhpService.ts",
@@ -2496,8 +2506,8 @@
   },
   {
     "path": "webui/web/src/components/ArkDialog.tsx",
-    "bytes": 13462,
-    "sha256": "9733c056f8125686f31f41fb65669c3f08d118ad6960df725577b51a7babd317"
+    "bytes": 13774,
+    "sha256": "d5dc080c5d3fd473d2c093053ac524405fbcec19563699a7052cdf8444b41de2"
   },
   {
     "path": "webui/web/src/components/CommunityActions.tsx",
@@ -2551,8 +2561,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 13392,
-    "sha256": "b96e5572dba8b452645987ba60d755b5ab3cf2b097ca88855be0488ded90dc05"
+    "bytes": 13956,
+    "sha256": "cf29cc81e73b7b51896d0fdd31a1087ee03005c8ed3ddf3b166a6766afbe9d93"
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
@@ -2636,8 +2646,8 @@
   },
   {
     "path": "webui/web/src/components/ShareDialog.tsx",
-    "bytes": 19272,
-    "sha256": "af4753f478a5cd39ab28c62751071ea3d1b04d64205e6f2875333fe09625fd1c"
+    "bytes": 20015,
+    "sha256": "4925f8faa24d0188e82335c3aa29e789eb59bb2f6962e0550622786a4c2294b4"
   },
   {
     "path": "webui/web/src/components/ShareDnsSection.tsx",
@@ -2676,8 +2686,8 @@
   },
   {
     "path": "webui/web/src/components/SmartDnsConfigurator.tsx",
-    "bytes": 11863,
-    "sha256": "b20302649806f5b1f5c6b1699de02d0bd35668451ff07cd336f761983dc6c035"
+    "bytes": 11952,
+    "sha256": "45ebf2c94e5351145acbd481ff83c1fa6d03eebe3664443e8750a33c03cb09a8"
   },
   {
     "path": "webui/web/src/components/SmartDnsPanel.tsx",
@@ -2731,8 +2741,8 @@
   },
   {
     "path": "webui/web/src/hooks/useStatus.tsx",
-    "bytes": 2430,
-    "sha256": "7e27ea501cb6fcf02073590ed7aa0aab7a9bc6d72f7ec3a3783407a3f635dd5a"
+    "bytes": 2556,
+    "sha256": "01104cbb32ee37982a0b73c770a0d5379cd56e74d088096c66d3774575cbfa44"
   },
   {
     "path": "webui/web/src/hooks/useStorage.ts",
@@ -2801,13 +2811,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 58537,
-    "sha256": "a133e6c3f71f904a9d61e42234c64beab5fa6f7687215afabd46c8490b81f497"
+    "bytes": 59801,
+    "sha256": "231e4abedc808103d7028b84fa876088cb919e705f3ac913c7ab580a948b231c"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 96196,
-    "sha256": "20ab9ef03cb0cdc1c42d7f7b731fbbe1d1612e5d39c04f34ea3f411d76cc665e"
+    "bytes": 98153,
+    "sha256": "18c82e6b0f78c7a70fd73752bcefca0bc95316e6adc61401a88c085eca7c5bed"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -2878,6 +2888,11 @@
     "path": "webui/web/src/utils/quoteDiagnostics.ts",
     "bytes": 3141,
     "sha256": "7bd4cba9c157d2ea93ef88f66197b920d5e009e2409183de63bd9741dcd7d0ca"
+  },
+  {
+    "path": "webui/web/src/utils/shareAvailability.ts",
+    "bytes": 490,
+    "sha256": "be8bb4dd2d40ecdeb4fe7e62afed36a92fd604fd5283f817112e4fd99c3322fd"
   },
   {
     "path": "webui/web/src/vite-env.d.ts",

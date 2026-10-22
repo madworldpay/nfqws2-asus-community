@@ -267,6 +267,8 @@ export interface components {
       status: 0;
       /** @description Service status (running or not) */
       service: boolean;
+      /** @description Loaded ARK module, or null when runtime state cannot be read */
+      ark_loaded?: boolean | null;
       nfqws2: boolean;
       version: string | null;
       anonym: boolean;

@@ -92,7 +92,7 @@ class SmartDnsHookTests(unittest.TestCase):
 
 
 class SmartDnsConnectionTests(unittest.TestCase):
-    def scenario(self, mode='ready', action='confirm'):
+    def scenario(self, mode='ready', action='confirm', conflicts=None):
         code=r'''require $argv[1].'/smartdns-connect.php';
         if(!class_exists('AsusSmartDnsConnection')){echo json_encode(['error'=>'missing_transaction']);exit;}
         $in=json_decode(stream_get_contents(STDIN),true);$time=100.0;$events=[];$reads=0;$journalReader=null;
@@ -100,7 +100,7 @@ class SmartDnsConnectionTests(unittest.TestCase):
         $hash=$store->saveDraft($in['profile']);$base=str_repeat('a',64);$id=str_repeat('b',32);$preview=str_repeat('1',32);
         $store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>700]);
         $deps=['uptime'=>function()use(&$time){return $time;},
-          'baseline'=>function()use(&$reads,$base,$in){$reads++;return ['hash'=>$in['mode']==='changed_baseline'&&$reads>1?str_repeat('c',64):$base,'snapshot'=>['hook'=>'foreign'],'conflicts'=>[]];},
+          'baseline'=>function()use(&$reads,$base,$in){$reads++;return ['hash'=>$in['mode']==='changed_baseline'&&$reads>1?str_repeat('c',64):$base,'snapshot'=>['hook'=>'foreign'],'conflicts'=>$in['conflicts']];},
           'prepare'=>function($job,$snapshot)use(&$events){$events[]='prepare';},
           'guard'=>function($job,$profile)use(&$events,$in,$argv,&$journalReader){$events[]='guard';if($in['mode']==='guard_fails')throw new RuntimeException('guard_unavailable');
             if($in['mode']==='journal_reader_after_guard'){
@@ -139,9 +139,29 @@ class SmartDnsConnectionTests(unittest.TestCase):
         echo json_encode(['results'=>$out,'events'=>$events,'status'=>$connection->status(),'active'=>$store->active()]);'''
         with tempfile.TemporaryDirectory() as d:
             p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(Path(d)/'state'),str(os.getuid())],
-                             input=json.dumps({'mode':mode,'action':action,'profile':profile()}),capture_output=True,text=True,timeout=8)
+                             input=json.dumps({'mode':mode,'action':action,'profile':profile(),'conflicts':conflicts or []}),capture_output=True,text=True,timeout=8)
         self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'')
         return json.loads(p.stdout)
+
+    def test_baseline_hook_permissions_are_reported_before_any_dns_change(self):
+        value=self.scenario(conflicts=['hook_permissions'])
+        self.assertEqual(value['results'],[{'error':'hook_permissions'}])
+        self.assertEqual(value['events'],[])
+        self.assertEqual(value['status']['state'],'idle')
+        self.assertIsNone(value['active'])
+
+    def test_known_baseline_problems_keep_their_specific_safe_error(self):
+        for conflict in ['hook_conflict','native_fallback_unavailable']:
+            with self.subTest(conflict=conflict):
+                value=self.scenario(conflicts=[conflict])
+                self.assertEqual(value['results'],[{'error':conflict}])
+                self.assertEqual(value['events'],[])
+
+    def test_unknown_baseline_details_are_not_exposed_as_error_codes(self):
+        value=self.scenario(conflicts=['PRIVATE_PATH_AND_URL_CANARY'])
+        self.assertEqual(value['results'],[{'error':'existing_dns_rules'}])
+        self.assertNotIn('CANARY',json.dumps(value))
+        self.assertEqual(value['events'],[])
 
     def test_guard_handshake_precedes_forwarding_and_confirmation_is_explicit(self):
         value=self.scenario(action='none')

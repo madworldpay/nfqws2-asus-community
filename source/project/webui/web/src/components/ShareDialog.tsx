@@ -69,6 +69,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { shareMailUnavailableReason } from '@/utils/shareAvailability';
+
 type ShareErrorCode = keyof TranslationSchema['share']['errors'];
 const emptyStrategyForm = (): ShareStrategyForm => ({
   selected: [],
@@ -82,6 +84,51 @@ const emptyStrategyForm = (): ShareStrategyForm => ({
   },
   locationEdited: false,
 });
+export const ShareMailNotice = ({ mail }: { mail?: ShareState['mail'] }) => {
+  const { t } = useTranslation();
+  const reason = shareMailUnavailableReason(mail);
+  return reason && reason !== 'loading' ? (
+    <Alert severity="info">{t(`share.mail_availability.${reason}`)}</Alert>
+  ) : null;
+};
+
+export const ShareDeliveryButtons = ({
+  mail,
+  snapshot,
+  busy,
+  disabled,
+  retry,
+  onSave,
+  onSend,
+}: {
+  mail?: ShareState['mail'];
+  snapshot?: PreparedShare;
+  busy: boolean;
+  disabled: boolean;
+  retry: boolean;
+  onSave: VoidFunction;
+  onSend: VoidFunction;
+}) => {
+  const { t } = useTranslation();
+  const mailAvailable = shareMailUnavailableReason(mail) === null;
+  return (
+    <>
+      <Button disabled={busy || !snapshot} onClick={onSave}>
+        {t(
+          canChooseReportLocation() ? 'report.choose_file' : 'report.download',
+        )}
+      </Button>
+      <Button
+        variant="contained"
+        disabled={disabled || !snapshot || !mailAvailable}
+        onClick={onSend}
+      >
+        {t(retry ? 'report.send_again' : 'report.send')}
+      </Button>
+    </>
+  );
+};
+
 export const ShareDialog = ({
   onClose,
   onSent,
@@ -302,11 +349,7 @@ export const ShareDialog = ({
     );
   const hasContributions =
     strategySelected || files.selected.length > 0 || dns.length > 0;
-  const mailAvailable =
-    !!state?.mail.configured &&
-    ((snapshot?.version ?? 3) === 4
-      ? state.mail.sharing_v4 === true
-      : state.mail.sharing_v3);
+  const mailAvailable = shareMailUnavailableReason(state?.mail) === null;
   const canPrepare =
     !!token &&
     (reportSelected || !!dpi || hasContributions) &&
@@ -416,6 +459,7 @@ export const ShareDialog = ({
       <DialogContent>
         <Stack spacing={2}>
           <Typography variant="body2">{t('share.intro')}</Typography>
+          <ShareMailNotice mail={state?.mail} />
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Button
               disabled={disabled || !token || !state}
@@ -560,9 +604,6 @@ export const ShareDialog = ({
             <Alert severity="error">{t(`share.errors.${error}`)}</Alert>
           )}
           {snapshot && <SharePreview snapshot={snapshot} />}
-          {snapshot && !mailAvailable && (
-            <Alert severity="info">{t('report.mail_unavailable')}</Alert>
-          )}
           {snapshot && (
             <Typography variant="body2">
               {t(
@@ -624,24 +665,15 @@ export const ShareDialog = ({
         <InlineHelp title={t('share.preview')}>
           <Typography>{t('share.preview_help')}</Typography>
         </InlineHelp>
-        <Button disabled={busy || !snapshot} onClick={save}>
-          {t(
-            canChooseReportLocation()
-              ? 'report.choose_file'
-              : 'report.download',
-          )}
-        </Button>
-        <Button
-          variant="contained"
-          disabled={disabled || !snapshot || !mailAvailable}
-          onClick={() => void send()}
-        >
-          {t(
-            result?.state === 'failed_safe'
-              ? 'report.send_again'
-              : 'report.send',
-          )}
-        </Button>
+        <ShareDeliveryButtons
+          mail={state?.mail}
+          snapshot={snapshot}
+          busy={busy}
+          disabled={disabled}
+          retry={result?.state === 'failed_safe'}
+          onSave={save}
+          onSend={() => void send()}
+        />
       </DialogActions>
     </Dialog>
   );

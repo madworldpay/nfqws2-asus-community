@@ -30,6 +30,7 @@ type UseStatusResult = {
   status: boolean;
   nfqws2: boolean;
   service: boolean;
+  arkLoaded?: boolean | null;
   version?: Version;
   packageVersion?: string;
   buildNumber?: string;
@@ -66,6 +67,8 @@ export const useStatus = (): UseStatusResult => {
         status: true,
         nfqws2: status.nfqws2,
         service: status.service,
+        arkLoaded:
+          typeof status.ark_loaded === 'boolean' ? status.ark_loaded : null,
         ...current,
         anonym: status.anonym,
         authenticated: status.authenticated ?? !status.anonym,

@@ -1,6 +1,6 @@
 # Исходники NFQWS2 ASUS
 
-Код адаптации соответствует Build 64.
+Код адаптации соответствует Build 65.
 
 - `asus/` — сборка IPK, службы, чекап, ARK, SmartDNS и модуль старого ядра.
 - `webui/web/` — интерфейс и PHP API.
@@ -9,7 +9,7 @@
 - `support-relay/`, `updates-feed/` — серверная часть и канал обновлений.
 - `tests/` — проверки проекта.
 
-Для сборки нужны Python 3, Node.js, Yarn 4.12.0 и UPX для ARM-пакета.
+Для сборки нужны Python 3, Node.js, Yarn 4.9.2 и UPX для ARM-пакета.
 
 ```sh
 cd webui/web

@@ -40,5 +40,11 @@ class SmartDnsConfigApiTests(unittest.TestCase):
         r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],capture_output=True,text=True)
         self.assertEqual(r.returncode,0);self.assertNotIn('CANARY',r.stdout);self.assertEqual(json.loads(r.stdout),{'error':'internal_error'})
 
+    def test_dns_hook_permissions_have_a_public_safe_error_code(self):
+        code=r'''require $argv[1].'/smartdns-config-api.php';echo json_encode(AsusSmartDnsConfigApi::error(new RuntimeException('hook_permissions')));'''
+        r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertEqual(json.loads(r.stdout),{'error':'hook_permissions'})
+
 
 if __name__=='__main__':unittest.main()

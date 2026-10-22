@@ -384,6 +384,9 @@ components:
         service:
           type: boolean
           description: Service status (running or not)
+        ark_loaded:
+          type: [boolean, 'null']
+          description: Loaded ARK module, or null when runtime state cannot be read
         nfqws2:
           type: boolean
         version:

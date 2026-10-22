@@ -11,6 +11,8 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   IconButton,
@@ -52,7 +54,7 @@ export const Header = () => {
   const open = Boolean(anchorEl);
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
 
-  const { service, nfqws2 } = useStatus();
+  const { service, nfqws2, arkLoaded } = useStatus();
 
   const config = useConfig(nfqws2);
 
@@ -371,6 +373,24 @@ export const Header = () => {
             </Stack>
           </Stack>
         </Box>
+        {auth && arkLoaded === true && (
+          <Alert
+            severity="error"
+            sx={{ mt: 2, whiteSpace: 'normal' }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => setArkOpen(true)}
+              >
+                {t('ark.title')}
+              </Button>
+            }
+          >
+            <AlertTitle>{t('ark.runtime_loaded_title')}</AlertTitle>
+            {t('ark.runtime_loaded_hint')}
+          </Alert>
+        )}
       </Box>
 
       <ThemeMenu anchorEl={themeAnchor} onClose={() => setThemeAnchor(null)} />

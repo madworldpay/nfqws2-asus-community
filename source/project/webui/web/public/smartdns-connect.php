@@ -159,7 +159,13 @@ final class AsusSmartDnsConnection
         if ($preview['profile_hash']!==$profileHash || $preview['baseline_hash']!==$baselineHash) throw new RuntimeException('stale_preview');
         $baseline=$this->baseline();
         if (!hash_equals($baselineHash,$baseline['hash'])) throw new RuntimeException('stale_baseline');
-        if ($baseline['conflicts']) throw new RuntimeException('existing_dns_rules');
+        if ($baseline['conflicts']) {
+            // Keep actionable local checks distinct from conditional DNS rules.
+            // Unknown collector details remain behind the existing safe error.
+            foreach (['hook_permissions','hook_conflict','native_fallback_unavailable'] as $code)
+                if (in_array($code,$baseline['conflicts'],true)) throw new RuntimeException($code);
+            throw new RuntimeException('existing_dns_rules');
+        }
         $profile=$this->store->draft();
         $this->store->begin($requestId,$profileHash,$baselineHash);$guardReady=false;
         try {
