@@ -310,7 +310,7 @@ function main(): void
   }
 
   $mutationLease = null;
-  $updaterMutations = ['filecreate','filesave','fileremove','password','arkprepare','arkrestore','start','stop','restart','upgrade','dpiinstall','dpistart','dpistop','dpidelete','sharesavedrefresh','sharesaveddelete','smartdnsinstall'];
+  $updaterMutations = ['filecreate','filesave','fileremove','password','arkprepare','arkrestore','start','stop','restart','upgrade','dpiinstall','dpistart','dpistop','dpidelete','sharesavedrefresh','sharesaveddelete','sharechannelconnect','smartdnsinstall'];
   if (in_array($_POST['cmd'], $updaterMutations, true) || ($_POST['cmd']==='dpipreferences' && ($_POST['action']??null)!=='read')) {
     require_once __DIR__.'/update-guard.php';
     try {$mutationLease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();}
@@ -360,7 +360,7 @@ function main(): void
     exit();
   }
 
-  if (in_array($_POST['cmd'], ['sharestates','sharesavedrefresh','sharesavedread','sharesaveddelete','sharestrategydraft','shareinventory','sharednssources','shareresourceread','shareanalyze','shareprepare','sharesend','sharelocation'], true)) {
+  if (in_array($_POST['cmd'], ['sharestates','sharesavedrefresh','sharesavedread','sharesaveddelete','sharestrategydraft','shareinventory','sharednssources','shareresourceread','shareanalyze','shareprepare','sharesend','sharelocation','sharechannelconnect'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/share-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     try {

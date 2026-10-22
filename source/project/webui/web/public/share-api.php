@@ -8,11 +8,12 @@ require_once __DIR__.'/dpi-saved-projector.php';
 require_once __DIR__.'/dpi-jobs.php';
 require_once __DIR__.'/support-mail.php';
 require_once __DIR__.'/support-mail-proof.php';
+require_once __DIR__.'/support-channel-setup.php';
 /** Fixed commands and saved config path; a draft is data, never a shell command. */
 final class AsusShareApi
 {
     private const FIELDS=['sharestates'=>[],'sharesavedrefresh'=>[],'sharesavedread'=>['id'],'sharesaveddelete'=>['id'],
-        'sharestrategydraft'=>[],'shareinventory'=>[],'sharednssources'=>[],'shareresourceread'=>['id','source_sha256'],'shareanalyze'=>['selection'],'shareprepare'=>['selection'],'sharesend'=>['envelope','proof','consent','submission_id'],'sharelocation'=>[]];
+        'sharestrategydraft'=>[],'shareinventory'=>[],'sharednssources'=>[],'shareresourceread'=>['id','source_sha256'],'shareanalyze'=>['selection'],'shareprepare'=>['selection'],'sharesend'=>['envelope','proof','consent','submission_id'],'sharelocation'=>[],'sharechannelconnect'=>[]];
     public function __construct(private ?AsusDpiSavedStore $saved=null,private ?AsusDpiStore $legacy=null,private ?AsusSupportMail $mail=null,
         private string $configPath='/opt/etc/nfqws2/nfqws2.conf',private ?array $versions=null,private ?AsusShareSource $source=null,private ?AsusShareResources $resourceStore=null,private ?AsusShareDns $dnsStore=null){}
     public static function validate(array $post): void
@@ -60,8 +61,9 @@ final class AsusShareApi
                 if(!AsusShareBundle::verify($post['proof'],$envelope['files'],$sessionKey,$now,$envelope['source']??null))throw new RuntimeException('invalid_proof');
                 return $this->mail()->sendShare($post['envelope'],$post['submission_id']);
             case 'sharelocation':return $this->mail()->location();
+            case 'sharechannelconnect':return (new AsusSupportChannelSetup())->connect();
             case 'sharestates':
-                return ['mail'=>$this->mail()->shareAvailability(),'dpi'=>(new AsusDpiJobs())->status(),'saved'=>$this->saved()->list()];
+                return ['mail'=>$this->mail()->shareAvailability()+['public_setup_available'=>(new AsusSupportChannelSetup())->available()],'dpi'=>(new AsusDpiJobs())->status(),'saved'=>$this->saved()->list()];
             case 'sharesavedrefresh':return $this->saved()->refresh();
             case 'sharesavedread':return $this->saved()->read($post['id']);
             case 'sharesaveddelete':$this->saved()->delete($post['id']);return ['deleted'=>true];
