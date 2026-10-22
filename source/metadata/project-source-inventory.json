@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "979b894f2d91bf199766571d58024f020d1a44a417da5f48e1fa1cdf554a14f5"
+    "sha256": "8e37bed9dff3949ffd23ae638260dff869f5cc26e551f2a9e5e289a8888949fa"
   },
   {
     "path": "LICENSE",
@@ -12,7 +12,7 @@
   {
     "path": "README.md",
     "bytes": 1125,
-    "sha256": "5e72a54b2b58c887e48266ad84591eaf2164f717c3e5b4eecf3e9ec14d105511"
+    "sha256": "868bec2fdc685010cab4d0521a395e4186d9170360716d15f55e854ed6e8f2e4"
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
@@ -51,8 +51,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 25224,
-    "sha256": "6ab12823ab0591d6f0c1eadc562b3d74ba85e7e40f29923f2ab6dcac4328cc16"
+    "bytes": 27463,
+    "sha256": "dd0c7420c4fb1c9d94d4860b29611317d475df670254551d8e1f8319fe010488"
   },
   {
     "path": "asus/compatibility.sh",
@@ -141,8 +141,13 @@
   },
   {
     "path": "asus/ipk/preinst",
-    "bytes": 1811,
-    "sha256": "88294374eb13bd8acc94080d70e86e103412b1606f6ca69f10dd7b4d2a35dfa5"
+    "bytes": 1982,
+    "sha256": "796fc5644343e8dfeaa0406c2dbd770ff289c7fc5594b2052293eea5fbdd1406"
+  },
+  {
+    "path": "asus/ipk/relay-config.php",
+    "bytes": 10055,
+    "sha256": "b6b0740c5520abf9c618c80f65c988feb29dadfb8eb0175bda92138dbd69ad08"
   },
   {
     "path": "asus/ipk/unified-postinst",
@@ -781,8 +786,8 @@
   },
   {
     "path": "support-relay/README.md",
-    "bytes": 12122,
-    "sha256": "c380cc0297c8d7789ab592641e474b2e2a4c8468a84fc4be2ce7f792a53f9637"
+    "bytes": 12516,
+    "sha256": "b9d31d981069cd1561fc035d9d988f02b8df6c8e054e78b46c647797cadf12b6"
   },
   {
     "path": "support-relay/deploy/credential-config.example.json",
@@ -1225,6 +1230,11 @@
     "sha256": "a2b52176ad5c3d9650f95bfe14eb018bd5f41be6f4e7f8d437b9b81c01b7634e"
   },
   {
+    "path": "tests/test_package_update_relay.py",
+    "bytes": 13147,
+    "sha256": "981e869ff2d2ea564b92b38e281debbf45bb45cc8c0673a84dbd494ce46c6cc9"
+  },
+  {
     "path": "tests/test_package_update_runtime.py",
     "bytes": 7292,
     "sha256": "ff20c0c13aad57cdb879f5129708fad57cc1042df8ef4244b7ccbd8e87a8cc51"
@@ -1266,8 +1276,8 @@
   },
   {
     "path": "tests/test_packages.py",
-    "bytes": 18266,
-    "sha256": "a8ecbc8c88774b8a52501b66bb8345e11e4912e2762d6824f193c73224b759c6"
+    "bytes": 19253,
+    "sha256": "4f08e0e60ff0ed074d1cab7abac90e38adf01eb8a8b355b0f3652d6079fd5232"
   },
   {
     "path": "tests/test_platform.py",
@@ -1283,6 +1293,11 @@
     "path": "tests/test_quote_diagnostics.mjs",
     "bytes": 2186,
     "sha256": "fe3fe9eef08c83abc6e6b4013727d0f14b5c21017e4688d91cece9782068e001"
+  },
+  {
+    "path": "tests/test_relay_conffile.py",
+    "bytes": 11673,
+    "sha256": "eb1b8920a41a41f9415c9cb56df60c7c3f6c5665a807336e010fbf9113d305b3"
   },
   {
     "path": "tests/test_router_checkup.py",
@@ -1318,6 +1333,11 @@
     "path": "tests/test_share_bundle_api.py",
     "bytes": 4397,
     "sha256": "d3b058f69b093a29fc39cbb4609b01673641205e658ff1b742df201c8a546a8c"
+  },
+  {
+    "path": "tests/test_share_channel_setup.mjs",
+    "bytes": 3035,
+    "sha256": "8f57d9e7bd9a5eeca4b14ca17160cc43cac94cb9b828114d683df1cd4270efce"
   },
   {
     "path": "tests/test_share_client.mjs",
@@ -1590,6 +1610,11 @@
     "sha256": "583ab96b8851b10f6459096c6d404a810f8b5d96c5a3a2a5779d6f23dcfc5a8e"
   },
   {
+    "path": "tests/test_support_channel_setup.py",
+    "bytes": 7248,
+    "sha256": "7a8005f7ac2b7a27042f54428fd1d4b7d53251fca518ef4988a61ffa009038ff"
+  },
+  {
     "path": "tests/test_support_mail.php",
     "bytes": 2214,
     "sha256": "b68a66f63066dcf318a4d914f10203c460e93e88b8bdd143dff65a24db4d9a00"
@@ -1606,8 +1631,8 @@
   },
   {
     "path": "tests/test_support_mail_dependencies.py",
-    "bytes": 5640,
-    "sha256": "e73cd0e249c01ff78473efda32f7efee78242b01b6971c4444443b869765a64b"
+    "bytes": 5985,
+    "sha256": "7be51ee394717a769c2400d93afd6154f59c6b6a0c339725e310889754bf82bb"
   },
   {
     "path": "tests/test_support_mail_router_http.py",
@@ -1926,8 +1951,8 @@
   },
   {
     "path": "webui/web/openapi.yaml",
-    "bytes": 42761,
-    "sha256": "bbe81cc66e9fd32d0e9a63d1426d410c8709df5c794df67e00bbe90462c052d9"
+    "bytes": 43747,
+    "sha256": "7aa68271dad032b8f8ecdab3e0a7c1f118b714e94cdb3d880415f27b6f32ae60"
   },
   {
     "path": "webui/web/package.json",
@@ -2061,8 +2086,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 27881,
-    "sha256": "88b804879443f0a17c251bf17ceb341d670691795a199ecd939c29a733190773"
+    "bytes": 27925,
+    "sha256": "7c368f162f401a126b5bda4964a98188d42f2fce96ca8d767648ea119c774f51"
   },
   {
     "path": "webui/web/public/logo.woff2",
@@ -2096,8 +2121,8 @@
   },
   {
     "path": "webui/web/public/share-api.php",
-    "bytes": 9954,
-    "sha256": "1c8357060368c4c24cc98970393430dcf4a7e0685ef0687cf13bfe7c7bdc3941"
+    "bytes": 10194,
+    "sha256": "1191873e99d050b54e2f2e8e13db07f0791aad932ae72295f7f384c4be86511c"
   },
   {
     "path": "webui/web/public/share-bundle-v4.php",
@@ -2228,6 +2253,11 @@
     "path": "webui/web/public/support-bundle.php",
     "bytes": 4350,
     "sha256": "7df079a22797276f58625b4a928f361ac52dfcc308d1baf4b2fdee83555ec7be"
+  },
+  {
+    "path": "webui/web/public/support-channel-setup.php",
+    "bytes": 5328,
+    "sha256": "81aa78d190b8bf329aec2b4b8335fddfb902fd800ba90028244a705a575a6a14"
   },
   {
     "path": "webui/web/public/support-json-schema.php",
@@ -2421,8 +2451,8 @@
   },
   {
     "path": "webui/web/src/api/schema.ts",
-    "bytes": 46372,
-    "sha256": "6146010f80f4306965fd9b1618fab05e79991cac4d730604c6fc06b949907aaa"
+    "bytes": 47418,
+    "sha256": "30607fb68c3bab03aad9a02d7773e07a2cde51341c10d1b9687730b10c9126f6"
   },
   {
     "path": "webui/web/src/api/services/IndexPhpService.ts",
@@ -2436,8 +2466,8 @@
   },
   {
     "path": "webui/web/src/api/shareClient.ts",
-    "bytes": 21018,
-    "sha256": "56eccbabfb939ae86b9e26ba93a2a5e130207b36877d6d51ed4a4fa7417081ce"
+    "bytes": 21419,
+    "sha256": "f868df58887b1a8345cd51b51b8f263e804240c7a5dcaa2c0fcaac9100e5be0f"
   },
   {
     "path": "webui/web/src/api/shareResourcesClient.ts",
@@ -2646,8 +2676,8 @@
   },
   {
     "path": "webui/web/src/components/ShareDialog.tsx",
-    "bytes": 20015,
-    "sha256": "4925f8faa24d0188e82335c3aa29e789eb59bb2f6962e0550622786a4c2294b4"
+    "bytes": 20834,
+    "sha256": "51ac66f10cc14b6be47954630bb997ed58067f63791bcb3eb453a01a322f539c"
   },
   {
     "path": "webui/web/src/components/ShareDnsSection.tsx",
@@ -2811,13 +2841,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 59801,
-    "sha256": "231e4abedc808103d7028b84fa876088cb919e705f3ac913c7ab580a948b231c"
+    "bytes": 59843,
+    "sha256": "a60195fdbb2f63d25d387e07a4d9d4a5fe8b9d4cbf9be1a326f95eaa9f9c64c9"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 98153,
-    "sha256": "18c82e6b0f78c7a70fd73752bcefca0bc95316e6adc61401a88c085eca7c5bed"
+    "bytes": 98217,
+    "sha256": "9e10bf2a14f201d3470e8969f9e517e1db01a6fefb35dde645274bdd461516bf"
   },
   {
     "path": "webui/web/src/types/types.ts",

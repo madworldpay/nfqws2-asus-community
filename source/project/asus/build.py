@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 import re
 import os
 import shutil
+import shlex
 import subprocess
 import tempfile
 import tarfile
@@ -170,6 +171,27 @@ def licenses(data, package):
             data[f'opt/share/licenses/{package}/{name}'] = local(name)
 
 
+def relay_preserver(action, version, *, opt='/opt', php='/opt/bin/php-cgi', owner=0, busybox=None, script_parent=None):
+    """Inline the bounded preserver: old updaters accept no new control names."""
+    if action not in ['prepare', 'finish']:
+        raise ValueError('Invalid relay preservation action')
+    quote = lambda value: "'" + str(value).replace('\\', '\\\\').replace("'", "\\'") + "'"
+    digest = hashlib.sha256((ROOT/'asus/support-relay.json').read_bytes()).hexdigest()
+    script = (ROOT/'asus/ipk/relay-config.php').read_text()
+    script += ('\ntry {(new AsusRelayConffile('+quote(opt)+','+quote(version)+','+quote(digest)+','+str(int(owner))+'))->'+action+'();}'
+               'catch(Throwable $e){file_put_contents("php://stderr","Cannot preserve support delivery settings.\\n");exit(1);}\n')
+    bb=shlex.quote(busybox) if busybox else '"$ASUS_MIGRATION_BUSYBOX"'
+    parent=shlex.quote(script_parent+'/.relay-script.XXXXXX') if script_parent else '"$ASUS_MIGRATION_DIR/.relay-script.XXXXXX"'
+    secure_parent='' if script_parent else 'asus_migration_safe_dir "$ASUS_MIGRATION_DIR" || exit 1\n'
+    return ('umask 077\n'+secure_parent+'ASUS_RELAY_SCRIPT_DIR=$('+bb+' mktemp -d '+parent+') || exit 1\n'+
+            bb+' cat > "$ASUS_RELAY_SCRIPT_DIR/config.php" <<\'NFQWS_RELAY_CONFIG_PHP\'\n'+script+
+            'NFQWS_RELAY_CONFIG_PHP\n'+
+            'ASUS_RELAY_SCRIPT_STATUS=0\n'+shlex.quote(php)+' -n -d register_argc_argv=1 -q -f "$ASUS_RELAY_SCRIPT_DIR/config.php" || ASUS_RELAY_SCRIPT_STATUS=$?\n'+
+            bb+' rm -f "$ASUS_RELAY_SCRIPT_DIR/config.php" || ASUS_RELAY_SCRIPT_STATUS=1\n'+
+            bb+' rmdir "$ASUS_RELAY_SCRIPT_DIR" || ASUS_RELAY_SCRIPT_STATUS=1\n'+
+            '[ "$ASUS_RELAY_SCRIPT_STATUS" = 0 ] || exit 1\n').encode()
+
+
 def package(output, name, version, depends, conflicts, payload, prefix, conffiles='', arch='aarch64-3.10', filename_arch=None, family=None):
     control = {
         'Package': name, 'Version': version, 'Architecture': arch,
@@ -194,6 +216,9 @@ def package(output, name, version, depends, conflicts, payload, prefix, conffile
             source_bytes = b'#!/bin/sh\n'+migration+b'\n'+source_bytes.split(b'\n', 1)[1]
             if script == 'preinst':
                 source_bytes = source_bytes.replace(b"model=''", b"asus_migration_save || exit $?\nmodel=''", 1)
+                source_bytes = source_bytes.replace(b'asus_preserve_relay() { :; }',b'asus_preserve_relay() {\nasus_migration_select_busybox || return 1\n'+relay_preserver('prepare',version)+b'}',1)
+            else:
+                source_bytes = source_bytes.replace(b'set -e\n',b'set -e\n'+relay_preserver('finish',version),1)
             scripts[script] = source_bytes, 0o755
     if prefix == 'unified':
         # These exact, pinned payload tools are also available to preinst before
@@ -364,6 +389,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     web['opt/etc/init.d/S81nfqws-asus-web'] = local('asus/S81nfqws-asus-web', True)
     web['opt/etc/nfqws-asus-web/auth.json'] = (ROOT/'asus/web-auth.json').read_bytes(), 0o600
     web['opt/etc/nfqws-asus-web/support-relay.json'] = (ROOT/'asus/support-relay.json').read_bytes(), 0o600
+    web['opt/share/nfqws2-asus/support-relay-default.json'] = (ROOT/'asus/support-relay.json').read_bytes(), 0o644
     licenses(web, 'nfqws-asus-web')
     # Preserve notices from bundled frontend dependencies, including nested ones.
     notices = []

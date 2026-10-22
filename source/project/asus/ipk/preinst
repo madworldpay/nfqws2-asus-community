@@ -1,5 +1,7 @@
 #!/bin/sh
 # Runs before this package's files are installed. ARMv7 has an explicit CPU/ABI gate.
+# The builder embeds the relay preserver here, after all platform checks pass.
+asus_preserve_relay() { :; }
 if [ -n "$IPKG_INSTROOT" ]; then
     echo 'Install on the router OS, not into an offline root.' >&2
     exit 1
@@ -35,9 +37,10 @@ for key in productid odmpid; do
     candidate=$(nvram get "$key" 2>/dev/null)
     [ -z "$model" ] && model=$candidate
     case "$candidate" in
-        GT-BE19000|GT-BE19000AI) exit 0 ;;
+        GT-BE19000|GT-BE19000AI) asus_preserve_relay || exit $?; exit 0 ;;
     esac
 done
 [ -n "$model" ] || { echo 'Cannot identify an ASUS router OS.' >&2; exit 1; }
 echo "WARNING: $model has not been tested. Use at your own risk; developers accept no liability for damage, data loss or connectivity loss." >&2
+asus_preserve_relay || exit $?
 exit 0

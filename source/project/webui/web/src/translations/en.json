@@ -566,6 +566,7 @@
     "clear_blobs": "Clear blobs",
     "preview_help": "Select at least one item. For strategies, files or DNS, enter the purpose and provider. Preview shows only your selection and lets you save JSON. Sending also requires a configured channel with v4 support. Preview again after editing.",
     "resources_help": "Lists contain domains or IPs. Blobs are packet templates used by certain strategy methods. You can select just one file; other files are not attached automatically. Bundled Lua is already part of the package.",
+    "connect_channel": "Connect sending",
     "mail_availability": {
       "not_configured": "Sending channel is not configured. Preview and JSON saving remain available; sending requires channel configuration on the router.",
       "v4_unsupported": "The channel is configured, but format v4 is not enabled. Preview and JSON saving remain available; update the channel settings to send.",

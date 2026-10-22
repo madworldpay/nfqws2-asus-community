@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 3956,
-      "sha256": "7a2a69ca3f6658133f6e9a032ba9dc342fa43b4d291d71d83bb9d81484494ad7"
+      "bytes": 4969,
+      "sha256": "8b27a66a79d40797515be9dd0e9ff7faea5155db906058a7356ae60e2f174fab"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -17,8 +17,8 @@
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 2660,
-      "sha256": "cdd6290c87b0b8bb2f26059df08fbb8078cd98466ade216a123c1d8e38d13fd8"
+      "bytes": 3038,
+      "sha256": "a8a3aa16a174300bc2df21aa7c98b46ff1d52d74886cc40a4f97d303a6e13d3e"
     },
     {
       "file": "DOMRU.md",
@@ -28,7 +28,7 @@
     {
       "file": "DOWNLOADS.md",
       "bytes": 1199,
-      "sha256": "93e88137aa8cf9578c4e38ba4d4116f7c839ae0ff7d3c2d2a80479bf3f71d628"
+      "sha256": "dd88fef904a4c57ddbffa40544fdd4b0564581cf09f86d4551ee6453b5e1e44b"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -52,8 +52,8 @@
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 3329,
-      "sha256": "0aaf385ca59bbe5a81600d7219b49f987271a5985ab161cde0faae0afca48347"
+      "bytes": 3716,
+      "sha256": "4afded95d79e34652294ef0872ea974081455b7ad15dcb6ed5c444630a105389"
     },
     {
       "file": "QUICKSTART.md",
@@ -63,7 +63,7 @@
     {
       "file": "README.md",
       "bytes": 3297,
-      "sha256": "3b91584439b7057d68381ef31cf09c4d0d04a02349562adff27f5ba3ea85b8ab"
+      "sha256": "a6b226fe290058abacf2c8268e8492ef0e47d9ea4bbcdfe79adf2b0ebfee834a"
     },
     {
       "file": "ROADMAP.md",
@@ -93,7 +93,7 @@
     {
       "file": "build.svg",
       "bytes": 385,
-      "sha256": "24a8aee9148bcad1c44e8361dda0e031c4854043ce5ea9245ca34b58da9da461"
+      "sha256": "63268a7a03228402268f406ba025f1a3691fae15fe4113d39fa83c8525b33ad8"
     },
     {
       "file": "domru.json",

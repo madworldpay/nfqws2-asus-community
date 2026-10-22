@@ -91,6 +91,7 @@ export type ShareState = {
     configured: boolean;
     sharing_v3: boolean;
     sharing_v4?: boolean;
+    public_setup_available?: boolean;
     code: string;
   };
   dpi: DpiStatus;
@@ -504,6 +505,8 @@ export async function getShareState(csrf: string): Promise<ShareState> {
     typeof v.mail.configured !== 'boolean' ||
     typeof v.mail.sharing_v3 !== 'boolean' ||
     typeof v.mail.code !== 'string' ||
+    (v.mail.public_setup_available !== undefined &&
+      typeof v.mail.public_setup_available !== 'boolean') ||
     !object(v.dpi) ||
     !object(v.dpi.installed) ||
     typeof v.dpi.installed.installed !== 'boolean' ||
@@ -512,6 +515,11 @@ export async function getShareState(csrf: string): Promise<ShareState> {
     throw new ShareError('invalid_response');
   reports(v.saved);
   return v as ShareState;
+}
+export async function connectShareChannel(csrf: string): Promise<void> {
+  const value = await shareRequest(csrf, 'sharechannelconnect');
+  if (!exact(value, ['connected']) || value.connected !== true)
+    throw new ShareError('invalid_response');
 }
 export async function refreshSaved(csrf: string): Promise<SavedReports> {
   return reports(await shareRequest(csrf, 'sharesavedrefresh'));

@@ -37,13 +37,17 @@ class MailPackageTests(unittest.TestCase):
             self.assertIsNone(url.username);self.assertIsNone(url.password)
             self.assertEqual(url.query,'');self.assertEqual(url.fragment,'')
             self.assertIn(('/'+config_path+'\n').encode(),control['conffiles'][1])
-            for name in ['support-mail.php','support-mail-proof.php','index.php']:
+            template_info,template=data['opt/share/nfqws2-asus/support-relay-default.json']
+            self.assertEqual((template_info.mode,template_info.uid,template_info.gid),(0o644,0,0))
+            self.assertEqual(template,raw)
+            for name in ['support-mail.php','support-mail-proof.php','support-channel-setup.php','index.php']:
                 self.assertEqual(data['opt/share/nfqws-asus-web/'+name][1],(ROOT/'webui/web/public'/name).read_bytes())
             self.assertFalse(any('support-relay/' in name or name.endswith('.py') for name in data))
             versions.append(fields['Version'])
         self.assertEqual(versions[0],versions[1])
 
-    def test_opkg_upgrades_untouched_channel_but_preserves_operator_choices(self):
+    def test_opkg_without_maintainer_hooks_replaces_pristine_conffiles(self):
+        # Baseline opkg behavior is why the staged-updater preservation hook is needed.
         opkg=ROOT/'.work/packaging-audit-20261012/opkg-x64'
         self.assertTrue(opkg.is_file(),'real opkg required for conffile upgrade regression')
         new=(ROOT/'asus/support-relay.json').read_bytes()

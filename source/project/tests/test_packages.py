@@ -215,9 +215,19 @@ class PackageTests(unittest.TestCase):
         p=self.packages()['aarch64-3.10']
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); init=root/'opt/etc/init.d'; init.mkdir(parents=True)
+            for directory in [root/'opt',root/'opt/etc',init]:directory.chmod(0o755)
             for name,code in [('S51nfqws2',core),('S81nfqws-asus-web',web)]:
                 f=init/name; f.write_text(f'#!/bin/sh\necho "{name} $1" >> "{tmp}/calls"\nexit {code}\n'); f.chmod(0o755)
-            script=p['control'][action][1].decode().replace('/opt/', tmp+'/opt/')
+            script=p['control'][action][1].decode().replace('/opt/', tmp+'/opt/').replace("'/opt'",repr(tmp+'/opt'))
+            # Host applets/PHP and this fixture's owner stand in for Entware;
+            # execute the packaged preserver, rather than skipping its hook.
+            if 'final class AsusRelayConffile' in script:
+                from test_package_update_guard import NATIVE
+                self.assertTrue(NATIVE.is_file(),'native PHP required for packaged maintainer scripts')
+                script=script.replace('ASUS_MIGRATION_BUSYBOX='+tmp+'/opt/libexec/nfqws2-asus/busybox','ASUS_MIGRATION_BUSYBOX=/bin/busybox').replace('ASUS_MIGRATION_OWNER=0','ASUS_MIGRATION_OWNER='+str(os.getuid()))
+                script=script.replace(tmp+'/opt/bin/php-cgi',str(NATIVE))
+                digest=hashlib.sha256((ROOT/'asus/support-relay.json').read_bytes()).hexdigest()
+                script=script.replace("'"+digest+"',0))->", "'"+digest+"',"+str(os.getuid())+"))->")
             r=subprocess.run(['sh','-c',script],text=True,capture_output=True,
                              env={**os.environ,'NFQWS_ASUS_NO_START':str(int(no_start))})
             calls=(root/'calls').read_text().splitlines() if (root/'calls').exists() else []
