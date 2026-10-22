@@ -26,6 +26,7 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     IndexCmdRequest:
+      | components['schemas']['SupportChannelConnectRequest']
       | components['schemas']['SupportBundlePrepareRequest']
       | components['schemas']['SupportBundleSendRequest']
       | components['schemas']['DpiStatusRequest']
@@ -136,6 +137,7 @@ export interface components {
       csrf_token: string;
     };
     IndexCmdResponse:
+      | components['schemas']['SupportChannelConnectResponse']
       | components['schemas']['SupportBundleResponse']
       | components['schemas']['DpiStatusResponse']
       | components['schemas']['DpiJob']
@@ -158,6 +160,19 @@ export interface components {
       | components['schemas']['SupportReportResponse']
       | components['schemas']['SupportMailAvailability']
       | components['schemas']['SupportSendResponse'];
+    /** @description Explicitly connect the packaged public sending channel only for a missing or legacy blank configuration. Does not send a report. */
+    SupportChannelConnectRequest: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      cmd: 'sharechannelconnect';
+      csrf_token: string;
+    };
+    SupportChannelConnectResponse: {
+      /** @constant */
+      connected: true;
+    };
     SupportMailStatusRequest: {
       /**
        * @description discriminator enum property added by openapi-typescript
@@ -272,6 +287,7 @@ export interface components {
       nfqws2: boolean;
       version: string | null;
       anonym: boolean;
+      /** @description Current session is authenticated with the protected panel account */
       authenticated?: boolean;
       csrf_token: string;
       username: string;
@@ -1037,6 +1053,9 @@ export const logoutRequestCmdValues: ReadonlyArray<
 export const passwordRequestCmdValues: ReadonlyArray<
   components['schemas']['PasswordRequest']['cmd']
 > = ['password'];
+export const supportChannelConnectRequestCmdValues: ReadonlyArray<
+  components['schemas']['SupportChannelConnectRequest']['cmd']
+> = ['sharechannelconnect'];
 export const supportMailStatusRequestCmdValues: ReadonlyArray<
   components['schemas']['SupportMailStatusRequest']['cmd']
 > = ['supportmailstatus'];
@@ -1379,6 +1398,10 @@ export type LoginRequest = components['schemas']['LoginRequest'];
 export type LogoutRequest = components['schemas']['LogoutRequest'];
 export type PasswordRequest = components['schemas']['PasswordRequest'];
 export type IndexCmdResponse = components['schemas']['IndexCmdResponse'];
+export type SupportChannelConnectRequest =
+  components['schemas']['SupportChannelConnectRequest'];
+export type SupportChannelConnectResponse =
+  components['schemas']['SupportChannelConnectResponse'];
 export type SupportMailStatusRequest =
   components['schemas']['SupportMailStatusRequest'];
 export type SupportSendRequest = components['schemas']['SupportSendRequest'];
