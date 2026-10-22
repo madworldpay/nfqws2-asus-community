@@ -57,6 +57,7 @@ components:
     # -----------------------------
     IndexCmdRequest:
       oneOf:
+        - $ref: '#/components/schemas/SupportChannelConnectRequest'
         - $ref: '#/components/schemas/SupportBundlePrepareRequest'
         - $ref: '#/components/schemas/SupportBundleSendRequest'
         - $ref: '#/components/schemas/DpiStatusRequest'
@@ -81,6 +82,7 @@ components:
       discriminator:
         propertyName: cmd
         mapping:
+          sharechannelconnect: '#/components/schemas/SupportChannelConnectRequest'
           supportbundleprepare: '#/components/schemas/SupportBundlePrepareRequest'
           supportbundlesend: '#/components/schemas/SupportBundleSendRequest'
           dpistatus: '#/components/schemas/DpiStatusRequest'
@@ -231,6 +233,7 @@ components:
     # -----------------------------
     IndexCmdResponse:
       oneOf:
+        - $ref: '#/components/schemas/SupportChannelConnectResponse'
         - $ref: '#/components/schemas/SupportBundleResponse'
         - $ref: '#/components/schemas/DpiStatusResponse'
         - $ref: '#/components/schemas/DpiJob'
@@ -253,6 +256,28 @@ components:
         - $ref: '#/components/schemas/SupportReportResponse'
         - $ref: '#/components/schemas/SupportMailAvailability'
         - $ref: '#/components/schemas/SupportSendResponse'
+
+    SupportChannelConnectRequest:
+      type: object
+      description: Explicitly connect the packaged public sending channel only for a missing or legacy blank configuration. Does not send a report.
+      required: [cmd, csrf_token]
+      properties:
+        cmd:
+          type: string
+          enum: [sharechannelconnect]
+        csrf_token:
+          type: string
+          maxLength: 256
+      additionalProperties: false
+
+    SupportChannelConnectResponse:
+      type: object
+      required: [connected]
+      properties:
+        connected:
+          type: boolean
+          const: true
+      additionalProperties: false
 
     SupportMailStatusRequest:
       type: object
@@ -394,6 +419,9 @@ components:
           nullable: true
         anonym:
           type: boolean
+        authenticated:
+          type: boolean
+          description: Current session is authenticated with the protected panel account
         csrf_token:
           type: string
         username:
