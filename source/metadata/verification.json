@@ -1,70 +1,27 @@
 {
-  "build": 65,
-  "inherited_component_verification": "verification-build64.json",
-  "project_files": 588,
+  "build": 66,
+  "inherited_component_verification": "verification-build65.json",
+  "project_files": 594,
   "package_reproduced_byte_for_byte": [
     "aarch64-3.10",
     "armv7"
   ],
   "changes": [
-    "missing config and required default lists recovery with atomic publication",
-    "specific safe SmartDNS baseline errors",
-    "nullable ARK runtime status and warning",
-    "manual Send channel and availability reasons"
+    "preserve active relay configuration across frozen public64/65 updater runtimes",
+    "bounded retry after interrupted preinstall preparation",
+    "explicit authenticated manual channel setup without sending"
   ],
-  "physical_router_evidence": {
-    "rt_ac87u": {
-      "ordinary_upgrade64_to65": true,
-      "tested_artifact": "first65 candidate before channel-default-only respin",
-      "final_executable_code_byte_identical": true,
-      "final_delta": "support-relay.json default and control Installed-Size only",
-      "preserved_operator_conffile_equals_final_default": true,
-      "core_running_queue300_bound_nonzero": true,
-      "web_running": true,
-      "managed_smartdns_profile_preserved_and_confirmed": true,
-      "saved_settings_bytes_owner_mode_preserved": true,
-      "reboot_performed": false
-    },
-    "aarch64_exact_final_artifact": "not physically verified at this local preparation checkpoint",
-    "missing_config_branch": "real offline opkg and engine preflight; no deliberate live userdata deletion",
-    "scope": "Not evidence of application bypass, speed, UDP/IPv6 or long-term stability."
-  },
   "test_evidence": {
-    "fresh_final_package_conffile_reinstall_tests": {
-      "tests": 43,
-      "skipped": 0,
-      "result": "pass"
-    },
-    "independent_smartdns_connect_api_baseline": {
-      "tests_per_runtime": 37,
-      "runtimes": [
-        "aarch64",
-        "armv7-3.2",
-        "armv7-2.6"
-      ],
-      "total": 111,
-      "result": "pass"
-    },
-    "independent_runtime_status": {
-      "tests_per_runtime": 2,
-      "runtimes": [
-        "aarch64",
-        "armv7-3.2",
-        "armv7-2.6"
-      ],
-      "total": 6,
-      "result": "pass"
-    },
-    "independent_node_ui_suites": [
-      "ark_readiness",
-      "share_availability",
-      "share_ui"
+    "matching_php_runtimes": [
+      "aarch64",
+      "armv7-3.2",
+      "armv7-2.6"
     ],
-    "native_Send_or_email_attempted": false,
-    "reviews": [
-      "atomic defaults/reinstall",
-      "safe DNS error mapping",
-      "UI/status/privacy/manual-Send gates"
-    ]
-  }
+    "focused_tests_per_runtime": 101,
+    "migration_reinstall_tests": 38,
+    "full_package_tests": 18,
+    "frozen_full_package_readers": 6,
+    "native_Send_or_email_attempted": false
+  },
+  "scope": "Local regression and exact package reproducibility. Router acceptance is recorded separately after the frozen artifacts are downloaded through the panel; this is not evidence of application/video/voice/IPv6 availability."
 }
