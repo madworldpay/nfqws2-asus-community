@@ -92,8 +92,8 @@
     },
     {
       "file": "build.svg",
-      "bytes": 424,
-      "sha256": "f5720bca5cfe4494c2cb346231e4763db0013d39d7f5efb71312a057009298d1"
+      "bytes": 385,
+      "sha256": "7cf0e456e4ba5f737b3b1b9bba378bf1947ef7b4729eecf53fb169d66c9d6060"
     },
     {
       "file": "domru.json",
