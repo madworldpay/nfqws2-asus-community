@@ -1,6 +1,6 @@
 # Происхождение компонентов
 
-Описание соответствует компонентам Build 63.
+Описание соответствует компонентам Build 64.
 Полные уведомления: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 [Состояние выпуска](DOWNLOADS.md).
 
@@ -84,7 +84,7 @@ libmnl1.0.5 (LGPLv2.1), libnfnetlink1.0.2 и libnetfilter_queue1.0.5 (GPLv2).
 стандартной библиотеки Rust1.98.1 и musl из Zig0.13.0.
 433 файла уведомлений frontend сохранены в IPK без изменения.
 
-Полные LICENSE и THIRD-PARTY-NOTICES включены в IPK. Дополнение Build 63
+Полные LICENSE и THIRD-PARTY-NOTICES включены в IPK. Дополнение Build 64
 содержит точные уведомления zlib1.3.2, musl1.2.5 и GCC15.2.0 с Runtime Library
 Exception. Версии сверены по официальному журналу сборки и закреплённым инструментам.
 
