@@ -1,6 +1,6 @@
 # Домру
 
-[Скачать JSON](domru.json) · [Как импортировать](IMPORT.md)
+[Скачать JSON](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build67/DOM.RU-TulskayOblast.json) · [Как импортировать](IMPORT.md)
 
 Готовая связка стратегий NFQWS2 и настроек SmartDNS.
 
