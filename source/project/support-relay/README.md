@@ -1,8 +1,8 @@
 # Diagnostic mail relay
 
-Separate operator service; it is never included in the router IPK. The router
-defaults to mail disabled. A fixed HTTPS endpoint and a fixed mailbox must be
-configured privately by the operator before mail can be offered to users.
+Separate operator service; it is never included in the router IPK. The community
+package provides a fixed HTTPS endpoint for manual submissions. Mailbox settings
+and credentials remain private on the relay and never enter the router package.
 
 The service accepts only the closed `support/report.schema.json` collector
 format and a filename matching its model and timestamp. It mails the original
@@ -166,4 +166,4 @@ DB-IP City Lite is provided under CC BY 4.0. Preserve attribution
 
 `/nfqws-support/v4/reports` accepts an ordered subset of report, DPI, strategy, resources and DNS attachments (at most five, envelope at most 4 MiB). Legacy v1–v3 routes and file schemas remain available. Strategy schema2 includes shared BASE/EXTRA/IPSET declarations for selected blocks. The resources attachment carries explicit copies, source and outgoing hashes, aliases and a bounded static dependency audit. DNS separates active, draft and legacy sources, including deliberate standalone nondefault cards. Neither validator executes submitted files. URL credentials and authentication query parameters are rejected.
 
-Deploy the compatible relay and 4 MiB in-memory nginx route before enabling optional boolean `sharing_v4_enabled` in the router’s root-only operator config. Its default is false; `sharestates` exposes the local capability without contacting the relay. This flag is independent of `sharing_v3_enabled`. Local preparation/download remain available without mail. SMTP sends the exact reviewed JSON bytes; resources/DNS contributions use the existing strategies label and do not create extra mailbox folders. Per-source/global limits, receipt deduplication and retention are unchanged.
+Deploy the compatible relay and 4 MiB in-memory nginx route before enabling `sharing_v4_enabled` in the router’s root-only operator config. The community package supplies its verified HTTPS channel with v4 enabled; operator-modified conffiles remain preserved by opkg. This enables the manual Send action, never automatic submission. `sharestates` exposes local capability without contacting the relay. The flag is independent of `sharing_v3_enabled`. Local preparation/download remain available without mail. SMTP sends the exact reviewed JSON bytes; resources/DNS contributions use the existing strategies label and do not create extra mailbox folders. Per-source/global limits, receipt deduplication and retention are unchanged.
