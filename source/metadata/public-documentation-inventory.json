@@ -72,8 +72,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 5208,
-      "sha256": "72ca139f616c3b175e5281c6ca5a4ca46e8adf2ebe5cc7a593831b8b9cd89968"
+      "bytes": 5386,
+      "sha256": "7be4715da041e7726c7e6cf4c4802f13e0521d51f785b7b1092033e68e5cf262"
     },
     {
       "file": "ROADMAP.md",
@@ -104,6 +104,11 @@
       "file": "build.svg",
       "bytes": 385,
       "sha256": "f7839524164b64792ec7249446ebdd6eea3742ee9d5e7dc67fe991543609e7fd"
+    },
+    {
+      "file": "images/cloud-catalog.jpg",
+      "bytes": 54787,
+      "sha256": "891dd478c4f0b02158090d9c166df3db2158c8a4e4885f7dff1d0137ea944232"
     },
     {
       "file": "images/import-cloud.png",
