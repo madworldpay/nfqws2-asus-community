@@ -4,11 +4,11 @@ export type Appearance = 'classic' | 'rabbit';
 
 function savedAppearance(): Appearance {
   try {
-    return localStorage.getItem('nfqws2-appearance') === 'rabbit'
-      ? 'rabbit'
-      : 'classic';
+    return localStorage.getItem('nfqws2-appearance') === 'classic'
+      ? 'classic'
+      : 'rabbit';
   } catch {
-    return 'classic';
+    return 'rabbit';
   }
 }
 

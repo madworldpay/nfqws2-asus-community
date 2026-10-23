@@ -1,0 +1,3 @@
+# Include inside http {}, e.g. /etc/nginx/conf.d/nfqws-profile-limits.conf.
+limit_req_zone $binary_remote_addr zone=nfqws_profile_requests:1m rate=60r/m;
+limit_conn_zone $binary_remote_addr zone=nfqws_profile_connections:1m;

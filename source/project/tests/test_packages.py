@@ -139,6 +139,18 @@ class PackageTests(unittest.TestCase):
         self.assertTrue(all(p.name.startswith('nfqws2-asus_') for p in files), 'each architecture must include core and web')
         return {p.name.rsplit('_',1)[1].removesuffix('.ipk'): read_ipk(p) for p in files}
 
+    def test_cloud_catalog_and_both_languages_are_in_both_packages(self):
+        for package in self.packages().values():
+            data=package['data']
+            for name in ['profile-catalog.php','profile-catalog-transport.php','profile-catalog-api.php']:
+                self.assertEqual(data['opt/share/nfqws-asus-web/'+name][1],(ROOT/'webui/web/public'/name).read_bytes())
+            for source,name in [('support/profile-catalog.schema.json','profile-catalog.schema.json'),('asus/profile-catalog-public.pem','profile-catalog-public.pem')]:
+                self.assertEqual(data['opt/share/nfqws2-asus/'+name][1],(ROOT/source).read_bytes())
+            scripts=b'\n'.join(value[1] for path,value in data.items() if path.startswith('opt/share/nfqws-asus-web/assets/') and path.endswith('.js'))
+            for phrase in ['Из облака','From cloud','Глобальные стратегии','Global strategies','Фрэнк одобряет...','Frank approves...']:
+                self.assertIn(phrase.encode(),scripts)
+            self.assertFalse(any('private.pem' in p or '/profile-catalog/files/' in p for p in data))
+
     def test_default_strategy_mode_is_auto_in_both_packages(self):
         for package in self.packages().values():
             template=package['data']['opt/etc/nfqws2/nfqws2.conf.notactive'][1]

@@ -137,6 +137,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <ThemeProvider
       theme={appearance === 'rabbit' ? rabbitTheme : theme}
       modeStorageKey="theme"
+      defaultMode={appearance === 'rabbit' ? 'dark' : 'system'}
     >
       <CssBaseline />
 

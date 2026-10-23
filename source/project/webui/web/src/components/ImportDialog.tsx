@@ -31,8 +31,10 @@ import {
   type ImportSelection,
   type ImportStatus,
 } from '@/api/importClient';
+import { loadCatalogDocument } from '@/api/profileCatalogClient';
 import { ShareError } from '@/api/shareClient';
 
+import { ImportCatalog } from '@/components/ImportCatalog';
 import { ImportPreview } from '@/components/ImportPreview';
 import { ImportSelectionView } from '@/components/ImportSelection';
 import { InlineHelp } from '@/components/InlineHelp';
@@ -58,6 +60,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
   >('');
   const [saved, setSaved] = useState(false);
   const [uncertain, setUncertain] = useState(false);
+  const [showCatalog, setShowCatalog] = useState(false);
   const mounted = useRef(false);
   const pending = useRef(false);
   const requestId = useRef('');
@@ -111,7 +114,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       if (mounted.current) setBusy(false);
     }
   };
-  const load = (files: File[]) => {
+  const loadDocuments = (read: () => Promise<string[]>, files: File[] = []) => {
     if (pending.current) return;
     chosenFiles.current = files;
     revision.current++;
@@ -129,7 +132,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
     setSaved(false);
     setUncertain(false);
     void run(async () => {
-      const raw = await readImportFiles(files);
+      const raw = await read();
       const parsed = await inspectImport(csrfToken!, raw);
       if (mounted.current) {
         setDocuments(raw);
@@ -137,6 +140,8 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       }
     });
   };
+  const load = (files: File[]) =>
+    loadDocuments(() => readImportFiles(files), files);
   const review = () =>
     void run(async () => {
       setPlan(undefined);
@@ -259,6 +264,13 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
                 }}
               />
             </Button>
+            <Button
+              variant={showCatalog ? 'contained' : 'outlined'}
+              disabled={!csrfToken || disabled || needSave}
+              onClick={() => setShowCatalog((value) => !value)}
+            >
+              {t('import.catalog.choose')}
+            </Button>
             {!!chosenFiles.current.length && !doc && (
               <Button
                 disabled={busy || !csrfToken}
@@ -280,6 +292,22 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
               </Button>
             )}
           </Stack>
+          {showCatalog && csrfToken && (
+            <ImportCatalog
+              key={csrfToken}
+              csrfToken={csrfToken}
+              disabled={disabled || needSave}
+              onSelect={(profile) =>
+                loadDocuments(async () => [
+                  await loadCatalogDocument(
+                    csrfToken,
+                    profile.id,
+                    profile.sha256,
+                  ),
+                ])
+              }
+            />
+          )}
           {busy && (
             <Stack direction="row" spacing={1} alignItems="center">
               <CircularProgress size={18} />

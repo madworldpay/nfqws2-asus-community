@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "nfqws-menu",
+      "repository": "https://github.com/rndnaame/nfqws-menu",
+      "directory": "strategies/nfqws2",
+      "api": "https://api.github.com/repos/rndnaame/nfqws-menu/contents/strategies/nfqws2",
+      "pinned_commit": "8f78e35b8dff78ffbabd85c7de439380b3a83448",
+      "attribution": "rndnaame/nfqws-menu; ports credited upstream to @Nare51; original Flowseal/zapret-discord-youtube",
+      "original_project": "https://github.com/Flowseal/zapret-discord-youtube",
+      "update_policy": "Manual pinned-source verification, adaptation and import/runtime review before cloud approval; no router snapshot or automatic replacement",
+      "held": ["MartinBacker"]
+    }
+  ]
+}
