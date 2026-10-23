@@ -17,8 +17,8 @@
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 3038,
-      "sha256": "a8a3aa16a174300bc2df21aa7c98b46ff1d52d74886cc40a4f97d303a6e13d3e"
+      "bytes": 3240,
+      "sha256": "0ee4f60b331e31eebda58df5e0887a4df1a824781e66303d0b90ff1d0ff69cad"
     },
     {
       "file": "DOMRU.md",
@@ -32,13 +32,13 @@
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 1972,
-      "sha256": "31e45331afff05367d319e32f17ed5d7851e2264509dc754b58c25f6bed1e063"
+      "bytes": 2293,
+      "sha256": "360094ffaeb5d82fa2eeb0e22a01d9af2569139ea8c62c4ea528e5ef5489f296"
     },
     {
       "file": "IMPORT.md",
-      "bytes": 3721,
-      "sha256": "3bd1b559372c9e4d1507d422f317b931259dbea907b48c87c25751d2f10aaee1"
+      "bytes": 5494,
+      "sha256": "f0123d9904bfb954ac55e8b34070022507749bb5acf9d96b61c71a81ad242cba"
     },
     {
       "file": "INSTALL.md",
@@ -97,8 +97,8 @@
     },
     {
       "file": "USAGE.md",
-      "bytes": 2358,
-      "sha256": "680f251979ee29ed6d98d8fc83ca75a49c56abe5b90efcc75a11ac76d0dec3b4"
+      "bytes": 2405,
+      "sha256": "025b8796dd616e2f1a8407200658db636ec5c02feb71c8d9333de595c17d0114"
     },
     {
       "file": "build.svg",
