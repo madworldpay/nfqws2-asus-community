@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 5972,
-      "sha256": "a08eef0b59869c9998fb02811d1f2ddcfa78c1fc94addcaf9c7a60bde25f0b40"
+      "bytes": 5949,
+      "sha256": "0fdcc18f62b001dae8ace396ba417fbb357a43f951e39bccbbeee578639ce5f6"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -72,8 +72,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 5443,
-      "sha256": "6802e41999d8afeb0a6246e54d5503bcd9d9c6170e52826d1fcb994ebe830a4e"
+      "bytes": 5386,
+      "sha256": "7be4715da041e7726c7e6cf4c4802f13e0521d51f785b7b1092033e68e5cf262"
     },
     {
       "file": "ROADMAP.md",
@@ -104,6 +104,11 @@
       "file": "build.svg",
       "bytes": 385,
       "sha256": "f7839524164b64792ec7249446ebdd6eea3742ee9d5e7dc67fe991543609e7fd"
+    },
+    {
+      "file": "images/cloud-catalog.jpg",
+      "bytes": 54787,
+      "sha256": "891dd478c4f0b02158090d9c166df3db2158c8a4e4885f7dff1d0137ea944232"
     },
     {
       "file": "images/import-cloud.png",
