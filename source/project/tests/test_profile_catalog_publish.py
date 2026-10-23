@@ -42,6 +42,23 @@ class ProfileCatalogPublisherTests(unittest.TestCase):
         self.assertEqual({str(p.relative_to(self.out)) for p in self.out.rglob('*') if p.is_file()},{'catalog.json',f'files/{digest}.json'})
         self.assertNotIn('PRIVATE KEY',(self.out/'catalog.json').read_text())
 
+    def test_missing_blob_file_and_alias_dependencies_are_not_signed(self):
+        for operand in ['--lua-desync=fake:blob=missing_fixture_blob','--hostlist=/opt/etc/nfqws2/lists/missing.list','--hostlist=RESOURCE_99']:
+            value=copy.deepcopy(STRATEGY);value['blocks'][0]['value']='--filter-tcp=443 '+operand
+            raw=json.dumps(value).encode();(self.profiles/'example.json').write_bytes(raw);self.meta['profiles'][0]['source_sha256']=hashlib.sha256(raw).hexdigest()
+            result=self.publish(False);self.assertIn('dependencies',result.stderr)
+        self.assertFalse((self.out/'catalog.json').exists())
+
+    def test_packaged_lua_and_engine_builtin_blob_are_self_contained(self):
+        value=copy.deepcopy(STRATEGY);value['shared']['NFQWS_BASE_ARGS']='--lua-init=@/opt/etc/nfqws2/lua/zapret-lib.lua --lua-init=@/opt/etc/nfqws2/lua/zapret-antidpi.lua'
+        value['blocks'][0]['value']='--filter-tcp=443 --lua-desync=fake:blob=fake_default_tls'
+        raw=json.dumps(value).encode();(self.profiles/'example.json').write_bytes(raw);self.meta['profiles'][0]['source_sha256']=hashlib.sha256(raw).hexdigest();self.publish()
+
+    def test_dns_with_sites_and_fixed_records_uses_real_selective_plan(self):
+        from test_import_plan import ImportPlanTests
+        docs,_=ImportPlanTests().dns_input();value=json.loads(docs[0]);value['sources'][0]['profile']['records']=[{'name':'media.example.com','include_subdomains':False,'addresses':['203.0.113.10'],'checked_at':None}]
+        raw=json.dumps(value).encode();(self.profiles/'example.json').write_bytes(raw);self.meta['profiles'][0]['source_sha256']=hashlib.sha256(raw).hexdigest();self.publish()
+
     def test_changed_unreviewed_input_does_not_replace_existing_catalog(self):
         self.publish();before=(self.out/'catalog.json').read_bytes()
         (self.profiles/'example.json').write_bytes(self.raw+b'\n');self.publish(False)

@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 5326,
-      "sha256": "de3b515d275c7a5944fb07a72a5200fb93f19a03d621e37d488584682b65ef59"
+      "bytes": 6107,
+      "sha256": "81aee67c5a62647191b06337461767740e4753e8347a2141882353522a3ade87"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -22,13 +22,13 @@
     },
     {
       "file": "DOMRU.md",
-      "bytes": 2324,
-      "sha256": "82b6d9f5422f1b96f390ae2ecc6bf03d1d2e0cbf49444258d519056cca5246ee"
+      "bytes": 220,
+      "sha256": "ff4e7c910c758dbc2203e541fd92b4468e0374924c42184a9357c453fd942997"
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 1484,
-      "sha256": "469e34f2221a4c6a29369ddbfb6daef69757c1e7816f1a4dc0da0b39deb1b3b7"
+      "bytes": 1217,
+      "sha256": "9e60634e80fe86a97f2e8cd4600634845aa51641633cc8068bab7fe033a0cf4a"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -37,13 +37,13 @@
     },
     {
       "file": "IMPORT.md",
-      "bytes": 3366,
-      "sha256": "c3bd9dde57cc3039c34a32db0f2e67279891e98fa285523606067e6cc41071c3"
+      "bytes": 3634,
+      "sha256": "1a35b1c0208245013d92750719315381431b12124ef2ecc1c7fee5def0ad5d1c"
     },
     {
       "file": "INSTALL.md",
-      "bytes": 5092,
-      "sha256": "be6b60d23863cb380289afb25555152c037dccebcba54b952a4532ed309ed28f"
+      "bytes": 4438,
+      "sha256": "f1da086edf079fcf1acd319385ac5f4785e708a2e5529b3b5e169943d49c66cb"
     },
     {
       "file": "LICENSE",
@@ -51,19 +51,29 @@
       "sha256": "7ba68d733517c49e0a84fac9331d46a1bbd8997edb302b9b69e09da6c30a479c"
     },
     {
+      "file": "MANUAL-INSTALL.md",
+      "bytes": 2115,
+      "sha256": "a16062e5961bf9742034927595242d05672d6839d11f42f5ecc62f76ea02be3a"
+    },
+    {
       "file": "PACKAGE-UPDATES.md",
       "bytes": 3716,
       "sha256": "4afded95d79e34652294ef0872ea974081455b7ad15dcb6ed5c444630a105389"
     },
     {
+      "file": "PRESETS.md",
+      "bytes": 1051,
+      "sha256": "e28708969ad5f9bebe707ca2c9fca307f0f81054c531a58eb499b184b7325532"
+    },
+    {
       "file": "QUICKSTART.md",
-      "bytes": 3068,
-      "sha256": "0370871a36ef5379d204cb5698e6e82eefbb3b6c473eaf644d610b8f9536ca60"
+      "bytes": 3128,
+      "sha256": "cc81504b821922375541cd5c35dcdda1d3d096a71e9bf90b967d99511675f612"
     },
     {
       "file": "README.md",
-      "bytes": 3758,
-      "sha256": "0977aff0faff0da3fd003e6a0a7937f51373c515b913f9eed94d674ef6c3564a"
+      "bytes": 5443,
+      "sha256": "6802e41999d8afeb0a6246e54d5503bcd9d9c6170e52826d1fcb994ebe830a4e"
     },
     {
       "file": "ROADMAP.md",
@@ -96,6 +106,21 @@
       "sha256": "f7839524164b64792ec7249446ebdd6eea3742ee9d5e7dc67fe991543609e7fd"
     },
     {
+      "file": "images/import-cloud.png",
+      "bytes": 135714,
+      "sha256": "b002bb319304f65807696afea6f8c39899d8486b73c9608eff86d4fca265e24c"
+    },
+    {
+      "file": "images/smartdns.png",
+      "bytes": 97596,
+      "sha256": "4bece6e3c26463204b86b785df881e7d33986346e71b2a3e38f5ba1aabf8fa14"
+    },
+    {
+      "file": "images/strategy-editor.png",
+      "bytes": 131463,
+      "sha256": "3939991d9d63c3a9cea87ed45a7a6a7b065e42a5ffdef8edd41fbd1cfeaaecdf"
+    },
+    {
       "file": "status.svg",
       "bytes": 401,
       "sha256": "bb1f7093adb04e800866547c4d20c39c01bdb98c7d6f91beb64e80894e1eeae4"
@@ -109,5 +134,5 @@
   "excluded": [
     "SHA256SUMS"
   ],
-  "checksum_note": "Documentation checksum snapshot covers the release IPKs and unchanged named profiles. Canonical complete SHA256SUMS is a release asset."
+  "checksum_note": "Documentation checksum snapshot covers release IPKs. Canonical complete SHA256SUMS is a release asset. Operational presets are served only by the cloud catalog."
 }

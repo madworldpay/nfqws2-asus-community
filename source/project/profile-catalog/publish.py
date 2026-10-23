@@ -113,13 +113,39 @@ def validate_profile(raw, php_binary):
             raise ValueError('private key refused')
         if row['kind'] == 'blobs' and re.search(br'<!doctype\s+html|<html\b|version https://git-lfs', data[:2048], re.I):
             raise ValueError('blob is an HTML page or LFS pointer')
-    for text in parsed['values'].values():
+    for text in (parsed['values'].values() if isinstance(parsed['values'], dict) else []):
         words = shlex.split(text)
         for pos, word in enumerate(words):
             if word == '--lua-init' or word.startswith('--lua-init='):
                 operand = words[pos+1] if word == '--lua-init' and pos+1 < len(words) else word.removeprefix('--lua-init=')
                 if not operand.startswith('@/opt/etc/nfqws2/lua/') or operand.rsplit('/', 1)[-1] not in INIT_FILES:
                     raise ValueError('only packaged Lua init is allowed')
+    # No Lua attachments are allowed above. These rows model only the package's
+    # explicit Lua-presence contract, not measured file bytes. Their hashes are
+    # symbolic; no file is reused, written, or trusted from this operator model.
+    code = """require $argv[1].'/import-plan.php';try{
+      $v=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
+      $doc=$v['document'];$selection=['blocks'=>[],'shared'=>[],'ports'=>[],
+        'files'=>[],'dns'=>[],'allow_shared_impact'=>true,
+        'allow_incomplete'=>false,'trusted_lua'=>false];
+      foreach($doc['values']as $key=>$value)$selection[in_array($key,AsusImportConfig::BLOCKS,true)?'blocks':'shared'][]=['key'=>$key,'value'=>$value];
+      foreach($doc['ports']as $key=>$value)$selection['ports'][]=['key'=>$key,'value'=>$value];
+      foreach($doc['resources']as $file)$selection['files'][]=['id'=>$file['id']];
+      foreach($doc['dns_sources']as $source)$selection['dns'][]=[
+        'source_id'=>$source['id'],'source_sha256'=>$source['sha256'],
+        'upstreams'=>$source['profile']['upstreams'],
+        'records'=>array_map(fn($index,$value)=>['index'=>$index,'value'=>$value],array_keys($source['profile']['records']),$source['profile']['records'])];
+      $files=[];foreach($v['packaged_lua']as $name)$files[]=[
+        'id'=>substr(hash('sha256','/opt/etc/nfqws2/lua/'.$name),0,32),
+        'kind'=>'lua','name'=>$name,'byte_length'=>0,
+        'sha256'=>hash('sha256','package-presence:'.$name),'state'=>'available',
+        'bundled_lua'=>true,'bundled_name'=>$name];
+      $plan=AsusImportPlan::prepare($doc,$selection,'',['files'=>$files,'scan_truncated'=>false],null);
+      echo json_encode(['ready'=>$plan['ready'],'problems'=>$plan['problems']],JSON_THROW_ON_ERROR);
+    }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"""
+    plan = php(php_binary, code, {'document': parsed, 'packaged_lua': sorted(INIT_FILES)})
+    if not plan['ready']:
+        raise ValueError('incomplete dependencies or invalid selectable profile')
     return parsed
 
 

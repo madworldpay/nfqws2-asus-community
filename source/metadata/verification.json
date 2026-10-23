@@ -1,26 +1,29 @@
 {
-  "build": 67,
-  "inherited_component_verification": "verification-build66.json",
-  "engine": "NFQWS2 1.0.6 / provider 1.3.2",
-  "project_files": 596,
+  "build": 68,
+  "inherited_component_verification": "verification-build67.json",
+  "engine": "Unchanged NFQWS2 1.0.6 / provider 1.3.2",
+  "project_files": 618,
   "package_reproduced_byte_for_byte": [
     "aarch64-3.10",
     "armv7"
   ],
   "checks": {
-    "frontend_build_and_types": true,
-    "full_package_tests": 16,
-    "migration_tests": 13,
-    "reinstall_tests_passed": 20,
-    "reinstall_optional_skipped": 5,
-    "matching_native_engine_default_profile_parse": true,
-    "native_engine_and_current_profile_load": [
-      "RT-AC87U",
-      "GT-BE19000AI"
-    ],
-    "native_DPI_tests_completed": "1,2,3 on both routers; known network failures remain",
-    "router_rebooted": false,
-    "ordinary_ASUS_core_after_test": "stopped"
+    "frontend_build_types_lint": true,
+    "actual_package_tests": 17,
+    "catalog_tests": 38,
+    "catalog_optional_CGI_skips": 2,
+    "import_tests": 63,
+    "import_optional_CGI_skips": 2,
+    "share_tests": 96,
+    "share_optional_skips": 3,
+    "builder_tests": 5,
+    "installer_tests": 22,
+    "real_browser_RU_EN_import": true,
+    "Frank_28_clicks_and_viewport_centers": true,
+    "first_visit_and_saved_theme_choices": true,
+    "cloud_HTTPS_signature_hash_and_import": true,
+    "live_router_installation": false,
+    "router_configuration_changed": false
   },
-  "scope": "Package integrity, settings preservation and native IPv4 DNS/HTTP/TLS/QUIC/TCP probes. This does not establish video bitrate, voice, LAN coverage or IPv6 availability."
+  "scope": "Both package artifacts, public-key/schema inclusion, RU/EN frontend, signed bounded cloud/local selective import, source integrity and UI behavior. No new ISP, video bitrate, voice, UDP or IPv6 performance claim."
 }
