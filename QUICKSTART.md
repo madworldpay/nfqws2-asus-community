@@ -1,24 +1,22 @@
 # Быстрый старт
 
 Для тех, у кого уже работают Merlin, SSH и Entware в `/opt`.
-Сборка — **Build 64**. [Загрузки](DOWNLOADS.md).
+[Загрузки](DOWNLOADS.md).
 
 ## 1. Установить
 
-Определите основной ABI Entware:
+Войдите по SSH **в роутер** и вставьте одну команду:
 
 ```sh
-/opt/bin/opkg print-architecture
+( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
 ```
 
-`armv7-2.6` / `armv7-3.2` → ARMv7 IPK. `aarch64-3.10` → AArch64 IPK.
-Передайте подходящий пакет на роутер как `/tmp/nfqws2-asus.ipk`, проверьте SHA256.
-Для первой установки без немедленного запуска обработки:
+Она выберет актуальный IPK по архитектуре Entware, проверит SHA256 и установит
+пакет с сохранением настроек. При первой установке обработка остаётся выключенной;
+при обновлении сохраняется прежнее состояние. В конце появится ссылка на панель.
 
-```sh
-/opt/bin/opkg update
-NFQWS_ASUS_NO_START=1 /opt/bin/opkg install /tmp/nfqws2-asus.ipk
-```
+Нужен `curl` или GNU `wget`. Entware устанавливается пользователем заранее.
+[Ручная установка IPK](INSTALL.md#установить-ipk).
 
 ## 2. Настроить
 

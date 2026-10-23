@@ -5,6 +5,7 @@
 - [recipes/](recipes/) — конфигурации, патчи и рецепты сборки модуля, движка и DPI.
 - [metadata/](metadata/) — точные версии, происхождение и SHA256 компонентов.
 - [documentation/](documentation/) — инструкции. Лицензии компонентов сохранены.
+- [installer/](installer/) — установщик одной командой и его проверки.
 
 Проверка файлов в Linux: `sha256sum -c SHA256SUMS`.
 
@@ -24,6 +25,6 @@ copy /b sources\linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-001+sources\linux-m
 
 SHA256 исходного архива указан в `metadata/kernel-archive-parts.json`.
 После соединения используйте [рецепт модуля](recipes/legacy-module/README.md).
-Полный комплект с теми же файлами доступен [в выпуске Build 67](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build67/nfqws2-asus_1.3.2-asus6+b67_source.tar.gz).
+Архив исходников выпуска доступен [в выпуске Build 67](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build67/nfqws2-asus_1.3.2-asus6+b67_source.tar.gz).
 
 Контрольные суммы в documentation/SHA256SUMS фиксируют IPK и профиль на момент сборки исходников. Полный SHA256SUMS выпуска, включая архив и подписанную метадату, находится среди release assets.
