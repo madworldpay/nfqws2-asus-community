@@ -14,7 +14,7 @@ class BuilderTests(unittest.TestCase):
     def test_build_number_is_validated_and_opkg_orders_successive_builds(self):
         self.assertTrue(callable(getattr(builder, 'package_version', None)), 'build number support is missing')
         versions = [builder.package_version(n) for n in ['1', '2', '10']]
-        self.assertEqual(versions, ['1.3.1-asus6+b1', '1.3.1-asus6+b2', '1.3.1-asus6+b10'])
+        self.assertEqual(versions, [builder.CORE_VERSION+'+b'+n for n in ['1', '2', '10']])
         for invalid in ['', '0', '-1', '01', '1\n2', '1;id', '1.2']:
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 builder.package_version(invalid)

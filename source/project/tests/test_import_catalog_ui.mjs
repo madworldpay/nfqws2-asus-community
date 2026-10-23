@@ -30,7 +30,7 @@ try {
   await page.route('**/index.php',async route=>{
     const post=new URLSearchParams(route.request().postData());const cmd=post.get('cmd');calls.push(cmd);
     let body;
-    if(cmd==='importstatus')body={state:'idle',id:null,can_undo:false};
+    if(cmd==='importstatus')body={state:'idle',id:null,can_undo:false,config_saved:false,dns_draft_saved:false};
     else if(cmd==='importcatalog')body=offline?{error:'catalog_unavailable'}:{schema_version:1,revision:1,build:68,profiles:[{...profile,id:'provider',title:'Provider preset',category:'provider',provider:'Example ISP',region:'Example region'},profile]};
     else if(cmd==='importcatalogload'){await new Promise(resolve=>setTimeout(resolve,100));body={document:'{}'};}
     else if(cmd==='importinspect')body=document;
