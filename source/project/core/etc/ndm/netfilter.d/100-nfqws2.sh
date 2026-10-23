@@ -9,5 +9,11 @@ if [ "$table" != "mangle" ] && [ "$table" != "nat" ]; then
 fi
 
 # $type is `iptables` or `ip6tables`
-/opt/etc/init.d/S51nfqws2 firewall_"$type"
-exit 0
+for attempt in 1 2 3 4 5; do
+  /opt/etc/init.d/S51nfqws2 firewall_"$type"
+  rc=$?
+  [ "$rc" -eq 0 ] && exit 0
+  [ "$attempt" -eq 5 ] && break
+  sleep 1
+done
+exit "$rc"

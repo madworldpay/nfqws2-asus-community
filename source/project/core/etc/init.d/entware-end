@@ -8,7 +8,20 @@ start() {
   create_running_config
   kernel_modules
 
-  $NFQWS_BIN --daemon --pidfile=$PIDFILE $(_startup_args)
+  if ! $NFQWS_BIN --daemon --pidfile=$PIDFILE $(_startup_args); then
+    echo 'NFQWS2 daemon exited with an error, firewall rules not installed' >&2
+    return 1
+  fi
+
+  # The parent can exit before the child writes its pidfile.
+  for attempt in 1 2 3 4 5; do
+    is_running && break
+    sleep 1
+  done
+  if ! is_running; then
+    echo 'NFQWS2 daemon did not start, firewall rules not installed' >&2
+    return 1
+  fi
 
   firewall_iptables
   firewall_ip6tables

@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 4969,
-      "sha256": "8b27a66a79d40797515be9dd0e9ff7faea5155db906058a7356ae60e2f174fab"
+      "bytes": 5326,
+      "sha256": "de3b515d275c7a5944fb07a72a5200fb93f19a03d621e37d488584682b65ef59"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -22,13 +22,13 @@
     },
     {
       "file": "DOMRU.md",
-      "bytes": 2230,
-      "sha256": "afee7e82098e8227d3d12aabfb0164c18dee9300626676b00b6531f5377e0aeb"
+      "bytes": 2324,
+      "sha256": "82b6d9f5422f1b96f390ae2ecc6bf03d1d2e0cbf49444258d519056cca5246ee"
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 1199,
-      "sha256": "dd88fef904a4c57ddbffa40544fdd4b0564581cf09f86d4551ee6453b5e1e44b"
+      "bytes": 1484,
+      "sha256": "469e34f2221a4c6a29369ddbfb6daef69757c1e7816f1a4dc0da0b39deb1b3b7"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -63,7 +63,7 @@
     {
       "file": "README.md",
       "bytes": 3297,
-      "sha256": "a6b226fe290058abacf2c8268e8492ef0e47d9ea4bbcdfe79adf2b0ebfee834a"
+      "sha256": "6fe5d9df3f374ca50804076450850ab93d270006468d9d1306fc841a6a4fd7d1"
     },
     {
       "file": "ROADMAP.md",
@@ -82,8 +82,8 @@
     },
     {
       "file": "UPSTREAM.md",
-      "bytes": 9350,
-      "sha256": "8fa25a66b32bc8cf50421e05fe68ad5bf8c97ffef3fcc51b7e789ce1dc7036e5"
+      "bytes": 9381,
+      "sha256": "88cc2e9d684b061bbaa783d1ad86c6f89464dd0ddc1f02b0d80ea800a561ba41"
     },
     {
       "file": "USAGE.md",
@@ -93,7 +93,7 @@
     {
       "file": "build.svg",
       "bytes": 385,
-      "sha256": "63268a7a03228402268f406ba025f1a3691fae15fe4113d39fa83c8525b33ad8"
+      "sha256": "f7839524164b64792ec7249446ebdd6eea3742ee9d5e7dc67fe991543609e7fd"
     },
     {
       "file": "domru.json",
@@ -108,11 +108,11 @@
     {
       "file": "version.svg",
       "bytes": 418,
-      "sha256": "28f28c48fd2ea5f95aaa92b467c2895997124d35d8c74a29524345a5d5356b88"
+      "sha256": "17e15862bbc34184b27b903a0e9feab17f8f28f2dff902a3b1a89a19b21bb2de"
     }
   ],
   "excluded": [
     "SHA256SUMS"
   ],
-  "checksum_note": "Archive documentation checksum snapshot covers unchanged release IPKs and profile. Canonical full release SHA256SUMS is generated after archive verification and signing."
+  "checksum_note": "Documentation checksum snapshot covers the release IPKs and unchanged named profiles. Canonical complete SHA256SUMS is a release asset."
 }

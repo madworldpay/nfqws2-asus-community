@@ -28,13 +28,6 @@
     "tar_members": 2695
   },
   {
-    "file": "zapret2-6b6c63e3.tar.gz",
-    "url": "https://codeload.github.com/bol-van/zapret2/tar.gz/6b6c63e3385fa73f8af3be4a69171e947f5a319d",
-    "sha256": "389a833121ee19979a9f5bf6f9c8d0c12cc1ceeacc1244d1bf23f7728b621f70",
-    "bytes": 651456,
-    "tar_members": 298
-  },
-  {
     "file": "luajit2-2.1-20250826.tar.gz",
     "url": "https://codeload.github.com/openresty/luajit2/tar.gz/refs/tags/v2.1-20250826",
     "sha256": "5a49743ad6ce4b7f19aac71b55a08052c1feb62750f051982082c12bf62f39c0",
@@ -120,5 +113,21 @@
     "tag": "Release48.4",
     "sha256": "f4cb3ec5d2c49bf9752f717cfa1ae2e393df0a001de7ab626b9039cc0bf3ef52",
     "bytes": 906935
+  },
+  {
+    "file": "zapret2-221d7dff.tar.gz",
+    "url": "https://codeload.github.com/bol-van/zapret2/tar.gz/221d7dff24bfec0cd5ac0a5070b8acef2008af3d",
+    "commit": "221d7dff24bfec0cd5ac0a5070b8acef2008af3d",
+    "sha256": "c9925bb194eea8c19feb05ea6b24a848e8b50af8c64643b9e394ffe653327d87",
+    "bytes": 657643,
+    "tar_members": 298
+  },
+  {
+    "file": "provider132-source.tar.gz",
+    "url": "https://codeload.github.com/nfqws/nfqws2-keenetic/tar.gz/5d155f33ab00f3a4879c485c1094e8ec1e014586",
+    "commit": "5d155f33ab00f3a4879c485c1094e8ec1e014586",
+    "sha256": "1cd3b476ed44f4ac626308d199fc518fdb2b4184620cb4c5752b32a55b2d696a",
+    "bytes": 42050,
+    "tar_members": 59
   }
 ]

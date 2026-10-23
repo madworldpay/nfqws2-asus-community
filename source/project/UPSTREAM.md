@@ -1,6 +1,6 @@
 # Происхождение компонентов
 
-Описание соответствует компонентам Build 62.
+Описание соответствует компонентам Build 67.
 Полные уведомления: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 [Состояние выпуска](DOWNLOADS.md).
 
@@ -16,15 +16,15 @@
 условия лицензии: [pymumu/smartdns](https://github.com/pymumu/smartdns/tree/Release48.4).
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — импорт коммита
-  `077f9af`, пакет v1.3.1; MIT, исходное авторство сохранено.
+  `5d155f33ab00f3a4879c485c1094e8ec1e014586`, пакет v1.3.2; MIT, исходное авторство сохранено.
 - `webui/`: https://github.com/nfqws/nfqws-keenetic-web — импорт коммита
   `c225df3`; MIT, исходное авторство сохранено. Интерфейс адаптирован для ASUS.
 - NFQWS2 ARMv7/AArch64 и Lua взяты из указанного пакета. AArch64-бинарник
   сохранён побайтно; ARMv7-бинарник распакован из UPX для совместимой проверки
   процесса на старом ядре. Машинный код и алгоритмы движка не переписывались;
-  его версия zapret2 — v1.0.5.2,
-  `6b6c63e3385fa73f8af3be4a69171e947f5a319d`.
-  Исходники: https://github.com/bol-van/zapret2/tree/6b6c63e3385fa73f8af3be4a69171e947f5a319d
+  его версия zapret2 — v1.0.6,
+  `221d7dff24bfec0cd5ac0a5070b8acef2008af3d`.
+  Исходники: https://github.com/bol-van/zapret2/tree/221d7dff24bfec0cd5ac0a5070b8acef2008af3d
   Рецепт сборки и патчи поставщика находятся в `core/.github/workflows/`
   и `core/patches/`. Лицензия основного проекта MIT; сторонние библиотеки
   сохраняют собственные лицензии.
