@@ -703,7 +703,7 @@
   },
   "import": {
     "title": "Import profile",
-    "hint": "Choose your JSON or a preset from our catalog, then select blocks, files and SmartDNS. JSON is a settings file saved through Share. Review changes before saving; importing starts no services.",
+    "hint": "Open your JSON or a cloud preset. All included items are selected; uncheck anything you don't need. JSON is a settings file. Review the changes before saving.",
     "choose": "From computer (JSON)",
     "retry": "Read again",
     "check_status": "Check result",

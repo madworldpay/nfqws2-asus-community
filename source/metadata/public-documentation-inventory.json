@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 6107,
-      "sha256": "81aee67c5a62647191b06337461767740e4753e8347a2141882353522a3ade87"
+      "bytes": 5972,
+      "sha256": "a08eef0b59869c9998fb02811d1f2ddcfa78c1fc94addcaf9c7a60bde25f0b40"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -37,8 +37,8 @@
     },
     {
       "file": "IMPORT.md",
-      "bytes": 3634,
-      "sha256": "1a35b1c0208245013d92750719315381431b12124ef2ecc1c7fee5def0ad5d1c"
+      "bytes": 3721,
+      "sha256": "3bd1b559372c9e4d1507d422f317b931259dbea907b48c87c25751d2f10aaee1"
     },
     {
       "file": "INSTALL.md",
@@ -62,8 +62,8 @@
     },
     {
       "file": "PRESETS.md",
-      "bytes": 1051,
-      "sha256": "e28708969ad5f9bebe707ca2c9fca307f0f81054c531a58eb499b184b7325532"
+      "bytes": 1108,
+      "sha256": "e1ce28221232486dacc17728f1a87badd99014aa4ba97b8d5eedc9ff17270799"
     },
     {
       "file": "QUICKSTART.md",
@@ -107,8 +107,8 @@
     },
     {
       "file": "images/import-cloud.png",
-      "bytes": 135714,
-      "sha256": "b002bb319304f65807696afea6f8c39899d8486b73c9608eff86d4fca265e24c"
+      "bytes": 145534,
+      "sha256": "f4c0ffdd2336b83bb58028766f5e4d0fe905593d141489d88857ab19adec9a8a"
     },
     {
       "file": "images/smartdns.png",
