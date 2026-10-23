@@ -41,16 +41,13 @@ NFQWS2 с веб-панелью для ASUS: стратегии, устройс�
 
 ## Внутри панели
 
-<table>
-<tr><th>Пресеты из облака или свой JSON</th><th>DNS для выбранных сайтов</th></tr>
-<tr><td><a href="IMPORT.md"><img src="images/import-cloud.png" alt="Импорт своего JSON или пресета из облака" width="470"></a></td><td><a href="SMARTDNS.md"><img src="images/smartdns.png" alt="SmartDNS: сайты для DNS и фиксированные ответы" width="470"></a></td></tr>
-</table>
+| Пресеты из облака или свой JSON | DNS для выбранных сайтов |
+| --- | --- |
+| [![Импорт своего JSON или пресета из облака](images/import-cloud.png)](IMPORT.md) | [![SmartDNS: сайты для DNS и фиксированные ответы](images/smartdns.png)](SMARTDNS.md) |
 
 **Редактор стратегий:** подсветка, проверка кавычек и различимые переносы строк.
 
 ![Редактор стратегии в теме «Кроличья нора»](images/strategy-editor.png)
-
-Тема «Кроличья нора». На скриншотах — демонстрационные данные.
 
 [Использование](USAGE.md) · [Диагностика](DIAGNOSTICS.md) · [DPI Detector](DPI-DETECTOR.md) · [Обновление](PACKAGE-UPDATES.md) · [Изменения](CHANGELOG.md).
 
