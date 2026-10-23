@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 
+import { selectAllImport } from '@/api/bulkSelection';
 import { API } from '@/api/client';
 import {
   applyImport,
@@ -137,6 +138,13 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       if (mounted.current) {
         setDocuments(raw);
         setDoc(parsed);
+        setSelection(
+          selectAllImport(parsed, {
+            ...emptyImportSelection(),
+            allow_shared_impact: true,
+            allow_incomplete: true,
+          }),
+        );
       }
     });
   };

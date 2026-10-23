@@ -676,8 +676,8 @@
   },
   {
     "path": "docs/IMPORT.md",
-    "bytes": 7581,
-    "sha256": "3b446332ec758895d8822359134ecf01dd169bef0f056e46fb5fbb90bdcce824"
+    "bytes": 7668,
+    "sha256": "855e3c3798f2a0e5af890f88e7cd37df4dd68d910f901a4c158cf17212d7bcdc"
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
@@ -1171,8 +1171,8 @@
   },
   {
     "path": "tests/test_import_catalog_ui.mjs",
-    "bytes": 6005,
-    "sha256": "67be2fc5d709e0c6b5ffa9720686c18a2d86f950cd3822ecf8690a9231779cad"
+    "bytes": 8264,
+    "sha256": "9f4863e2658428c979ccc496263657beb570cf9171a624c8e02a3d35d6eb342c"
   },
   {
     "path": "tests/test_import_client.mjs",
@@ -2716,8 +2716,8 @@
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
-    "bytes": 11834,
-    "sha256": "58f7ddd5f7a7249d18550dbb4a46046738176c0fd3946fe6d6a09f4a5b36f4b8"
+    "bytes": 12086,
+    "sha256": "fb36e17ed04f56ae3256b8f08d0bc71a92ecee0a989388e1db295bcb608833cd"
   },
   {
     "path": "webui/web/src/components/ImportPreview.tsx",
@@ -2961,13 +2961,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 61029,
-    "sha256": "45572d704d42cc0de2b55defdd4a610dff0338986c75a2941ecb91803368be91"
+    "bytes": 60996,
+    "sha256": "fe9310225639f9e6af1286a03b8460ad7db8b82a0304218d0dab6e7a20b8edf6"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 100035,
-    "sha256": "f7f0b56c9ab03d6629291a0b7adee589e56a33921e664dd9841f442543f51c8d"
+    "bytes": 99901,
+    "sha256": "b7296a5d23078fa91532878fee9517967fc6f98671112f5d4d331519e2415b56"
   },
   {
     "path": "webui/web/src/types/types.ts",

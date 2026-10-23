@@ -19,6 +19,7 @@
     "builder_tests": 5,
     "installer_tests": 22,
     "real_browser_RU_EN_import": true,
+    "complete_author_selection_and_recipient_opt_out": true,
     "Frank_28_clicks_and_viewport_centers": true,
     "first_visit_and_saved_theme_choices": true,
     "cloud_HTTPS_signature_hash_and_import": true,
