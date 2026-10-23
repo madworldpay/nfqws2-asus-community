@@ -323,8 +323,10 @@
       "nfqueue": "NFQUEUE",
       "dns": "Router DNS / DoT / DoH"
     },
+    "frank": "Frank",
     "mail_states": {
-      "accepted": "Thank you! Together, we’ll make the internet freer!",
+      "accepted": "Frank approves...",
+      "watching": "Frank is watching...",
       "failed_safe": "The report was not accepted. You may explicitly retry later or save the JSON.",
       "unknown": "No confirmation: the report may have been accepted. Resending this file is disabled to avoid a duplicate.",
       "busy": "Another send is in progress. Try later or save the JSON.",

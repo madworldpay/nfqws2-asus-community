@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Alert,
   Box,
+  ButtonBase,
   IconButton,
   Paper,
   Snackbar,
@@ -13,22 +15,42 @@ import type { Appearance } from '@/store/useAppearanceStore';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
-export function ShareThanks({
-  appearance,
-  event,
-  onClose,
-}: {
+type ShareThanksProps = {
   appearance: Appearance;
   event: number;
   onClose: () => void;
-}) {
+};
+
+export function ShareThanks(props: ShareThanksProps) {
+  return props.event ? <AcceptedThanks key={props.event} {...props} /> : null;
+}
+
+function AcceptedThanks({ appearance, event, onClose }: ShareThanksProps) {
   const { t } = useTranslation();
-  if (!event) return null;
+  const [interaction, setInteraction] = useState({ clicks: 0, replays: 0 });
+  const nod = () =>
+    setInteraction(({ clicks, replays }) =>
+      clicks === 27
+        ? { clicks: 0, replays: replays + 1 }
+        : { clicks: clicks + 1, replays },
+    );
   return (
     <Snackbar
       open
       autoHideDuration={10000}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      sx={
+        appearance === 'rabbit'
+          ? {
+              '&&': {
+                inset: '50% auto auto 50%',
+                transform: 'translate(-50%, -50%)',
+                width: 'max-content',
+                maxWidth: 'calc(100vw - 32px)',
+              },
+            }
+          : undefined
+      }
       onClose={(_, reason) => {
         if (reason !== 'clickaway') onClose();
       }}
@@ -63,27 +85,35 @@ export function ShareThanks({
             <CloseIcon fontSize="small" />
           </IconButton>
           <Stack spacing={2} alignItems="center">
-            <Box
-              component="img"
-              src={`/community/rabbit-respect-once.gif?sent=${event}`}
-              alt=""
-              aria-hidden="true"
-              width={192}
-              height={192}
-              sx={{
-                display: 'block',
-                width: { xs: 176, sm: 192, lg: 224 },
-                height: { xs: 176, sm: 192, lg: 224 },
-                '@media (min-width: 2560px)': { width: 288, height: 288 },
-                '@media (min-width: 3200px)': { width: 352, height: 352 },
-                borderRadius: '50%',
-                objectFit: 'cover',
-                flexShrink: 0,
-                border: '1px solid #60758d',
-                backgroundColor: '#0b1119',
-                boxShadow: '0 0 28px #93b7df18',
-              }}
-            />
+            <ButtonBase
+              aria-label={t('report.frank')}
+              disableRipple
+              onClick={nod}
+              sx={{ borderRadius: '50%', flexShrink: 0 }}
+            >
+              <Box
+                key={interaction.replays}
+                component="img"
+                src={`/community/rabbit-respect-once.gif?sent=${event}${interaction.replays ? `&replay=${interaction.replays}` : ''}`}
+                alt=""
+                aria-hidden="true"
+                width={192}
+                height={192}
+                sx={{
+                  display: 'block',
+                  width: { xs: 176, sm: 192, lg: 224 },
+                  height: { xs: 176, sm: 192, lg: 224 },
+                  '@media (min-width: 2560px)': { width: 288, height: 288 },
+                  '@media (min-width: 3200px)': { width: 352, height: 352 },
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  border: '1px solid #60758d',
+                  backgroundColor: '#0b1119',
+                  boxShadow: '0 0 28px #93b7df18',
+                }}
+              />
+            </ButtonBase>
             <Typography
               sx={{
                 fontSize: 18,
@@ -93,7 +123,11 @@ export function ShareThanks({
                 maxWidth: 280,
               }}
             >
-              {t('report.mail_states.accepted')}
+              {t(
+                interaction.replays
+                  ? 'report.mail_states.watching'
+                  : 'report.mail_states.accepted',
+              )}
             </Typography>
           </Stack>
         </Paper>
