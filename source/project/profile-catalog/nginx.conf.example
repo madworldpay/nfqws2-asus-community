@@ -1,0 +1,38 @@
+# Include inside the existing HTTPS server {}, before other regex locations.
+# Only these two object paths are exposed; no directory listing or upload API.
+location = /nfqws-profiles/v1/catalog.json {
+    if ($request_method !~ ^(GET|HEAD)$) { return 405; }
+    alias /srv/nfqws-profiles/v1/catalog.json;
+    default_type application/json;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Cache-Control "no-cache" always;
+    disable_symlinks on;
+    max_ranges 0;
+    limit_req zone=nfqws_profile_requests burst=10 nodelay;
+    limit_req_status 429;
+    limit_conn nfqws_profile_connections 8;
+    limit_conn_status 429;
+    error_page 429 = @nfqws_profile_limited;
+}
+
+location ~ "^/nfqws-profiles/v1/files/(?<nfqws_profile_sha>[a-f0-9]{64})\.json$" {
+    if ($request_method !~ ^(GET|HEAD)$) { return 405; }
+    alias /srv/nfqws-profiles/v1/files/$nfqws_profile_sha.json;
+    default_type application/json;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    disable_symlinks on;
+    max_ranges 0;
+    limit_rate 512k;
+    limit_req zone=nfqws_profile_requests burst=10 nodelay;
+    limit_req_status 429;
+    limit_conn nfqws_profile_connections 8;
+    limit_conn_status 429;
+    error_page 429 = @nfqws_profile_limited;
+}
+
+location /nfqws-profiles/ { return 404; }
+location @nfqws_profile_limited {
+    add_header Retry-After 5 always;
+    return 429;
+}

@@ -53,6 +53,6 @@ try {
   await page.locator('input[type=file]').setInputFiles({name:'Профиль Windows.json',mimeType:'',buffer:Buffer.from('{}')});
   await page.getByText('Selected example',{exact:false}).first().waitFor();
   assert.ok(calls.filter(x=>x==='importinspect').length===2,'Local file still enters the same import flow while catalog is unavailable');
-  await page.goto(base+'/?lang=en');await page.getByRole('button',{name:'From cloud',exact:true}).waitFor();
+  offline=false;await page.goto(base+'/?lang=en');await page.getByRole('button',{name:'From cloud',exact:true}).click();await page.getByText('Global strategies',{exact:true}).waitFor();await page.getByText('Provider presets',{exact:true}).waitFor();await page.getByText('From computer (JSON)',{exact:true}).waitFor();
   console.log('PASS actual import dialog: local/VPS sources, two categories, escaped names, unchecked selective import, no automatic apply, rapid-click guard and offline local fallback');
 }finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));await rm(dir,{recursive:true,force:true});}
