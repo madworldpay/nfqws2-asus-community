@@ -42,8 +42,8 @@
     },
     {
       "file": "INSTALL.md",
-      "bytes": 3888,
-      "sha256": "22e6e651db49aa3292322cfcb2a38a55550a13a24d2469a63f11c3cae6821060"
+      "bytes": 5092,
+      "sha256": "be6b60d23863cb380289afb25555152c037dccebcba54b952a4532ed309ed28f"
     },
     {
       "file": "LICENSE",
@@ -57,13 +57,13 @@
     },
     {
       "file": "QUICKSTART.md",
-      "bytes": 2552,
-      "sha256": "a736204ffcf638fc6be652dcd140001784ed368ba8469442caa1a9d50bef1173"
+      "bytes": 3068,
+      "sha256": "0370871a36ef5379d204cb5698e6e82eefbb3b6c473eaf644d610b8f9536ca60"
     },
     {
       "file": "README.md",
-      "bytes": 3297,
-      "sha256": "6fe5d9df3f374ca50804076450850ab93d270006468d9d1306fc841a6a4fd7d1"
+      "bytes": 3758,
+      "sha256": "0977aff0faff0da3fd003e6a0a7937f51373c515b913f9eed94d674ef6c3564a"
     },
     {
       "file": "ROADMAP.md",
@@ -94,11 +94,6 @@
       "file": "build.svg",
       "bytes": 385,
       "sha256": "f7839524164b64792ec7249446ebdd6eea3742ee9d5e7dc67fe991543609e7fd"
-    },
-    {
-      "file": "domru.json",
-      "bytes": 77229,
-      "sha256": "ba8b3b1b42a1d269249c6681a2a8e72623b3dfd93f0859502c2e260f7a5844b6"
     },
     {
       "file": "status.svg",
