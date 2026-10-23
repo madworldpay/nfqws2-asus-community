@@ -31,6 +31,13 @@ class ShareDependenciesTests(unittest.TestCase):
     def test_inline_hex_blob_is_not_a_missing_file(self):
         v=self.analyze(text='--lua-desync=fake:blob=0x0123abcd',config='NFQWS_ARGS="--filter-tcp=443"\n')
         self.assertEqual(v['references'],[]);self.assertEqual(v['missing'],[]);self.assertEqual(v['unresolved'],[])
+
+    def test_engine_builtin_blobs_need_no_file_but_similar_unknown_name_still_fails(self):
+        for name in ['fake_default_tls','fake_default_http','fake_default_quic']:
+            v=self.analyze(text='--lua-desync=fake:blob='+name,config='NFQWS_ARGS="--filter-tcp=443"\n')
+            self.assertTrue(v['complete'],v);self.assertEqual(v['references'],[])
+        v=self.analyze(text='--lua-desync=fake:blob=fake_default_other',config='NFQWS_ARGS="--filter-tcp=443"\n')
+        self.assertFalse(v['complete']);self.assertIn('unbound_blob',{r['kind'] for r in v['unresolved']})
     def test_quoted_paths_and_separate_option_values_are_tokens_not_commands(self):
         v=self.analyze(text="--hostlist '/opt/etc/nfqws2/lists/sites.list' --lua-init=@/opt/etc/nfqws2/lua/custom.lua",config='NFQWS_ARGS="--filter-tcp=443"\n')
         self.assertEqual({x['name'] for x in v['references']},{'sites.list','custom.lua'})

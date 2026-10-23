@@ -13,6 +13,13 @@ NFQWS_ARGS_CUSTOM="--filter-tcp=8443 --dpi-desync=fake"
 '''
 
 class ShareStrategyTests(unittest.TestCase):
+    def test_export_does_not_invent_file_dependencies_for_engine_builtin_blobs(self):
+        v=self.call(edited='--lua-desync=fake:blob=fake_default_tls --lua-desync=multisplit:seqovl_pattern=fake_default_http')
+        self.assertNotIn('error',v);self.assertEqual(v['dependencies'],[])
+        self.assertIn('blob=fake_default_tls',v['blocks'][0]['value'])
+        v=self.call(edited='--lua-desync=fake:blob=custom_blob')
+        self.assertEqual(v['dependencies'][0]['kind'],'blob')
+
     def test_credentials_with_separate_values_and_complete_unusual_paths_are_private(self):
         for text in ['--password PRIVATE_CANARY_SECRET','--auth-token PRIVATE_CANARY_SECRET','--password="PRIVATE_CANARY_SECRET"']:
             self.assertIn('error',self.call(edited=text))

@@ -76,7 +76,7 @@ final class AsusShareDependencies
                 }
             }
         }
-        foreach($blobUses as $use)if(!array_key_exists($use['name'],$blobDefinitions))$unresolved[]=['source'=>$use['source'],'kind'=>'unbound_blob','name'=>$use['name']];
+        foreach($blobUses as $use)if(!array_key_exists($use['name'],$blobDefinitions)&&!in_array($use['name'],AsusShareStrategy::BUILTIN_BLOBS,true))$unresolved[]=['source'=>$use['source'],'kind'=>'unbound_blob','name'=>$use['name']];
         if(($inventory['scan_truncated']??false)===true)$unresolved[]=['source'=>'inventory','kind'=>'inventory_partial'];
         $unique=[];foreach($unresolved as $row)$unique[$row['source'].'|'.$row['kind'].'|'.($row['name']??'')]=$row;$unresolved=array_values($unique);if(count($unresolved)>128)$unresolved=array_merge(array_slice($unresolved,0,127),[['source'=>'analysis','kind'=>'reference_limit']]);
         $refs=array_values($references);usort($refs,fn($a,$b)=>strcmp($a['id'],$b['id']));

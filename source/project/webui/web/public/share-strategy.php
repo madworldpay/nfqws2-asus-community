@@ -4,6 +4,8 @@ require_once __DIR__.'/support-json-schema.php';
 final class AsusShareStrategy
 {
     public const BLOCKS=['NFQWS_ARGS','NFQWS_ARGS_QUIC','NFQWS_ARGS_UDP','NFQWS_ARGS_CUSTOM'];
+    // Supplied by the pinned engine itself, not by external files or Lua.
+    public const BUILTIN_BLOBS=['fake_default_tls','fake_default_http','fake_default_quic'];
     private const REFERENCES=['NFQWS_ARGS','NFQWS_ARGS_QUIC','NFQWS_ARGS_UDP','NFQWS_ARGS_CUSTOM','NFQWS_BASE_ARGS','NFQWS_ARGS_IPSET','NFQWS_EXTRA_ARGS','MODE_LIST','MODE_ALL','MODE_AUTO'];
     private const SETTINGS=['ISP_INTERFACE','ASUS_CLIENT_MODE','ASUS_CLIENTS4','ASUS_CLIENTS6','POLICY_NAME','POLICY_EXCLUDE','IPV6_ENABLED','TCP_PORTS','UDP_PORTS','LOG_LEVEL','LOG_DEBUG_PATH','NFQUEUE_NUM','USER','CONFIG_VERSION'];
     private static function assignments(string $config): array
@@ -123,7 +125,7 @@ final class AsusShareStrategy
         $remaining=preg_replace('/\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))/','',$value);
         if(str_contains($remaining,'$')||trim($value)==='')throw new RuntimeException('unsafe_strategy');
         preg_match_all('/\b(?:blob|seqovl_pattern)=([A-Za-z][A-Za-z0-9_]*)/',$value,$resources);
-        foreach($resources[1] as $resource)$alias('blob',$resource);
+        foreach($resources[1] as $resource)if(!in_array($resource,self::BUILTIN_BLOBS,true))$alias('blob',$resource);
         return trim(strtr($value,$destinations));
     }
     private static function finish(array $payload,array $context,array $versions,array $deps,int $schemaVersion=1): string
