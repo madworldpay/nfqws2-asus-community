@@ -319,6 +319,20 @@ function main(): void
     }
   }
 
+  if (in_array($_POST['cmd'], ['importcatalog','importcatalogload'], true)) {
+    require_once __DIR__.'/support-report.php';require_once __DIR__.'/profile-catalog-api.php';
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    try {
+      AsusProfileCatalogApi::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();$result=(new AsusProfileCatalogApi())->handle($_POST);
+      $raw=json_encode($result,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+      if(strlen($raw)>AsusProfileCatalog::DOCUMENT_LIMIT*2+64)throw new RuntimeException('catalog_limit');
+      http_response_code(200);echo $raw;
+    }catch(Throwable $e){$code=AsusProfileCatalogApi::error($e);http_response_code($code==='invalid_request'?400:($code==='catalog_changed'?409:503));echo json_encode(['error'=>$code]);}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['importinspect','importprepare','importapply','importstatus','importundo'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/import-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');

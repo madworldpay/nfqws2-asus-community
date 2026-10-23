@@ -702,9 +702,9 @@
     "reload_draft": "Load saved profile"
   },
   "import": {
-    "title": "Import JSON",
-    "hint": "JSON is a profile file saved from this panel. A router owner creates it with Share → Download JSON to transfer settings or share them with another user. Choose a file (up to five attachments), then the blocks, files and DNS settings you want. Review the changes before saving; importing starts nothing automatically.",
-    "choose": "Choose file (JSON)",
+    "title": "Import profile",
+    "hint": "Choose your JSON or a preset from our catalog, then select blocks, files and SmartDNS. JSON is a settings file saved through Share. Review changes before saving; importing starts no services.",
+    "choose": "From computer (JSON)",
     "retry": "Read again",
     "check_status": "Check result",
     "undo": "Undo last import",
@@ -791,7 +791,14 @@
       "stale_draft": "Unable to read or prepare the data. Check the chosen JSON and retry.",
       "storage_unavailable": "Storage is unavailable. Check the drive and Entware, then retry the check.",
       "unavailable": "Unable to read or prepare the data. Check the chosen JSON and retry.",
-      "invalid_proof": "Unable to read or prepare the data. Check the chosen JSON and retry."
+      "invalid_proof": "Unable to read or prepare the data. Check the chosen JSON and retry.",
+      "catalog_invalid": "Preset verification failed. Refresh the list and select it again.",
+      "catalog_signature": "Catalog signature verification failed. Try again later.",
+      "catalog_unavailable": "The catalog is unavailable. Try again later or choose a JSON file from your computer.",
+      "catalog_timeout": "The server did not respond in time. Retry the download.",
+      "catalog_limit": "The preset exceeds the size limit. Choose another one.",
+      "catalog_changed": "The catalog has changed. Refresh the list and select the preset again.",
+      "catalog_version": "Update the package to use this preset."
     },
     "from_json": "From JSON: ",
     "dns_default_hint": "A complete DNS draft needs at least one default server. Supply bootstrap addresses for DNS hostnames. Nothing is added automatically.",
@@ -811,6 +818,18 @@
     "replace_file": "Replace",
     "replace_backup": "Previous copies are kept so you can undo the import.",
     "paths_missing": "Some files are missing or have conflicting names. Check the JSON contents.",
-    "preview_help": "Choose JSON and the items you need. Preview shows which settings and files will be added or replaced. Nothing is applied until Save selected."
+    "preview_help": "Choose JSON and the items you need. Preview shows which settings and files will be added or replaced. Nothing is applied until Save selected.",
+    "catalog": {
+      "title": "Preset catalog",
+      "choose": "From cloud",
+      "help_title": "About the catalog",
+      "help": "Presets are loaded from our cloud. A selection opens the normal import flow: choose the full profile or individual parts. Results depend on the ISP and network. You can also choose your own JSON file.",
+      "refresh": "Refresh list",
+      "offline": "The catalog is unavailable. Try again later or choose a JSON file from your computer.",
+      "empty": "No presets yet.",
+      "provider": "Provider presets",
+      "global": "Global strategies",
+      "update": "Update the package to use this preset."
+    }
   }
 }

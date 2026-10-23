@@ -305,10 +305,11 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/bin/nfqws2-smartdns-control'] = local('asus/smartdns/control-cli.sh', True)
     core['opt/etc/init.d/S80nfqws2-smartdns'] = local('asus/smartdns/init.sh', True)
     core['opt/share/nfqws2-asus/smartdns-catalog.json'] = local('support/smartdns-catalog.json')
-    for name in ['dpi-catalog.json', 'dpi-profile.json', 'dpi-native-defaults.json', 'dpi-analysis-v2.schema.json', 'dpi-report.schema.json', 'dpi-envelope.schema.json', 'dpi-saved.schema.json', 'strategy.schema.json', 'strategy-v2.schema.json', 'resources.schema.json', 'dns-share.schema.json', 'share-v4.schema.json', 'share-envelope.schema.json', 'report.schema.json']:
+    for name in ['profile-catalog.schema.json', 'dpi-catalog.json', 'dpi-profile.json', 'dpi-native-defaults.json', 'dpi-analysis-v2.schema.json', 'dpi-report.schema.json', 'dpi-envelope.schema.json', 'dpi-saved.schema.json', 'strategy.schema.json', 'strategy-v2.schema.json', 'resources.schema.json', 'dns-share.schema.json', 'share-v4.schema.json', 'share-envelope.schema.json', 'report.schema.json']:
         core['opt/share/nfqws2-asus/'+name] = local('support/'+name)
     core['opt/share/nfqws2-asus/package-manifest.schema.json'] = local('updates/package-manifest.schema.json')
     core['opt/share/nfqws2-asus/update-release-key.pem'] = local('updates/trusted-release-key.pem')
+    core['opt/share/nfqws2-asus/profile-catalog-public.pem'] = local('asus/profile-catalog-public.pem')
     core['opt/libexec/nfqws2-asus/update-launch'] = update_launcher(target)
     core['opt/libexec/nfqws2-asus/location-launch'] = update_launcher(target, ROOT/'asus/share', 'location-launch')
     for name in ['worker.php', 'worker.sh', 'check.sh', 'lifecycle.sh']:
