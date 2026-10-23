@@ -1,0 +1,27 @@
+{
+  "build": 66,
+  "inherited_component_verification": "verification-build65.json",
+  "project_files": 594,
+  "package_reproduced_byte_for_byte": [
+    "aarch64-3.10",
+    "armv7"
+  ],
+  "changes": [
+    "preserve active relay configuration across frozen public64/65 updater runtimes",
+    "bounded retry after interrupted preinstall preparation",
+    "explicit authenticated manual channel setup without sending"
+  ],
+  "test_evidence": {
+    "matching_php_runtimes": [
+      "aarch64",
+      "armv7-3.2",
+      "armv7-2.6"
+    ],
+    "focused_tests_per_runtime": 101,
+    "migration_reinstall_tests": 38,
+    "full_package_tests": 18,
+    "frozen_full_package_readers": 6,
+    "native_Send_or_email_attempted": false
+  },
+  "scope": "Local regression and exact package reproducibility. Router acceptance is recorded separately after the frozen artifacts are downloaded through the panel; this is not evidence of application/video/voice/IPv6 availability."
+}

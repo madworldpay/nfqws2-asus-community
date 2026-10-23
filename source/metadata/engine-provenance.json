@@ -1,0 +1,29 @@
+{
+  "provider": {
+    "version": "1.3.2",
+    "commit": "5d155f33ab00f3a4879c485c1094e8ec1e014586",
+    "release": "https://github.com/nfqws/nfqws2-keenetic/releases/tag/v1.3.2"
+  },
+  "engine": {
+    "version": "1.0.6",
+    "commit": "221d7dff24bfec0cd5ac0a5070b8acef2008af3d",
+    "lua_compat_ver": 6
+  },
+  "inputs": {
+    "nfqws2-keenetic_1.3.2_aarch64-3.10.ipk": {
+      "sha256": "f62c338d3e4abd7bb953c742a2e295fc58e21f19c9bfba296d857f9f9d365187",
+      "bytes": 381748
+    },
+    "nfqws2-keenetic_1.3.2_all_entware.ipk": {
+      "sha256": "6de14a39345e05c887cd0d9af573bf42b4a489773d36011079c6f5c2fe2a0dd9",
+      "bytes": 2381500
+    }
+  },
+  "armv7_unpack": {
+    "upx": "4.2.4",
+    "packed_sha256": "19da1dd9e7f49e061bc7735f690d1a42b55f562976fa820a5794c28695412cbe",
+    "unpacked_sha256": "8bdb300328a358c069d11e957e4f88b23883abbbeb659c9ffa1ff48090ad70c6"
+  },
+  "provider_patch_dry_run": "applies with fuzz=0",
+  "runtime_changes": "ASUS lifecycle remains separate; upstream argument builder and corrected UDP template are included. User configuration is retained."
+}

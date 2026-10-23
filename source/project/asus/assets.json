@@ -1,8 +1,4 @@
 {
-  "nfqws2-keenetic_1.3.1_aarch64-3.10.ipk": {
-    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.1/nfqws2-keenetic_1.3.1_aarch64-3.10.ipk",
-    "sha256": "9167d72053a83a78f48f6439af38432fb2d1d411fb22c0980240a949ace614df"
-  },
   "busybox_1.37.0-6_aarch64-3.10.ipk": {
     "url": "https://bin.entware.net/aarch64-k3.10/busybox_1.37.0-6_aarch64-3.10.ipk",
     "sha256": "881b06cecc1c8c6b4a0658d551c2230034ea0a21354fab89ddbce744f3d51e24"
@@ -14,10 +10,6 @@
   "lighttpd-mod-cgi_1.4.82-2_aarch64-3.10.ipk": {
     "url": "https://bin.entware.net/aarch64-k3.10/lighttpd-mod-cgi_1.4.82-2_aarch64-3.10.ipk",
     "sha256": "479bf1a1da968574dc9fe727e4d8d4559634e757acfb35ee7566f32b53707009"
-  },
-  "nfqws2-keenetic_1.3.1_all_entware.ipk": {
-    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.1/nfqws2-keenetic_1.3.1_all_entware.ipk",
-    "sha256": "28af67f8e192c838e007f23517b52b1f8c20d030cef5b971dfc93b7f21a79054"
   },
   "busybox_1.37.0-6_armv7-3.2.ipk": {
     "url": "https://bin.entware.net/armv7sf-k3.2/busybox_1.37.0-6_armv7-3.2.ipk",
@@ -42,5 +34,13 @@
   "lighttpd-mod-cgi_1.4.71-1_armv7-2.6.ipk": {
     "url": "https://bin.entware.net/armv7sf-k2.6/lighttpd-mod-cgi_1.4.71-1_armv7-2.6.ipk",
     "sha256": "31e677e119d09a7cbde11b5f58838052ab8602704c2de4d26c69f4507a47cf47"
+  },
+  "nfqws2-keenetic_1.3.2_aarch64-3.10.ipk": {
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.2/nfqws2-keenetic_1.3.2_aarch64-3.10.ipk",
+    "sha256": "f62c338d3e4abd7bb953c742a2e295fc58e21f19c9bfba296d857f9f9d365187"
+  },
+  "nfqws2-keenetic_1.3.2_all_entware.ipk": {
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.2/nfqws2-keenetic_1.3.2_all_entware.ipk",
+    "sha256": "6de14a39345e05c887cd0d9af573bf42b4a489773d36011079c6f5c2fe2a0dd9"
   }
 }

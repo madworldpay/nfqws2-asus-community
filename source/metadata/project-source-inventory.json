@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "8e37bed9dff3949ffd23ae638260dff869f5cc26e551f2a9e5e289a8888949fa"
+    "sha256": "7f3d905fd916ac40ded4007bbe76e90633bb99a856b7bf512eaf5ae1e91f6ca7"
   },
   {
     "path": "LICENSE",
@@ -12,7 +12,7 @@
   {
     "path": "README.md",
     "bytes": 1125,
-    "sha256": "868bec2fdc685010cab4d0521a395e4186d9170360716d15f55e854ed6e8f2e4"
+    "sha256": "2547b8be56ff6b7f84115fe608809f13a820fd2ea7be7ba2fc166a2202e0c15c"
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
@@ -21,8 +21,8 @@
   },
   {
     "path": "UPSTREAM.md",
-    "bytes": 9350,
-    "sha256": "29721ffd2ae32c1ff601512e075c4579ed2a463cd1365fb38ca847d7b6bdd97e"
+    "bytes": 9381,
+    "sha256": "b76467daa99435491d78166c27c416adc3071727449d350b13a00fb015376aed"
   },
   {
     "path": "VERSION",
@@ -47,12 +47,12 @@
   {
     "path": "asus/assets.json",
     "bytes": 2440,
-    "sha256": "52e53c6632175e76d29089d821ff894b554f5a9580acd759f8345b26554122e0"
+    "sha256": "d23c66d61b5d095b815f08731f564882beaaae16442701a26df44dd4c4e67118"
   },
   {
     "path": "asus/build.py",
-    "bytes": 27463,
-    "sha256": "dd0c7420c4fb1c9d94d4860b29611317d475df670254551d8e1f8319fe010488"
+    "bytes": 27461,
+    "sha256": "0e72b310db1389d5c040c595b5893b1dd69effe4c27b71e81a01cba4f990fb67"
   },
   {
     "path": "asus/compatibility.sh",
@@ -512,7 +512,7 @@
   {
     "path": "core/VERSION",
     "bytes": 6,
-    "sha256": "10e2e117b01523891ca271a615ae36e9d5e52348fd7d642f66727602c1b8dcbe"
+    "sha256": "33158972a53877b421cfe2598b8d93cab169963a4964b45ee889e85349979018"
   },
   {
     "path": "core/common/ipk/conffiles",
@@ -541,13 +541,13 @@
   },
   {
     "path": "core/etc/init.d/common",
-    "bytes": 12271,
-    "sha256": "2b3794fdbdac731374e441b6bc374e32a6bdcb06d698e66aac194dcedde7bdf7"
+    "bytes": 13513,
+    "sha256": "d801eaf6d78d232346594e63f6ad7d440ae5f33f9251fa49964c89f32e7aeabb"
   },
   {
     "path": "core/etc/init.d/entware-end",
-    "bytes": 933,
-    "sha256": "b0bd1e279e0a152729f69139d466357b00a439f4bf453a0893e491072d22cb61"
+    "bytes": 1293,
+    "sha256": "d99853c9b9087b64d5a19a29a156428cdbf3d78ee7042ef79bd8db01c2330f65"
   },
   {
     "path": "core/etc/init.d/entware-start",
@@ -566,8 +566,8 @@
   },
   {
     "path": "core/etc/ndm/netfilter.d/100-nfqws2.sh",
-    "bytes": 288,
-    "sha256": "57770e0250100ca81a0af546ffee6a885b68eb5224963bca4574236b80f6b3ea"
+    "bytes": 406,
+    "sha256": "c9bb3fccc6aad4cab258eae087024b2aede1cff3a082181c58fc98f60ef0e3fb"
   },
   {
     "path": "core/etc/nfqws2/blobs/quic_initial.bin",
@@ -606,8 +606,8 @@
   },
   {
     "path": "core/etc/nfqws2/nfqws2.conf",
-    "bytes": 3770,
-    "sha256": "b994f88b865d9a42275f8201f9ec55f2b22b16d8ac3942d0c71f677de4d1b7c5"
+    "bytes": 3786,
+    "sha256": "6503c5cad7128f3d5fe9d3906f9a175369f1cec9f39be1dbcdd86538e1fd69cd"
   },
   {
     "path": "core/keys/README",
@@ -653,6 +653,16 @@
     "path": "core/repository.mk",
     "bytes": 3790,
     "sha256": "0e9e874eccded228b29ceda6d1f754323aafc168fe56b7594d3d76b20894c0fd"
+  },
+  {
+    "path": "core/tests/test-firewall-retry.sh",
+    "bytes": 2496,
+    "sha256": "351311719a299704574ee9dc57ef4ee474dcbea9009e03574b248ce59be700a8"
+  },
+  {
+    "path": "core/tests/test-init-config.sh",
+    "bytes": 1019,
+    "sha256": "cf9981b26c2f59d203c66f6ec69aa2c1ebf3960c927f1b160e8f2e33a34ea2d9"
   },
   {
     "path": "core/tests/test-packaging.sh",

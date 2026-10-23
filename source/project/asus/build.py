@@ -22,12 +22,12 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {
     'armv7-3.2': {'opkg_arch': 'all', 'filename_arch': 'armv7', 'family': 'armv7', 'elf_class': 1, 'elf_machine': 40,
-                 'engine_asset': 'nfqws2-keenetic_1.3.1_all_entware.ipk',
+                 'engine_asset': 'nfqws2-keenetic_1.3.2_all_entware.ipk',
                  'engine_member': 'opt/tmp/nfqws2_binary/nfqws2-armv7',
-                 'packed_sha256': '82e25311b3f7645617ff539d8bab50ae5509d4c2284e826e3c8810470df337e3',
-                 'unpacked_sha256': 'dde6c26b12ef812d49aef3050dbd5b9186c7d65d43478ae222932e52f04320c8'},
+                 'packed_sha256': '19da1dd9e7f49e061bc7735f690d1a42b55f562976fa820a5794c28695412cbe',
+                 'unpacked_sha256': '8bdb300328a358c069d11e957e4f88b23883abbbeb659c9ffa1ff48090ad70c6'},
     'aarch64-3.10': {'opkg_arch': 'aarch64-3.10', 'elf_class': 2, 'elf_machine': 183,
-                     'engine_asset': 'nfqws2-keenetic_1.3.1_aarch64-3.10.ipk',
+                     'engine_asset': 'nfqws2-keenetic_1.3.2_aarch64-3.10.ipk',
                      'engine_member': 'opt/usr/bin/nfqws2'},
 }
 for arch, target in TARGETS.items():
@@ -67,7 +67,7 @@ def prepare_engine(data, target):
     if hashlib.sha256(unpacked).hexdigest() != target['unpacked_sha256']:
         raise RuntimeError('Unexpected unpacked engine SHA256')
     return unpacked
-CORE_VERSION = '1.3.1-asus6'
+CORE_VERSION = '1.3.2-asus6'
 WEB_VERSION = (ROOT/'VERSION').read_text().strip()
 ASSETS = json.loads((ROOT/'asus/assets.json').read_text())
 
@@ -256,7 +256,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/usr/bin/nfqws2'] = engine, 0o755
     core['opt/etc/nfqws2/lua/local-guarded-ts.lua'] = local('asus/lua/local-guarded-ts.lua')
     baseline = {'schema_version': 1, 'package_version': package_version(build_number), 'web_version': WEB_VERSION,
-                'engine': {'version': '1.0.5.2', 'provider': 'nfqws2-keenetic',
+                'engine': {'version': '1.0.6', 'provider': 'nfqws2-keenetic',
                            'sha256': hashlib.sha256(engine).hexdigest(),
                            'elf_class': engine[4], 'elf_machine': int.from_bytes(engine[18:20], 'little')},
                 'resources': {}}
