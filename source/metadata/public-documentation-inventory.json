@@ -27,8 +27,8 @@
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 1217,
-      "sha256": "4443a26a4c59caded9473fefed9b04699f5770f88cebcf7863b23d77589b7cdb"
+      "bytes": 1365,
+      "sha256": "bada441f67cb4813871f9b624e4d61ef826bfdc4430e499775d6d56d7e2dfb5e"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -42,8 +42,8 @@
     },
     {
       "file": "INSTALL.md",
-      "bytes": 4438,
-      "sha256": "f1da086edf079fcf1acd319385ac5f4785e708a2e5529b3b5e169943d49c66cb"
+      "bytes": 4440,
+      "sha256": "085b4de672ad3a1124ebb54428f93780527d18faeadd14eb155687a5e9bfd115"
     },
     {
       "file": "LICENSE",
@@ -57,8 +57,8 @@
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 3716,
-      "sha256": "4afded95d79e34652294ef0872ea974081455b7ad15dcb6ed5c444630a105389"
+      "bytes": 3899,
+      "sha256": "c55f0b9db62d23f2fee72249afd604ce02e502c8367fc8f8dd02b0f27ab6e8aa"
     },
     {
       "file": "PRESETS.md",
@@ -72,8 +72,8 @@
     },
     {
       "file": "README.md",
-      "bytes": 5386,
-      "sha256": "a66600260ae3c160400a9b9ebb5d9ab94148bc588909fe40d1426f29163df3f6"
+      "bytes": 5374,
+      "sha256": "99809d2d106c60260b7edf632c076c8ed2f67c92980e4b7c90a42637bd8de827"
     },
     {
       "file": "ROADMAP.md",
@@ -82,8 +82,8 @@
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 6756,
-      "sha256": "9ac9ba055fef52cc534b29ca4354dbe8b66916251a8df84a229e49ea2894b4ab"
+      "bytes": 6592,
+      "sha256": "32269f13f7eea8bcb354485afd976061c37b297197981efd9fe5082bd1beec35"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
@@ -92,8 +92,8 @@
     },
     {
       "file": "UPSTREAM.md",
-      "bytes": 9381,
-      "sha256": "88cc2e9d684b061bbaa783d1ad86c6f89464dd0ddc1f02b0d80ea800a561ba41"
+      "bytes": 9281,
+      "sha256": "eb96c1f14cc046c1c6eb16410ff79a98ea552f7cd343e43a6418c1782808a000"
     },
     {
       "file": "USAGE.md",
@@ -102,8 +102,8 @@
     },
     {
       "file": "build.svg",
-      "bytes": 385,
-      "sha256": "bff805790998c347ed755bac391d8bf358282b86cfda0b78613e8cce08b8ba2e"
+      "bytes": 394,
+      "sha256": "c286ee0f9d42004dc632f7b4c56d3a2cb36601d9ef9225242206301b1eb8714c"
     },
     {
       "file": "images/cloud-catalog.jpg",

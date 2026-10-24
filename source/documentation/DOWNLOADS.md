@@ -1,15 +1,20 @@
 # Загрузки
 
-**Build 69 — 1.3.2-asus6+b69.**
+[**Открыть последний выпуск**](https://github.com/madworldpay/nfqws2-asus-community/releases/latest).
+В списке файлов выберите IPK по архитектуре Entware:
 
-| Основной ABI Entware | Скачать |
+| Архитектура Entware | Окончание имени файла |
 |---|---|
-| `armv7-2.6` / `armv7-3.2` | [ARMv7 IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build69/nfqws2-asus_1.3.2-asus6+b69_armv7.ipk) |
-| `aarch64-3.10` | [AArch64 IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build69/nfqws2-asus_1.3.2-asus6+b69_aarch64-3.10.ipk) |
+| `armv7-2.6` / `armv7-3.2` | `_armv7.ipk` |
+| `aarch64-3.10` | `_aarch64-3.10.ipk` |
 
-[Исходники в репозитории](source/) · [Архив исходников](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build69/nfqws2-asus_1.3.2-asus6+b69_source.tar.gz) · [SHA256](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build69/SHA256SUMS) · [Страница выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build69)
+Каждый IPK содержит NFQWS2 и WebUI на RU и EN. SmartDNS устанавливается
+отдельной кнопкой в панели. [Установщик одной командой](QUICKSTART.md#1-установить)
+сам выбирает актуальный пакет.
 
-Каждый IPK содержит NFQWS2 и WebUI на RU и EN. Выбирайте пакет по ABI Entware;
-SmartDNS устанавливается отдельной кнопкой в панели.
+[SHA256 последнего выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/latest/download/SHA256SUMS).
+Архив исходников с окончанием `_source.tar.gz` находится рядом с IPK в каждом
+выпуске. Для установленной версии выбирайте исходники из того же выпуска.
+[Исходники в репозитории](source/).
 
-[Быстрый старт](QUICKSTART.md) · [Каталог пресетов](PRESETS.md) · [Совместимость](COMPATIBILITY.md).
+[Быстрый старт](QUICKSTART.md) · [Ручная установка](MANUAL-INSTALL.md) · [Каталог пресетов](PRESETS.md) · [Совместимость](COMPATIBILITY.md).
