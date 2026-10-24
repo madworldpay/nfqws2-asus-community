@@ -43,8 +43,8 @@ class SmartDnsIncludeRepairTests(unittest.TestCase):
         text=text.replace(expected,hashlib.sha256(self.payload.read_bytes()).hexdigest())
         self.helper.write_text(text)
 
-    def run_repair(self):
-        p=subprocess.run(['/bin/busybox','ash',str(self.helper)],capture_output=True,text=True,timeout=25)
+    def run_repair(self,shell=None):
+        p=subprocess.run((shell or ['/bin/busybox','ash'])+[str(self.helper)],capture_output=True,text=True,timeout=25)
         self.assertEqual((self.case.jffs/'native-common.sh').read_bytes(),self.original)
         self.assertIn('server=1.1.1.1@awg0',self.vpn.read_text())
         self.assertIsNone(self.case.foreign.poll())
@@ -73,6 +73,21 @@ class SmartDnsIncludeRepairTests(unittest.TestCase):
     def test_live_installer_with_released_worker_lease_prevents_repair(self):
         (self.root/'live-installer').touch()
         p=self.run_repair();self.assertNotEqual(p.returncode,0)
+        self.assertEqual(self.case.read_state()['phase'],'conflict')
+        self.assertEqual(self.case.events.read_text(),'');self.assertIsNone(self.case.runtime.poll())
+
+    def test_repair_does_not_require_firmware_id_command(self):
+        missing=self.bin/'id';missing.write_text('#!/bin/sh\nexit 127\n');missing.chmod(0o700)
+        # Host BusyBox ash can prefer its bundled id applet over PATH; dash
+        # reproduces firmware without that applet and resolves the missing id.
+        p=self.run_repair(['/bin/sh']);self.assertEqual(p.returncode,0,p.stdout+p.stderr)
+        self.assertEqual(self.case.read_state()['phase'],'rolled_back')
+
+    def test_wrong_process_owner_is_rejected_before_download_or_dns_changes(self):
+        text=self.helper.read_text().replace('nfqws_owner='+str(os.getuid()),'nfqws_owner='+str(os.getuid()+1))
+        self.helper.write_text(text)
+        p=self.run_repair();self.assertNotEqual(p.returncode,0)
+        self.assertIn('правами root',p.stderr)
         self.assertEqual(self.case.read_state()['phase'],'conflict')
         self.assertEqual(self.case.events.read_text(),'');self.assertIsNone(self.case.runtime.poll())
 

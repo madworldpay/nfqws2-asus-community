@@ -386,8 +386,8 @@
   },
   {
     "path": "asus/smartdns/repair-includes.sh",
-    "bytes": 3326,
-    "sha256": "6495fccbbc8678b94adc69757cb0f5753df713e2f587de812e197c57a8dabce6"
+    "bytes": 3641,
+    "sha256": "45d3879b87d1f170467a01cd1aaa70d805480a7a76b57cd7ffc9b19c87a81e61"
   },
   {
     "path": "asus/smartdns/runtime.sh",
@@ -1661,8 +1661,8 @@
   },
   {
     "path": "tests/test_smartdns_repair_includes.py",
-    "bytes": 4530,
-    "sha256": "611066b5cc0fda7f3495c0d4a012d8c3828ef404b6799c94a6053565f2ccf5f6"
+    "bytes": 5553,
+    "sha256": "4c89df5fd3fc26ed564282b7f5ffe3d02ccb4deb0b24656f8b5ebc4f9e1401f6"
   },
   {
     "path": "tests/test_smartdns_report.py",

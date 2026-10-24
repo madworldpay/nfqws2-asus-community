@@ -33,7 +33,13 @@ nfqws_native_repair() (
 )
 
 nfqws_main() {
-    [ "$(id -u)" = "$nfqws_owner" ] || { nfqws_error 'Запустите в SSH роутера с правами root.'; return 1; }
+    # Firmware may omit the id command/applet. Read the kernel's real,
+    # effective, saved and filesystem UIDs, as the packaged PHP entry does.
+    /bin/busybox awk -v owner="$nfqws_owner" '
+        $1=="Uid:" {found=1;ok=(NF==5 && $2==owner && $3==owner && $4==owner && $5==owner)}
+        END {exit !(found && ok)}' /proc/self/status || {
+        nfqws_error 'Запустите в SSH роутера с правами root.'; return 1;
+    }
     nfqws_tmp=$(mktemp -d /tmp/nfqws-dns-repair.XXXXXX) || return 1
     trap 'rm -f "$nfqws_tmp/native-common.sh" "$nfqws_tmp/check.sh"; rmdir "$nfqws_tmp"' 0
     trap 'exit 1' 1 2 15
