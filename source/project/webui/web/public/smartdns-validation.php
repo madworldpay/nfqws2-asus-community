@@ -26,8 +26,7 @@ final class AsusSmartDnsValidationJob
             if (($this->deps['authenticate'])()!==true) throw new RuntimeException('guard_unavailable');
         } else $candidate->authenticate();
         try {
-            $profile=$this->store->draft();
-            if ($profile===null || !hash_equals($job['profile_hash'],AsusSmartDnsProfile::hash($profile))) throw new RuntimeException('stale_draft');
+            $profile=$this->store->candidate($job);
             if (!hash_equals($job['baseline_hash'],$this->baseline()['hash'])) throw new RuntimeException('stale_baseline');
             $dependencies=['candidate'=>$this->deps['candidate']??[$candidate,'run'],'baseline'=>fn()=>$this->baseline()];
             if (isset($this->deps['bundle'])) $dependencies['bundle']=$this->deps['bundle'];
@@ -38,7 +37,7 @@ final class AsusSmartDnsValidationJob
             $this->store->savePreview($preview);
             $this->store->transition($id,['validating'],['state'=>'preview_ready','code'=>null,'preview_id'=>$preview['id'],'checks'=>$preview['checks']]);
         } catch (Throwable $error) {
-            $allowed=['stale_draft','stale_baseline','baseline_unavailable','guard_unavailable','dns_validation_failed','invalid_configuration','port_busy','timed_out','interrupted','output_limit','unsupported_binary','insufficient_space','insufficient_memory'];
+            $allowed=['stale_draft','stale_preview','stale_baseline','baseline_unavailable','guard_unavailable','dns_validation_failed','invalid_configuration','port_busy','timed_out','interrupted','output_limit','unsupported_binary','insufficient_space','insufficient_memory'];
             $code=in_array($error->getMessage(),$allowed,true)?$error->getMessage():'validation_failed';
             $checks=$error instanceof AsusSmartDnsValidationError?$error->checks:[];
             $this->store->transition($id,['validating'],['state'=>'failed','code'=>$code,'checks'=>$checks]);

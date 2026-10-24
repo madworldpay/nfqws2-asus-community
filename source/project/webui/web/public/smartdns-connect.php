@@ -142,20 +142,22 @@ final class AsusSmartDnsConnection
         return $j;
     }
     public function status(): array { return $this->store->status(); }
-    public function apply(string $requestId,string $previewId,string $profileHash,string $baselineHash): array
+    public function apply(string $requestId,string $previewId,string $profileHash,string $baselineHash,string $source='draft'): array
     {
-        if (!self::id($requestId) || !self::id($previewId) || !self::digest($profileHash) || !self::digest($baselineHash)) throw new RuntimeException('invalid_request');
+        if (!self::id($requestId) || !self::id($previewId) || !self::digest($profileHash) || !self::digest($baselineHash) || !in_array($source,['draft','confirmed'],true)) throw new RuntimeException('invalid_request');
         $receipt=$this->store->receipt($requestId);$old=$receipt['job']??null;
         if ($old!==null) {
+            if (($old['profile_source']??'draft')!==$source) throw new RuntimeException('stale_preview');
             if ($old['profile_hash']!==$profileHash || $old['baseline_hash']!==$baselineHash || $old['preview_id']!==$previewId) throw new RuntimeException('request_conflict');
             return $receipt['status'];
         }
         // Replacing a confirmed listener on the same port needs its own swap
         // protocol. Until then use the explicit, verified Restore action first.
         if ($this->store->active()!==null) throw new RuntimeException('restore_required');
+        $preview=$this->store->preview($previewId);
+        if (($preview['profile_source']??'draft')!==$source) throw new RuntimeException('stale_preview');
         foreach (['prepare','guard','forward','dns','confirm','restore','stop','release'] as $name)
             if (!isset($this->deps[$name]) || !is_callable($this->deps[$name])) throw new RuntimeException('guard_unavailable');
-        $preview=$this->store->preview($previewId);
         if ($preview['profile_hash']!==$profileHash || $preview['baseline_hash']!==$baselineHash) throw new RuntimeException('stale_preview');
         $baseline=$this->baseline();
         if (!hash_equals($baselineHash,$baseline['hash'])) throw new RuntimeException('stale_baseline');
@@ -166,7 +168,7 @@ final class AsusSmartDnsConnection
                 if (in_array($code,$baseline['conflicts'],true)) throw new RuntimeException($code);
             throw new RuntimeException('existing_dns_rules');
         }
-        $profile=$this->store->draft();
+        $profile=$this->store->candidate($preview);
         $this->store->begin($requestId,$profileHash,$baselineHash);$guardReady=false;
         try {
             $backup=$this->store->backup(['baseline'=>$baseline['snapshot'],'candidate_profile'=>$profile]);

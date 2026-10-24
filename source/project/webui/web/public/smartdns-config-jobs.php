@@ -75,14 +75,16 @@ final class AsusSmartDnsConfigJobs
         }
     }
     /** The HTTP lease is handed off to the native guardian before returning. */
-    public function start(string $id,string $hash): array
+    public function start(string $id,string $hash,string $source='draft'): array
     {
-        if (!preg_match('/^[a-f0-9]{32}$/D',$id) || !preg_match('/^[a-f0-9]{64}$/D',$hash)) throw new RuntimeException('invalid_request');
+        if (!preg_match('/^[a-f0-9]{32}$/D',$id) || !preg_match('/^[a-f0-9]{64}$/D',$hash) || !in_array($source,['draft','confirmed'],true)) throw new RuntimeException('invalid_request');
         $lease=isset($this->deps['lease'])?($this->deps['lease'])():(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
         try {
             $this->reconcile();$receipt=$this->store->receipt($id);
             if ($receipt!==null) {
                 if ($receipt['job']['profile_hash']!==$hash || !array_key_exists('preview_id',$receipt['job']) || $receipt['job']['backup_id']!==null) throw new RuntimeException('request_conflict');
+                if (($receipt['job']['profile_source']??'draft')!==$source) throw new RuntimeException('request_conflict');
+                if ($source==='confirmed') $this->store->candidate($receipt['job']);
                 return $receipt['status'];
             }
             if ($this->store->active()!==null) throw new RuntimeException('restore_required');
@@ -92,7 +94,7 @@ final class AsusSmartDnsConfigJobs
             $run=$root.'/jobs/'.$id;
             // Never adopt or replay a preexisting run, including stale proofs.
             if (file_exists($run) || is_link($run)) throw new RuntimeException('invalid_state');
-            $result=$this->store->beginValidation($id,$hash,$baseline['hash']);
+            $result=$this->store->beginValidation($id,$hash,$baseline['hash'],$source);
             try {
                 $this->privateDirectory($run,true);$this->launch($id,$run);
                 $end=hrtime(true)+3000000000;

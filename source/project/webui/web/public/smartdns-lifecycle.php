@@ -61,20 +61,18 @@ final class AsusSmartDnsLifecycle
         }
         $jobs=new AsusSmartDnsConfigJobs($this->store,$this->backend,$this->deps['jobs_deps']??[]);$jobs->reconcile();
         if ($jobs->blocksUpdate() || $this->store->active()!==null) return ['state'=>'action_required','code'=>'busy'];
-        // Never replace even a temporary draft: a killed root process must
-        // not lose a separately prepared profile. Leave native DNS working.
-        $before=$this->store->draft();
-        if ($before===null || AsusSmartDnsProfile::hash($before)!==$intent['profile_hash']) return ['state'=>'action_required','code'=>'stale_draft'];
+        // Saved consent is independent of an imported or unfinished draft.
+        // Its journal binding is checked again at publication and application.
         $hash=$intent['profile_hash'];$id=bin2hex(random_bytes(16));
-        if (isset($this->deps['validate'])) ($this->deps['validate'])($id,$hash);
-        else $jobs->start($id,$hash);
+        if (isset($this->deps['validate'])) ($this->deps['validate'])($id,$hash,'confirmed');
+        else $jobs->start($id,$hash,'confirmed');
         $end=hrtime(true)+155000000000;
         do {$status=self::readStatus(fn()=>$jobs->status(),$end);if ($status['request_id']!==$id || $status['state']!=='validating') break;usleep(100000);} while (hrtime(true)<$end);
         if ($status['request_id']!==$id) return ['state'=>'action_required','code'=>'stale_state'];
         if ($status['state']!=='preview_ready') return $status;
         $jobs->awaitValidationRelease($status['preview_id']);
         $preview=$this->store->preview($status['preview_id']);
-        $applied=$connection->apply(bin2hex(random_bytes(16)),$preview['id'],$hash,$preview['baseline_hash']);
+        $applied=$connection->apply(bin2hex(random_bytes(16)),$preview['id'],$hash,$preview['baseline_hash'],'confirmed');
         if ($applied['state']!=='awaiting_confirmation') return $applied;
         $confirmed=$connection->confirm($applied['request_id']);
         if ($confirmed['state']==='confirmed') $this->remember();

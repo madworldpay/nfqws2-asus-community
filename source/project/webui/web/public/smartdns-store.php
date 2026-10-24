@@ -93,6 +93,25 @@ final class AsusSmartDnsStore
     }
     public function draft(): ?array
     { return $this->locked(fn()=>($p=$this->read('draft.json',65536))===null?null:AsusSmartDnsProfile::normalize($p),false); }
+    /** Resolve a journal-bound source without ever replacing the editor draft. */
+    private function selectedProfile(array $binding,string $error): array
+    {
+        $source=$binding['profile_source']??'draft';
+        if ($source==='draft') $profile=$this->read('draft.json',65536);
+        elseif ($source==='confirmed') {
+            $raw=$this->read('resume-intent.json',131072);$intent=$raw===null?null:self::checkedIntent($raw);
+            if ($intent===null || ($binding['source_request_id']??null)!==$intent['source_request_id'] ||
+                ($binding['engine_sha']??null)!==$intent['engine_sha']) throw new RuntimeException($error);
+            $profile=$intent['profile'];
+        } else throw new RuntimeException('invalid_state');
+        if ($profile===null || !self::hash($binding['profile_hash']??null) ||
+            !hash_equals(AsusSmartDnsProfile::hash($profile),$binding['profile_hash'])) throw new RuntimeException($error);
+        return AsusSmartDnsProfile::normalize($profile);
+    }
+    public function candidate(array $binding): array
+    { return $this->locked(fn()=>$this->selectedProfile($binding,($binding['profile_source']??'draft')==='draft'?'stale_draft':'stale_preview'),false); }
+    private static function sourceFields(array $binding): array
+    { return array_intersect_key($binding,array_flip(['profile_source','source_request_id','engine_sha'])); }
     /** Import/undo changes only the draft, including restoring its absence. */
     public function replaceDraft(?array $profile, ?string $expectedHash): ?string
     {
@@ -113,9 +132,11 @@ final class AsusSmartDnsStore
         if (!self::id($preview['id']??null) || !self::hash($preview['profile_hash']??null) || !self::hash($preview['baseline_hash']??null) || !is_numeric($preview['expires_uptime']??null) || !is_finite((float)$preview['expires_uptime'])) throw new RuntimeException('invalid_request');
         $preview['boot']=$this->boot();
         $this->locked(function()use($preview){
-            $draft=$this->read('draft.json',65536);
-            if ($draft===null || !hash_equals(AsusSmartDnsProfile::hash($draft),$preview['profile_hash'])) throw new RuntimeException('stale_preview');
             $job=$this->journal()['job'];
+            // Only a root-started validation journal can select saved consent.
+            if (isset($preview['profile_source'])) throw new RuntimeException('invalid_request');
+            if (($job['state']??null)==='validating') $preview+=self::sourceFields($job);
+            $this->selectedProfile($preview,'stale_preview');
             if ($job!==null && in_array($job['state'],self::LIVE,true)) {
                 if ($job['state']!=='validating') throw new RuntimeException('busy');
                 if ($job['profile_hash']!==$preview['profile_hash'] || $job['baseline_hash']!==$preview['baseline_hash']) throw new RuntimeException('stale_preview');
@@ -128,8 +149,7 @@ final class AsusSmartDnsStore
     {
         $p=$this->read('preview.json',131072);
         if ($p===null || !self::id($id) || ($p['id']??null)!==$id || ($p['boot']??null)!==$this->boot() || !self::hash($p['profile_hash']??null) || !self::hash($p['baseline_hash']??null) || !is_numeric($p['expires_uptime']??null) || !is_finite((float)$p['expires_uptime']) || $this->now()>=(float)$p['expires_uptime']) throw new RuntimeException('stale_preview');
-        $draft=$this->read('draft.json',65536);
-        if ($draft===null || !hash_equals(AsusSmartDnsProfile::hash($draft),$p['profile_hash'])) throw new RuntimeException('stale_preview');
+        $this->selectedProfile($p,'stale_preview');
         if (isset($p['validation_request_id'])) {
             $job=$this->journal()['job'];
             if (($job['state']??null)!=='preview_ready' || ($job['request_id']??null)!==$p['validation_request_id'] || ($job['preview_id']??null)!==$id) throw new RuntimeException('stale_preview');
@@ -145,23 +165,28 @@ final class AsusSmartDnsStore
             'preview_id'=>($v['state']??'')==='preview_ready'?($v['preview_id']??null):null,
             'active_profile_hash'=>$j['active']['profile_hash']??null,'deadline_remaining_s'=>$left,'checks'=>$v['checks']??[],'conflicts'=>$v['conflicts']??[]];
     }
-    public function beginValidation(string $requestId, string $profileHash, string $baselineHash): array
+    public function beginValidation(string $requestId, string $profileHash, string $baselineHash,string $source='draft'): array
     {
-        if (!self::id($requestId) || !self::hash($profileHash) || !self::hash($baselineHash)) throw new RuntimeException('invalid_request');
-        return $this->locked(function()use($requestId,$profileHash,$baselineHash){
+        if (!self::id($requestId) || !self::hash($profileHash) || !self::hash($baselineHash) || !in_array($source,['draft','confirmed'],true)) throw new RuntimeException('invalid_request');
+        return $this->locked(function()use($requestId,$profileHash,$baselineHash,$source){
             $j=$this->journal();
+            $binding=['profile_hash'=>$profileHash];
+            if ($source==='confirmed') {
+                $raw=$this->read('resume-intent.json',131072);$intent=$raw===null?null:self::checkedIntent($raw);
+                if ($intent===null) throw new RuntimeException('stale_preview');
+                $binding+=['profile_source'=>'confirmed','source_request_id'=>$intent['source_request_id'],'engine_sha'=>$intent['engine_sha']];
+            }
+            $this->selectedProfile($binding,$source==='draft'?'stale_draft':'stale_preview');
             foreach (array_filter(array_merge([$j['job']],$j['history'])) as $job) if ($job['request_id']===$requestId) {
-                if ($job['profile_hash']!==$profileHash || $job['baseline_hash']!==$baselineHash) throw new RuntimeException('request_conflict');
+                if ($job['profile_hash']!==$profileHash || $job['baseline_hash']!==$baselineHash || self::sourceFields($job)!==self::sourceFields($binding)) throw new RuntimeException('request_conflict');
                 return $this->publicStatus($j,$job);
             }
             if ($j['job']!==null && in_array($j['job']['state'],self::LIVE,true)) throw new RuntimeException('busy');
-            $draft=$this->read('draft.json',65536);
-            if ($draft===null || !hash_equals(AsusSmartDnsProfile::hash($draft),$profileHash)) throw new RuntimeException('stale_draft');
             // Invalidate first: a failed journal write must never leave an old
             // preview eligible after a new validation attempt.
             if ($this->regular($this->root.'/preview.json',131072)!==null && !unlink($this->root.'/preview.json')) throw new RuntimeException('invalid_state');
             if ($j['job']!==null) {array_unshift($j['history'],$j['job']);$j['history']=array_slice($j['history'],0,16);}
-            $j['job']=['request_id'=>$requestId,'state'=>'validating','code'=>null,'profile_hash'=>$profileHash,'baseline_hash'=>$baselineHash,'preview_id'=>null,'boot'=>$this->boot(),'started_uptime'=>$this->now(),'backup_id'=>null];
+            $j['job']=['request_id'=>$requestId,'state'=>'validating','code'=>null,'profile_hash'=>$profileHash,'baseline_hash'=>$baselineHash,'preview_id'=>null,'boot'=>$this->boot(),'started_uptime'=>$this->now(),'backup_id'=>null]+self::sourceFields($binding);
             $this->write('state.json',$j); return $this->publicStatus($j);
         });
     }
@@ -179,7 +204,7 @@ final class AsusSmartDnsStore
             $p=$this->checkedPreview($p['id']);
             if ($p['profile_hash']!==$profileHash || $p['baseline_hash']!==$baselineHash) throw new RuntimeException('stale_preview');
             if ($j['job']!==null) {array_unshift($j['history'],$j['job']);$j['history']=array_slice($j['history'],0,16);}
-            $j['job']=['request_id'=>$requestId,'state'=>'applying','code'=>null,'profile_hash'=>$profileHash,'baseline_hash'=>$baselineHash,'preview_id'=>$p['id'],'boot'=>$this->boot(),'started_uptime'=>$this->now(),'backup_id'=>null];
+            $j['job']=['request_id'=>$requestId,'state'=>'applying','code'=>null,'profile_hash'=>$profileHash,'baseline_hash'=>$baselineHash,'preview_id'=>$p['id'],'boot'=>$this->boot(),'started_uptime'=>$this->now(),'backup_id'=>null]+self::sourceFields($p);
             $this->write('state.json',$j); return $this->publicStatus($j);
         });
     }
