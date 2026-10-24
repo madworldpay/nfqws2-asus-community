@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 6427,
-      "sha256": "77934ad5fd8fabd2ad8489c56c34adebae0f48ca63f01511fe46b752f59af345"
+      "bytes": 7111,
+      "sha256": "60cf310f89c54272338b32b7f7a3b846a7b3907b867561b18851be94291299ac"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -82,8 +82,8 @@
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 6592,
-      "sha256": "32269f13f7eea8bcb354485afd976061c37b297197981efd9fe5082bd1beec35"
+      "bytes": 7443,
+      "sha256": "be5e500d6012d0c697c5f1f03b936f8f7ffd644e09baef4e75e4c2dad407a5e3"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
