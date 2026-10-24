@@ -57,7 +57,8 @@ sd_next=$sd_config.nfqws2.new
 trap '"$sd_bb" rm -f "$sd_next"' EXIT
 # Preserve the firmware file mode and owner through the atomic replace.
 "$sd_bb" cp -p "$sd_config" "$sd_next" || exit 2
-"$sd_bb" awk -v servers1=/tmp/resolv.dnsmasq -v servers2=/tmp/resolv.conf -f "$sd_root/forwarding.awk" "$sd_config" > "$sd_next" || exit 2
+sd_sources=$(sd_config_fingerprint "$sd_config") || exit 2
+sd_render_forwarding "$sd_config" > "$sd_next" || exit 2
 /usr/sbin/dnsmasq --test --conf-file="$sd_next" >/dev/null 2>&1 7>&- 8>&- 9>&- &
 sd_child=$!;sd_child_ticks=$(sd_startof "$sd_child");sd_wait=0
 while sd_same "$sd_child" "$sd_child_ticks"; do
@@ -72,5 +73,7 @@ wait "$sd_child" || exit 2
 # Recheck liveness after the syntax test: no stale forwarding if USB was
 # removed while the parser was running. A later failure is the guard's job.
 sd_runtime_alive && sd_same "$sd_guard_pid" "$sd_guard_ticks" || exit 2
+sd_current_sources=$(sd_config_fingerprint "$sd_config") || exit 2
+[ "$sd_sources" = "$sd_current_sources" ] || exit 2
 "$sd_bb" mv "$sd_next" "$sd_config" || exit 2
 exit 0

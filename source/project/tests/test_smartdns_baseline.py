@@ -12,14 +12,15 @@ class SmartDnsBaselineTests(unittest.TestCase):
     def collect(self,changes=None,nvram='',operation=None):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
-            for name in ['opt','proc','tmp','jffs','etc','sys','ark']:(root/name).mkdir()
+            for name in ['opt','proc','tmp','jffs','etc','sys','ark']:(root/name).mkdir(mode=0o700)
             files={'tmp/etc/dnsmasq.conf':'interface=br0\ndhcp-range=192.0.2.10,192.0.2.20\nresolv-file=/tmp/resolv.dnsmasq\n',
                    'tmp/resolv.dnsmasq':'nameserver 9.9.9.9\n','proc/sys/kernel/random/boot_id':'12345678-1234-1234-1234-123456789abc\n',
                    'jffs/scripts/dnsmasq.postconf':'#!/bin/sh\nprintf "foreign"\n'}
             files.update(changes or {})
             for name,body in files.items():
                 f=root/name
-                if body is not None:f.parent.mkdir(parents=True,exist_ok=True);f.write_text(body)
+                if body is not None:f.parent.mkdir(parents=True,exist_ok=True);f.write_text(body.replace('@ROOT@',str(root)))
+                if body is not None and name in ['opt/vpn.conf','jffs/outer.conf']:f.chmod(0o600)
             hook=root/'jffs/scripts/dnsmasq.postconf'
             if hook.exists():hook.chmod(0o755)
             if operation=='unsafe_mode':hook.chmod(0o777)
@@ -34,6 +35,7 @@ class SmartDnsBaselineTests(unittest.TestCase):
               $b=new AsusSmartDnsBaseline(new AsusReportIO($roots),new AsusSmartDnsInstaller(),$deps);$out=[$b->collect()];
               if($argv[4]==='config')file_put_contents($r.'/tmp/etc/dnsmasq.conf',"server=1.1.1.1\n");
               if($argv[4]==='engine')$engine=str_repeat('b',64);
+              if($argv[4]==='include')file_put_contents($r.'/opt/vpn.conf',"filter-AAAA\nipset=/new.example/geo_dst\nserver=8.8.8.8@vpn0\n");
               $out[]=$b->collect();echo json_encode($out);
             }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
             p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(root),str(os.getuid()),operation or 'none'],capture_output=True,text=True,timeout=8)
@@ -51,6 +53,23 @@ class SmartDnsBaselineTests(unittest.TestCase):
             with self.subTest(operation=operation):
                 out=self.collect(operation=operation);self.assertIsInstance(out,list)
                 self.assertNotEqual(out[0]['hash'],out[1]['hash'])
+
+    def test_protected_include_is_expanded_and_interface_bound_dns_is_preserved_in_baseline(self):
+        out=self.collect({'tmp/etc/dnsmasq.conf':'interface=br0\nconf-file=@ROOT@/opt/vpn.conf\n',
+                          'opt/vpn.conf':'filter-AAAA\nipset=/video.example/geo_dst\nno-resolv\nserver=1.1.1.1@vpn0\n'})
+        self.assertIsInstance(out,list)
+        self.assertEqual(out[0]['conflicts'],[])
+        config=out[0]['snapshot']['config']['value']
+        self.assertIn('ipset=/video.example/geo_dst',config)
+        self.assertIn('server=1.1.1.1@vpn0',config)
+        self.assertNotIn('conf-file=',config)
+
+    def test_nested_dns_include_edit_invalidates_the_preview_hash(self):
+        out=self.collect({'tmp/etc/dnsmasq.conf':'conf-file=@ROOT@/jffs/outer.conf\n',
+                          'jffs/outer.conf':'conf-file=@ROOT@/opt/vpn.conf\n',
+                          'opt/vpn.conf':'filter-AAAA\nipset=/video.example/geo_dst\nserver=1.1.1.1@vpn0\n'},operation='include')
+        self.assertIsInstance(out,list)
+        self.assertNotEqual(out[0]['hash'],out[1]['hash'])
 
     def test_foreign_runtime_configuration_is_a_conflict_not_a_takeover(self):
         out=self.collect({'opt/etc/smartdns/smartdns.conf':'server-https https://example.org/?PRIVATE_CANARY\n'})

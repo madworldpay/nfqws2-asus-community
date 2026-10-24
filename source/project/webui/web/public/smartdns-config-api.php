@@ -47,8 +47,17 @@ final class AsusSmartDnsConfigApi
         $jobs=new AsusSmartDnsConfigJobs($store,$backend,$deps['jobs_deps']??[]);
         if ($cmd==='smartdnsconfigstatus') {
             $status=$jobs->status();$intent=$store->intent();
+            $routing='inactive';$resume=null;
+            if (in_array($status['state'],['confirmed','awaiting_confirmation'],true)) {
+                $routing=isset($deps['routing'])?($deps['routing'])():$backend->forwarding();
+                if (!in_array($routing,['managed','external','unknown'],true)) $routing='unknown';
+            }
+            if ($intent!==null) {
+                if ($status['state']==='confirmed' && $routing!=='managed') $resume=$routing==='external'?'routing_lost':'routing_unknown';
+                elseif (!in_array($status['state'],['confirmed','validating','applying','awaiting_confirmation','rolling_back'],true)) $resume='resume_required';
+            }
             return ['status'=>$status,'draft'=>$store->draft(),'active_profile'=>$store->active()['profile']??null,'confirmed_profile'=>$intent['profile']??null,
-                'resume_code'=>$intent!==null && in_array($status['state'],['idle','rolled_back','failed'],true)?'resume_required':null];
+                'routing'=>$routing,'resume_code'=>$resume];
         }
         if ($cmd==='smartdnspreview') return $store->preview($post['preview_id']);
         if ($cmd==='routercheckup') {
