@@ -2,7 +2,7 @@
 
 NFQWS2 с веб-панелью для ASUS: стратегии, устройства, SmartDNS и обмен профилями.
 
-**Build 68 · RU / EN · две архитектуры Entware**
+**Build 69 · RU / EN · две архитектуры Entware**
 
 [Установить](QUICKSTART.md) · [Скачать IPK](DOWNLOADS.md) · [Совместимость](COMPATIBILITY.md) · [Что нового](CHANGELOG.md)
 

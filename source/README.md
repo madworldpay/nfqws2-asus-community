@@ -1,4 +1,4 @@
-# Исходники Build 68
+# Исходники Build 69
 
 - [project/](project/) — весь код ASUS, WebUI, службы, модуль, тесты и серверная часть.
 - [sources/](sources/) — исходники движка, SmartDNS, BusyBox, lighttpd и библиотек.
@@ -25,6 +25,6 @@ copy /b sources\linux-merlin-26e1f3f1-kernel-sdk.tar.gz.part-001+sources\linux-m
 
 SHA256 исходного архива указан в `metadata/kernel-archive-parts.json`.
 После соединения используйте [рецепт модуля](recipes/legacy-module/README.md).
-Архив исходников выпуска доступен [в выпуске Build 68](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build68/nfqws2-asus_1.3.2-asus6+b68_source.tar.gz).
+Архив исходников выпуска доступен [в выпуске Build 69](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build69/nfqws2-asus_1.3.2-asus6+b69_source.tar.gz).
 
 Контрольные суммы в documentation/SHA256SUMS фиксируют IPK на момент сборки исходников. Полный SHA256SUMS выпуска, включая архив и подписанную метадату, находится среди release assets.
