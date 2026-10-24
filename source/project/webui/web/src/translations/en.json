@@ -697,7 +697,9 @@
       "bound": "bound",
       "unbound": "not bound"
     },
-    "resume_info": "The confirmed profile is saved but was not reconnected automatically. Native DNS remains active. This can follow an engine change, failed validation or a different draft. Load the saved profile, validate and connect through its preview.",
+    "resume_info": "Your SmartDNS choice is saved, but the profile is not connected. Load the saved profile, validate and connect it. A new draft does not cancel the previous DNS choice.",
+    "routing_lost": "SmartDNS is running, but dnsmasq no longer forwards queries to it. Check DNS/VPN settings. To reconnect, restore previous DNS, then validate and connect the saved profile.",
+    "routing_unknown": "SmartDNS is running, but DNS forwarding could not be verified. Refresh the status.",
     "use_saved": "Load last confirmed profile",
     "short_intro": "Choose a default DNS or assign a DNS to specific sites.",
     "short_sequence": "Choose → Check → Connect",

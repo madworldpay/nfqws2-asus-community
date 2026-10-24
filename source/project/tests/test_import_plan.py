@@ -54,6 +54,19 @@ class ImportPlanTests(unittest.TestCase):
   docs,sel=self.dns_input(False);p=self.call(sel,docs=docs);self.assertFalse(p['ready']);self.assertIsNone(p['draft']);self.assertIn('invalid_dns_profile',[v['code']for v in p['problems']])
  def test_partial_dns_source_requires_explicit_incomplete_ack(self):
   docs,sel=self.dns_input(partial=True);p=self.call(sel,docs=docs);self.assertFalse(p['ready']);self.assertIn('incomplete_analysis',[v['code']for v in p['problems']]);sel['allow_incomplete']=True;self.assertTrue(self.call(sel,docs=docs)['ready'])
+ def test_same_active_and_draft_dns_import_once_with_fixed_answers(self):
+  docs,sel=self.dns_input();d=json.loads(docs[0]);source=d['sources'][0];source['id']='active';source['origin']='active';record={'name':'example.org','include_subdomains':True,'addresses':['192.0.2.8'],'checked_at':None};source['profile']['records']=[record]
+  other=copy.deepcopy(source);other['id']='draft';other['origin']='draft';d['sources'].append(other)
+  sel['dns']=[{'source_id':s['id'],'source_sha256':s['sha256'],'upstreams':s['profile']['upstreams'],'records':[{'index':0,'value':record}]}for s in d['sources']]
+  p=self.call(sel,docs=[json.dumps(d)]);self.assertNotIn('error',p);self.assertTrue(p['ready'],p);self.assertEqual(len(p['draft']['upstreams']),1);self.assertEqual(p['draft']['records'],[record])
+ def test_duplicate_sources_do_not_double_the_dns_server_limit(self):
+  docs,sel=self.dns_input();d=json.loads(docs[0]);source=d['sources'][0];source['id']='active';source['origin']='active';u=source['profile']['upstreams'][0];source['profile']['upstreams']=[dict(u,id='dns'+str(i),address='192.0.2.'+str(i+1))for i in range(32)]
+  other=copy.deepcopy(source);other['id']='draft';other['origin']='draft';d['sources'].append(other);sel['dns']=[{'source_id':s['id'],'source_sha256':s['sha256'],'upstreams':s['profile']['upstreams'],'records':[]}for s in d['sources']]
+  p=self.call(sel,docs=[json.dumps(d)]);self.assertNotIn('error',p);self.assertTrue(p['ready'],p);self.assertEqual(len(p['draft']['upstreams']),32)
+ def test_conflicting_fixed_answers_explain_invalid_dns_profile(self):
+  docs,sel=self.dns_input();d=json.loads(docs[0]);source=d['sources'][0];source['id']='active';source['origin']='active';source['profile']['records']=[{'name':'example.org','include_subdomains':True,'addresses':['192.0.2.8'],'checked_at':None}]
+  other=copy.deepcopy(source);other['id']='draft';other['origin']='draft';other['profile']['records'][0]['addresses']=['192.0.2.9'];d['sources'].append(other);sel['dns']=[{'source_id':s['id'],'source_sha256':s['sha256'],'upstreams':s['profile']['upstreams'],'records':[{'index':0,'value':s['profile']['records'][0]}]}for s in d['sources']]
+  p=self.call(sel,docs=[json.dumps(d)]);self.assertNotIn('error',p);self.assertFalse(p['ready']);self.assertIn('invalid_dns_profile',[v['code']for v in p['problems']]);self.assertIsNone(p['draft'])
  def test_unrelated_legacy_import_name_does_not_change_original_target(self):
   sha=hashlib.sha256(BLOB).hexdigest();row={'id':'a'*32,'kind':'blobs','name':'imp-'+sha+'-hello.bin','sha256':'0'*64,'state':'available','byte_length':1}
   p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertTrue(p['ready']);self.assertEqual(p['files'][0]['target_name'],'hello.bin')

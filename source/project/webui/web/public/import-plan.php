@@ -54,7 +54,15 @@ final class AsusImportPlan
             foreach($row['records']as $r){if(!is_array($r))throw new RuntimeException('invalid_import_selection');self::keys($r,['index','value']);if(!is_int($r['index'])||!isset($source['profile']['records'][$r['index']])||!is_array($r['value']))throw new RuntimeException('invalid_import_selection');$records[]=$r['value'];}
         }
         if(!$servers&&!$records){$problems[]=['code'=>'empty_dns_selection'];return null;}
-        $subset=['schema_version'=>1,'upstreams'=>$servers,'records'=>$records];AsusShareDns::validateExport($subset);
+        // A full export commonly contains the same active profile and draft.
+        // Source-scoped IDs differ, but identical DNS entries are one choice.
+        $uniqueServers=[];$serverValues=[];
+        foreach($servers as $server){$value=$server;unset($value['id']);if(in_array($value,$serverValues,true))continue;$serverValues[]=$value;$uniqueServers[]=$server;}
+        $uniqueRecords=[];foreach($records as $record)if(!in_array($record,$uniqueRecords,true))$uniqueRecords[]=$record;
+        $servers=$uniqueServers;$records=$uniqueRecords;
+        $subset=['schema_version'=>1,'upstreams'=>$servers,'records'=>$records];
+        try{AsusShareDns::validateExport($subset);}
+        catch(AsusSmartDnsProfileError $e){$problems[]=['code'=>'invalid_dns_profile','field'=>$e->field];return null;}
         // Records alone can extend an existing draft without inventing a DNS.
         if(!$servers&&$old!==null){$servers=$old['upstreams'];$merged=[];foreach(array_merge($old['records'],$records)as $r)$merged[$r['name'].'|'.(int)$r['include_subdomains']]=$r;$records=array_values($merged);}
         try{return AsusSmartDnsProfile::normalize(['schema_version'=>1,'upstreams'=>$servers,'records'=>$records]);}

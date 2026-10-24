@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/smartdns-config.php';
 /** Pure, conservative edits shared by preflight and the recovery backend. */
 final class AsusSmartDnsHook
 {
@@ -37,12 +38,14 @@ final class AsusSmartDnsHook
     /** Keep local names/DHCP; never silently discard a conditional DNS route. */
     public static function forwarding(string $text, array $serverFiles): string
     {
+        $text=AsusSmartDnsConfig::expand($text,$serverFiles);
         self::text($text,'existing_dns_rules'); $kept=[];
         foreach (explode("\n",$text) as $line) {
             $directive=trim($line);
             if ($directive==='' || str_starts_with($directive,'#')) { $kept[]=$line; continue; }
             if (preg_match('/^(conf-file|conf-dir|conf-script)\s*(?:=|$)/',$directive)) throw new RuntimeException('existing_dns_rules');
             if (preg_match('/^server\s*=\s*\//',$directive)) throw new RuntimeException('existing_dns_rules');
+            if (preg_match('/^rev-server\s*(?:=|$)/',$directive)) throw new RuntimeException('existing_dns_rules');
             if (preg_match('/^servers-file\s*=\s*(.+)$/D',$directive,$match)) {
                 $path=trim($match[1]);
                 if (!isset($serverFiles[$path]) || !is_string($serverFiles[$path])) throw new RuntimeException('existing_dns_rules');
@@ -57,7 +60,23 @@ final class AsusSmartDnsHook
             if (preg_match('/^(?:server|resolv-file)\s*=/',$directive) || preg_match('/^(?:no-resolv|all-servers|strict-order)\s*$/D',$directive)) continue;
             $kept[]=$line;
         }
-        return rtrim(implode("\n",$kept),"\n")."\nno-resolv\nserver=127.0.0.1#6054\n";
+        $out=rtrim(implode("\n",$kept),"\n")."\nno-resolv\nserver=127.0.0.1#6054\n";
+        self::text($out,'existing_dns_rules');return $out;
+    }
+    /** Process ownership alone cannot prove that dnsmasq still uses us. */
+    public static function isForwarded(string $text): bool
+    {
+        self::text($text,'existing_dns_rules');$servers=0;$noResolve=0;
+        foreach (explode("\n",$text) as $line) {
+            $line=trim($line);if ($line==='' || str_starts_with($line,'#')) continue;
+            if ($line==='no-resolv') {$noResolve++;continue;}
+            if (preg_match('/^server\s*=/',$line)) {
+                if ($line!=='server=127.0.0.1#6054') return false;
+                $servers++;continue;
+            }
+            if (preg_match('/^(resolv-file|servers-file|conf-file|conf-dir|conf-script|rev-server)\s*(?:=|$)/',$line)) return false;
+        }
+        return $servers===1 && $noResolve===1;
     }
 
     /** Preserve LAN answers, but don't claim a profile can override them. */
@@ -142,20 +161,22 @@ final class AsusSmartDnsConnection
         return $j;
     }
     public function status(): array { return $this->store->status(); }
-    public function apply(string $requestId,string $previewId,string $profileHash,string $baselineHash): array
+    public function apply(string $requestId,string $previewId,string $profileHash,string $baselineHash,string $source='draft'): array
     {
-        if (!self::id($requestId) || !self::id($previewId) || !self::digest($profileHash) || !self::digest($baselineHash)) throw new RuntimeException('invalid_request');
+        if (!self::id($requestId) || !self::id($previewId) || !self::digest($profileHash) || !self::digest($baselineHash) || !in_array($source,['draft','confirmed'],true)) throw new RuntimeException('invalid_request');
         $receipt=$this->store->receipt($requestId);$old=$receipt['job']??null;
         if ($old!==null) {
+            if (($old['profile_source']??'draft')!==$source) throw new RuntimeException('stale_preview');
             if ($old['profile_hash']!==$profileHash || $old['baseline_hash']!==$baselineHash || $old['preview_id']!==$previewId) throw new RuntimeException('request_conflict');
             return $receipt['status'];
         }
         // Replacing a confirmed listener on the same port needs its own swap
         // protocol. Until then use the explicit, verified Restore action first.
         if ($this->store->active()!==null) throw new RuntimeException('restore_required');
+        $preview=$this->store->preview($previewId);
+        if (($preview['profile_source']??'draft')!==$source) throw new RuntimeException('stale_preview');
         foreach (['prepare','guard','forward','dns','confirm','restore','stop','release'] as $name)
             if (!isset($this->deps[$name]) || !is_callable($this->deps[$name])) throw new RuntimeException('guard_unavailable');
-        $preview=$this->store->preview($previewId);
         if ($preview['profile_hash']!==$profileHash || $preview['baseline_hash']!==$baselineHash) throw new RuntimeException('stale_preview');
         $baseline=$this->baseline();
         if (!hash_equals($baselineHash,$baseline['hash'])) throw new RuntimeException('stale_baseline');
@@ -166,7 +187,7 @@ final class AsusSmartDnsConnection
                 if (in_array($code,$baseline['conflicts'],true)) throw new RuntimeException($code);
             throw new RuntimeException('existing_dns_rules');
         }
-        $profile=$this->store->draft();
+        $profile=$this->store->candidate($preview);
         $this->store->begin($requestId,$profileHash,$baselineHash);$guardReady=false;
         try {
             $backup=$this->store->backup(['baseline'=>$baseline['snapshot'],'candidate_profile'=>$profile]);

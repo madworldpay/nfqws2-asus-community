@@ -3,6 +3,7 @@ import fcntl
 import hashlib
 import os
 from pathlib import Path
+import re
 import subprocess
 import unittest
 import test_smartdns_recovery as recovery
@@ -39,8 +40,12 @@ class SmartDnsIncludeRepairTests(unittest.TestCase):
         text=text.replace('/opt/var/lib/nfqws2-asus/updates',str(self.updates))
         text=text.replace('/opt/bin/nfqws2-smartdns-control',str(control))
         text=text.replace('/opt/bin/php-cgi',str(php))
-        expected=hashlib.sha256((recovery.LIB/'native-common.sh').read_bytes()).hexdigest()
-        text=text.replace(expected,hashlib.sha256(self.payload.read_bytes()).hexdigest())
+        # The published one-off repair intentionally pins its historical payload.
+        # Substitute that pin for this fixture without assuming today's library
+        # still has the same hash as the immutable download.
+        pattern=r'(\[ "\$\{nfqws_hash%% \*\}" = )[0-9a-f]{64}( \])'
+        text,count=re.subn(pattern,lambda match:match[1]+hashlib.sha256(self.payload.read_bytes()).hexdigest()+match[2],text)
+        self.assertEqual(count,1,'expected one immutable repair payload pin')
         self.helper.write_text(text)
 
     def run_repair(self,shell=None):

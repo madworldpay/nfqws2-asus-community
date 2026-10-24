@@ -45,7 +45,8 @@ export const SmartDnsConfigurator = ({
   current.current = editor;
   const [status, setStatus] = useState<ConfigStatus>();
   const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
-  const [resumeInfo, setResumeInfo] = useState(false);
+  const [resumeInfo, setResumeInfo] = useState<string | null>(null);
+  const [routing, setRouting] = useState('unknown');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,7 +74,8 @@ export const SmartDnsConfigurator = ({
       if (!alive.current || seq !== reply.current) return;
       updateStatus(data.status);
       setSavedProfile(data.confirmed_profile || null);
-      setResumeInfo(Boolean(data.resume_code));
+      setResumeInfo(data.resume_code || null);
+      setRouting(data.routing || 'unknown');
       if (!initialized.current) {
         initialized.current = true;
         const initial = {
@@ -265,10 +267,18 @@ export const SmartDnsConfigurator = ({
       </Stack>
       {external && <Alert severity="info">{t('smartdns.external')}</Alert>}
       {resumeInfo && (
-        <Alert severity="info">
+        <Alert severity="warning">
           <Stack spacing={1}>
-            <Typography variant="body2">{t('smartdns.resume_info')}</Typography>
-            {savedProfile && (
+            <Typography variant="body2">
+              {t(
+                resumeInfo === 'routing_lost'
+                  ? 'smartdns.routing_lost'
+                  : resumeInfo === 'routing_unknown'
+                    ? 'smartdns.routing_unknown'
+                    : 'smartdns.resume_info',
+              )}
+            </Typography>
+            {savedProfile && !connected && (
               <Button
                 disabled={busy || pending || connected}
                 onClick={() => change(savedProfile)}
@@ -279,7 +289,9 @@ export const SmartDnsConfigurator = ({
           </Stack>
         </Alert>
       )}
-      {connected && <Alert severity="success">{t('smartdns.confirmed')}</Alert>}
+      {connected && routing === 'managed' && (
+        <Alert severity="success">{t('smartdns.confirmed')}</Alert>
+      )}
       {status?.state === 'rolled_back' && (
         <Alert severity="info">{t('smartdns.rolled_back')}</Alert>
       )}

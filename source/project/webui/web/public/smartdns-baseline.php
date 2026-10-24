@@ -39,7 +39,7 @@ final class AsusSmartDnsBaseline
         foreach ($addresses as $address) {
             // Loopback may be another USB resolver or a native resolver with
             // an unverified dependency chain. Never guess a replacement DNS.
-            $ip=explode('#',$address,2)[0];$packed=@inet_pton($ip);
+            $ip=preg_split('/[#@]/',$address,2)[0];$ip=explode('%',trim($ip,'[]'),2)[0];$packed=@inet_pton($ip);
             if ($packed===false || $ip==='::1' || $ip==='::' || str_starts_with($ip,'127.') || $ip==='0.0.0.0') return false;
         }
         return true;
@@ -52,6 +52,11 @@ final class AsusSmartDnsBaseline
             if (!in_array($f['read']['state'],['available','missing'],true)) $conflicts[]='dns_sources_unavailable';
         }
         if ($files['dnsmasq_config']['read']['state']!=='available') throw new RuntimeException('baseline_unavailable');
+        $config=$files['dnsmasq_config']['read'];
+        try {
+            $expanded=AsusSmartDnsConfig::collect($config['value'],$owner);
+            $config['value']=$expanded['text'];$facts['dns_includes']=$expanded['fingerprints'];
+        } catch (Throwable $e) {$conflicts[]='existing_dns_rules';}
         $hook=$files['hook_dnsmasq'];
         if ($hook['read']['state']==='available' && ($hook['meta']['file']['uid']!==$owner || $hook['meta']['file']['links']!==1 || ($hook['meta']['file']['mode']&0022)!==0 || ($hook['meta']['file']['mode']&0100)===0)) $conflicts[]='hook_permissions';
         if ($files['dns_external_config']['read']['state']!=='missing' || $files['dns_external_init']['read']['state']!=='missing') $conflicts[]='external_smartdns';
@@ -64,9 +69,9 @@ final class AsusSmartDnsBaseline
         }
         try {AsusSmartDnsHook::install($hook['read']['value']);}
         catch (Throwable $e) {$conflicts[]='hook_conflict';}
-        try {AsusSmartDnsHook::forwarding($files['dnsmasq_config']['read']['value'],$serverFiles);}
+        try {AsusSmartDnsHook::forwarding($config['value'],$serverFiles);}
         catch (Throwable $e) {$conflicts[]='existing_dns_rules';}
-        if (!self::nativeFallback($files['dnsmasq_config']['read']['value'],$serverFiles)) $conflicts[]='native_fallback_unavailable';
+        if (!self::nativeFallback($config['value'],$serverFiles)) $conflicts[]='native_fallback_unavailable';
         $keys=['jffs2_scripts','dns_local_cache','dnspriv_enable','dnspriv_profile','dnspriv_rulelist','dhcp_dns1_x','dhcp_dns2_x','dhcp_dns_router','dnsfilter_enable_x','dnsfilter_mode','dnssec_enable'];
         foreach ([0,1] as $unit) foreach (['dnsenable_x','dns1_x','dns2_x','dns'] as $key) $keys[]='wan'.$unit.'_'.$key;
         $nv=[];$nvr=$this->io->streamCommand('nvram',function($line)use(&$nv,$keys) {
@@ -103,7 +108,7 @@ final class AsusSmartDnsBaseline
         if (!is_array($engine) || !is_string($engine['sha256']??null) || !preg_match('/^[a-f0-9]{64}$/D',$engine['sha256']) || !is_string($engine['version']??null)) throw new RuntimeException('baseline_unavailable');
         $facts['engine']=$engine;$conflicts=array_values(array_unique($conflicts));sort($conflicts);
         $snapshot=['hook'=>['state'=>$hook['read']['state'],'value'=>$hook['read']['value'],'mode'=>$hook['meta']['file']['mode']??null],
-            'config'=>$files['dnsmasq_config']['read'],'server_files'=>$serverFiles,'fingerprints'=>$facts];
+            'config'=>$config,'server_files'=>$serverFiles,'fingerprints'=>$facts];
         if (strlen(json_encode($snapshot,JSON_THROW_ON_ERROR))>500000) throw new RuntimeException('output_limit');
         return ['hash'=>hash('sha256',json_encode($facts,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES)), 'snapshot'=>$snapshot,'conflicts'=>$conflicts];
     }

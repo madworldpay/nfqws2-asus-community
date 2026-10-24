@@ -86,9 +86,10 @@ for(;;)sleep(1);}
               $states[]=$connection->apply($id,$preview,$hash,$base);$native=$backend->state();
               if($mode==='cleanup_failed'){unlink($root.'/probe-fail');$states[]=$connection->rollback($id);}
               elseif(str_starts_with($mode,'upgrade_resume')){
-                $states[]=$connection->confirm($id);$life=new AsusSmartDnsLifecycle($store,$backend,$installer,['jobs_deps'=>['owner'=>$owner],'validate'=>function($validation,$hash)use($store,$backend,$mode,$root,&$validationHolder){
-                  $base=$backend->baseline()['hash'];$store->beginValidation($validation,$hash,$base);
-                  if($mode==='upgrade_resume_edited'){$p=$store->draft();$p['upstreams'][0]['label']='new concurrent edit';$store->saveDraft($p);$store->transition($validation,['validating'],['state'=>'failed','code'=>'stale_draft']);return;}
+                $states[]=$connection->confirm($id);$life=new AsusSmartDnsLifecycle($store,$backend,$installer,['jobs_deps'=>['owner'=>$owner],'validate'=>function($validation,$hash,$source)use($store,$backend,$mode,$root,&$validationHolder){
+                  $base=$backend->baseline()['hash'];$store->beginValidation($validation,$hash,$base,$source);
+                  if($mode==='upgrade_resume_edited'){$p=$store->draft();$p['upstreams'][0]['label']='new concurrent edit';$store->saveDraft($p);}
+                  if($mode==='upgrade_resume_revoked'){$store->saveIntent(null);$store->transition($validation,['validating'],['state'=>'failed','code'=>'stale_preview']);return;}
                   if($mode==='upgrade_resume_handoff'){
                     $run=$root.'/app/smartdns/jobs/'.$validation;mkdir($run,0700);
                     $holder=$root.'/validation-holder.sh';file_put_contents($holder,"#!/bin/sh\nexec 9>>\"\$1\"\n/usr/bin/flock -x 9\nprintf ready >\"\$2\"\nsleep 3\n");chmod($holder,0700);
@@ -101,7 +102,7 @@ for(;;)sleep(1);}
                 }]);
                 $states[]=$life->stop('upgrade');$other=$profile;$other['upstreams'][0]['label']='prepared next profile';if($mode==='upgrade_resume_draft')$store->saveDraft($other);
                 $states[]=$life->resume();$resumedHash=$store->active()['profile_hash']??null;$draftLabel=$store->draft()['upstreams'][0]['label'];
-                if(in_array($mode,['upgrade_resume','upgrade_resume_handoff'],true))$states[]=$connection->rollback($store->transaction()['request_id']);
+                if(in_array($mode,['upgrade_resume','upgrade_resume_handoff','upgrade_resume_draft','upgrade_resume_edited'],true))$states[]=$connection->rollback($store->transaction()['request_id']);
               }
               elseif(!in_array($mode,['occupied_run','browser_loss'],true)){$states[]=$connection->confirm($id);$states[]=$connection->rollback($id);}
               echo json_encode(['states'=>$states,'runtime_pid'=>$native['runtime_pid'],'native'=>$backend->state(),'active'=>$store->active(),'resumed_hash'=>$resumedHash??null,'draft_label'=>$draftLabel??null]);
@@ -132,11 +133,11 @@ for(;;)sleep(1);}
                 finally:
                     subprocess.run(['/bin/sh',str(native/'recovery.sh'),'rollback','c'*32],capture_output=True,timeout=20)
                 return
-            expected={'occupied_run':['failed'],'cleanup_failed':['conflict','rolled_back'],'upgrade_resume':['awaiting_confirmation','confirmed','rolled_back','confirmed','rolled_back'],'upgrade_resume_handoff':['awaiting_confirmation','confirmed','rolled_back','confirmed','rolled_back'],'upgrade_resume_edited':['awaiting_confirmation','confirmed','rolled_back','failed'],'upgrade_resume_draft':['awaiting_confirmation','confirmed','rolled_back','action_required']}.get(mode,['awaiting_confirmation','confirmed','rolled_back'])
+            expected={'occupied_run':['failed'],'cleanup_failed':['conflict','rolled_back'],'upgrade_resume':['awaiting_confirmation','confirmed','rolled_back','confirmed','rolled_back'],'upgrade_resume_handoff':['awaiting_confirmation','confirmed','rolled_back','confirmed','rolled_back'],'upgrade_resume_edited':['awaiting_confirmation','confirmed','rolled_back','confirmed','rolled_back'],'upgrade_resume_draft':['awaiting_confirmation','confirmed','rolled_back','confirmed','rolled_back'],'upgrade_resume_revoked':['awaiting_confirmation','confirmed','rolled_back','failed']}.get(mode,['awaiting_confirmation','confirmed','rolled_back'])
             self.assertEqual([x['state'] for x in out['states']],expected)
             self.assertEqual(out['native']['phase'],'rolled_back');self.assertIsNone(out['active'])
             if mode=='upgrade_resume':self.assertIsNotNone(out['resumed_hash']);self.assertEqual(out['draft_label'],'main')
-            if mode=='upgrade_resume_draft':self.assertIsNone(out['resumed_hash']);self.assertEqual(out['draft_label'],'prepared next profile')
+            if mode=='upgrade_resume_draft':self.assertIsNotNone(out['resumed_hash']);self.assertEqual(out['draft_label'],'prepared next profile')
             if mode=='upgrade_resume_edited':self.assertEqual(out['draft_label'],'new concurrent edit')
             self.assertEqual(hook.read_bytes(),original)
             self.assertNotIn('127.0.0.1#6054',(root/'dnsmasq.conf').read_text())
@@ -148,6 +149,7 @@ for(;;)sleep(1);}
     def test_resume_preserves_a_different_draft_without_temporarily_replacing_it(self):self.exercise('upgrade_resume_draft')
     def test_upgrade_resumes_only_the_confirmed_profile_and_preserves_next_draft(self):self.exercise('upgrade_resume')
     def test_resume_never_overwrites_an_edit_arriving_during_validation(self):self.exercise('upgrade_resume_edited')
+    def test_disconnect_during_resume_keeps_saved_profile_off(self):self.exercise('upgrade_resume_revoked')
     def test_native_guard_apply_confirm_and_verified_restore(self):self.exercise()
     def test_native_state_lock_waits_without_replaying_the_mutation(self):self.exercise('contention')
     def test_journal_reader_does_not_abort_a_started_native_guard(self):self.exercise('journal_contention')

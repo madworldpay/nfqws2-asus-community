@@ -12,7 +12,7 @@ final class AsusSmartDnsNativeBackend
     private const CODE=['native-state.sh','native-common.sh','primary-dns.sh','recovery.sh','lifecycle.sh','forwarding.awk','hook-edit.awk'];
     public function __construct(private AsusSmartDnsStore $store,private AsusSmartDnsInstaller $installer,array $paths=[],private array $deps=[])
     {
-        $this->paths=$paths+['native'=>'/jffs/nfqws2-asus-smartdns','hook'=>'/jffs/scripts/dnsmasq.postconf'];
+        $this->paths=$paths+['native'=>'/jffs/nfqws2-asus-smartdns','hook'=>'/jffs/scripts/dnsmasq.postconf','config'=>'/tmp/etc/dnsmasq.conf'];
         $library=$paths['library']??AsusDpiStore::optPath('/lib/nfqws2-asus/smartdns');
         $this->paths['library']=realpath($library)?:$library;
         $this->owner=$deps['owner']??0;
@@ -220,6 +220,13 @@ final class AsusSmartDnsNativeBackend
         if ($runtime===null || $guard===null || !AsusSmartDnsCandidate::ownsPorts($runtime['pid'],6054)) return false;
         $cmd=explode("\0",rtrim((string)@file_get_contents('/proc/'.$guard['pid'].'/cmdline'),"\0"));
         return $cmd===['/bin/sh',$this->paths['native'].'/recovery.sh','guard',$s['request_id']];
+    }
+    /** Read-only and separate from the guardian/process identity check. */
+    public function forwarding(): string
+    {
+        try {
+            return AsusSmartDnsHook::isForwarded($this->readExact($this->paths['config'],262144))?'managed':'external';
+        } catch (Throwable $e) {return 'unknown';}
     }
     public function lastCode(string $id): ?string
     {

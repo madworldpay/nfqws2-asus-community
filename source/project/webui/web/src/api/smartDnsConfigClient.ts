@@ -41,6 +41,7 @@ export type ConfigView = {
   active_profile: Profile | null;
   resume_code?: string | null;
   confirmed_profile?: Profile | null;
+  routing?: 'managed' | 'external' | 'unknown' | 'inactive';
 };
 const ID = /^[a-f0-9]{32}$/;
 const HASH = /^[a-f0-9]{64}$/;

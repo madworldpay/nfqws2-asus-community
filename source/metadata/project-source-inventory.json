@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "b35e87b5838011a3637be660e4238af9a55e4edc74404c990f7a558e7f416658"
+    "sha256": "6442bc26a7c562f5afe6467dab36365c709909f6a81afcecfc0c25cff0f1bab0"
   },
   {
     "path": "LICENSE",
@@ -346,8 +346,8 @@
   },
   {
     "path": "asus/smartdns/forwarding.awk",
-    "bytes": 1066,
-    "sha256": "a22df8f7b8b6ad101371de98b2f05c0f3b4587b67e78b09b6f6f3d26d6443a40"
+    "bytes": 3058,
+    "sha256": "20d7088794d909ca72937ee920ee82bee2978358a6e4a5806d815acc9b4f0904"
   },
   {
     "path": "asus/smartdns/hook-edit.awk",
@@ -361,13 +361,13 @@
   },
   {
     "path": "asus/smartdns/lifecycle.sh",
-    "bytes": 3735,
-    "sha256": "dc13d0d9989330bb45698d071d42e4d89cdf13b1caad65e84789949e01cf5fd5"
+    "bytes": 3831,
+    "sha256": "a7a4df8dc30442ca20c25ba05851ecfa487d4b26a9678c6cac1e0a1bfa6ec6d5"
   },
   {
     "path": "asus/smartdns/native-common.sh",
-    "bytes": 17860,
-    "sha256": "5f92ef885d3a7ba1f0907c24bbce04e24cedebed7631c7327427ed5e77ee39c9"
+    "bytes": 21014,
+    "sha256": "75293e18625c5ac42585d67981ab70f0846f7c1833be34976e391927413af29c"
   },
   {
     "path": "asus/smartdns/native-state.sh",
@@ -1201,8 +1201,8 @@
   },
   {
     "path": "tests/test_import_plan.py",
-    "bytes": 11658,
-    "sha256": "6de310d7ea9d99f78582de4f2b7dff2eea0d8b13cacfbb12aab2b83353bd06ea"
+    "bytes": 14019,
+    "sha256": "23aaeb5ac04f8c3ef68e8ec14a9f2e1d8c7b34ef5773906c7614350bac284eb5"
   },
   {
     "path": "tests/test_import_review_regressions.py",
@@ -1536,8 +1536,8 @@
   },
   {
     "path": "tests/test_smartdns_baseline.py",
-    "bytes": 5917,
-    "sha256": "39aa569a645ff3a2eba5b0fe2b5c5f4082749bc2d4d9c4b594da7596b0ca9a8f"
+    "bytes": 7285,
+    "sha256": "0cd0b1177b78775b18eebc736afabf4b2564a09ef9406f7b2e614705d9113bb2"
   },
   {
     "path": "tests/test_smartdns_candidate.py",
@@ -1565,6 +1565,11 @@
     "sha256": "ec76cef2a5fc2d9837f09efeb2e285207cb4d214f7fd4260b2021ea0f5aa6c0e"
   },
   {
+    "path": "tests/test_smartdns_confirmed_source.py",
+    "bytes": 4823,
+    "sha256": "47caf7c315d417968a169cf0b416b841b8e0d8a716d133a8943fb073713b2d3a"
+  },
+  {
     "path": "tests/test_smartdns_connect.py",
     "bytes": 15689,
     "sha256": "cf9d5153faf377f145fe5d7b626a3fccf87acfd73ed93dc7ec4fd4174bf54808"
@@ -1578,6 +1583,11 @@
     "path": "tests/test_smartdns_form.mjs",
     "bytes": 1533,
     "sha256": "244f363300b39d202e177d8d6a534715890a415e60dbc773fd341bfeb52d84de"
+  },
+  {
+    "path": "tests/test_smartdns_forward_includes.py",
+    "bytes": 8417,
+    "sha256": "473241b026edd4b60b449766ea97a485812c4bd1ad86efab322ef701f57a05bb"
   },
   {
     "path": "tests/test_smartdns_guard.py",
@@ -1616,8 +1626,8 @@
   },
   {
     "path": "tests/test_smartdns_native_connection.py",
-    "bytes": 16728,
-    "sha256": "afe13830d2b4182500d8b2dda7c4b4038e79bb8728864e36a370ddd9b2c56509"
+    "bytes": 17097,
+    "sha256": "ba4cf96307c601402fcdbe757c1a3c0647c545195aa87ce5faca59a217a0aea5"
   },
   {
     "path": "tests/test_smartdns_native_state.py",
@@ -1661,8 +1671,8 @@
   },
   {
     "path": "tests/test_smartdns_repair_includes.py",
-    "bytes": 5553,
-    "sha256": "4c89df5fd3fc26ed564282b7f5ffe3d02ccb4deb0b24656f8b5ebc4f9e1401f6"
+    "bytes": 5876,
+    "sha256": "09913e87e5edfc851c3a2664754125d07495f37ebf2bdec8de0d1d94e6da9e65"
   },
   {
     "path": "tests/test_smartdns_report.py",
@@ -1673,6 +1683,11 @@
     "path": "tests/test_smartdns_resume_retry.py",
     "bytes": 3452,
     "sha256": "50ab924804b6686ff3345238065804e5dd81c6ea1c73a734450440a14512b8f4"
+  },
+  {
+    "path": "tests/test_smartdns_routing_status.py",
+    "bytes": 4106,
+    "sha256": "8d767919cfb817499af9eb1a18da6e00e83e4bc37018a7fc04870ce2d262e246"
   },
   {
     "path": "tests/test_smartdns_store.py",
@@ -2176,8 +2191,8 @@
   },
   {
     "path": "webui/web/public/import-plan.php",
-    "bytes": 15576,
-    "sha256": "26aa1307a625370338324e7852705627c46baf4ad8a314d730ba1f7f99f17968"
+    "bytes": 16260,
+    "sha256": "6cd36d5c0f4692d302226ce53727fe99b65fac37ae9fd126c620600945904c35"
   },
   {
     "path": "webui/web/public/import-store.php",
@@ -2306,8 +2321,8 @@
   },
   {
     "path": "webui/web/public/smartdns-baseline.php",
-    "bytes": 8937,
-    "sha256": "b067872e1d18f2ced09d9bd37a234cb573e3432a62e73c7870bb3ab0eab2c310"
+    "bytes": 9212,
+    "sha256": "e1370ae0a2f178205a8933960d2a6626d995eb35405e68ebb9c347d4cea5c231"
   },
   {
     "path": "webui/web/public/smartdns-candidate.php",
@@ -2316,18 +2331,23 @@
   },
   {
     "path": "webui/web/public/smartdns-config-api.php",
-    "bytes": 6390,
-    "sha256": "bfc98d33c3074f3a02207e8da3a361ed63be95951e5ea00fedb5fa72815b1c70"
+    "bytes": 7005,
+    "sha256": "93f4bf8c8c55db8e7c193ac602accd5ce47aa1ab674d9c04ca23e9d143675108"
   },
   {
     "path": "webui/web/public/smartdns-config-jobs.php",
-    "bytes": 16427,
-    "sha256": "c2d506a84117fda1b4366845483e37b6453970197ee180552c4fef68c2c28326"
+    "bytes": 16716,
+    "sha256": "f7b7068ddc6e6d945be2245121ed1a08fb36c97d15e1e92ac08c77fdf98347f3"
+  },
+  {
+    "path": "webui/web/public/smartdns-config.php",
+    "bytes": 4657,
+    "sha256": "1a9933a8d8e845986d7da50274adfc83463fe456e570efc89876e8ee448c95fc"
   },
   {
     "path": "webui/web/public/smartdns-connect.php",
-    "bytes": 14328,
-    "sha256": "743af5c5402d99467f3b36b011934f8642b78ce946cee7905a079dc3571e510a"
+    "bytes": 15681,
+    "sha256": "863d11abf2b208ba4be3eecb7f9f9575f2f00d82a27310a1eead8d4b4cb87449"
   },
   {
     "path": "webui/web/public/smartdns-install.php",
@@ -2336,13 +2356,13 @@
   },
   {
     "path": "webui/web/public/smartdns-lifecycle.php",
-    "bytes": 5511,
-    "sha256": "798eca971a1b4ff87c54b0bb2bf84e8b4ebb686f47f0a1072bc9d89d23611678"
+    "bytes": 5360,
+    "sha256": "bd3bb5a32c91214639d1ed40862e2f17ede04369a1974f1b6265340f98e5a091"
   },
   {
     "path": "webui/web/public/smartdns-native.php",
-    "bytes": 23764,
-    "sha256": "74b6060b434dfd5b38cca657d7a76b46b056696dc0dfa6c5302b2afcdf986610"
+    "bytes": 24112,
+    "sha256": "6c71b28f22e9636b14e3923f34e2a19d538c246d136134a06690d9b972cbb88d"
   },
   {
     "path": "webui/web/public/smartdns-probe.php",
@@ -2361,13 +2381,13 @@
   },
   {
     "path": "webui/web/public/smartdns-store.php",
-    "bytes": 19493,
-    "sha256": "225a872db2510ddfbe566981426aef8a4aae511ad2504327555fef9b1f169d1a"
+    "bytes": 21425,
+    "sha256": "f140765126fa479dd171644166b137192164fdb6d59aae11d764a851bf0caf2b"
   },
   {
     "path": "webui/web/public/smartdns-validation.php",
-    "bytes": 3469,
-    "sha256": "06e6cb95c408135bcf56c0e5b50e7618dffb7fddd788883a1bbb312ab7886fd4"
+    "bytes": 3343,
+    "sha256": "659f4dc4979cc889dac14424ff3ad2c4a040345f2cf84b6d8ba5775546cedef6"
   },
   {
     "path": "webui/web/public/support-bundle.php",
@@ -2606,8 +2626,8 @@
   },
   {
     "path": "webui/web/src/api/smartDnsConfigClient.ts",
-    "bytes": 4256,
-    "sha256": "785b39a31201e7b204694ad8e55dc7be19576ea04ed8de9ab6ed21b143325904"
+    "bytes": 4317,
+    "sha256": "7d7694084490a9567158cf880b8951d91379d772aa725a59b471ac425d6280f6"
   },
   {
     "path": "webui/web/src/api/smartDnsPresets.json",
@@ -2846,8 +2866,8 @@
   },
   {
     "path": "webui/web/src/components/SmartDnsConfigurator.tsx",
-    "bytes": 11952,
-    "sha256": "45ebf2c94e5351145acbd481ff83c1fa6d03eebe3664443e8750a33c03cb09a8"
+    "bytes": 12382,
+    "sha256": "378c5d7f0a41f9338010818513a64709ff9ae4499bbd5a297b54ef35901c31f3"
   },
   {
     "path": "webui/web/src/components/SmartDnsPanel.tsx",
@@ -2971,13 +2991,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 61196,
-    "sha256": "9b0ab73bac6a40f0e27fa1a01bd21320a98ef553ed2d82f44e29eddac5cd9ef2"
+    "bytes": 61430,
+    "sha256": "ad6f8051c88d45d0f298277094eb2bb8269adc43e1f6ca5c17f622efcea49385"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 100229,
-    "sha256": "55e5b95837e43eaa61d958ac6183579f01719cc11a8fdc61d01665776b614658"
+    "bytes": 100591,
+    "sha256": "e20948fe48c7ac0ad84e1234b62114f422529a62a8793ce8ca6f1c38245f60c9"
   },
   {
     "path": "webui/web/src/types/types.ts",

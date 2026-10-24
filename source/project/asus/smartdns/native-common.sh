@@ -102,6 +102,74 @@ sd_forward() {
     sd_error=;return 0
 }
 
+# Pin the firmware's /opt alias; reject writable or linked include ancestors.
+sd_config_file() {
+    sd_protected "$1" - || return 1
+    [ "$1" != /tmp/etc/dnsmasq.conf ] || return 0
+    sd_path=$1;sd_boundary=
+    case "$sd_path" in /opt/*)
+        sd_boundary=$("$sd_bb" readlink -f /opt) || return 1
+        sd_protected "$sd_boundary" d || return 1
+        "$sd_bb" ls -ldn /opt | "$sd_bb" awk -v owner="$sd_owner" 'NR==1 {ok=($3==owner)} END {exit !(NR==1&&ok)}' || return 1
+        sd_path=$sd_boundary${sd_path#/opt};;
+    esac
+    sd_parent=${sd_path%/*}
+    while [ "$sd_parent" != / ] && [ -n "$sd_parent" ]; do
+        "$sd_bb" ls -ldn "$sd_parent" 2>/dev/null | "$sd_bb" awk -v owner="$sd_owner" '
+            NR==1 {ok=(substr($1,1,1)=="d" && ($3==owner||$3==0) &&
+              ((substr($1,6,1)!="w" && substr($1,9,1)!="w") || ($3==0 && substr($1,10,1)=="t")))}
+            END {exit !(NR==1&&ok)}' || return 1
+        [ "$sd_parent" != "$sd_boundary" ] || break
+        sd_parent=${sd_parent%/*}
+    done
+}
+# Enumerate a protected graph; rendering visits repeated includes in place.
+sd_config_files() (
+    set -f
+    sd_newline='
+'
+    IFS=$sd_newline
+    sd_queue=$1;sd_seen=$sd_newline;sd_files=0;sd_total=0;sd_depth=0
+    while [ -n "$sd_queue" ]; do
+        sd_depth=$((sd_depth+1));[ "$sd_depth" -le 8 ] || return 1
+        sd_next_queue=
+        for sd_file in $sd_queue; do
+            case "$sd_seen" in *"$sd_newline$sd_file$sd_newline"*) continue;; esac
+            sd_config_file "$sd_file" || return 1
+            sd_bytes=$("$sd_bb" wc -c < "$sd_file") || return 1
+            sd_files=$((sd_files+1));sd_total=$((sd_total+sd_bytes))
+            [ "$sd_files" -le 32 ] && [ "$sd_bytes" -le 262144 ] && [ "$sd_total" -le 1048576 ] || return 1
+            "$sd_bb" tr -d '\000' < "$sd_file" | "$sd_bb" cmp -s "$sd_file" - || return 1
+            sd_includes=$("$sd_bb" awk -v mode=includes -f "$sd_root/forwarding.awk" "$sd_file") || return 1
+            printf '%s\n' "$sd_file"
+            sd_seen=$sd_seen$sd_file$sd_newline
+            [ -z "$sd_includes" ] || sd_next_queue=$sd_next_queue$sd_includes$sd_newline
+        done
+        sd_queue=$sd_next_queue
+    done
+)
+sd_config_fingerprint() (
+    sd_configs=$(sd_config_files "$1") || return 1
+    # Old ASUS firmware omits this applet. Postconf already requires /opt;
+    # rollback itself continues to use only its independent native helpers.
+    sd_hash_bb=$sd_bb
+    if ! "$sd_hash_bb" sha256sum /dev/null >/dev/null 2>&1; then sd_hash_bb=/opt/libexec/nfqws2-asus/busybox;fi
+    sd_newline='
+'
+    IFS=$sd_newline;set -f
+    for sd_file in $sd_configs; do
+        sd_digest=$("$sd_hash_bb" sha256sum "$sd_file") || return 1
+        printf '%s\n' "$sd_digest"
+    done
+)
+sd_render_forwarding() (
+    sd_configs=$(sd_config_files "$1") || return 1
+    sd_before=$(sd_config_fingerprint "$1") || return 1
+    "$sd_bb" awk -v mode=render -v configs="$sd_configs" -v main="$1" -v servers1=/tmp/resolv.dnsmasq -v servers2=/tmp/resolv.conf -f "$sd_root/forwarding.awk" || return 1
+    sd_after=$(sd_config_fingerprint "$1") || return 1
+    [ "$sd_before" = "$sd_after" ]
+)
+
 sd_forward_config() {
     sd_protected /tmp/etc/dnsmasq.conf - || return 1
     "$sd_bb" awk '
