@@ -133,6 +133,7 @@
   },
   "ark": {
     "title": "ARK check",
+    "about": "ARK is a traffic-processing module in some ASUS firmware. Certain QoE, filtering and blocking features use it. A loaded ARK module may interfere with NFQUEUE, the mechanism that delivers traffic to NFQWS2. In that case, the NFQWS2 process runs but bypass does not work. Preparation with a backup and a manual reboot lets you check operation without ARK loaded. If ARK is absent, no preparation is needed.",
     "model_hint": "Preparation has been tested on ASUS GT-BE19000AI. ARK may also be present on other ASUS models; its presence and loading depend on firmware and its settings. Check the diagnostics below.",
     "other_model_warning": "Detected {{model}}. Other models have not been tested. Use at your own risk; developers accept no liability for damage, data loss or connectivity loss. Backup and restore remain available on this model.",
     "explanation": "The nine settings are backed up before changes. Only enabled features in this list are disabled; their functions will stop working. Reboot ASUS through its stock panel after preparation or restoration. This panel does not reboot the router automatically.",
@@ -151,6 +152,7 @@
     "check_title": "ARK check result",
     "checking": "Checking the current ARK state…",
     "readiness": {
+      "absent": "ARK is absent — no preparation is needed.",
       "runtime_clear": "The ARK module is not loaded. You can check NFQUEUE packet reception and the service you need.",
       "unavailable_flags_note": "{{disabled}} of 9 functions are confirmed disabled. Some settings are absent or unavailable on this firmware; this does not mean ARK is enabled. See the table below for details.",
       "ready": "All 9 ARK features are disabled and the ARK module is not loaded. Preparation is confirmed. Check packet reception and bypass separately.",

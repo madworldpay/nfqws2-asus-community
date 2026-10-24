@@ -51,6 +51,8 @@ export const RouterCheckup = ({
       ? `${(Number(v) / scale).toFixed(1)} MiB`
       : t('smartdns.checkup.unknown');
   const platform = facts('platform');
+  const arkAbsent =
+    facts('ark')?.present === false && facts('ark')?.loaded === false;
   const memory = facts('memory');
   const codes = [
     ...new Set(data?.readiness.smartdns_connect.codes ?? []),
@@ -115,7 +117,11 @@ export const RouterCheckup = ({
                 );
               })}
               <Typography variant="body2">
-                {t('smartdns.checkup.ark_help')}
+                {t(
+                  arkAbsent
+                    ? 'ark.readiness.absent'
+                    : 'smartdns.checkup.ark_help',
+                )}
               </Typography>
               <Typography variant="body2">
                 {t('smartdns.checkup.hooks')}
@@ -150,9 +156,11 @@ export const RouterCheckup = ({
                   ? t(
                       x.facts.loaded === true
                         ? 'ark.loaded'
-                        : x.facts.loaded === false
-                          ? 'ark.unloaded'
-                          : 'ark.unknown',
+                        : arkAbsent
+                          ? 'ark.absent'
+                          : x.facts.loaded === false
+                            ? 'ark.unloaded'
+                            : 'ark.unknown',
                     )
                   : id === 'process'
                     ? t(

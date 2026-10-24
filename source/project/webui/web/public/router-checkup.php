@@ -65,7 +65,7 @@ final class AsusRouterCheckup
         $modules = $this->io->read('modules'); $component = $this->io->arkComponents();
         $loaded = ($component['loaded']??false) || ($modules['state']==='available' && preg_match('/^ark\s/m',$modules['value']));
         $arkKnown = $modules['state']==='available' || ($component['loaded']??false);
-        $items[] = self::item('ark', $loaded ? 'attention' : ($arkKnown ? 'ready' : 'info'), ['loaded'=>$arkKnown ? (bool)$loaded : null], $loaded ? 'review_ark_preparation' : 'none');
+        $items[] = self::item('ark', $loaded ? 'attention' : ($arkKnown ? 'ready' : 'info'), ['loaded'=>$arkKnown ? (bool)$loaded : null, 'present'=>$loaded ? true : ($arkKnown ? ($component['present']??null) : null)], $loaded ? 'review_ark_preparation' : 'none');
         $flags = []; $unknown = false; $enabled = false;
         foreach (AsusReportPlatform::ARK_KEYS as $key) {
             $raw = $n[$key]??null; $value = is_string($raw) && preg_match('/^[0-9]{1,10}$/D',$raw) ? $raw !== '0' : null;

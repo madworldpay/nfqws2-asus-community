@@ -72,6 +72,8 @@ export const RequirementsDialog = ({
     dirty,
     pendingRestart,
   });
+  const ark = checkup?.items.find((item) => item.id === 'ark')?.facts;
+  const arkAbsent = ark?.present === false && ark.loaded === false;
   return (
     <Dialog open maxWidth="sm" fullWidth onClose={onClose}>
       <DialogTitle>{t('requirements.title')}</DialogTitle>
@@ -84,7 +86,7 @@ export const RequirementsDialog = ({
             onResult={setCheckup}
           />
         )}
-        {onOpenArk && (
+        {onOpenArk && checkup && !arkAbsent && (
           <Button onClick={onOpenArk}>{t('requirements.open_ark')}</Button>
         )}
         <Stack direction="row" alignItems="center" spacing={1}>
@@ -121,7 +123,11 @@ export const RequirementsDialog = ({
                   label={t(`requirements.progress.states.${state}`)}
                 />
               </Stack>
-              {t(`requirements.quick.${id}`)}
+              {t(
+                id === 'ark' && arkAbsent
+                  ? 'ark.readiness.absent'
+                  : `requirements.quick.${id}`,
+              )}
             </Typography>
           ))}
         </Stack>
@@ -145,11 +151,13 @@ export const RequirementsDialog = ({
                   'verify',
                   'updates',
                 ] as const
-              ).map((item) => (
-                <Typography variant="body2" key={item}>
-                  {t(`requirements.items.${item}`)}
-                </Typography>
-              ))}
+              )
+                .filter((item) => item !== 'ark' || !arkAbsent)
+                .map((item) => (
+                  <Typography variant="body2" key={item}>
+                    {t(`requirements.items.${item}`)}
+                  </Typography>
+                ))}
             </Stack>
           </AccordionDetails>
         </Accordion>

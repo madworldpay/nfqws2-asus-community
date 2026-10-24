@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "6442bc26a7c562f5afe6467dab36365c709909f6a81afcecfc0c25cff0f1bab0"
+    "sha256": "826b6832e45ba17d625debc95ae8554e148550b00c05b47fa8f7be1c555bc83c"
   },
   {
     "path": "LICENSE",
@@ -1016,8 +1016,8 @@
   },
   {
     "path": "tests/test_ark_readiness.mjs",
-    "bytes": 14758,
-    "sha256": "1f2e334d40088766602028a653afb2047b6aaf137e9d37ed1dfd9014b9a941e3"
+    "bytes": 16003,
+    "sha256": "912574b809cb5c85795bda9b862ad65f57c432147669fec645ddd03eeaf52327"
   },
   {
     "path": "tests/test_arm_runtime.py",
@@ -1396,8 +1396,8 @@
   },
   {
     "path": "tests/test_router_checkup.py",
-    "bytes": 9918,
-    "sha256": "488564c52e65f186fb922140a6b420da9d313cf08d15633410e4a01392a234a6"
+    "bytes": 10514,
+    "sha256": "ad2723196912e5832c269d7657a4309eca94729dfb9d5f15f848a6601794540e"
   },
   {
     "path": "tests/test_router_wan.py",
@@ -2246,8 +2246,8 @@
   },
   {
     "path": "webui/web/public/router-checkup.php",
-    "bytes": 13675,
-    "sha256": "d36594f12c09035ebee158dfd6ce9f386ef9e632f9b62f140a2e664ead8963f3"
+    "bytes": 13755,
+    "sha256": "8bc36629839a665739ea7fc0ecea6e2ddfed880b93ba4354e8cd05b4f7feefc4"
   },
   {
     "path": "webui/web/public/router-wan.php",
@@ -2681,8 +2681,8 @@
   },
   {
     "path": "webui/web/src/components/ArkDialog.tsx",
-    "bytes": 13774,
-    "sha256": "d5dc080c5d3fd473d2c093053ac524405fbcec19563699a7052cdf8444b41de2"
+    "bytes": 14620,
+    "sha256": "aaae1b4cd5169fa36f6d572dc6a77b19cf5ed4cfc769c666a45ea903e1e9963f"
   },
   {
     "path": "webui/web/src/components/CommunityActions.tsx",
@@ -2801,13 +2801,13 @@
   },
   {
     "path": "webui/web/src/components/RequirementsDialog.tsx",
-    "bytes": 6074,
-    "sha256": "e33ddcbef0af76465baf1f375d924658e0ce649267e4508290003230c0d92f93"
+    "bytes": 6449,
+    "sha256": "1587dda19f8257164d718658056f8c7945cf9ffa7dd02bc0be7751be75adce0e"
   },
   {
     "path": "webui/web/src/components/RouterCheckup.tsx",
-    "bytes": 7529,
-    "sha256": "cb85561924248c77eb0ce44fcd14a7ec4de3bd144190545482026c3d5c16c694"
+    "bytes": 7817,
+    "sha256": "f7c50a05dce3a808bd8d66b19507746418c06cc72805c15125d9e61d40cdfc10"
   },
   {
     "path": "webui/web/src/components/RouterTrafficHelp.tsx",
@@ -2991,13 +2991,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 61430,
-    "sha256": "ad6f8051c88d45d0f298277094eb2bb8269adc43e1f6ca5c17f622efcea49385"
+    "bytes": 61914,
+    "sha256": "6818970706eb6b476fbd43433421f922f12353df041aebaa8cba3a696b90cb0b"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 100591,
-    "sha256": "e20948fe48c7ac0ad84e1234b62114f422529a62a8793ce8ca6f1c38245f60c9"
+    "bytes": 101426,
+    "sha256": "d45ebe265582fd8010190607914fbaa2a0e89568e2cf09186810cd5a62c21206"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -3006,8 +3006,8 @@
   },
   {
     "path": "webui/web/src/utils/arkReadiness.ts",
-    "bytes": 4319,
-    "sha256": "acc558fd7989af254923962865157a40cd64dcba32f12066efc2130d9968246f"
+    "bytes": 4477,
+    "sha256": "682857e5634362a4bad0ed09a145bc03c334b7771867c833de71cd53863b8d7c"
   },
   {
     "path": "webui/web/src/utils/codeMirrorLangList.ts",

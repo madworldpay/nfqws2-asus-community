@@ -70,6 +70,18 @@ class RouterCheckupTests(unittest.TestCase):
         self.assertIsNone(flags['facts']['ark_ids_enable'])
         self.assertEqual(flags['action_code'],'unknown_flag_is_not_failure')
 
+    def test_ark_absence_requires_component_and_runtime_evidence(self):
+        self.assertIs(self.item(self.collect(),'ark')['facts'].get('present'),False)
+        for files,present,loaded in [
+            ({'ark/ark.ko':'fixture'},True,False),
+            ({'proc/modules':'ark 100 0 - Live 0\n'},True,True),
+            ({'proc/modules':None},None,None),
+        ]:
+            with self.subTest(files=files):
+                facts=self.item(self.collect(files),'ark')['facts']
+                self.assertIs(facts.get('present'),present)
+                self.assertIs(facts['loaded'],loaded)
+
     def test_nfq_missing_does_not_block_smartdns(self):
         v = self.collect({'proc/modules':'','proc/net/netfilter/nfnetlink_queue':None})
         self.assertFalse(self.item(v,'nfqueue')['facts']['bound'])

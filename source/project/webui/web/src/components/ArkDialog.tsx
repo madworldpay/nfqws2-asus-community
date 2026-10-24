@@ -53,7 +53,9 @@ export const ArkReadinessSummary = ({
           ? 'info'
           : readiness.runtime === 'loaded'
             ? 'error'
-            : readiness.result === 'ready' || unloadedWithMissingFlags
+            : readiness.result === 'absent' ||
+                readiness.result === 'ready' ||
+                unloadedWithMissingFlags
               ? 'success'
               : 'warning'
       }
@@ -303,6 +305,8 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const canAct = status?.status === 0 && !!csrfToken && !pending;
   const activeBackup = status?.backup && !status.backup.restored;
   const readiness = classifyArkReadiness(status);
+  const absent = readiness.result === 'absent';
+  const showDetails = !absent && !checkingArk && status?.status === 0;
   const enabled = Array.isArray(status?.flags)
     ? status.flags.filter((flag) => flag?.enabled === true)
     : [];
@@ -316,36 +320,45 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
             readiness={readiness}
             checking={checkingArk || pending}
           />
-          <Alert severity="info">{t('ark.model_hint')}</Alert>
-          {status?.model && status.model !== 'GT-BE19000AI' && (
-            <Alert severity="warning">
-              {t('ark.other_model_warning', { model: status.model })}
-            </Alert>
+          {showDetails && (
+            <>
+              <Typography variant="body2">{t('ark.about')}</Typography>
+              <Alert severity="info">{t('ark.model_hint')}</Alert>
+              {status?.model && status.model !== 'GT-BE19000AI' && (
+                <Alert severity="warning">
+                  {t('ark.other_model_warning', { model: status.model })}
+                </Alert>
+              )}
+              <Typography variant="body2">{t('ark.explanation')}</Typography>
+              <ArkDiagnosticsTable diagnostics={status?.diagnostics} />
+              <Typography variant="body2">
+                {t('ark.queue_test_hint')}
+              </Typography>
+              {checkingQueue && (
+                <Alert severity="info">{t('ark.queue_testing')}</Alert>
+              )}
+              {queueResult && (
+                <Alert
+                  severity={
+                    queueResult.result === 'increased' ? 'success' : 'warning'
+                  }
+                >
+                  {queueResult.result === 'increased' ||
+                  queueResult.result === 'unchanged'
+                    ? t(`ark.queue_${queueResult.result}`, {
+                        before: queueResult.before,
+                        after: queueResult.after,
+                        delta: queueResult.delta,
+                      })
+                    : t(`ark.queue_${queueResult.result}`)}
+                </Alert>
+              )}
+              {!status && !error && <CircularProgress size={24} />}
+              {status?.status === 0 && (
+                <ArkFlagsTable flags={readiness.flags} />
+              )}
+            </>
           )}
-          <Typography variant="body2">{t('ark.explanation')}</Typography>
-          <ArkDiagnosticsTable diagnostics={status?.diagnostics} />
-          <Typography variant="body2">{t('ark.queue_test_hint')}</Typography>
-          {checkingQueue && (
-            <Alert severity="info">{t('ark.queue_testing')}</Alert>
-          )}
-          {queueResult && (
-            <Alert
-              severity={
-                queueResult.result === 'increased' ? 'success' : 'warning'
-              }
-            >
-              {queueResult.result === 'increased' ||
-              queueResult.result === 'unchanged'
-                ? t(`ark.queue_${queueResult.result}`, {
-                    before: queueResult.before,
-                    after: queueResult.after,
-                    delta: queueResult.delta,
-                  })
-                : t(`ark.queue_${queueResult.result}`)}
-            </Alert>
-          )}
-          {!status && !error && <CircularProgress size={24} />}
-          {status?.status === 0 && <ArkFlagsTable flags={readiness.flags} />}
           {status?.backup && (
             <Typography variant="body2">
               {t(
@@ -375,15 +388,24 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
         </Stack>
       </DialogContent>
       <DialogActions sx={{ flexWrap: 'wrap' }}>
-        <Button
-          disabled={pending || status?.status !== 0}
-          onClick={() => void checkQueue()}
-        >
-          {t('ark.queue_test')}
-        </Button>
-        <Button disabled={pending || checkingArk} onClick={() => void load()}>
-          {t('ark.refresh')}
-        </Button>
+        {!absent && (
+          <>
+            {showDetails && (
+              <Button
+                disabled={pending || status?.status !== 0}
+                onClick={() => void checkQueue()}
+              >
+                {t('ark.queue_test')}
+              </Button>
+            )}
+            <Button
+              disabled={pending || checkingArk}
+              onClick={() => void load()}
+            >
+              {t('ark.refresh')}
+            </Button>
+          </>
+        )}
         <Button
           onClick={() => (confirm ? setConfirm(null) : onClose())}
           disabled={pending}
@@ -401,23 +423,27 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
           </Button>
         ) : (
           <>
-            <Button
-              disabled={!canAct || !activeBackup}
-              onClick={() => setConfirm('arkrestore')}
-            >
-              {t('ark.restore')}
-            </Button>
-            <Button
-              variant="contained"
-              disabled={
-                !canAct ||
-                !!activeBackup ||
-                typeof status?.ark_loaded !== 'boolean'
-              }
-              onClick={() => setConfirm('arkprepare')}
-            >
-              {t('ark.prepare')}
-            </Button>
+            {(!absent || activeBackup) && (
+              <Button
+                disabled={!canAct || !activeBackup}
+                onClick={() => setConfirm('arkrestore')}
+              >
+                {t('ark.restore')}
+              </Button>
+            )}
+            {showDetails && (
+              <Button
+                variant="contained"
+                disabled={
+                  !canAct ||
+                  !!activeBackup ||
+                  typeof status?.ark_loaded !== 'boolean'
+                }
+                onClick={() => setConfirm('arkprepare')}
+              >
+                {t('ark.prepare')}
+              </Button>
+            )}
           </>
         )}
       </DialogActions>
