@@ -61,4 +61,10 @@ NFQWS2 с веб-панелью для ASUS: стратегии, устройс�
 [zapret2](https://github.com/bol-van/zapret2),
 [SmartDNS](https://github.com/pymumu/smartdns) и
 [DPI Detector](https://github.com/Runnin4ik/dpi-detector).
+
+Наша ASUS-адаптация распространяется по [MIT](LICENSE). Сторонние компоненты сохраняют
+свои лицензии и авторство; сборка в целом не лицензируется исключительно по MIT.
+Подробности — в [происхождении компонентов](UPSTREAM.md#лицензии-компонентов)
+и [полных уведомлениях](THIRD-PARTY-NOTICES.txt).
+
 [Авторство и лицензии](UPSTREAM.md) · [LICENSE](LICENSE) · [Исходники](source/).
