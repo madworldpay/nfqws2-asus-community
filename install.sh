@@ -56,7 +56,7 @@ read_package_status() {
 package_healthy() {
     [ -n "$installed" ] || return 1
     case "$package_status" in
-        'install ok installed'|'hold ok installed') return 0 ;;
+        'install ok installed'|'install user installed'|'hold ok installed') return 0 ;;
         *) return 1 ;;
     esac
 }

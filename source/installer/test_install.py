@@ -178,6 +178,33 @@ else:raise AssertionError(args)
         self.assertIn('opkg status nfqws2-asus',r.stderr)
         self.assertEqual(self.installs(),[])
 
+    def test_user_installed_upgrade_preserves_enabled_intent(self):
+        self.state.update(version='1.3.1-asus6+b66', package_status='install user installed',
+                          post_install_status='install user installed', enabled=True)
+        r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertEqual(self.installs(),[{'kind':'install','asset':f'nfqws2-asus_{VERSION}_aarch64-3.10.ipk','no_start':'0'}])
+        self.assertIn('Готово',r.stdout)
+
+    def test_current_user_installed_version_is_a_noop(self):
+        self.state.update(version=VERSION, package_status='install user installed')
+        r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertEqual(self.installs(),[])
+        self.assertFalse(any(x['kind']=='update' for x in self.events))
+        self.assertIn('уже установлен',r.stdout)
+
+    def test_first_install_accepts_user_flag_from_opkg(self):
+        self.state['post_install_status']='install user installed'
+        r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertEqual(self.installs()[0]['no_start'],'1')
+        self.assertIn('Готово',r.stdout)
+
+    def test_user_unpacked_install_is_not_upgraded(self):
+        self.state.update(version='1.3.1-asus6+b66', package_status='install user unpacked', enabled=True)
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        self.assertEqual(self.installs(),[])
+        self.assertFalse(any(x['kind']=='update' for x in self.events))
+        self.assertTrue((self.router/'tmp/nfqws2-asus/enabled').is_file())
+
     def test_incomplete_install_is_reported_without_changing_enabled_intent(self):
         self.state.update(version='1.3.1-asus6+b66', package_status='install ok unpacked', enabled=True)
         r=self.execute();self.assertNotEqual(r.returncode,0)
