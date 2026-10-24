@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 5949,
-      "sha256": "0fdcc18f62b001dae8ace396ba417fbb357a43f951e39bccbbeee578639ce5f6"
+      "bytes": 6427,
+      "sha256": "77934ad5fd8fabd2ad8489c56c34adebae0f48ca63f01511fe46b752f59af345"
     },
     {
       "file": "COMPATIBILITY.md",
@@ -28,7 +28,7 @@
     {
       "file": "DOWNLOADS.md",
       "bytes": 1217,
-      "sha256": "9e60634e80fe86a97f2e8cd4600634845aa51641633cc8068bab7fe033a0cf4a"
+      "sha256": "4443a26a4c59caded9473fefed9b04699f5770f88cebcf7863b23d77589b7cdb"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -73,7 +73,7 @@
     {
       "file": "README.md",
       "bytes": 5386,
-      "sha256": "7be4715da041e7726c7e6cf4c4802f13e0521d51f785b7b1092033e68e5cf262"
+      "sha256": "a66600260ae3c160400a9b9ebb5d9ab94148bc588909fe40d1426f29163df3f6"
     },
     {
       "file": "ROADMAP.md",
@@ -103,7 +103,7 @@
     {
       "file": "build.svg",
       "bytes": 385,
-      "sha256": "f7839524164b64792ec7249446ebdd6eea3742ee9d5e7dc67fe991543609e7fd"
+      "sha256": "bff805790998c347ed755bac391d8bf358282b86cfda0b78613e8cce08b8ba2e"
     },
     {
       "file": "images/cloud-catalog.jpg",
