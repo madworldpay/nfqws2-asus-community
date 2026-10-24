@@ -3,7 +3,20 @@
 Полные уведомления: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 [Состояние выпуска](DOWNLOADS.md).
 
-Это самостоятельная экспериментальная адаптация для ASUS, не официальный
+## Лицензии компонентов
+
+MIT в [LICENSE](LICENSE) относится к нашей ASUS-адаптации. Сторонние компоненты
+сохраняют свои лицензии и уведомления об авторских правах.
+
+NFQWS2 Keenetic, WebUI Keenetic, zapret2 и DPI Detector сохраняют уведомления MIT.
+BusyBox и модуль старого ядра используют GPLv2, библиотеки netfilter — GPLv2/LGPLv2.1.
+lighttpd использует BSD-3-Clause. LuaJIT, musl, Rust и зависимости интерфейса
+сохраняют собственные уведомления. Необязательный SmartDNS Release48.4 использует GPLv3.
+Полный перечень авторства и условий сохранён в [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+
+## Происхождение и изменения
+
+Это самостоятельная community-адаптация для ASUS, не официальный
 пакет ASUS, Entware или авторов исходных проектов.
 
 Установщик SmartDNS использует официальный

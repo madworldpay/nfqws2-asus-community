@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "6442bc26a7c562f5afe6467dab36365c709909f6a81afcecfc0c25cff0f1bab0"
+    "sha256": "826b6832e45ba17d625debc95ae8554e148550b00c05b47fa8f7be1c555bc83c"
   },
   {
     "path": "LICENSE",
@@ -2681,8 +2681,8 @@
   },
   {
     "path": "webui/web/src/components/ArkDialog.tsx",
-    "bytes": 14548,
-    "sha256": "87e2b761918246848d91e41db058ec36644ee79e3bc1e59e825bc0b413b2050d"
+    "bytes": 14620,
+    "sha256": "aaae1b4cd5169fa36f6d572dc6a77b19cf5ed4cfc769c666a45ea903e1e9963f"
   },
   {
     "path": "webui/web/src/components/CommunityActions.tsx",
@@ -2991,13 +2991,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 61493,
-    "sha256": "540be16698a1a4df9488ec87c9043771e5e9b1520119fb3c319999ceb25559b5"
+    "bytes": 61914,
+    "sha256": "6818970706eb6b476fbd43433421f922f12353df041aebaa8cba3a696b90cb0b"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 100687,
-    "sha256": "3dbe9d0367f33f02c65a7ddcb92fdbe3cda79d590efada4b9fe42064e1f3ea21"
+    "bytes": 101426,
+    "sha256": "d45ebe265582fd8010190607914fbaa2a0e89568e2cf09186810cd5a62c21206"
   },
   {
     "path": "webui/web/src/types/types.ts",

@@ -322,6 +322,7 @@ export const ArkDialog = ({ onClose }: { onClose: VoidFunction }) => {
           />
           {showDetails && (
             <>
+              <Typography variant="body2">{t('ark.about')}</Typography>
               <Alert severity="info">{t('ark.model_hint')}</Alert>
               {status?.model && status.model !== 'GT-BE19000AI' && (
                 <Alert severity="warning">
