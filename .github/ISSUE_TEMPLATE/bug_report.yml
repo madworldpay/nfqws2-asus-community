@@ -1,0 +1,29 @@
+name: Ошибка установки или панели
+description: Опишите, что произошло и как повторить проблему.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за обратную связь. Заполните то, что известно.
+        Конфиги, стратегии и полную диагностику передавайте через «Экспорт / поделиться» в панели.
+        Здесь достаточно описания и фрагмента ошибки без паролей и других секретов.
+  - type: input
+    id: environment
+    attributes:
+      label: Модель, прошивка и Build
+      placeholder: Например, ASUS GT-BE19000AI, Merlin, установленный Build
+  - type: textarea
+    id: steps
+    attributes:
+      label: Что сделали
+      description: Кнопки, команды и порядок действий.
+  - type: textarea
+    id: result
+    attributes:
+      label: Что ожидали и что получилось
+      description: Если появилась ошибка, приведите её точный текст или снимок.
+  - type: textarea
+    id: related_services
+    attributes:
+      label: Условия проверки
+      description: VPN, сторонний DNS, другие средства обработки трафика; с какого устройства проверяли.
