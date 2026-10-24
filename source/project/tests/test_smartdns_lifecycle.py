@@ -33,11 +33,11 @@ class SmartDnsLifecycleTests(unittest.TestCase):
         $store->begin(str_repeat('c',32),$hash,str_repeat('a',64));$store->transition(str_repeat('c',32),['applying'],['state'=>'awaiting_confirmation','deadline_uptime'=>1]);
         $backend=new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller(),['native'=>$root.'/missing-jffs'],['owner'=>$owner]);
         $worker=new AsusUpdateWorker(new AsusUpdateStore($root.'/updates',$owner),null,null,['owner'=>$owner,'dns_store'=>$store,'dns_backend'=>$backend]);
-        try{(new ReflectionMethod($worker,'assertDnsUpdateReady'))->invoke($worker);echo json_encode(['value'=>'allowed']);}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage(),'state'=>$store->status()['state']]);}'''
+        try{(new ReflectionMethod($worker,'assertDnsUpdateReady'))->invoke($worker);echo json_encode(['value'=>'allowed']);}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage(),'public_code'=>AsusUpdatePrepare::code($e),'state'=>$store->status()['state']]);}'''
         with tempfile.TemporaryDirectory() as d:
             r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),d,str(os.getuid())],input=json.dumps(profile()),capture_output=True,text=True,timeout=5)
             self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'');out=json.loads(r.stdout)
-            self.assertEqual(out['error'],'busy');self.assertEqual(out['state'],'conflict')
+            self.assertEqual(out['error'],'dns_restore_required');self.assertEqual(out['public_code'],'dns_restore_required');self.assertEqual(out['state'],'conflict')
 
 class SmartDnsMaintainerBoundaryTests(unittest.TestCase):
     def test_restore_failure_aborts_before_core_or_web_stop(self):

@@ -19,7 +19,7 @@ final class AsusUpdateWorker
         // The exclusive updater lease is already held. Dead processes alone
         // cannot release an unresolved native DNS transaction.
         $jobs=$this->dnsJobs();$jobs->reconcile();
-        if ($jobs->blocksUpdate()) throw new RuntimeException('busy');
+        if ($jobs->blocksUpdate()) throw new RuntimeException('dns_restore_required');
     }
     private function guard(): AsusUpdateGuard {return new AsusUpdateGuard($this->store,$this->owner(),$this->options['opkg']??'/opt/bin/opkg');}
     private function writeTicket(array $ticket): void
