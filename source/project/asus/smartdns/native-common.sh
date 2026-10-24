@@ -121,11 +121,55 @@ sd_native_resolver_data() {
       NR==1 {ok=($3==owner && substr($1,1,1)=="-" && $2==1)}
       END {exit !(NR==1 && ok)}'
 }
-sd_restored_config() {
-    local bytes file good good1 good2
-    sd_protected /tmp/etc/dnsmasq.conf - || return 1
-    bytes=$("$sd_bb" wc -c < /tmp/etc/dnsmasq.conf)
-    [ "$bytes" -le 262144 ] 2>/dev/null || return 1
+sd_restored_config() (
+    # Configuration includes are data, not executable recovery dependencies.
+    # Inspect a bounded graph before stopping our listener; never evaluate a
+    # conf-script or assume an unknown include cannot still forward to us.
+    set -f
+    newline='
+'
+    IFS=$newline
+    literal_awk='
+        function literal(line, end,suffix,out) {
+            sub(/^[^=]*=[ \t]*/,"",line)
+            if (index(line,"\\")) return ""
+            if (substr(line,1,1)=="\"") {
+                end=index(substr(line,2),"\"")+1;if (end==1) return ""
+                out=substr(line,2,end-2);suffix=substr(line,end+1)
+                if (suffix!~/^[ \t\r]*$/ && suffix!~/^[ \t\r]+#/) return ""
+                # Whitespace inside the quotes belongs to the filename.
+            } else {
+                out=line;sub(/[ \t\r]+#.*/,"",out);sub(/[ \t\r]+$/,"",out)
+                if (index(out,"\"")) return ""
+            }
+            if (length(out)>1024 || out!~/^\/[A-Za-z0-9_.+\/ -]+$/ || out~/\/\/|\/(\.\.?)(\/|$)/) return ""
+            return out
+        }
+    '
+    queue=/tmp/etc/dnsmasq.conf
+    configs=;seen=$newline;files=0;total=0;depth=0
+    while [ -n "$queue" ]; do
+        depth=$((depth+1));[ "$depth" -le 8 ] || return 1
+        next=
+        for file in $queue; do
+            case "$seen" in *"$newline$file$newline"*) continue;; esac
+            sd_protected "$file" - || return 1
+            bytes=$("$sd_bb" wc -c < "$file") || return 1
+            files=$((files+1));total=$((total+bytes))
+            [ "$files" -le 32 ] && [ "$bytes" -le 262144 ] && [ "$total" -le 1048576 ] || return 1
+            "$sd_bb" tr -d '\000' < "$file" | "$sd_bb" cmp -s "$file" - || return 1
+            configs=$configs$file$newline;seen=$seen$file$newline
+            includes=$("$sd_bb" awk "$literal_awk"'
+                {line=$0;sub(/^[ \t\r]+/,"",line);sub(/[ \t\r]+$/,"",line)}
+                line~/^conf-file[ \t]*=/ {
+                    # Only a literal absolute path; no escape evaluation.
+                    path=literal(line);if (path=="") exit 2
+                    print path
+                }' "$file") || return 1
+            if [ -n "$includes" ]; then next=$next$includes$newline;fi
+        done
+        queue=$next
+    done
     good1=0;good2=0
     for file in /tmp/resolv.dnsmasq /tmp/resolv.conf; do
         good=0
@@ -135,21 +179,40 @@ sd_restored_config() {
         fi
         case "$file" in /tmp/resolv.dnsmasq) good1=$good;; *) good2=$good;; esac
     done
-    # A successful public-name query cannot prove that another domain no
-    # longer uses our listener. Inspect all accepted native resolver sources;
-    # unknown includes stay unresolved and keep the owned runtime alive.
-    "$sd_bb" awk -v servers1=/tmp/resolv.dnsmasq -v servers2=/tmp/resolv.conf -v good1="$good1" -v good2="$good2" '
+    # A successful public-name query alone cannot prove independence. Every
+    # accepted include and native resolver source must pass the same check.
+    "$sd_bb" awk -v configs="$configs" -v main=/tmp/etc/dnsmasq.conf -v servers1=/tmp/resolv.dnsmasq -v servers2=/tmp/resolv.conf -v good1="$good1" -v good2="$good2" "$literal_awk"'
         function trim(s) {sub(/^[ \t\r]+/,"",s);sub(/[ \t\r]+$/,"",s);return s}
-        function independent(s,parts,n,i,endpoint,hex) {
-            n=split(tolower(s),parts,/[=,\/ \t]+/)
-            for (i=1;i<=n;i++) {
-                endpoint=parts[i];sub(/[#@].*/,"",endpoint);gsub(/[\[\]]/,"",endpoint)
-                if (endpoint=="localhost" || endpoint=="0.0.0.0" || endpoint~/^127\./ || endpoint~/(^|:)ffff:(127\.|7f[0-9a-f][0-9a-f]:)/ || endpoint~/(^|:)ffff:(0+:0+|0\.0\.0\.0)$/) return 0
-                if (index(endpoint,":")) {
-                    hex=endpoint;gsub(/[:0]/,"",hex)
-                    if (hex=="" || hex=="1") return 0
-                }
+        function numeric4(s,octets,n,i) {
+            n=split(s,octets,".");if (n!=4) return 0
+            for (i=1;i<=4;i++) {
+                if (octets[i]!~/^[0-9]+$/ || octets[i]>255 || (length(octets[i])>1 && substr(octets[i],1,1)=="0")) return 0
             }
+            return octets[1]!=127 && s!="0.0.0.0"
+        }
+        function independent(s,parts,n,endpoint,hex,kind,quotes) {
+            # dnsmasq also accepts legacy integer/octal IPv4 forms. Only
+            # supported numeric syntax may prove that a listener is external.
+            if (index(s,"\\")) return 0
+            quotes=gsub(/"/,"",s);if (quotes%2) return 0
+            s=trim(tolower(s));sub(/[ \t]+#.*/,"",s)
+            if (s~/^nameserver[ \t]+/) sub(/^nameserver[ \t]+/,"",s)
+            else {
+                kind=s;sub(/[ \t]*=.*/,"",kind);sub(/^[^=]*=[ \t]*/,"",s)
+                if (kind=="rev-server") {n=split(s,parts,",");if (n!=2) return 0;s=parts[2]}
+                else if (kind=="server") sub(/^.*\//,"",s)
+                else return 0
+                if (s=="" || s=="#") return 1
+            }
+            endpoint=trim(s);sub(/[#@].*/,"",endpoint);gsub(/[\[\]]/,"",endpoint);sub(/%.*/,"",endpoint)
+            if (!index(endpoint,":")) return numeric4(endpoint)
+            if (endpoint!~/^[0-9a-f:.]+$/) return 0
+            hex=endpoint;gsub(/[:0]/,"",hex);if (hex=="" || hex=="1") return 0
+            if (endpoint~/(^|:)ffff:/) {
+                hex=endpoint;sub(/^.*ffff:/,"",hex)
+                if (index(hex,".")) return numeric4(hex)
+                if (hex~/^0*7f[0-9a-f][0-9a-f]:/ || hex~/^0+:0+$/) return 0
+            } else if (index(endpoint,".")) return 0
             return 1
         }
         function source(path,kind, line,status,count,total) {
@@ -166,15 +229,37 @@ sd_restored_config() {
             }
             close(path);return status==0
         }
-        {line=trim($0);if (line=="" || line~/^#/) next}
-        line~/^(conf-file|conf-dir|conf-script)[ \t]*(=|$)/ {bad=1;exit}
-        line~/^(server|rev-server)[ \t]*=/ {if (!independent(line)) {bad=1;exit}}
-        line~/^(servers-file|resolv-file)[ \t]*=/ {
-            kind=line;sub(/[ \t]*=.*/,"",kind);path=line;sub(/^[^=]*=[ \t]*/,"",path)
-            if (!source(trim(path),kind)) {bad=1;exit}
+        function directive(line,depth, kind,path) {
+            line=trim(line);if (line=="" || line~/^#/) return 1
+            if (line~/^(conf-dir|conf-script)[ \t]*(=|$)/) return 0
+            if (line~/^conf-file[ \t]*(=|$)/) {
+                if (line!~/^conf-file[ \t]*=/) return 0
+                path=literal(line)
+                return path!="" && configuration(path,depth+1)
+            }
+            if (line~/^(server|rev-server)[ \t]*=/) return independent(line)
+            if (line~/^(servers-file|resolv-file)[ \t]*=/) {
+                kind=line;sub(/[ \t]*=.*/,"",kind);path=line;sub(/^[^=]*=[ \t]*/,"",path)
+                return source(trim(path),kind)
+            }
+            return 1
         }
-        END {exit bad?1:0}' /tmp/etc/dnsmasq.conf
-}
+        function configuration(path,depth, line,status,count,total,ok) {
+            if (!allowed[path] || depth>8 || active[path]) return 0
+            if (checked[path]) return 1
+            active[path]=1;count=0;total=0;ok=1
+            while ((status=getline line < path)>0) {
+                if (++count>4096 || (total+=length(line)+1)>262144 || !directive(line,depth)) {ok=0;break}
+            }
+            close(path);delete active[path]
+            if (!ok || status!=0) return 0
+            checked[path]=1;return 1
+        }
+        BEGIN {
+            n=split(configs,paths,"\n");for (i=1;i<=n;i++) if (paths[i]!="") allowed[paths[i]]=1
+            exit !configuration(main,1)
+        }'
+)
 
 sd_forward_ready() {
     sd_protected "$sd_root/dns-before" - || return 1

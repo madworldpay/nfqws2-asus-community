@@ -145,7 +145,7 @@ final class AsusUpdatePrepare
     public static function code(Throwable $error): string
     {
         $known=['channel_unconfigured','invalid_channel','invalid_manifest','invalid_signature','signature_unavailable','download_failed','download_size','download_hash','timed_out','channel_auth_failed','release_changed','unsupported_abi','unsupported_version','unsupported_package','invalid_package','package_reader_unavailable','missing_dependencies','dependency_change','pending_packages','insufficient_space','settings_changed','invalid_state','output_limit','stale_revision','busy','request_conflict','missing_operation','runtime_changed','core_stop_failed','core_start_failed','web_start_failed','web_health_failed','intent_mismatch','opkg_busy','install_failed','version_mismatch','launch_failed','interrupted'];
-        $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed']);
+        $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed','dns_restore_required','dns_restore_failed']);
         return in_array($error->getMessage(),$known,true)?$error->getMessage():'update_failed';
     }
     public function environment(): array

@@ -53,6 +53,8 @@ export function PackageUpdateDialog({
     'insufficient_space',
     'stale_revision',
     'busy',
+    'dns_restore_required',
+    'dns_restore_failed',
     'request_failed',
     'core_start_failed',
     'core_stop_failed',

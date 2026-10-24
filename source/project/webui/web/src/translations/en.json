@@ -442,6 +442,8 @@
     "insufficient_space": "Not enough free space. The service has not been stopped.",
     "stale_revision": "The channel has a different release. Check for updates again.",
     "busy": "Another operation is in progress. Wait for it to finish.",
+    "dns_restore_required": "Open SmartDNS: finish setup or restore the router's DNS.",
+    "dns_restore_failed": "The router's DNS could not be restored. Open SmartDNS and check the error message.",
     "request_failed": "The panel is temporarily unavailable. Status checks will resume; installation is never repeated automatically.",
     "core_start_failed": "The package was installed, but service startup is not confirmed. Check its status.",
     "core_stop_failed": "The service could not be stopped. Package replacement did not begin.",

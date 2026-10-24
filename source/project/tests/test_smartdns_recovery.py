@@ -13,6 +13,7 @@ JOB='c'*32
 
 class SmartDnsRecoveryTests(unittest.TestCase):
     def setUp(self):
+        self.shell=['/bin/busybox','ash'] if os.environ.get('SMARTDNS_TEST_BUSYBOX') else ['/bin/sh']
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
         self.jffs=self.root/'jffs';self.jffs.mkdir(mode=0o700)
         self.opt=self.root/'opt';self.opt.mkdir();self.hooks=self.root/'scripts';self.hooks.mkdir()
@@ -67,7 +68,7 @@ class SmartDnsRecoveryTests(unittest.TestCase):
     def read_state(self):return dict(line.split('\t',1) for line in (self.jffs/'state').read_text().splitlines())
     def run_recovery(self,command):
         if not (self.jffs/'recovery.sh').is_file():return 2,b'missing_native_recovery'
-        r=subprocess.run(['/bin/sh',str(self.jffs/'recovery.sh'),command,JOB],capture_output=True,timeout=22)
+        r=subprocess.run(self.shell+[str(self.jffs/'recovery.sh'),command,JOB],capture_output=True,timeout=22)
         self.assertEqual(r.stderr,b'');return r.returncode,r.stdout
 
     def wait_for(self,predicate,seconds=7):
@@ -167,6 +168,114 @@ class SmartDnsRecoveryTests(unittest.TestCase):
         self.hook.chmod(0o777)
         strict=subprocess.run(['/bin/sh','-c','. "'+str(source)+'"; sd_protected "'+str(self.hook)+'" -'],capture_output=True,timeout=3)
         self.assertNotEqual(strict.returncode,0)
+
+    def config_check(self, text):
+        config=self.root/'dnsmasq.conf';config.write_text(text);config.chmod(0o600)
+        return subprocess.run(self.shell+['-c','. "'+str(self.jffs/'native-common.sh')+'"; sd_restored_config'],
+                              capture_output=True,timeout=3)
+
+    def test_restored_config_accepts_independent_vpn_dns_and_routing_include(self):
+        include=self.root/'vpn routing.conf'
+        body='filter-AAAA\nipset=/video.example/chat.example/awg_dst\nno-resolv\nserver=1.1.1.1@awg0\nserver=1.0.0.1@awg0\n'
+        include.write_text(body);include.chmod(0o600)
+        result=self.config_check('conf-file='+str(include)+'\n')
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(include.read_text(),body)
+
+    def test_restored_config_checks_nested_includes_for_remaining_own_routes(self):
+        outer=self.root/'outer.conf';inner=self.root/'inner.conf'
+        outer.write_text('conf-file='+str(inner)+'\n');outer.chmod(0o600)
+        inner.write_text('server=1.1.1.1@awg0\n');inner.chmod(0o600)
+        config='conf-file='+str(outer)+'\n'
+        self.assertEqual(self.config_check(config).returncode,0)
+        inner.write_text('server=/private.example/127.0.0.1#6054\n')
+        self.assertNotEqual(self.config_check(config).returncode,0)
+
+    def test_restored_config_accepts_include_comments_and_simple_quoted_paths(self):
+        include=self.root/'vpn routing.conf';include.write_text('server=1.1.1.1@awg0\n');include.chmod(0o600)
+        for value in [str(include)+' # VPN routing','"'+str(include)+'" # VPN routing']:
+            with self.subTest(value=value):
+                self.assertEqual(self.config_check('conf-file='+value+'\n').returncode,0)
+
+    def test_restored_config_rejects_alternative_local_upstream_spellings(self):
+        include=self.root/'local.conf';include.chmod(0o600) if include.exists() else include.touch(mode=0o600)
+        for address in ['"127.0.0.1"#6054','"127.0.0.1#6054"','2130706433#6054','0x7f000001#6054',
+                        '::1%lo#6054','[::1%lo]#6054','0177.0.0.1#6054','127.1#6054','::ffff:7f00:1#6054',
+                        '::0.0.0.1#6054','0:0:0:0:0:0:0.0.0.1#6054','::0.0.0.0#6054']:
+            with self.subTest(address=address):
+                include.write_text('server=/private.example/'+address+'\n')
+                self.assertNotEqual(self.config_check('conf-file='+str(include)+'\n').returncode,0)
+
+    def test_restored_config_uses_exact_quoted_include_identity(self):
+        ordinary=self.root/'include.conf';actual=self.root/'include.conf '
+        ordinary.write_text('server=1.1.1.1\n');ordinary.chmod(0o600)
+        actual.write_text('server=/private.example/127.0.0.1#6054\n');actual.chmod(0o600)
+        config='conf-file="'+str(actual)+'"\n'
+        self.assertNotEqual(self.config_check(config).returncode,0)
+        actual.write_text('server=1.1.1.1\n');ordinary.write_text('server=127.0.0.1#6054\n')
+        self.assertEqual(self.config_check(config).returncode,0)
+
+    def test_restored_config_does_not_truncate_hash_inside_unquoted_path(self):
+        ordinary=self.root/'include.conf';actual=self.root/'include.conf#other'
+        ordinary.write_text('server=1.1.1.1\n');ordinary.chmod(0o600)
+        actual.write_text('server=/private.example/127.0.0.1#6054\n');actual.chmod(0o600)
+        self.assertNotEqual(self.config_check('conf-file='+str(actual)+'\n').returncode,0)
+
+    def test_restored_config_accepts_public_numeric_upstreams_with_interface(self):
+        include=self.root/'external.conf';include.touch(mode=0o600)
+        for line in ['server="1.1.1.1"#53@awg0','server=2606:4700:4700::1111#53@awg0',
+                     'server=/private.example/8.8.8.8','rev-server=192.0.2.0/24,8.8.8.8']:
+            with self.subTest(line=line):
+                include.write_text(line+'\n')
+                self.assertEqual(self.config_check('conf-file='+str(include)+'\n').returncode,0)
+
+    def test_restored_config_rejects_include_cycles(self):
+        first=self.root/'first.conf';second=self.root/'second.conf'
+        first.write_text('conf-file='+str(second)+'\n');first.chmod(0o600)
+        second.write_text('conf-file='+str(first)+'\n');second.chmod(0o600)
+        self.assertNotEqual(self.config_check('conf-file='+str(first)+'\n').returncode,0)
+
+    def test_restored_config_bounds_include_depth_count_and_bytes(self):
+        paths=[self.root/('level'+str(i)+'.conf') for i in range(33)]
+        for i,path in enumerate(paths):
+            path.write_text('conf-file='+str(paths[i+1])+'\n' if i+1<len(paths) else 'server=1.1.1.1\n')
+            path.chmod(0o600)
+        self.assertNotEqual(self.config_check('conf-file='+str(paths[0])+'\n').returncode,0)
+        for path in paths:path.write_text('server=1.1.1.1\n')
+        self.assertNotEqual(self.config_check(''.join('conf-file='+str(path)+'\n' for path in paths)).returncode,0)
+        paths[0].write_text('#'+('x'*262144)+'\n')
+        self.assertNotEqual(self.config_check('conf-file='+str(paths[0])+'\n').returncode,0)
+
+    def test_restored_config_does_not_execute_dynamic_config(self):
+        include=self.root/'dynamic.conf';marker=self.root/'executed'
+        program=self.root/'generator';program.write_text('#!/bin/sh\ntouch "'+str(marker)+'"\n');program.chmod(0o700)
+        include.write_text('conf-script='+str(program)+'\n');include.chmod(0o600)
+        self.assertNotEqual(self.config_check('conf-file='+str(include)+'\n').returncode,0)
+        self.assertFalse(marker.exists())
+
+    def test_restored_config_rejects_unsafe_include_objects(self):
+        include=self.root/'include.conf';target=self.root/'target.conf'
+        target.write_text('server=1.1.1.1\n');target.chmod(0o600)
+        config='conf-file='+str(include)+'\n'
+        include.symlink_to(target)
+        self.assertNotEqual(self.config_check(config).returncode,0);include.unlink()
+        os.mkfifo(include)
+        self.assertNotEqual(self.config_check(config).returncode,0);include.unlink()
+        include.write_text('server=1.1.1.1\n');include.chmod(0o666)
+        self.assertNotEqual(self.config_check(config).returncode,0);include.chmod(0o600)
+        os.link(include,self.root/'linked.conf')
+        self.assertNotEqual(self.config_check(config).returncode,0)
+
+    def test_rollback_with_vpn_include_preserves_foreign_dns_and_routing(self):
+        include=self.root/'vpn.conf';body='filter-AAAA\nipset=/video.example/awg_dst\nno-resolv\nserver=1.1.1.1@awg0\n'
+        include.write_text(body);include.chmod(0o600)
+        script=self.root/'apply-dns.sh'
+        script.write_text(script.read_text()+'printf "conf-file=%s\\n" "'+str(include)+'" >> "'+str(self.root/'dnsmasq.conf')+'"\n')
+        self.assertEqual(self.run_recovery('rollback')[0],0)
+        self.assertEqual(self.read_state()['phase'],'rolled_back')
+        self.assertEqual(include.read_text(),body)
+        self.assertEqual(self.hook.read_bytes(),b'#!/bin/sh\n# foreign\n\n# later foreign edit')
+        self.runtime.wait(timeout=2);self.assertIsNone(self.foreign.poll())
 
     def test_existing_exact_owned_block_is_not_duplicated_and_remains_removable(self):
         original=self.hook.read_bytes()

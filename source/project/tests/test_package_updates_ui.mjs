@@ -69,4 +69,11 @@ return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageU
   assert.doesNotMatch(html,/Установка завершена\.|Обновление установлено\./,'remove duplicated generic messages');
  }
  console.log('PASS RU/EN success receipt names the completed release, including older persisted operations');
+ for(const lang of ['ru','en'])for(const code of ['dns_restore_required','dns_restore_failed']) {
+  const html=render(lang,{...operation,state:'failed',code});
+  const error=html.match(/<div data-severity="warning">([^<]*)<\/div>/)?.[1] ?? html.match(/<div data-severity="error">([^<]*)<\/div>/)?.[1];
+  assert.ok(error?.includes('SmartDNS'),'DNS recovery must name SmartDNS and its recovery action');
+  assert.doesNotMatch(error,/другая операция|Another operation/,'an unresolved DNS restore is not a running update');
+ }
+ console.log('PASS RU/EN DNS recovery errors show the SmartDNS recovery action');
 }finally{await rm(directory,{recursive:true,force:true});}
