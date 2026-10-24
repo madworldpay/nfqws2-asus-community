@@ -15,6 +15,7 @@ const FLAG_KEYS = [
 type FlagState = 'enabled' | 'disabled' | 'unknown';
 export type ArkReadiness = {
   result:
+    | 'absent'
     | 'ready'
     | 'reboot_required'
     | 'runtime_unknown'
@@ -128,15 +129,18 @@ export const classifyArkReadiness = (data: unknown): ArkReadiness => {
   return {
     result: !valid
       ? 'unavailable'
-      : enabled
-        ? 'flags_enabled'
-        : unknown
-          ? 'flags_unknown'
-          : runtime === 'unloaded'
-            ? 'ready'
-            : runtime === 'loaded'
-              ? 'reboot_required'
-              : 'runtime_unknown',
+      : runtime === 'unloaded' &&
+          record(record(status.diagnostics)?.ark)?.present === 'absent'
+        ? 'absent'
+        : enabled
+          ? 'flags_enabled'
+          : unknown
+            ? 'flags_unknown'
+            : runtime === 'unloaded'
+              ? 'ready'
+              : runtime === 'loaded'
+                ? 'reboot_required'
+                : 'runtime_unknown',
     disabled,
     enabled,
     unknown,

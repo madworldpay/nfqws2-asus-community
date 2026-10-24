@@ -139,8 +139,28 @@ assert.equal(
       diagnostics: { ark: { present: "absent", loaded: "unloaded" } },
     }),
   ).result,
-  "ready",
+  "absent",
 );
+const absent = snapshot({
+  model: "RT-AC87U",
+  flags: [],
+  diagnostics: { ark: { present: "absent", loaded: "unloaded" } },
+});
+assert.equal(classifyArkReadiness(absent).result, "absent");
+assert.equal(classifyArkReadiness({
+  ...absent,
+  flags: [{ key: keys[0], present: true, value: "1", enabled: true }],
+}).result, "absent", "Unused NVRAM flags do not require preparation on firmware without ARK");
+for (const changes of [
+  { ark_loaded: true },
+  { ark_loaded: null },
+  { status: 1, error: "read_failed" },
+  { diagnostics: undefined },
+  { diagnostics: { ark: { present: "unknown", loaded: "unloaded" } } },
+  { diagnostics: { ark: { present: "absent", loaded: "unknown" } } },
+]) {
+  assert.notEqual(classifyArkReadiness({ ...absent, ...changes }).result, "absent");
+}
 assert.equal(
   classifyArkReadiness(
     snapshot({
@@ -259,6 +279,13 @@ try {
       .replace(/<style[^>]*>[\s\S]*?<\/style>/g, "")
       .replace(/<[^>]+>/g, "");
   const readyMarkup = renderReadiness(snapshot(), "ru");
+  for (const language of ["ru", "en"]) {
+    const absentMarkup = renderReadiness(absent, language);
+    assert.match(absentMarkup, /MuiAlert-standardSuccess/);
+    assert.match(visible(absentMarkup), language === "ru" ? /ARK отсутствует/ : /ARK is absent/);
+    assert.doesNotMatch(visible(absentMarkup), /9|NFQUEUE|не подтвержден|not confirmed/i);
+    assert.match(renderReadiness(absent, language, true), /MuiAlert-standardInfo/);
+  }
   assert.match(readyMarkup, /MuiAlert-standardSuccess/);
   assert.match(
     visible(readyMarkup),

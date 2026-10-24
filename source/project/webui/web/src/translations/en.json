@@ -151,6 +151,7 @@
     "check_title": "ARK check result",
     "checking": "Checking the current ARK state…",
     "readiness": {
+      "absent": "ARK is absent — no preparation is needed.",
       "runtime_clear": "The ARK module is not loaded. You can check NFQUEUE packet reception and the service you need.",
       "unavailable_flags_note": "{{disabled}} of 9 functions are confirmed disabled. Some settings are absent or unavailable on this firmware; this does not mean ARK is enabled. See the table below for details.",
       "ready": "All 9 ARK features are disabled and the ARK module is not loaded. Preparation is confirmed. Check packet reception and bypass separately.",
