@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogTitle,
   LinearProgress,
+  Link,
   Stack,
   Typography,
 } from '@mui/material';
@@ -14,6 +15,52 @@ import type { usePackageUpdates } from '@/hooks/usePackageUpdates';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import { formatPackageVersion } from '@/utils/packageVersion';
+
+function ReleaseNotes({ text }: { text: string }) {
+  // Render only simple emphasis and links to this project's documentation.
+  // Release bodies never enter an HTML/Markdown execution pipeline.
+  const parts = text.split(
+    /(\[[^\]\n]+\]\(https:\/\/[^\s()]+\)|\*\*[^*\n]+\*\*)/g,
+  );
+  return (
+    <Typography
+      variant="body2"
+      sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+    >
+      {parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**'))
+          return <strong key={index}>{part.slice(2, -2)}</strong>;
+        const match = part.match(/^\[([^\]\n]+)\]\((https:\/\/[^\s()]+)\)$/);
+        if (match) {
+          let url: URL;
+          try {
+            url = new URL(match[2]);
+          } catch {
+            return part;
+          }
+          const repo = '/madworldpay/nfqws2-asus-community';
+          if (
+            url.origin === 'https://github.com' &&
+            !url.username &&
+            !url.password &&
+            (url.pathname === repo || url.pathname.startsWith(repo + '/'))
+          )
+            return (
+              <Link
+                key={index}
+                href={url.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {match[1]}
+              </Link>
+            );
+        }
+        return part;
+      })}
+    </Typography>
+  );
+}
 
 export function PackageUpdateDialog({
   open,
@@ -91,11 +138,61 @@ export function PackageUpdateDialog({
                   version: formatPackageVersion(candidate.package_version),
                 })}
               </Typography>
-              {candidate.notes && (
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {candidate.notes}
+              <Typography variant="subtitle2">
+                {t('package_update.changes')}
+              </Typography>
+              {updates.notesLoading && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  role="status"
+                >
+                  {t('package_update.changes_loading')}
                 </Typography>
               )}
+              {updates.notes && (
+                <Typography variant="body2" color="text.secondary">
+                  {t('package_update.changes_range', {
+                    from: updates.notes.from_build,
+                    to: updates.notes.to_build,
+                  })}
+                </Typography>
+              )}
+              {updates.notes?.releases
+                .filter(
+                  (r) =>
+                    r.notes || r.build !== candidate.build || !candidate.notes,
+                )
+                .map((release) => (
+                  <Stack key={release.build} spacing={0.5}>
+                    <Typography variant="subtitle2">
+                      Build {release.build}
+                    </Typography>
+                    <ReleaseNotes
+                      text={release.notes || t('package_update.changes_empty')}
+                    />
+                  </Stack>
+                ))}
+              {!updates.notesLoading && !updates.notes?.complete && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  role="status"
+                >
+                  {t('package_update.changes_partial')}
+                </Typography>
+              )}
+              {!updates.notes?.releases.some(
+                (r) => r.build === candidate.build && r.notes,
+              ) &&
+                candidate.notes && (
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle2">
+                      Build {candidate.build}
+                    </Typography>
+                    <ReleaseNotes text={candidate.notes} />
+                  </Stack>
+                )}
               <Alert severity="info">{t('package_update.preserve')}</Alert>
             </>
           )}
