@@ -77,7 +77,7 @@ final class AsusDpiNormalizer
                         }
                     }break;
             }
-            $path='/opt/share/nfqws2-asus/dpi-report.schema.json';if(!is_file($path))$path=dirname(__DIR__,3).'/support/dpi-report.schema.json';
+            $path=NfqwsPlatform::sharedFile('dpi-report.schema.json',dirname(__DIR__,3).'/support/dpi-report.schema.json');
             $schema=json_decode(file_get_contents($path),true,128,JSON_THROW_ON_ERROR);
             AsusSupportSchema::projection(json_decode(json_encode($out,JSON_THROW_ON_ERROR)),$schema['$defs']['group'],$schema);
             return $out;

@@ -23,7 +23,7 @@ class SupportReportApiTests(auth_api.PasswordApiTests):
         for source in (ROOT / 'webui/web/public').glob('support-*.php'):
             text = source.read_text().replace('/tmp/nfqws2-support-report', str(self.base / 'report-lock'))
             (self.base / source.name).write_text(text)
-        for name in ['smartdns-report.php','smartdns-store.php','smartdns-profile.php','smartdns-install.php','dpi-store.php','dpi-install.php','dpi-runtime.php','dpi-catalog.php','dpi-options.php']:
+        for name in ['smartdns-report.php','smartdns-store.php','smartdns-profile.php','smartdns-install.php','dpi-store.php','dpi-install.php','openwrt-dpi.php','dpi-runtime.php','dpi-catalog.php','dpi-options.php']:
             (self.base/name).write_text((ROOT/'webui/web/public'/name).read_text())
         index = self.base / 'index.php'
         index.write_text(index.read_text().replace('new AsusReportLock()', 'new AsusReportLock(null, fileowner(__FILE__))'))

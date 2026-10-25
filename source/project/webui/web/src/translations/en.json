@@ -588,7 +588,9 @@
       "https_unavailable": "Sending is unavailable: HTTPS (TLS) or trusted certificates are unavailable on the router. Preview and JSON saving remain available.",
       "invalid_config": "Invalid sending configuration. Check it on the router. Preview and JSON saving remain available.",
       "unavailable": "Sending is currently unavailable. Preview and JSON saving remain available. Refresh the panel status."
-    }
+    },
+    "native_hint_openwrt": "Run the original DPI Detector over SSH on OpenWrt using the command below. Choose tests, press S to save, then refresh this list. You can view the original; sharing creates a sanitized JSON without rerunning tests.",
+    "dpi_help_command_openwrt": "Run the command above over SSH on OpenWrt. The address after src is the source IPv4 for this route; add it to the list, with /32 if needed. Check the entry again if the WAN address changes."
   },
   "smartdns": {
     "intro": "SmartDNS is a separate utility installed and configured by this panel. Assign DNS to specific sites and pin IP addresses: up to 32 DNS servers, 256 domain-to-DNS assignments and 64 fixed replies.",

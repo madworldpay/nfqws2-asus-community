@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/platform.php';
 
 /** One explicit local configuration action. No request supplies a URL or report. */
 final class AsusSupportChannelSetup
@@ -7,6 +8,7 @@ final class AsusSupportChannelSetup
     public function __construct(private ?string $config=null,private ?string $template=null,private int $owner=0){}
     private function paths(): array
     {
+        if(NfqwsPlatform::native())return [$this->config??'/etc/nfqws2-web/support-relay.json',$this->template??'/usr/share/nfqws2/support-relay-default.json'];
         $opt=realpath('/opt');if(($this->config===null||$this->template===null)&&$opt===false)throw new RuntimeException('invalid_state');
         return [$this->config??$opt.'/etc/nfqws-asus-web/support-relay.json',$this->template??$opt.'/share/nfqws2-asus/support-relay-default.json'];
     }

@@ -142,6 +142,11 @@ function getFiles(?string $type = null): array
 
 function getFileContent(string $filename): string
 {
+  if(NfqwsPlatform::native()&&$filename==='nfqws2.conf.notactive'){
+    $path=NfqwsPlatform::guardFile('/usr/share/nfqws2/defaults','nfqws2.conf');
+    $raw=@file_get_contents($path,false,null,0,262145);
+    if(!is_string($raw)||strlen($raw)>262144)throw new RuntimeException('invalid_state');return $raw;
+  }
   $path = getFilePath($filename);
 
   if (file_exists($path)) {
@@ -512,7 +517,8 @@ function main(): void
       $reportLock = new AsusReportLock();
       try {
         $reportLock->acquire();
-        $report = (new AsusSupportReport(new AsusReportIO(), new AsusReportValues()))->collect();
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-report.php';$report=(new NfqwsOpenWrtReport())->collect();}
+        else $report = (new AsusSupportReport(new AsusReportIO(), new AsusReportValues()))->collect();
         $json = AsusSupportReport::encode($report);
         $reportFilename = AsusSupportReport::filename($report);
         header('Cache-Control: no-store');

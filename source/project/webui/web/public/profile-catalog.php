@@ -20,7 +20,7 @@ final class AsusProfileCatalog
         if(!$details||$details['type']!==OPENSSL_KEYTYPE_RSA||$details['bits']!==3072||openssl_verify($raw,$sig,$key,OPENSSL_ALGO_SHA256)!==1)throw new RuntimeException('catalog_signature');
         try {
             $index=AsusSupportSchema::decode($raw,65536,'catalog_invalid');
-            $file=is_file('/opt/share/nfqws2-asus/profile-catalog.schema.json')?'/opt/share/nfqws2-asus/profile-catalog.schema.json':dirname(__DIR__,3).'/support/profile-catalog.schema.json';
+            $file=NfqwsPlatform::sharedFile('profile-catalog.schema.json',dirname(__DIR__,3).'/support/profile-catalog.schema.json');
             $schema=json_decode(file_get_contents($file),true,32,JSON_THROW_ON_ERROR);
             AsusSupportSchema::projection($index,$schema,$schema);$ids=[];
             foreach($index->profiles as $profile) {

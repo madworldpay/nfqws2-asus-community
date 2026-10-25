@@ -81,7 +81,7 @@ nfqws_package_preinstall() {
 }
 
 nfqws_package_defaults() {
-    local root=${IPKG_INSTROOT} src dst name
+    local root=${IPKG_INSTROOT} src dst name file leaf
     [ ! -L "$root/etc/nfqws2" ] || { echo native_config_owner_conflict >&2; return 1; }
     mkdir -p "$root/etc/nfqws2" "$root/etc/init.d" || return 1
     chmod 755 "$root/etc/nfqws2"
@@ -95,6 +95,15 @@ nfqws_package_defaults() {
                 find "$dst" -type d -exec chmod 755 '{}' ';' || return 1
                 find "$dst" -type f -exec chmod 644 '{}' ';' || return 1
             fi
+        fi
+        # Add newly supplied resources on upgrade without replacing a user's
+        # existing files. Package defaults are flat, regular-file directories.
+        if [ -d "$dst" ]; then
+            for file in "$src/$name"/*; do
+                [ -f "$file" ] && [ ! -L "$file" ] || continue
+                leaf="$dst/${file##*/}"
+                if [ ! -e "$leaf" ] && [ ! -L "$leaf" ]; then cp "$file" "$leaf" && chmod 644 "$leaf" || return 1; fi
+            done
         fi
     done
     chmod 600 "$root/etc/nfqws2/nfqws2.conf"

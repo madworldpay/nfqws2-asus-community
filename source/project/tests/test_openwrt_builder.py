@@ -1,5 +1,7 @@
 """Native packaging has its own architecture, dependencies and upgrade contract."""
 import importlib.util
+import gzip
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -41,7 +43,7 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertIn(dep,builder.DEPENDENCIES)
         with tempfile.TemporaryDirectory()as td:
             dist=Path(td)
-            for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php']:(dist/name).write_text('fixture')
+            for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php','resource-paths.php']:(dist/name).write_text('fixture')
             files=builder.web_payload(dist)
             profile=json.loads(files['usr/share/nfqws2-web/platform-profile.json'][0])
             self.assertEqual(profile,{'schema_version':1,'platform':'openwrt'})
@@ -57,6 +59,25 @@ class NativeBuilderTests(unittest.TestCase):
             finally:os.umask(old)
             for p in [root,*root.rglob('*')]:
                 self.assertEqual(stat.S_IMODE(p.stat().st_mode)&0o022,0,str(p))
+
+    @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
+    def test_native_baseline_pins_resources_and_installs_public_catalog_contract(self):
+        target=builder.native_metadata('24.10','arm_cortex-a9')
+        raw=(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes();lua=b'return 1\n'
+        files=builder.payload_files(target,raw,{'opt/etc/nfqws2/lua/demo.lua.gz':gzip.compress(lua)})
+        baseline=json.loads(files['usr/share/nfqws2/report-baseline.json'][0])
+        self.assertEqual(baseline['resources']['lua/demo.lua'],{'bytes':len(lua),'sha256':hashlib.sha256(lua).hexdigest()})
+        self.assertEqual(baseline['package_version'],target['version'])
+        self.assertEqual(baseline['build_number'],int((ROOT/'BUILD_NUMBER').read_text()))
+        self.assertEqual(baseline['resources']['lua/local-guarded-ts.lua']['sha256'],hashlib.sha256((ROOT/'asus/lua/local-guarded-ts.lua').read_bytes()).hexdigest())
+        artifact=json.loads(files['usr/share/nfqws2/dpi-native-artifact.json'][0])
+        self.assertEqual((artifact['arch'],artifact['engine']),('arm_cortex-a9','arm'))
+        self.assertEqual(artifact['artifact']['sha256'],'c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863')
+        self.assertIn('usr/lib/nfqws2/dpi/paths.sh',files)
+        raw,mode=files['usr/share/nfqws2/optional/dpi-detector-armv5te']
+        self.assertEqual((hashlib.sha256(raw).hexdigest(),mode),('c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863',0o644))
+        for name in ['strategy-v2.schema.json','profile-catalog.schema.json','profile-catalog-public.pem']:
+            self.assertIn('usr/share/nfqws2/'+name,files.keys())
 
     @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
     def test_payload_only_contains_selected_static_engine_and_native_paths(self):
@@ -83,9 +104,12 @@ class NativeBuilderTests(unittest.TestCase):
             web=root/'usr/lib/nfqws2-web/nfqws2-native-web';web.parent.mkdir(parents=True);web.write_text('fixture')
             builder.write_files(root,{'usr/share/nfqws2/defaults/web-config':((ROOT/'openwrt/web-config').read_bytes(),0o600)})
             active=root/'etc/nfqws2/nfqws2.conf';active.parent.mkdir(parents=True);active.write_text('# preserve my config\n')
+            custom=active.parent/'lua/manual.lua';custom.parent.mkdir(mode=0o755);custom.write_text('my Lua\n')
             hook=Path(td)/'postinst';hook.write_bytes(builder.package_hook(target,'postinstall'))
             subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},check=True,capture_output=True)
             self.assertEqual(active.read_text(),'# preserve my config\n')
+            self.assertEqual(custom.read_text(),'my Lua\n')
+            self.assertEqual((custom.parent/'local-guarded-ts.lua').read_bytes(),(ROOT/'asus/lua/local-guarded-ts.lua').read_bytes())
             self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native'),'/usr/lib/nfqws2/nfqws2-native')
             for name in ['lists','lua','blobs']:
                 self.assertEqual(stat.S_IMODE((root/'etc/nfqws2'/name).stat().st_mode),0o755)

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/platform.php';
 /** Fixed operator config; neither status nor construction makes a network call. */
 class AsusSupportMail
 {
@@ -6,8 +7,8 @@ class AsusSupportMail
     private string $caPath;
     public function __construct(?string $configPath=null,?string $caPath=null,private int $owner=0,private ?array $locationCommand=null,private float $locationSeconds=5,private ?array $locationGuard=null)
     {
-        $this->configPath=$configPath??'/opt/etc/nfqws-asus-web/support-relay.json';
-        $this->caPath=$caPath??'/opt/etc/ssl/certs/ca-certificates.crt';
+        $this->configPath=$configPath??NfqwsPlatform::translate('/opt/etc/nfqws-asus-web/support-relay.json');
+        $this->caPath=$caPath??NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt');
     }
     private function config(): array
     {
@@ -81,7 +82,7 @@ class AsusSupportMail
         // A separate process bounds native DNS/TLS stalls as well as socket I/O.
         // The request has no credentials, report or user-selected network target.
         $worker=$this->locationCommand??[PHP_BINARY,'-d','register_argc_argv=1','-q','-f',__DIR__.'/share-location-worker.php','--','location'];
-        $command=array_merge($this->locationGuard??['/opt/libexec/nfqws2-asus/location-launch'],$worker);
+        $command=array_merge($this->locationGuard??(NfqwsPlatform::native()?[]:['/opt/libexec/nfqws2-asus/location-launch']),$worker);
         $process=@proc_open($command,[0=>['pipe','r'],1=>['pipe','w'],2=>['file','/dev/null','w']],$pipes,'/',
             ['PATH'=>'/usr/sbin:/usr/bin:/sbin:/bin:/opt/sbin:/opt/bin','LC_ALL'=>'C'],['bypass_shell'=>true]);
         if(!is_resource($process))return $unavailable;

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/dpi-catalog.php';
 require_once __DIR__.'/dpi-runtime.php';
+require_once __DIR__.'/openwrt-dpi.php';
 /** Fixed HTTPS transport. Constructor overrides are trusted test dependencies, never HTTP input. */
 final class AsusDpiDownload
 {
@@ -65,6 +66,7 @@ final class AsusDpiInstaller
     private function primaryArtifact(): array
     {
         if($this->artifact!==null)return $this->artifact;
+        if(NfqwsPlatform::native())return NfqwsOpenWrtDpi::artifact();
         $p=@proc_open([AsusDpiRuntime::BUSYBOX,'sh','-c','. /opt/lib/nfqws2-asus/abi.sh; asus_entware_primary_abi'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/usr/bin:/bin:/opt/bin','LANG'=>'C']);
         if(!is_resource($p))throw new RuntimeException('unsupported_abi');$abi=stream_get_contents($pipes[1],64);fclose($pipes[1]);$exit=proc_close($p);
         if($exit!==0)throw new RuntimeException('unsupported_abi');return AsusDpiCatalog::artifact(trim($abi));
@@ -101,9 +103,9 @@ final class AsusDpiInstaller
         try {
             $this->primaryArtifact();$cap=(new AsusDpiRuntime())->capabilities();if(!$cap['available'])return $cap;
             if(time()<1704067200)return ['available'=>false,'code'=>'invalid_clock'];
-            if(!extension_loaded('openssl')||!is_readable('/opt/etc/ssl/certs/ca-certificates.crt'))return ['available'=>false,'code'=>'https_unavailable'];
+            if(!extension_loaded('openssl')||!is_readable(NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt')))return ['available'=>false,'code'=>'https_unavailable'];
             if(self::availableMemoryKiB(file_get_contents('/proc/meminfo'))<65536)return ['available'=>false,'code'=>'insufficient_memory'];
-            if((float)@disk_free_space('/opt')<12582912)return ['available'=>false,'code'=>'insufficient_space'];
+            if((float)@disk_free_space(NfqwsPlatform::native()?'/usr/lib/nfqws2':'/opt')<12582912)return ['available'=>false,'code'=>'insufficient_space'];
             return ['available'=>true,'code'=>'ready'];
         }catch(Throwable $e){return ['available'=>false,'code'=>in_array($e->getMessage(),['unsupported_abi','invalid_state'],true)?$e->getMessage():'unsupported_runtime'];}
     }
@@ -130,7 +132,7 @@ final class AsusDpiInstaller
     private function copyLegacyBundle(array $artifact,string $dest): void
     {
         if(($artifact['name']??null)!=='dpi-detector-armv5te')throw new RuntimeException('invalid_state');
-        $source=$this->legacyBundle??AsusDpiStore::optPath('/libexec/nfqws2-asus/optional/dpi-detector-armv5te');
+        $source=$this->legacyBundle??(NfqwsPlatform::native()?'/usr/share/nfqws2/optional/dpi-detector-armv5te':AsusDpiStore::optPath('/libexec/nfqws2-asus/optional/dpi-detector-armv5te'));
         for($p=$source;$p!=='/'&&$p!=='.';$p=dirname($p))if(is_link($p))throw new RuntimeException('invalid_state');
         $s=@lstat($source);
         if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||$s['nlink']!==1||($s['mode']&0022)!==0)throw new RuntimeException('invalid_state');
@@ -149,11 +151,11 @@ final class AsusDpiInstaller
         $artifact=$this->primaryArtifact();$stage=$this->root.'/.stage-'.$jobId;$metadata=$this->root.'/.active-'.$jobId;
         try {
             if(($artifact['source']??null)==='bundled-legacy')$this->copyLegacyBundle($artifact,$stage);
-            elseif($this->fetcher!==null)($this->fetcher)($artifact,$stage,microtime(true)+115);else (new AsusDpiDownload())->fetch($artifact,$stage,microtime(true)+115);
+            elseif($this->fetcher!==null)($this->fetcher)($artifact,$stage,microtime(true)+115);else (new AsusDpiDownload(NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt')))->fetch($artifact,$stage,microtime(true)+115);
             $s=@lstat($stage);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||$s['nlink']!==1||$s['size']!==$artifact['size'])throw new RuntimeException('download_size');
             if(!hash_equals($artifact['sha256'],hash_file('sha256',$stage)))throw new RuntimeException('download_hash');
             $f=fopen($stage,'rb');$elf=fread($f,64);fclose($f);
-            if(strlen($elf)<20||substr($elf,0,4)!=="\x7fELF"||ord($elf[4])!==$artifact['elf_class']||ord($elf[5])!==1||unpack('v',substr($elf,18,2))[1]!==$artifact['elf_machine'])throw new RuntimeException('unsupported_binary');
+            if(!NfqwsOpenWrtDpi::matchesElf($elf,$artifact))throw new RuntimeException('unsupported_binary');
             chmod($stage,0755);
             $r=$this->prober!==null?($this->prober)($jobId,[$stage,'--version'],'/',5):(new AsusDpiRuntime())->probe($jobId,[$stage,'--version'],'/',5);
             if(($r['exit']??-1)!==0||trim($r['stdout']??'')!=='dpi-detector 5.0.0-alpha.21')throw new RuntimeException('unsupported_binary');

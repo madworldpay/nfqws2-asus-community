@@ -68,6 +68,14 @@ final class NfqwsPlatform
     {
         return self::native()?new AsusShareRead($owner,null,null,$mutable):new AsusShareRead($owner,realpath('/opt'),'/opt',$mutable);
     }
+    public static function sharedFile(string $name,string $sourceFallback):string
+    {
+        if(!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D',$name)||in_array($name,['.','..'],true))throw new RuntimeException('invalid_platform_path');
+        $path=self::settings()['share'].'/'.$name;clearstatcache(true,$path);$s=@lstat($path);
+        if($s===false)return $sourceFallback;
+        if(self::native()&&(is_link($path)||!is_file($path)||$s['uid']!==0||($s['mode']&0022)!==0||$s['nlink']!==1))throw new RuntimeException('invalid_state');
+        return $path;
+    }
     /** Fixed argv selected by trusted callers, bounded output and deadline. */
     public static function run(array $argv,float $timeout=15):array
     {

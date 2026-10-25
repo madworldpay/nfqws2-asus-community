@@ -7,7 +7,7 @@ from test_support_mail_api import SupportMailApiTests
 class DpiApiTests(SupportMailApiTests):
     def setUp(self):
         super().setUp()
-        for name in ['dpi-api.php','dpi-jobs.php','dpi-install.php','dpi-runtime.php','dpi-store.php','dpi-catalog.php','dpi-normalize.php','dpi-options.php','support-json-schema.php']:
+        for name in ['dpi-api.php','dpi-jobs.php','dpi-install.php','openwrt-dpi.php','dpi-runtime.php','dpi-store.php','dpi-catalog.php','dpi-normalize.php','dpi-options.php','support-json-schema.php']:
             src=auth_api.ROOT/'webui/web/public'/name
             if src.exists():(self.base/name).write_text(src.read_text())
         (self.base/'dpi-jobs.php').write_text('''<?php

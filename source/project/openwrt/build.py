@@ -36,6 +36,7 @@ def native_metadata(series,arch,release=1):
     return dict(package='nfqws2-native',series=series,arch=arch,engine=engine,
                 format='ipk'if series=='24.10'else'apk',
                 version='1.3.2-'+('r'if series=='25.12'else'')+str(release),
+                application_build=int((ROOT/'BUILD_NUMBER').read_text()),
                 dependencies=DEPENDENCIES.copy(),elf=platform.ENGINES[engine].copy())
 
 
@@ -106,7 +107,7 @@ def payload_files(target,engine,source=None):
     platform.validate_engine(engine,target)
     files={'usr/bin/nfqws2':(engine,0o755),
         'usr/share/nfqws2/defaults/nfqws2.conf':(native_defaults(),0o600),
-        'usr/share/nfqws2/platform.json':(json.dumps({k:target[k]for k in ['series','arch','engine','format','version']}|{'platform':'openwrt'},sort_keys=True).encode()+b'\n',0o644),
+        'usr/share/nfqws2/platform.json':(json.dumps({k:target[k]for k in ['series','arch','engine','format','version','application_build']}|{'platform':'openwrt'},sort_keys=True).encode()+b'\n',0o644),
         'lib/upgrade/keep.d/nfqws2-native':(b'/etc/nfqws2/\n/etc/nfqws2-web/\n/etc/config/nfqws2-web\n',0o644)}
     for name in ['control.sh','platform.sh','firewall.sh','firewall-hook.sh','config.php','config-cli.php','flow.php','flow-cli.php','nfqws2.init']:
         installed='nfqws2-native'if name=='nfqws2.init'else name
@@ -117,6 +118,7 @@ def payload_files(target,engine,source=None):
     files['usr/lib/nfqws2/args.sh']=((args.group()+'\n').encode(),0o644)
     for path in sorted((ROOT/'core/etc/nfqws2/lists').iterdir()):
         if path.is_file():files['usr/share/nfqws2/defaults/lists/'+path.name]=(path.read_bytes(),0o644)
+    files['usr/share/nfqws2/defaults/lua/local-guarded-ts.lua']=((ROOT/'asus/lua/local-guarded-ts.lua').read_bytes(),0o644)
     if source is not None:
         for name,data in source.items():
             prefix='opt/etc/nfqws2/'
@@ -125,6 +127,35 @@ def payload_files(target,engine,source=None):
             if not re.fullmatch(r'(?:lua/[a-zA-Z0-9_-]+\.lua\.gz|blobs/[a-zA-Z0-9_-]+\.bin)',rel):continue
             if rel.endswith('.gz'):data=gzip.decompress(data);rel=rel[:-3]
             files['usr/share/nfqws2/defaults/'+rel]=(data,0o644)
+    baseline={'schema_version':1,'package_version':target['version'],'web_version':(ROOT/'VERSION').read_text().strip(),
+        'build_number':target['application_build'], 'engine':{'version':'1.0.6','provider':'nfqws2-keenetic',
+            'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':{}}
+    for name,(data,_)in files.items():
+        for kind,directory in [('lua','lua'),('blob','blobs')]:
+            prefix='usr/share/nfqws2/defaults/'+directory+'/'
+            if name.startswith(prefix):baseline['resources'][kind+'/'+name[len(prefix):]]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
+    files['usr/share/nfqws2/report-baseline.json']=((json.dumps(baseline,sort_keys=True,separators=(',',':'))+'\n').encode(),0o644)
+    for name in ['profile-catalog.schema.json','dpi-catalog.json','dpi-profile.json','dpi-native-defaults.json',
+                 'dpi-analysis-v2.schema.json','dpi-report.schema.json','dpi-envelope.schema.json','dpi-saved.schema.json',
+                 'strategy.schema.json','strategy-v2.schema.json','resources.schema.json','dns-share.schema.json',
+                 'share-v4.schema.json','share-envelope.schema.json','report.schema.json']:
+        files['usr/share/nfqws2/'+name]=((ROOT/'support'/name).read_bytes(),0o644)
+    dpi=json.loads((HERE/'dpi-assets.json').read_text())
+    files['usr/share/nfqws2/dpi-native-artifact.json']=((json.dumps({'schema_version':1,'version':dpi['version'],
+        'arch':target['arch'],'engine':target['engine'],'artifact':dpi['artifacts'].get(target['engine'])},sort_keys=True)+'\n').encode(),0o644)
+    if target['engine']=='arm':
+        legacy=(ROOT/'asus/dpi/legacy/dpi-detector-armv5te').read_bytes();record=dpi['artifacts']['arm']
+        if len(legacy)!=record['size']or hashlib.sha256(legacy).hexdigest()!=record['sha256']:raise RuntimeError('Compatible ARM DPI SHA256 mismatch')
+        files['usr/share/nfqws2/optional/dpi-detector-armv5te']=(legacy,0o644)
+    files['usr/share/licenses/nfqws2-native/dpi-detector-MIT.txt']=((ROOT/'support/dpi-detector-MIT.txt').read_bytes(),0o644)
+    for name in ['guard.sh','probe.sh','drop.sh','stop.sh','worker.php','cli.php']:
+        data=(ROOT/'asus/dpi'/name).read_bytes()
+        if name in ['worker.php','cli.php']:data=data.replace(b'/opt/share/nfqws-asus-web/',b'/usr/share/nfqws2-web/')
+        files['usr/lib/nfqws2/dpi/'+name]=(data,0o644)
+    files['usr/lib/nfqws2/dpi/paths.sh']=((HERE/'dpi-paths.sh').read_bytes(),0o644)
+    files['usr/bin/nfqws2-dpi']=((ROOT/'asus/dpi/cli.sh').read_bytes().replace(b'/opt/bin/php-cgi',b'/usr/bin/php-cgi').replace(b'/opt/lib/nfqws2-asus/dpi/cli.php',b'/usr/lib/nfqws2/dpi/cli.php'),0o755)
+    files['usr/share/nfqws2/profile-catalog-public.pem']=((ROOT/'asus/profile-catalog-public.pem').read_bytes(),0o644)
+    files['usr/share/nfqws2/support-relay-default.json']=((ROOT/'asus/support-relay.json').read_bytes(),0o644)
     for name in ['LICENSE','THIRD-PARTY-NOTICES.txt']:
         files['usr/share/licenses/nfqws2-native/'+name]=((ROOT/name).read_bytes(),0o644)
     return files
@@ -144,7 +175,7 @@ def write_files(root,files):
 
 def web_payload(dist=None):
     dist=Path(dist)if dist is not None else ROOT/'webui/web/dist'
-    for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php']:
+    for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php','resource-paths.php']:
         if not (dist/name).is_file():raise RuntimeError('Build the shared production frontend before native packaging')
     files={'usr/share/nfqws2-web/'+str(p.relative_to(dist)):(p.read_bytes(),0o644)
            for p in sorted(dist.rglob('*'))if p.is_file()and not p.name.endswith('.map')}

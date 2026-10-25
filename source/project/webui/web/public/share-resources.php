@@ -19,9 +19,13 @@ final class AsusShareResources
     public static function packageLua(string $alias='/opt',int $owner=0): array
     {
         try {
+            if($alias==='/opt'&&NfqwsPlatform::native()){
+                $reader=new AsusShareRead($owner);$path=NfqwsPlatform::sharedFile('report-baseline.json',__DIR__.'/missing-baseline.json');
+            }else{
             $base=realpath($alias);if($base===false)return [];
             $reader=new AsusShareRead($owner,$base,$alias);
             $path=rtrim($base,'/').'/share/nfqws2-asus/report-baseline.json';
+            }
             $stat=$reader->stat($path);
             if(!$stat || $stat['uid']!==$owner || ($stat['mode']&0022)!==0)return [];
             $v=json_decode($reader->bytes($path,131072),true,32,JSON_THROW_ON_ERROR);

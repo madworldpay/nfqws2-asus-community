@@ -33,7 +33,7 @@ final class AsusImportPlan
         // still contains whitespace could not retain its intended grouping.
         foreach($out as $word)if(preg_match('/\s/u',$word))throw new RuntimeException('unsupported_import_argument');return $out;
     }
-    private static function bind(string $value,array $aliases,array &$problems): string
+    private static function bind(string $value,array $aliases,array &$problems,?string $profile=null): string
     {
         if(preg_match('/\b(?:NETWORK|VARIABLE)_[1-9][0-9]*\b/',$value))$problems[]=['code'=>'unresolved_identity'];
         $words=self::words($value);$fileOperand=false;
@@ -41,7 +41,7 @@ final class AsusImportPlan
             // Exports can retain the original @ before an anonymized path.
             // Canonicalize the file marker instead of producing @@/opt/...
             $word=preg_replace_callback('/(@?)\b(RESOURCE_[1-9][0-9]*)\b/',function($m)use($aliases,&$problems,$at){if(!isset($aliases[$m[2]])){$problems[]=['code'=>'unresolved_file','alias'=>$m[2]];return $m[0];}return ($at?'@':$m[1]).$aliases[$m[2]];},$word);
-        }unset($word);return implode(' ',$words);
+        }unset($word);return implode(' ',NfqwsResourcePaths::arguments($words,$profile));
     }
     private static function dns(array $rows,array $sources,?array $old,array &$problems,array &$warnings): ?array
     {
@@ -68,8 +68,9 @@ final class AsusImportPlan
         try{return AsusSmartDnsProfile::normalize(['schema_version'=>1,'upstreams'=>$servers,'records'=>$records]);}
         catch(AsusSmartDnsProfileError $e){$problems[]=['code'=>'invalid_dns_profile','field'=>$e->field];return null;}
     }
-    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft): array
+    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null): array
     {
+        $profile??=NfqwsPlatform::current();NfqwsPlatform::settings($profile);
         self::keys($selection,['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua']);
         foreach(['allow_shared_impact','allow_incomplete','trusted_lua']as $key)if(!is_bool($selection[$key]))throw new RuntimeException('invalid_import_selection');
         foreach(['blocks','shared','ports','files','dns']as $key)if(!is_array($selection[$key]))throw new RuntimeException('invalid_import_selection');
@@ -99,10 +100,10 @@ final class AsusImportPlan
         }
         foreach($targets as &$target)if(isset($selectedTargets[$target['path']])&&$selectedTargets[$target['path']]!==$target['sha256'])$target['reuse']=false;unset($target);
         $current=($blocks||$shared||$ports||$files)?AsusImportConfig::parse($currentConfig):[];$changes=[];
-        foreach($blocks+$shared+$ports as $key=>$value)$changes[$key]=self::bind($value,$aliases,$problems);
+        foreach($blocks+$shared+$ports as $key=>$value)$changes[$key]=self::bind($value,$aliases,$problems,$profile);
         $hypothetical=$blocks+$shared;
         if($blocks)foreach(['NFQWS_BASE_ARGS','NFQWS_EXTRA_ARGS','NFQWS_ARGS_IPSET']as $key)if(isset($document['values'][$key])&&!isset($shared[$key])){
-            $bound=self::bind($document['values'][$key],$aliases,$problems);$hypothetical[$key]=$document['values'][$key];
+            $bound=self::bind($document['values'][$key],$aliases,$problems,$profile);$hypothetical[$key]=$document['values'][$key];
             if(($current[$key]??'')!==$bound){$required['shared'][]=$key;$problems[]=['code'=>'missing_shared','key'=>$key];}
         }
         foreach($hypothetical as $value)foreach($available as $id=>$file)foreach($file['aliases']as $alias)if(str_starts_with($alias,'RESOURCE_')&&preg_match('/\b'.preg_quote($alias,'/').'\b/',$value)&&(!isset($targets[$id])||(!$targets[$id]['selected']&&!$targets[$id]['reuse'])))$required['files'][]=$id;
@@ -111,14 +112,14 @@ final class AsusImportPlan
         if($sharedChanged)foreach(AsusImportConfig::BLOCKS as $key)if(!isset($blocks[$key])&&trim($current[$key]??'')!=='')$affected[]=$key;
         foreach($files as $file)if($file['replace'])foreach(AsusImportConfig::BLOCKS as $key)if(!isset($blocks[$key])&&trim($current[$key]??'')!==''){
             $uses=implode(' ',array_map(fn($k)=>$current[$k]??'',[$key,'NFQWS_BASE_ARGS','NFQWS_EXTRA_ARGS','NFQWS_ARGS_IPSET']));
-            if(preg_match('~'.preg_quote($file['path'],'~').'(?![A-Za-z0-9_.-])~',$uses))$affected[]=$key;
+            foreach(NfqwsResourcePaths::forms($file['path'])as $path)if(preg_match('~'.preg_quote($path,'~').'(?![A-Za-z0-9_.-])~',$uses)){$affected[]=$key;break;}
         }
         $affected=array_values(array_unique($affected));
         if($affected&&!$selection['allow_shared_impact'])$problems[]=['code'=>'shared_impact'];
         $hasLua=false;foreach($files as $file)if($file['kind']==='lua')$hasLua=true;foreach($changes as $value)if(preg_match('/--lua-init(?:=|\s)/',$value))$hasLua=true;
         $trustedLua=[];foreach($local as $row)if($row['kind']==='lua'&&($row['bundled_lua']??false)===true)$trustedLua['/opt/etc/nfqws2/lua/'.$row['name']]=true;
         $luaTrustNeeded=false;foreach($files as $file)if($file['kind']==='lua'&&(!$file['reuse']||!isset($trustedLua[$file['path']])))$luaTrustNeeded=true;
-        foreach($changes as $value){$words=self::words($value);for($i=0;$i<count($words);$i++){if($words[$i]==='--lua-init')$operand=$words[++$i]??'';elseif(str_starts_with($words[$i],'--lua-init='))$operand=substr($words[$i],11);else continue;if(!str_starts_with($operand,'@')||!isset($trustedLua[substr($operand,1)]))$luaTrustNeeded=true;}}
+        foreach($changes as $value){$words=self::words($value);for($i=0;$i<count($words);$i++){if($words[$i]==='--lua-init')$operand=$words[++$i]??'';elseif(str_starts_with($words[$i],'--lua-init='))$operand=substr($words[$i],11);else continue;$path=NfqwsResourcePaths::canonical(substr($operand,1))??substr($operand,1);if(!str_starts_with($operand,'@')||!isset($trustedLua[$path]))$luaTrustNeeded=true;}}
         if($luaTrustNeeded&&!$selection['trusted_lua'])$problems[]=['code'=>'lua_trust'];
         $newConfig=AsusImportConfig::replace($currentConfig,$changes);$warnings=[];
         if($luaTrustNeeded)$warnings[]=['source'=>'lua','kind'=>'lua_dependencies_unchecked'];

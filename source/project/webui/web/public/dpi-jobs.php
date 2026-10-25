@@ -48,7 +48,7 @@ final class AsusDpiJobs
     {
         $s=$this->store->status();$job=$s['active'];
         if($job!==null) {
-            $run='/opt/var/lib/nfqws2-asus/dpi-detector/runs/'.$job['id'];$outcome=null;
+            $run=NfqwsPlatform::translate('/opt/var/lib/nfqws2-asus/dpi-detector/runs/').$job['id'];$outcome=null;
             if(is_file($run.'/outcome')&&!is_link($run.'/outcome'))$outcome=trim(file_get_contents($run.'/outcome',false,null,0,32));
             elseif(time()-$job['started_at']>4&&(!isset($job['identity'])||AsusDpiRuntime::identity($job['identity']['pid'])!==$job['identity']))$outcome='interrupted';
             if($outcome!==null) {
