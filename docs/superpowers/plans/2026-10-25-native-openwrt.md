@@ -52,10 +52,10 @@ Interfaces: build_native(release_series, package_arch, engine_asset, output) emi
 ### Task 4: Shared panel native platform adapter
 Files: common PHP platform/path/service boundaries, native web service adapter, tests/test_openwrt_web.php, existing backend/frontend regression suites.
 Interfaces: trusted build/runtime profile resolves paths, service commands, model/system facts, WAN facts and capabilities; ASUS profile remains default for the existing builder.
-- [ ] Write failing path/service/auth/API tests for both profiles, including symlink and unknown profile rejection.
-- [ ] Replace firmware assumptions through explicit boundaries rather than source-wide blind path substitution.
-- [ ] Use a native dedicated web listener without changing LuCI. Adapt checkup/WAN facts and show hardware-specific controls only when present.
-- [ ] Build/lint frontend, run backend regressions, verify actual native login/config/start/status in browser; commit.
+- [x] Write failing path/service/auth/API tests for both profiles, including symlink and unknown profile rejection.
+- [x] Replace firmware assumptions through explicit boundaries rather than source-wide blind path substitution.
+- [x] Use a native dedicated web listener without changing LuCI. Adapt checkup/WAN facts and show hardware-specific controls only when present.
+- [x] Build/lint frontend, run backend regressions, verify actual native login/config/start/status in browser; commit.
 
 ### Task 5: Portable import, cloud catalog, diagnostics and export
 Files: common import/resource path abstraction, native DPI/diagnostics runtime adapter, tests/test_openwrt_import.php, tests/test_openwrt_diagnostics.php.

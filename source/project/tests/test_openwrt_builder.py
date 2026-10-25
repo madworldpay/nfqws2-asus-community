@@ -36,6 +36,20 @@ class NativeBuilderTests(unittest.TestCase):
         self.assertNotIn('/opt/',config)
         self.assertNotIn('POLICY_NAME=',config)
 
+    def test_native_panel_uses_explicit_profile_and_native_dependencies(self):
+        for dep in ['uhttpd','php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle']:
+            self.assertIn(dep,builder.DEPENDENCIES)
+        with tempfile.TemporaryDirectory()as td:
+            dist=Path(td)
+            for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php']:(dist/name).write_text('fixture')
+            files=builder.web_payload(dist)
+            profile=json.loads(files['usr/share/nfqws2-web/platform-profile.json'][0])
+            self.assertEqual(profile,{'schema_version':1,'platform':'openwrt'})
+            self.assertIn('usr/lib/nfqws2-web/nfqws2-native-web',files.keys())
+            self.assertIn('usr/lib/nfqws2-web/php-cgi.sh',files.keys())
+            self.assertNotIn('etc/config/uhttpd',files)
+            self.assertNotIn('etc/init.d/uhttpd',files)
+
     def test_staging_never_inherits_group_writable_developer_directories(self):
         with tempfile.TemporaryDirectory()as td:
             root=Path(td)/'payload';old=os.umask(0o002)
@@ -66,6 +80,8 @@ class NativeBuilderTests(unittest.TestCase):
             files['usr/share/nfqws2/defaults/'+name]=(b'test',0o644)
         with tempfile.TemporaryDirectory()as td:
             root=Path(td)/'root';builder.write_files(root,files)
+            web=root/'usr/lib/nfqws2-web/nfqws2-native-web';web.parent.mkdir(parents=True);web.write_text('fixture')
+            builder.write_files(root,{'usr/share/nfqws2/defaults/web-config':((ROOT/'openwrt/web-config').read_bytes(),0o600)})
             active=root/'etc/nfqws2/nfqws2.conf';active.parent.mkdir(parents=True);active.write_text('# preserve my config\n')
             hook=Path(td)/'postinst';hook.write_bytes(builder.package_hook(target,'postinstall'))
             subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},check=True,capture_output=True)
@@ -75,6 +91,11 @@ class NativeBuilderTests(unittest.TestCase):
                 self.assertEqual(stat.S_IMODE((root/'etc/nfqws2'/name).stat().st_mode),0o755)
             self.assertEqual(stat.S_IMODE((root/'etc/nfqws2/lists/user.list').stat().st_mode),0o644)
             self.assertEqual(stat.S_IMODE(active.stat().st_mode),0o600)
+            self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native-web'),'/usr/lib/nfqws2-web/nfqws2-native-web')
+            auth=json.loads((root/'etc/nfqws2-web/auth.json').read_text())
+            self.assertEqual(auth,{'mode':'system','username':'root','password_hash':''})
+            self.assertEqual(stat.S_IMODE((root/'etc/nfqws2-web/auth.json').stat().st_mode),0o600)
+            self.assertIn("option network 'lan'",(root/'etc/config/nfqws2-web').read_text())
 
 
 if __name__=='__main__':unittest.main()

@@ -51,6 +51,7 @@ export const RouterCheckup = ({
       ? `${(Number(v) / scale).toFixed(1)} MiB`
       : t('smartdns.checkup.unknown');
   const platform = facts('platform');
+  const native = platform?.platform === 'openwrt';
   const arkAbsent =
     facts('ark')?.present === false && facts('ark')?.loaded === false;
   const memory = facts('memory');
@@ -88,8 +89,10 @@ export const RouterCheckup = ({
               </Typography>
               {platform && (
                 <Typography variant="body2">
-                  {String(platform.kernel || '—')} · Entware{' '}
-                  {String(platform.entware_abi || '—')}
+                  {String(platform.kernel || '—')} ·{' '}
+                  {native
+                    ? `OpenWrt ${String(platform.firmware || '—')}`
+                    : `Entware ${String(platform.entware_abi || '—')}`}
                 </Typography>
               )}
               {memory && (
@@ -100,13 +103,20 @@ export const RouterCheckup = ({
                   RSS: {mib(memory.nfqws2_rss_kib, 1024)}
                 </Typography>
               )}
-              {(['storage_opt', 'storage_jffs'] as const).map((id) => {
+              {(native
+                ? ['storage_native']
+                : ['storage_opt', 'storage_jffs']
+              ).map((id) => {
                 const f = facts(id);
                 return (
                   f && (
                     <Typography variant="body2" key={id}>
-                      {id === 'storage_opt' ? '/opt' : 'JFFS'}:{' '}
-                      {mib(f.free_bytes)} ·{' '}
+                      {native
+                        ? String(f.path)
+                        : id === 'storage_opt'
+                          ? '/opt'
+                          : 'JFFS'}
+                      : {mib(f.free_bytes)} ·{' '}
                       {t(
                         f.readonly === true
                           ? 'smartdns.checkup.readonly_storage'
@@ -123,9 +133,11 @@ export const RouterCheckup = ({
                     : 'smartdns.checkup.ark_help',
                 )}
               </Typography>
-              <Typography variant="body2">
-                {t('smartdns.checkup.hooks')}
-              </Typography>
+              {!native && (
+                <Typography variant="body2">
+                  {t('smartdns.checkup.hooks')}
+                </Typography>
+              )}
             </Stack>
           </InlineHelp>
           <Button

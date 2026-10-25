@@ -41,6 +41,9 @@ final class AsusSmartDnsConfigApi
     public static function dispatch(array $post,array $deps=[]): array
     {
         self::validate($post);$cmd=$post['cmd'];
+        if(NfqwsPlatform::native()&&in_array($cmd,['wanaddresses','routercheckup'],true)){
+            require_once __DIR__.'/openwrt-web.php';return $cmd==='wanaddresses'?NfqwsOpenWrtWeb::wan():NfqwsOpenWrtWeb::checkup();
+        }
         if ($cmd==='wanaddresses') return (new AsusRouterWan($deps['wan_io']??new AsusReportIO()))->collect();
         $store=$deps['store']??new AsusSmartDnsStore();
         $backend=$deps['backend']??new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller());

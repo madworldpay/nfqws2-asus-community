@@ -41,7 +41,8 @@ export const RequirementsDialog = ({
   onOpenArk?: VoidFunction;
 }) => {
   const { t } = useTranslation();
-  const { csrfToken } = useStatus();
+  const { csrfToken, platform } = useStatus();
+  const native = platform === 'openwrt';
   const dirty = useAppStore((s) => s.needSave);
   const pendingRestart = useAppStore((s) => s.needReload);
   const [checkup, setCheckup] = useState<Checkup>();
@@ -126,7 +127,9 @@ export const RequirementsDialog = ({
               {t(
                 id === 'ark' && arkAbsent
                   ? 'ark.readiness.absent'
-                  : `requirements.quick.${id}`,
+                  : native && id === 'install'
+                    ? 'openwrt.install'
+                    : `requirements.quick.${id}`,
               )}
             </Typography>
           ))}
@@ -155,7 +158,16 @@ export const RequirementsDialog = ({
                 .filter((item) => item !== 'ark' || !arkAbsent)
                 .map((item) => (
                   <Typography variant="body2" key={item}>
-                    {t(`requirements.items.${item}`)}
+                    {t(
+                      native &&
+                        (item === 'platform' ||
+                          item === 'storage' ||
+                          item === 'transit' ||
+                          item === 'verify' ||
+                          item === 'updates')
+                        ? `openwrt.${item}`
+                        : `requirements.items.${item}`,
+                    )}
                   </Typography>
                 ))}
             </Stack>
@@ -171,11 +183,15 @@ export const RequirementsDialog = ({
             NFQWS2 ASUS Community
           </Link>
           <Link
-            href="https://www.asuswrt-merlin.net/download"
+            href={
+              native
+                ? 'https://github.com/madworldpay/nfqws2-asus-community/blob/main/OPENWRT.md'
+                : 'https://www.asuswrt-merlin.net/download'
+            }
             target="_blank"
             rel="noreferrer"
           >
-            Asuswrt-Merlin
+            {native ? 'OpenWrt' : 'Asuswrt-Merlin'}
           </Link>
           <Link
             href="https://github.com/nfqws/nfqws2-keenetic#подготовка-keeneticnetcraze"
@@ -184,20 +200,24 @@ export const RequirementsDialog = ({
           >
             NFQWS2
           </Link>
-          <Link
-            href="https://www.asus.com/support/faq/1045253/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            ASUS DNS
-          </Link>
-          <Link
-            href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/DNS-Director"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Merlin DNS Director
-          </Link>
+          {!native && (
+            <Link
+              href="https://www.asus.com/support/faq/1045253/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              ASUS DNS
+            </Link>
+          )}
+          {!native && (
+            <Link
+              href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/DNS-Director"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Merlin DNS Director
+            </Link>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>

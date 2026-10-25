@@ -1,5 +1,11 @@
 import { type ReactNode } from 'react';
-import { Backdrop, Box, CircularProgress, Typography } from '@mui/material';
+import {
+  Alert,
+  Backdrop,
+  Box,
+  CircularProgress,
+  Typography,
+} from '@mui/material';
 import { useBlocker, type AnyRouter } from '@tanstack/react-router';
 
 import { ConfirmationDialog } from '@/components/ConfirmationDialog';
@@ -25,7 +31,7 @@ export function App({
 
   const { t } = useTranslation();
 
-  const { isPending, status } = useStatus();
+  const { isPending, status, authUnavailable } = useStatus();
   const nfqwsInstalled = isPending || status;
 
   const {
@@ -47,7 +53,11 @@ export function App({
       {showFilesTabs && nfqwsInstalled && auth && <FilesTabs />}
 
       <Box flex={1} sx={{ display: 'flex', position: 'relative' }}>
-        {auth === undefined || isPending || !nfqwsInstalled ? (
+        {authUnavailable ? (
+          <Alert severity="info" sx={{ m: 2 }}>
+            {t('openwrt.auth_required')}
+          </Alert>
+        ) : auth === undefined || isPending || !nfqwsInstalled ? (
           <Backdrop open={true}>
             {nfqwsInstalled ? (
               <CircularProgress color="inherit" />

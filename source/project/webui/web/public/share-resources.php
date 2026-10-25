@@ -12,7 +12,7 @@ final class AsusShareResources
     private AsusShareRead $reader;
     public function __construct(?string $root=null,private int $owner=0,private ?array $bundledLua=null)
     {
-        $this->root=$root??AsusDpiStore::optPath('/etc/nfqws2');$this->reader=$root===null?new AsusShareRead($owner,realpath('/opt'),'/opt',true):new AsusShareRead($owner,null,null,true);
+        $this->root=$root??AsusDpiStore::optPath('/etc/nfqws2');$this->reader=$root===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true);
         if($this->bundledLua===null)$this->bundledLua=$root===null?self::packageLua('/opt',$owner):[];
     }
     /** A pinned firmware-owned /opt alias may resolve to USB or internal storage. */

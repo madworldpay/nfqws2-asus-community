@@ -25,12 +25,18 @@ nfqws_package_manager() {
 }
 
 nfqws_package_service_state() {
-    local enabled=0 running=0
+    local enabled=0 running=0 web_present=0 web_enabled=0 web_running=0
     if [ -L /etc/init.d/nfqws2-native ] && [ "$(readlink /etc/init.d/nfqws2-native)" = /usr/lib/nfqws2/nfqws2-native ]; then
         /etc/init.d/nfqws2-native enabled && enabled=1
         /usr/lib/nfqws2/control.sh check >/dev/null 2>&1 && running=1
     fi
     printf 'enabled=%s\nrunning=%s\n' "$enabled" "$running"
+    if [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ]; then
+        web_present=1
+        /etc/init.d/nfqws2-native-web enabled && web_enabled=1
+        /etc/init.d/nfqws2-native-web running && web_running=1
+    fi
+    printf 'web_present=%s\nweb_enabled=%s\nweb_running=%s\n' "$web_present" "$web_enabled" "$web_running"
 }
 
 nfqws_package_snapshot() {
@@ -68,6 +74,9 @@ nfqws_package_preinstall() {
     if [ -e /etc/init.d/nfqws2-native ] || [ -L /etc/init.d/nfqws2-native ]; then
         [ -L /etc/init.d/nfqws2-native ] && [ "$(readlink /etc/init.d/nfqws2-native)" = /usr/lib/nfqws2/nfqws2-native ] || { echo native_service_owner_conflict >&2; return 1; }
     fi
+    if [ -e /etc/init.d/nfqws2-native-web ] || [ -L /etc/init.d/nfqws2-native-web ]; then
+        [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ] || { echo native_web_owner_conflict >&2; return 1; }
+    fi
     nfqws_package_snapshot && nfqws_package_prepare_upgrade
 }
 
@@ -99,12 +108,28 @@ nfqws_package_defaults() {
     else
         ln -s /usr/lib/nfqws2/nfqws2-native "$dst" || return 1
     fi
+    if [ -f "$root/usr/lib/nfqws2-web/nfqws2-native-web" ]; then
+        [ ! -L "$root/etc/nfqws2-web" ] && [ ! -L "$root/etc/config/nfqws2-web" ] || return 1
+        mkdir -p "$root/etc/config" "$root/etc/nfqws2-web" || return 1
+        chmod 700 "$root/etc/nfqws2-web" || return 1
+        if [ ! -e "$root/etc/config/nfqws2-web" ]; then cp "$src/web-config" "$root/etc/config/nfqws2-web" || return 1; fi
+        dst="$root/etc/nfqws2-web/auth.json"
+        [ ! -L "$dst" ] || return 1
+        if [ ! -e "$dst" ]; then
+            printf '%s\n' '{"mode":"system","username":"root","password_hash":""}' > "$dst" || return 1
+            chmod 600 "$dst" || return 1
+        fi
+        dst="$root/etc/init.d/nfqws2-native-web"
+        if [ -e "$dst" ] || [ -L "$dst" ]; then
+            [ -L "$dst" ] && [ "$(readlink "$dst")" = /usr/lib/nfqws2-web/nfqws2-native-web ] || return 1
+        else ln -s /usr/lib/nfqws2-web/nfqws2-native-web "$dst" || return 1; fi
+    fi
 }
 
 nfqws_package_postinstall() {
     nfqws_package_defaults || return 1
     [ -z "$IPKG_INSTROOT" ] || return 0
-    local enabled=0 running=0 path manager
+    local enabled=0 running=0 path manager web_enabled=1 web_running=1
     nfqws_package_guard "$nfqws_package_state_dir" || return 1
     if [ -f "$nfqws_package_state_dir/state" ] && [ ! -L "$nfqws_package_state_dir/state" ]; then
         manager=$(nfqws_package_manager) || return 1
@@ -112,6 +137,11 @@ nfqws_package_postinstall() {
         enabled=$(sed -n 's/^enabled=\([01]\)$/\1/p' "$nfqws_package_state_dir/state")
         running=$(sed -n 's/^running=\([01]\)$/\1/p' "$nfqws_package_state_dir/state")
         case "$enabled:$running" in 0:0|0:1|1:0|1:1) ;; *) return 1;; esac
+        if [ "$(sed -n 's/^web_present=//p' "$nfqws_package_state_dir/state")" = 1 ]; then
+            web_enabled=$(sed -n 's/^web_enabled=\([01]\)$/\1/p' "$nfqws_package_state_dir/state")
+            web_running=$(sed -n 's/^web_running=\([01]\)$/\1/p' "$nfqws_package_state_dir/state")
+            case "$web_enabled:$web_running" in 0:0|0:1|1:0|1:1) ;; *) return 1;; esac
+        fi
     fi
     path=$(uci -q get firewall.nfqws2_native.path)
     if [ -n "$(uci -q get firewall.nfqws2_native)" ]; then
@@ -125,6 +155,11 @@ nfqws_package_postinstall() {
     if [ "$enabled" = 1 ]; then /etc/init.d/nfqws2-native enable || return 1
     else /etc/init.d/nfqws2-native disable || return 1; fi
     [ "$running" != 1 ] || /etc/init.d/nfqws2-native start || return 1
+    if [ -x /etc/init.d/nfqws2-native-web ]; then
+        if [ "$web_enabled" = 1 ]; then /etc/init.d/nfqws2-native-web enable || return 1
+        else /etc/init.d/nfqws2-native-web disable || return 1; fi
+        [ "$web_running" != 1 ] || /etc/init.d/nfqws2-native-web start || return 1
+    fi
     rm -f "$nfqws_package_state_dir/state"
     rmdir "$nfqws_package_state_dir" 2>/dev/null || :
 }
@@ -137,6 +172,11 @@ nfqws_package_preremove() {
     if [ "$PKG_UPGRADE" = 1 ] || [ "$1" = upgrade ]; then nfqws_package_snapshot || return 1
     else [ ! -x /etc/init.d/nfqws2-native ] || /etc/init.d/nfqws2-native disable || return 1; fi
     [ ! -x /etc/init.d/nfqws2-native ] || /etc/init.d/nfqws2-native stop || return 1
+    if [ -e /etc/init.d/nfqws2-native-web ] || [ -L /etc/init.d/nfqws2-native-web ]; then
+        [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ] || return 1
+        if [ "$PKG_UPGRADE" != 1 ] && [ "$1" != upgrade ]; then /etc/init.d/nfqws2-native-web disable || return 1; fi
+        /etc/init.d/nfqws2-native-web stop || return 1
+    fi
 }
 
 nfqws_package_postremove() {
@@ -145,6 +185,7 @@ nfqws_package_postremove() {
     if [ -L /etc/init.d/nfqws2-native ] && [ "$(readlink /etc/init.d/nfqws2-native)" = /usr/lib/nfqws2/nfqws2-native ]; then
         rm /etc/init.d/nfqws2-native
     fi
+    if [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ]; then rm /etc/init.d/nfqws2-native-web; fi
     if [ "$(uci -q get firewall.nfqws2_native.path)" = /usr/lib/nfqws2/firewall-hook.sh ]; then
         uci -q delete firewall.nfqws2_native && uci commit firewall || return 1
     fi

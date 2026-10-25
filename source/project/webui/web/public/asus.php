@@ -1,5 +1,6 @@
 <?php
-const ASUS_WEB_AUTH_FILE = '/opt/etc/nfqws-asus-web/auth.json';
+require_once __DIR__.'/platform.php';
+define('ASUS_WEB_AUTH_FILE', NfqwsPlatform::translate('/opt/etc/nfqws-asus-web/auth.json'));
 
 // Only usable UID-0 system accounts participate in the default router login.
 function asusWebSystemAccounts(string $passwdFile, string $shadowFile): array
@@ -36,7 +37,7 @@ function asusAuthenticate(string $username, string $password, string $passwdFile
     return strlen($candidate) >= 13 && hash_equals($hash, $candidate);
 }
 
-function asusWebReadAuth(string $path = ASUS_WEB_AUTH_FILE, string $passwdFile = '/etc/passwd', string $shadowFile = '/etc/shadow'): ?array
+function asusWebReadAuth(string $path = ASUS_WEB_AUTH_FILE, string $passwdFile = '/etc/passwd', string $shadowFile = '/etc/shadow', ?string $profile = null): ?array
 {
     $source = @file_get_contents($path);
     if ($source === false) return null;
@@ -46,9 +47,12 @@ function asusWebReadAuth(string $path = ASUS_WEB_AUTH_FILE, string $passwdFile =
         !is_string($auth['password_hash'] ?? null)) return null;
     $hash = $auth['password_hash'];
     if ($hash !== '' && password_get_info($hash)['algo'] === null) return null;
-    // The packaged system mode always has a protected fallback.
-    if ($auth['mode'] === 'system' && $hash === '') return null;
+    // ASUS preserves its protected fallback. Native OpenWrt uses the existing
+    // system account only; an unset/locked root password never opens the panel.
+    $native = NfqwsPlatform::settings($profile)['root'] === '';
+    if ($auth['mode'] === 'system' && $hash === '' && !$native) return null;
     $accounts = $auth['mode'] === 'system' ? asusWebSystemAccounts($passwdFile, $shadowFile) : [];
+    if ($auth['mode'] === 'system' && $hash === '' && !$accounts) return null;
     $auth['revision'] = hash('sha256', $source . json_encode($accounts));
     if ($accounts) {
         $auth['accounts'] = $accounts;

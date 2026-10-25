@@ -87,7 +87,7 @@
     "strategy_default_unavailable": "Could not read the default strategy. Fields were left unchanged.",
     "ISP_INTERFACE": "WAN interfaces (ISP_INTERFACE)",
     "ISP_INTERFACE_AUTO": "Automatic",
-    "ISP_INTERFACE_HELP": "Leave empty to automatically select active ASUS WAN interfaces. For manual selection, enter one interface name or several names separated by spaces.",
+    "ISP_INTERFACE_HELP": "Leave empty to automatically select the router’s active WAN interfaces. For manual selection, enter one interface name or several names separated by spaces.",
     "NFQWS_BASE_ARGS": "Startup arguments",
     "NFQWS_ARGS": "Base strategy",
     "NFQWS_ARGS_QUIC": "Quic strategy",
@@ -116,7 +116,7 @@
     "ASUS_CLIENT_HELP": "Separate addresses and subnets with spaces. In «Only listed devices» mode, an empty IPv4 or IPv6 list leaves that traffic unprocessed by NFQWS2.",
     "WAN_TITLE": "This router's WAN IPv4",
     "WAN_LOADING": "Reading active WAN interface addresses…",
-    "WAN_UNAVAILABLE": "Current WAN address could not be determined. Check the stock ASUS panel: Network Map → Internet Status.",
+    "WAN_UNAVAILABLE": "The current WAN address could not be determined. Check it in the router’s own administration panel.",
     "WAN_PARTIAL": "Found addresses are shown; information about other WAN interfaces is incomplete.",
     "WAN_HELP": "This is the router interface address. Behind another router or NAT it can be private. Add it for tests originating on ASUS; VPN or routing policies may choose a different source address. Refresh the entry if WAN IP changes.",
     "WAN_ALL": "In All devices mode this traffic is already selected.",
@@ -846,5 +846,14 @@
       "global": "Global strategies",
       "update": "Update the package to use this preset."
     }
+  },
+  "openwrt": {
+    "install": "Install the native IPK or APK matching your OpenWrt release and exact package architecture. Panel: http://router-IP:90.",
+    "platform": "Platform: uses the native OpenWrt package manager. Match the firmware release and DISTRIB_ARCH. Requires UID 0, firewall4 and compatible NFQUEUE modules from your firmware feeds.",
+    "storage": "Memory and storage: allow space for the package, dependencies and backups. Jobs and temporary files in /tmp use RAM. Configuration is stored in /etc/nfqws2.",
+    "transit": "SmartDNS integrates through native OpenWrt facilities. Existing DHCP settings, local names and rules owned by other DNS services are preserved. Use “Restore previous DNS” to undo. A browser or VPN may use its own DNS.",
+    "verify": "Check the process, queue binding, packet delivery and a complete service response from the selected device. New connections and actual video or voice matter more than one successful HTTPS request. A VPN or another NFQWS2 on the path may affect the result.",
+    "updates": "Updates preserve the active settings. First installation creates the initial configuration with processing disabled. Updates restore the previous service state.",
+    "auth_required": "Set a root password in the OpenWrt administration panel, then reload this page. If a separate panel password is already configured, check its authorization file at /etc/nfqws2-web/auth.json."
   }
 }

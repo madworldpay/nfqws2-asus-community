@@ -355,7 +355,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     conffiles = ''  # Active NFQWS2 config/lists are created once, never unpacked over.
 
     dist = ROOT/'webui/web/dist'
-    for name in ['index.html', 'index.php', 'asus.php', 'ark.php', 'support-report.php',
+    for name in ['index.html', 'index.php', 'asus.php', 'ark.php', 'platform.php', 'support-report.php',
                  'support-report-io.php', 'support-report-values.php',
                  'support-report-platform.php', 'support-report-network.php',
                  'support-mail.php', 'support-mail-proof.php', 'support-report-dns.php',

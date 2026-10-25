@@ -10,7 +10,7 @@ final class AsusImportStore
     public function __construct(?string $root=null,private int $owner=0)
     {
         $this->root=$root??AsusDpiStore::optPath('/var/lib/nfqws2-asus/import');
-        $this->reader=$root===null?new AsusShareRead($owner,realpath('/opt'),'/opt'):new AsusShareRead($owner);
+        $this->reader=$root===null?NfqwsPlatform::reader($owner):new AsusShareRead($owner);
     }
     public function directory(bool $create=false): ?string
     {

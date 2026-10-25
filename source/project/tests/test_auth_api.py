@@ -27,7 +27,7 @@ class PasswordApiTests(unittest.TestCase):
           if(is_file(__DIR__.'/update-busy'))throw new RuntimeException('busy');
           $f=fopen(__DIR__.'/http-mutation.lock','c+');flock($f,LOCK_SH);return $f;
         }}''')
-        for name in ['index.php', 'asus.php', 'ark.php']:
+        for name in ['index.php', 'asus.php', 'ark.php', 'platform.php']:
             source = (ROOT / 'webui/web/public' / name).read_text()
             for original, replacement in [('/opt/etc/nfqws-asus-web/auth.json', self.auth),
                                           ('/etc/passwd', self.base / 'passwd'),

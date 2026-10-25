@@ -25,7 +25,8 @@ HERE=Path(__file__).resolve().parent
 ASSETS=json.loads((HERE/'assets.json').read_text())
 spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platform.py')
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
-DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi','flock']
+DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi',
+              'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd']
 
 
 def native_metadata(series,arch,release=1):
@@ -106,7 +107,7 @@ def payload_files(target,engine,source=None):
     files={'usr/bin/nfqws2':(engine,0o755),
         'usr/share/nfqws2/defaults/nfqws2.conf':(native_defaults(),0o600),
         'usr/share/nfqws2/platform.json':(json.dumps({k:target[k]for k in ['series','arch','engine','format','version']}|{'platform':'openwrt'},sort_keys=True).encode()+b'\n',0o644),
-        'lib/upgrade/keep.d/nfqws2-native':(b'/etc/nfqws2/\n/etc/nfqws2-web/\n',0o644)}
+        'lib/upgrade/keep.d/nfqws2-native':(b'/etc/nfqws2/\n/etc/nfqws2-web/\n/etc/config/nfqws2-web\n',0o644)}
     for name in ['control.sh','platform.sh','firewall.sh','firewall-hook.sh','config.php','config-cli.php','flow.php','flow-cli.php','nfqws2.init']:
         installed='nfqws2-native'if name=='nfqws2.init'else name
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
@@ -141,6 +142,19 @@ def write_files(root,files):
         path.write_bytes(data);path.chmod(mode)
 
 
+def web_payload(dist=None):
+    dist=Path(dist)if dist is not None else ROOT/'webui/web/dist'
+    for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php']:
+        if not (dist/name).is_file():raise RuntimeError('Build the shared production frontend before native packaging')
+    files={'usr/share/nfqws2-web/'+str(p.relative_to(dist)):(p.read_bytes(),0o644)
+           for p in sorted(dist.rglob('*'))if p.is_file()and not p.name.endswith('.map')}
+    files['usr/share/nfqws2-web/platform-profile.json']=(b'{"schema_version":1,"platform":"openwrt"}\n',0o644)
+    for name,installed in [('web.sh','web.sh'),('php-cgi.sh','php-cgi.sh'),('nfqws2-web.init','nfqws2-native-web')]:
+        files['usr/lib/nfqws2-web/'+installed]=((HERE/name).read_bytes(),0o644 if name=='web.sh'else 0o755)
+    files['usr/share/nfqws2/defaults/web-config']=((HERE/'web-config').read_bytes(),0o600)
+    return files
+
+
 def package_hook(target,action,upgrade=False):
     text='#!/bin/sh\numask 077\nPATH=/usr/sbin:/usr/bin:/sbin:/bin\nexport PATH\n'
     for key,value in [('ACTION',action),('ARCH',target['arch']),('SERIES',target['series']),('FORMAT',target['format'])]:
@@ -153,7 +167,7 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
     target=native_metadata(series,package_arch,release);output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
     source=source_payload(cache,offline);engine=prepare_engine(target,source,upx)
     with tempfile.TemporaryDirectory(prefix='nfqws-native-package-')as td:
-        stage=Path(td)/'payload';write_files(stage,payload_files(target,engine,source))
+        stage=Path(td)/'payload';write_files(stage,payload_files(target,engine,source)|web_payload())
         hooks={key:package_hook(target,action)for key,action in [('preinst','preinstall'),('postinst','postinstall'),('prerm','preremove'),('postrm','postremove')]}
         if target['format']=='ipk':
             metadata='Package: nfqws2-native\nVersion: '+target['version']+'\nArchitecture: '+target['arch']+'\nDepends: '+', '.join(target['dependencies'])+'\nMaintainer: madworldpay\nSection: net\nLicense: MIT\nDescription: NFQWS2 community native OpenWrt service\n'

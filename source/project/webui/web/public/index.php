@@ -5,7 +5,7 @@ require_once __DIR__ . '/asus.php';
 require_once __DIR__ . '/ark.php';
 
 define('NFQWS2', true);
-define('ROOT_DIR', '/opt');
+define('ROOT_DIR', NfqwsPlatform::settings()['root']);
 const SCRIPT_NAME = 'S51nfqws2';
 const CONF_DIR = NFQWS2 ? '/etc/nfqws2' : '/etc/nfqws';
 const LISTS_DIR = NFQWS2 ? '/etc/nfqws2/lists' : '/etc/nfqws';
@@ -57,6 +57,7 @@ function getFilePath(string $filename): string
   } else {
     $path = ROOT_DIR . CONF_DIR . '/' . basename($filename);
   }
+  if(NfqwsPlatform::native())$path=NfqwsPlatform::guardFile(dirname($path),basename($path));
   return $path;
 }
 
@@ -146,6 +147,7 @@ function getFileContent(string $filename): string
   if (file_exists($path)) {
     return file_get_contents($path);
   } else if (file_exists($path . '.gz')) {
+    if(NfqwsPlatform::native())NfqwsPlatform::guardFile(dirname($path),basename($path).'.gz');
     return file_get_contents('compress.zlib://' . $path . '.gz');
   }
   return '';
@@ -154,7 +156,9 @@ function getFileContent(string $filename): string
 function getLogContent(string $filename): string
 {
   $filename = baseFileName($filename);
-  $file = file(ROOT_DIR . LOGS_DIR . '/' . $filename);
+  $path=ROOT_DIR . LOGS_DIR . '/' . $filename;
+  if(NfqwsPlatform::native())$path=NfqwsPlatform::guardFile(dirname($path),$filename);
+  $file = file($path);
   $file = array_reverse($file);
   return implode("", $file);
 }
@@ -204,27 +208,24 @@ function nfqwsArkLoaded(): ?bool
 
 function nfqwsServiceStatus(): array
 {
-  $output = null;
-  $path = ROOT_DIR . "/etc/init.d/" . SCRIPT_NAME;
+  $command=NfqwsPlatform::serviceCommand('status');$path=$command[0];
   if (!file_exists($path)) {
     return array('service' => false, 'status' => 1);
   }
 
-  exec($path . " status", $output);
-  $running = str_contains($output[0] ?? '', 'is running');
+  $result=NfqwsPlatform::run($command);
+  $running = $result['status']===0&&str_contains($result['output'][0] ?? '', 'is running');
   return array('service' => $running, 'status' => 0);
 }
 
 function nfqwsServiceAction(string $action): array
 {
-  $output = null;
-  $retval = null;
-  exec(ROOT_DIR . "/etc/init.d/" . SCRIPT_NAME . " $action 2>&1", $output, $retval);
-  return array('output' => $output, 'status' => $retval);
+  return NfqwsPlatform::run(NfqwsPlatform::serviceCommand($action));
 }
 
 function nfqwsInstalledVersion(): string
 {
+  if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-web.php';return NfqwsOpenWrtWeb::version();}
   $output = [];
   exec("opkg status nfqws2-asus | awk -F': ' '/^Version:/ {print $2}'", $output);
   return $output[0] ?? '';
@@ -237,6 +238,14 @@ function upgradeAction(): array
 
 function main(): void
 {
+  if(NfqwsPlatform::native()&&($_SERVER['REQUEST_METHOD']??'')==='GET'){
+    // Native packages normalize timestamps; uhttpd's static HTML validators can
+    // otherwise retain the previous bundle across an in-place upgrade.
+    header('Content-Type: text/html; charset=utf-8');header('Cache-Control: no-store');
+    $html=__DIR__.'/index.html';$s=@lstat($html);
+    if(!$s||is_link($html)||$s['uid']!==0||($s['mode']&0022)!==0){http_response_code(503);exit();}
+    readfile($html);exit();
+  }
   if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(302);
     header('Location: index.html');
@@ -251,6 +260,10 @@ function main(): void
   $auth = asusWebReadAuth();
   if ($auth === null) {
     http_response_code(503);
+    if(NfqwsPlatform::native()){
+      header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+      echo json_encode(['error'=>'auth_unconfigured']);
+    }
     exit();
   }
   $authEnabled = $auth['mode'] === 'system' || $auth['password_hash'] !== '';
@@ -519,11 +532,13 @@ function main(): void
       exit();
 
     case 'arkstatus':
-      $response = (new AsusArkSettings(new AsusArkPlatform()))->status();
+      if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-web.php';$response=NfqwsOpenWrtWeb::arkStatus();}
+      else $response = (new AsusArkSettings(new AsusArkPlatform()))->status();
       break;
 
     case 'arkprepare':
     case 'arkrestore':
+      if(NfqwsPlatform::native()){$response=['status'=>1,'error'=>'unsupported_runtime'];break;}
       if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         http_response_code(403);
         exit();
@@ -534,7 +549,7 @@ function main(): void
 
     case 'status':
       $status = nfqwsServiceStatus();
-      $response = array('status' => $status['status'], 'service' => $status['service'], 'ark_loaded' => nfqwsArkLoaded(), 'nfqws2' => NFQWS2, 'version' => nfqwsInstalledVersion(), 'anonym' => !$authEnabled, 'authenticated' => $authEnabled && $sessionValid, 'csrf_token' => $_SESSION['csrf_token'], 'username' => $sessionValid ? $_SESSION['auth_username'] : $auth['username']);
+      $response = array('status' => $status['status'], 'service' => $status['service'], 'ark_loaded' => nfqwsArkLoaded(), 'nfqws2' => NFQWS2, 'platform'=>NfqwsPlatform::current(), 'version' => nfqwsInstalledVersion(), 'anonym' => !$authEnabled, 'authenticated' => $authEnabled && $sessionValid, 'csrf_token' => $_SESSION['csrf_token'], 'username' => $sessionValid ? $_SESSION['auth_username'] : $auth['username']);
       break;
 
     case 'filenames':
@@ -620,4 +635,8 @@ function main(): void
   exit();
 }
 
-main();
+try{main();}catch(Throwable $e){
+  header('Content-Type: application/json; charset=utf-8');
+  $unsafe=$e->getMessage()==='unsafe_panel_file';http_response_code($unsafe?400:503);
+  echo json_encode(['error'=>$unsafe?'invalid_request':'invalid_state']);
+}

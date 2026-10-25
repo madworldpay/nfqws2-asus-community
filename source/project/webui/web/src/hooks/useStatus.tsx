@@ -27,6 +27,8 @@ export const useVersionCheck = (url: string, enabled = true) => {
 };
 
 type UseStatusResult = {
+  platform: 'asus-entware' | 'openwrt';
+  authUnavailable?: boolean;
   status: boolean;
   nfqws2: boolean;
   service: boolean;
@@ -47,7 +49,7 @@ type UseStatusResult = {
 };
 
 export const useStatus = (): UseStatusResult => {
-  const { data: status, isPending, isError } = API.status();
+  const { data: status, isPending, isError, error } = API.status();
 
   const { updateUrl, webUpdateUrl } = useConfig(status?.nfqws2 ?? false);
 
@@ -64,6 +66,7 @@ export const useStatus = (): UseStatusResult => {
       const currentWeb = parsePackageVersion(process.env.APP_VERSION).version;
 
       return {
+        platform: status.platform === 'openwrt' ? 'openwrt' : 'asus-entware',
         status: true,
         nfqws2: status.nfqws2,
         service: status.service,
@@ -84,6 +87,12 @@ export const useStatus = (): UseStatusResult => {
     }
 
     return {
+      platform: 'asus-entware',
+      authUnavailable:
+        isError &&
+        error !== null &&
+        'error' in error &&
+        error.error === 'auth_unconfigured',
       status: isError || isPending,
       nfqws2: true,
       service: false,
@@ -91,5 +100,5 @@ export const useStatus = (): UseStatusResult => {
       authenticated: false,
       isPending,
     };
-  }, [isError, isPending, latest, latestWeb, status]);
+  }, [error, isError, isPending, latest, latestWeb, status]);
 };

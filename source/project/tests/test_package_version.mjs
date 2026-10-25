@@ -72,6 +72,7 @@ try {
         import { queryClient } from '@/api/client';
         import { createAPIClient } from '@/api/create-api-client';
         import { CurrentVersion } from '@/components/CurrentVersion';
+        import { useStatus } from '@/hooks/useStatus';
         import { TranslationContext } from '@/context/TranslationContext';
         import en from '@/translations/en.json';
         import ru from '@/translations/ru.json';
@@ -86,6 +87,13 @@ try {
           return renderToStaticMarkup(createElement(QueryClientProvider, { client: queryClient },
             createElement(TranslationContext.Provider, { value: { t, langcode: language, setLanguage() {} } },
               createElement(CurrentVersion))));
+        }
+        export function renderUnavailable() {
+          const key = createAPIClient().indexPhp.postIndexCmd.getQueryKey({ body: { cmd: 'status' } });
+          queryClient.setQueryDefaults(key,{retryOnMount:false});
+          queryClient.getQueryCache().build(queryClient,{queryKey:key}).setState({data:undefined,status:'error',error:{error:'auth_unconfigured'},fetchStatus:'idle'});
+          function Probe(){return createElement('span',null,useStatus().authUnavailable?'setup-required':'missing');}
+          return renderToStaticMarkup(createElement(QueryClientProvider,{client:queryClient},createElement(Probe)));
         }
       `,
     },
@@ -102,7 +110,7 @@ try {
     outfile,
     logLevel: 'silent',
   });
-  const { renderVersion } = await import(pathToFileURL(outfile).href);
+  const { renderVersion, renderUnavailable } = await import(pathToFileURL(outfile).href);
   const labels = (html) =>
     Array.from(
       html.matchAll(/<span class="MuiChip-label[^"]*">([^<]*)<\/span>/g),
@@ -126,6 +134,7 @@ try {
   assert.deepEqual(labels(html), ['1.3.1-asus6 — Build 12']);
   assert.equal((html.match(/MuiChip-colorWarning/g) ?? []).length,1,'hidden WebUI version still participates in update detection');
   assert.equal((renderVersion('1.3.1-asus6+b12','ru',{...update,state:'failed',candidate:null}).match(/MuiChip-colorWarning/g) ?? []).length,0);
+  assert.match(renderUnavailable(),/setup-required/,'unset native system credentials must produce a visible setup state');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }
