@@ -1,5 +1,5 @@
 {
-  "arm": {"class": 1, "endian": 1, "machine": 40, "baseline": "ARMv6 soft-float EABI"},
+  "arm": {"class": 1, "endian": 1, "machine": 40, "baseline": "ARMv7 soft-float EABI"},
   "arm64": {"class": 2, "endian": 1, "machine": 183, "baseline": "ARMv8-A"},
   "mips": {"class": 1, "endian": 2, "machine": 8, "baseline": "MIPS32 soft-float"},
   "mipsel": {"class": 1, "endian": 1, "machine": 8, "baseline": "MIPS32 soft-float"},

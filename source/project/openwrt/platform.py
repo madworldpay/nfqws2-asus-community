@@ -38,7 +38,7 @@ def engine_for_arch(arch: str) -> str:
         raise ValueError('native_architecture_required')
     if re.fullmatch(r'aarch64(?:_[a-z0-9_-]+)?', arch):
         return 'arm64'
-    if re.fullmatch(r'arm_(?:cortex-a[0-9]+|arm1176jzf-s)(?:_[a-z0-9_-]+)?', arch):
+    if re.fullmatch(r'arm_cortex-a[0-9]+(?:_[a-z0-9_-]+)?', arch):
         return 'arm'
     if re.fullmatch(r'mips(?:el)?_(?:4kec|24kc|24kec|74kc|1004kc)(?:_[a-z0-9_-]+)?', arch):
         return 'mipsel' if arch.startswith('mipsel_') else 'mips'
@@ -89,7 +89,16 @@ def validate_engine(data: bytes, target: dict) -> None:
     if (len(data) < 64 or data[:4] != b'\x7fELF' or data[6] != 1 or
             data[4] != expected['class'] or data[5] != expected['endian']):
         raise ValueError('engine_elf_mismatch')
+    cls=data[4]
     endian = 'little' if data[5] == 1 else 'big'
+    offset=int.from_bytes(data[28:32] if cls==1 else data[32:40],endian)
+    size=int.from_bytes(data[42:44] if cls==1 else data[54:56],endian)
+    count=int.from_bytes(data[44:46] if cls==1 else data[56:58],endian)
+    if count and (size<(32 if cls==1 else 56) or count>1024 or offset+size*count>len(data)):
+        raise ValueError('engine_elf_mismatch')
+    for at in range(offset,offset+size*count,size or 1):
+        if int.from_bytes(data[at:at+4],endian)==3:
+            raise ValueError('engine_dynamic_loader')
     if (int.from_bytes(data[16:18], endian) not in (2, 3) or
             int.from_bytes(data[18:20], endian) != expected['machine'] or
             int.from_bytes(data[20:24], endian) != 1):

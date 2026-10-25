@@ -82,3 +82,14 @@ nfqws_queue_facts() {
       else if(found)printf "bound %s %s\n",seq,port;
       else print "unbound null null";}' "$file"
 }
+
+nfqws_wait_started() {
+    local attempts=0
+    while [ "$attempts" -lt 10 ]; do
+        nfqws_check && return 0
+        attempts=$((attempts+1))
+        sleep 1 || return 1
+    done
+    printf 'queue_not_bound\n' >&2
+    return 1
+}

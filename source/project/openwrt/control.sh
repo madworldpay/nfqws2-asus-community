@@ -97,9 +97,6 @@ case "$1" in
     preflight) nfqws_preflight;;
     firewall) nfqws_capture;;
     remove-firewall) nfqws_firewall_stop && rm -f "$NFQWS_RUN/capture.state";;
-    check-started)
-        tries=0
-        while [ "$tries" -lt 30 ]; do nfqws_check && exit 0; tries=$((tries+1)); sleep 0.1; done
-        echo queue_not_bound >&2; exit 1;;
+    check-started) nfqws_wait_started;;
     *) echo invalid_operation >&2; exit 1;;
 esac

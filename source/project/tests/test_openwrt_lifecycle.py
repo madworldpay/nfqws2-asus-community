@@ -63,6 +63,17 @@ service_started
                 self.assertEqual(r.returncode,0,r.stderr)
                 self.assertEqual(r.stdout.strip(),expected)
 
+    def test_readiness_wait_uses_base_busybox_integer_sleep(self):
+        r=subprocess.run(['sh','-c','''
+. "$LIB"
+checks=0
+nfqws_check() { checks=$((checks+1)); [ "$checks" -ge 3 ]; }
+sleep() { [ "$1" = 1 ] || return 1; printf 'sleep=%s\n' "$1"; }
+nfqws_wait_started
+'''],env={**os.environ,'LIB':str(ROOT/'openwrt/platform.sh')},capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(r.stdout.splitlines(),['sleep=1','sleep=1'])
+
 
 @unittest.skipUnless(JSONFILTER,'Set NFQWS_TEST_JSONFILTER to the native OpenWrt parser')
 class OpenWrtUplinkTests(unittest.TestCase):

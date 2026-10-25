@@ -1,0 +1,80 @@
+"""Native packaging has its own architecture, dependencies and upgrade contract."""
+import importlib.util
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import tempfile
+import unittest
+
+ROOT=Path(__file__).resolve().parents[1]
+spec=importlib.util.spec_from_file_location('openwrt_builder',ROOT/'openwrt/build.py')
+builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+ENGINE_DIR=os.environ.get('NFQWS_TEST_ENGINE_DIR')
+
+
+class NativeBuilderTests(unittest.TestCase):
+    def test_ipk_apk_metadata_is_native_and_does_not_change_entware(self):
+        for series,fmt,version in [('24.10','ipk','1.3.2-1'),('25.12','apk','1.3.2-r1')]:
+            with self.subTest(series=series):
+                m=builder.native_metadata(series,'arm_cortex-a9')
+                self.assertEqual((m['package'],m['format'],m['version'],m['arch']),('nfqws2-native',fmt,version,'arm_cortex-a9'))
+                for dep in ['kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi','flock','firewall4']:
+                    self.assertIn(dep,m['dependencies'])
+                self.assertFalse(any('/opt' in d or 'entware' in d for d in m['dependencies']))
+
+    def test_architecture_series_and_release_cannot_inject_metadata(self):
+        for args in [('24.10','all',1),('25.12','armv7-3.2',1),('24.10\n','arm_cortex-a9',1),('24.10','arm_cortex-a9',0),('24.10','arm_cortex-a9','1;reboot')]:
+            with self.subTest(args=args),self.assertRaises(ValueError):builder.native_metadata(*args)
+
+    def test_defaults_are_portable_and_discover_uplinks(self):
+        config=builder.native_defaults().decode()
+        self.assertIn('ISP_INTERFACE=""',config)
+        self.assertIn('/etc/nfqws2/lua/zapret-lib.lua',config)
+        self.assertIn('ASUS_CLIENT_MODE="all"',config)
+        self.assertNotIn('/opt/',config)
+        self.assertNotIn('POLICY_NAME=',config)
+
+    def test_staging_never_inherits_group_writable_developer_directories(self):
+        with tempfile.TemporaryDirectory()as td:
+            root=Path(td)/'payload';old=os.umask(0o002)
+            try:builder.write_files(root,{'usr/lib/nfqws2/test':(b'data',0o644)})
+            finally:os.umask(old)
+            for p in [root,*root.rglob('*')]:
+                self.assertEqual(stat.S_IMODE(p.stat().st_mode)&0o022,0,str(p))
+
+    @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
+    def test_payload_only_contains_selected_static_engine_and_native_paths(self):
+        raw=(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes()
+        files=builder.payload_files(builder.native_metadata('24.10','arm_cortex-a9'),raw)
+        self.assertEqual(files['usr/bin/nfqws2'],(raw,0o755))
+        for name in ['usr/lib/nfqws2/control.sh','usr/lib/nfqws2/nfqws2-native','usr/share/nfqws2/defaults/nfqws2.conf','lib/upgrade/keep.d/nfqws2-native']:
+            self.assertIn(name,files.keys())
+        self.assertNotIn('etc/init.d/nfqws2-native',files)  # no default_postinst auto-start
+        self.assertNotIn('etc/nfqws2/nfqws2.conf',files)  # never overwrite active files
+        self.assertFalse(any(p.startswith('opt/')or p.endswith('.ko')or'/libc.so'in p for p in files))
+        profile=json.loads(files['usr/share/nfqws2/platform.json'][0])
+        self.assertEqual((profile['platform'],profile['arch']),('openwrt','arm_cortex-a9'))
+        for mode in [value[1] for value in files.values()]:self.assertEqual(mode&0o022,0)
+
+    @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
+    def test_offline_install_preserves_config_and_readable_engine_resources(self):
+        target=builder.native_metadata('24.10','arm_cortex-a9')
+        files=builder.payload_files(target,(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes())
+        for name in ['lua/zapret-lib.lua','blobs/tls_clienthello.bin']:
+            files['usr/share/nfqws2/defaults/'+name]=(b'test',0o644)
+        with tempfile.TemporaryDirectory()as td:
+            root=Path(td)/'root';builder.write_files(root,files)
+            active=root/'etc/nfqws2/nfqws2.conf';active.parent.mkdir(parents=True);active.write_text('# preserve my config\n')
+            hook=Path(td)/'postinst';hook.write_bytes(builder.package_hook(target,'postinstall'))
+            subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},check=True,capture_output=True)
+            self.assertEqual(active.read_text(),'# preserve my config\n')
+            self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native'),'/usr/lib/nfqws2/nfqws2-native')
+            for name in ['lists','lua','blobs']:
+                self.assertEqual(stat.S_IMODE((root/'etc/nfqws2'/name).stat().st_mode),0o755)
+            self.assertEqual(stat.S_IMODE((root/'etc/nfqws2/lists/user.list').stat().st_mode),0o644)
+            self.assertEqual(stat.S_IMODE(active.stat().st_mode),0o600)
+
+
+if __name__=='__main__':unittest.main()

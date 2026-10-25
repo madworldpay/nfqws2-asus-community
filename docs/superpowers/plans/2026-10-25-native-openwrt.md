@@ -42,12 +42,12 @@ Interfaces: nfqws2-native {start,stop,reload,status,check,diagnostics}; diagnost
 - [x] Commit after the suite passes.
 
 ### Task 3: Native packages and real core installation
-Files: openwrt/package/Makefile, openwrt/build.py, openwrt/assets.json, tests/test_openwrt_builder.py.
+Files: openwrt/build.py, openwrt/assets.json, tests/test_openwrt_builder.py.
 Interfaces: build_native(release_series, package_arch, engine_asset, output) emits a package and checksums; installs native paths with explicit dependencies and conffiles.
-- [ ] Test package file ownership, correct package architecture/format, no foreign loaders/modules, preserved config and disabled first install.
-- [ ] Implement official native package-tool pipeline with pinned engine/source digests; use selected architecture payload only.
-- [ ] Build/install the IPK on 87U with processing off, then verify check/start/traffic/stop and restore test state.
-- [ ] Build-check APK and remaining engine families; commit.
+- [x] Test package file ownership, correct package architecture/format, no foreign loaders/modules, preserved config and disabled first install.
+- [x] Implement official native package-tool pipeline with pinned engine/source digests; use selected architecture payload only.
+- [x] Build/install the IPK on 87U with processing off, then verify check/start/traffic/stop and restore test state.
+- [x] Build-check APK and remaining engine families; commit.
 
 ### Task 4: Shared panel native platform adapter
 Files: common PHP platform/path/service boundaries, native web service adapter, tests/test_openwrt_web.php, existing backend/frontend regression suites.

@@ -42,7 +42,7 @@ class OpenWrtPlatformTests(unittest.TestCase):
                 self.assertNotIn('asus', r['platform'])
 
     def test_missing_binary_is_distinct_from_an_unsupported_brand(self):
-        for arch in ['riscv64_riscv64', 'arm_arm926ej-s', 'mips_mips32r6', 'i386_i486']:
+        for arch in ['riscv64_riscv64', 'arm_arm926ej-s', 'arm_arm1176jzf-s', 'mips_mips32r6', 'i386_i486']:
             with self.subTest(arch=arch), self.assertRaisesRegex(ValueError, 'engine_unavailable'):
                 self.resolve(arch)
 
@@ -98,6 +98,14 @@ class OpenWrtPlatformTests(unittest.TestCase):
                               self.elf(cls, 3-endian, machine), self.elf(cls, endian, 999)]:
                     with self.assertRaisesRegex(ValueError, 'engine_elf_mismatch'):
                         platform.validate_engine(wrong, target)
+
+    def test_native_engine_cannot_require_a_foreign_dynamic_loader(self):
+        data=bytearray(self.elf(1,1,40))+bytearray(32)
+        struct.pack_into('<I',data,28,64)
+        struct.pack_into('<HH',data,42,32,1)
+        struct.pack_into('<I',data,64,3)  # PT_INTERP
+        with self.assertRaisesRegex(ValueError,'engine_dynamic_loader'):
+            platform.validate_engine(bytes(data),self.resolve())
 
 
 if __name__ == '__main__':
