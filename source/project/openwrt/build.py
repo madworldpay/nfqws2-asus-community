@@ -26,7 +26,7 @@ ASSETS=json.loads((HERE/'assets.json').read_text())
 spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platform.py')
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
 DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi',
-              'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd']
+              'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd','libopenssl3','libgcc']
 
 
 def native_metadata(series,arch,release=1):
@@ -161,6 +161,83 @@ def payload_files(target,engine,source=None):
     return files
 
 
+def smartdns_runtime_files():
+    # Keep the tested common owner algorithms. Every fixed replacement is
+    # counted, so changes to their source contract fail the native build.
+    def adapt(name,replacements):
+        data=(ROOT/'asus/smartdns'/name).read_bytes()
+        for before,after in replacements:
+            before=before.encode();after=after.encode()
+            if data.count(before)!=1:raise RuntimeError('SmartDNS native adapter contract changed: '+name+' '+repr(before))
+            data=data.replace(before,after)
+        return data
+    files={}
+    for name in ['config-worker.php','worker.php']:
+        data=adapt(name,[('/opt/share/nfqws-asus-web/','/usr/share/nfqws2-web/')])
+        files['usr/lib/nfqws2/smartdns/'+name]=(data,0o644)
+    files['usr/lib/nfqws2/smartdns/control.php']=(adapt('control.php',[
+        ('/opt/share/nfqws-asus-web/','/usr/share/nfqws2-web/'),
+        ('new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller())','AsusSmartDnsNativeBackend::create($store,new AsusSmartDnsInstaller())')]),0o644)
+    files['usr/lib/nfqws2/smartdns/config-worker.sh']=(adapt('config-worker.sh',[
+        ('root=/opt/etc/nfqws-asus-web/smartdns','root=/etc/nfqws2-web/smartdns'),
+        ('lib=/opt/lib/nfqws2-asus/smartdns','lib=/usr/lib/nfqws2/smartdns'),
+        ('updates=/opt/var/lib/nfqws2-asus/updates','updates=/tmp/nfqws2-native-state/updates'),
+        ('/opt/bin/php-cgi','/usr/bin/php-cgi'),
+        ('"$bb" sleep 0.1','"$bb" sleep 1'),
+        ('-lt 20','-lt 3'),
+        ('"$lib/session-owner" "$job" "$$" "$ticks"','"$bb" setsid /bin/sh "$lib/config-worker.sh" session "$job" "$$" "$ticks"')]),0o644)
+    files['usr/lib/nfqws2/smartdns/worker.sh']=(adapt('worker.sh',[
+        ('bb=/opt/libexec/nfqws2-asus/busybox','bb=/bin/busybox'),
+        ('/opt/lib/nfqws2-asus/smartdns-engine','/usr/lib/nfqws2/smartdns-engine'),
+        ('/opt/bin/php-cgi','/usr/bin/php-cgi'),
+        ('/opt/lib/nfqws2-asus/smartdns/worker.php','/usr/lib/nfqws2/smartdns/worker.php'),
+        ('"$bb" usleep 250000','"$bb" sleep 1'),
+        ('"$bb" usleep 1000000','"$bb" sleep 1')]),0o644)
+    for source,name in [('smartdns-native-control.php','native-control.php'),('smartdns-runtime.sh','runtime.sh'),('smartdns-resume.sh','resume.sh'),('dnsmasq-transaction.sh','dnsmasq-transaction.sh'),('nfqws2-dns.init','nfqws2-native-dns'),('nfqws2-dns-resume.init','nfqws2-native-dns-resume')]:
+        files['usr/lib/nfqws2/smartdns/'+name]=((HERE/source).read_bytes(),0o644 if name.endswith('.php')else 0o755)
+    return files
+
+
+def smartdns_payload(target,cache,offline=False,apk_tool=None):
+    catalog=json.loads((HERE/'smartdns-assets.json').read_text())
+    try:asset=catalog['artifacts'][target['series']][target['arch']]
+    except KeyError:raise RuntimeError('No pinned native SmartDNS engine for this package architecture')
+    path=pinned_asset(asset,cache,offline)
+    if target['format']=='ipk':
+        with tarfile.open(path)as outer:
+            member=next(m for m in outer if m.name.removeprefix('./')=='data.tar.gz'and m.isfile());data=outer.extractfile(member).read()
+        with tarfile.open(fileobj=io.BytesIO(data))as inner:
+            candidates=[m for m in inner if m.name.removeprefix('./')=='usr/sbin/smartdns'and m.isfile()]
+            if len(candidates)!=1:raise RuntimeError('Native SmartDNS payload mismatch')
+            binary=inner.extractfile(candidates[0]).read()
+    else:
+        with tempfile.TemporaryDirectory(prefix='nfqws-smartdns-extract-')as td:
+            tool=apk_tool
+            if tool is None:
+                sdk=pinned_asset(ASSETS['apk_sdk'],cache,offline);tools=Path(td)/'tools';tools.mkdir()
+                subprocess.run(['tar','--zstd','-xf',str(sdk),'-C',str(tools),'--strip-components=3','--wildcards',
+                    '*/staging_dir/host/bin/apk','*/staging_dir/host/bin/.apk.bin','*/staging_dir/host/lib/*'],
+                    check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120)
+                tool=tools/'bin/apk'
+            dest=Path(td)/'unpack';dest.mkdir()
+            # Package was pinned above; extract never executes its scripts.
+            subprocess.run([str(tool),'extract','--allow-untrusted','--no-chown','--destination',str(dest),str(path)],
+                check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30)
+            binary=(dest/'usr/sbin/smartdns').read_bytes()
+    if len(binary)!=asset['binary_size']or hashlib.sha256(binary).hexdigest()!=asset['binary_sha256']:
+        raise RuntimeError('Native SmartDNS binary hash mismatch')
+    elf=target['elf']
+    if binary[:4]!=b'\x7fELF'or binary[4]!=elf['class']or binary[5]!=elf['endian']or int.from_bytes(binary[18:20],'little'if elf['endian']==1 else'big')!=elf['machine']:
+        raise RuntimeError('Native SmartDNS ELF mismatch')
+    artifact={'source':'bundled-native','version':asset['version'],'version_output':asset['version_output'],
+        'sha256':asset['binary_sha256'],'elf_class':asset['elf_class'],'elf_data':asset['elf_data'],'elf_machine':asset['elf_machine'],
+        'files':{'smartdns':{'size':asset['binary_size'],'sha256':asset['binary_sha256']}},'links':[]}
+    record={'schema_version':1,'series':target['series'],'arch':target['arch'],'artifact':artifact}
+    return {'usr/share/nfqws2/optional/smartdns':(binary,0o644),
+        'usr/share/nfqws2/smartdns-native-artifact.json':((json.dumps(record,sort_keys=True)+'\n').encode(),0o644),
+        'usr/share/nfqws2/smartdns-native-source.json':((json.dumps(asset,sort_keys=True)+'\n').encode(),0o644)}|smartdns_runtime_files()
+
+
 def write_files(root,files):
     root=Path(root);root.mkdir(parents=True,exist_ok=True);root.chmod(0o755)
     for name,(data,mode)in files.items():
@@ -198,7 +275,7 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
     target=native_metadata(series,package_arch,release);output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
     source=source_payload(cache,offline);engine=prepare_engine(target,source,upx)
     with tempfile.TemporaryDirectory(prefix='nfqws-native-package-')as td:
-        stage=Path(td)/'payload';write_files(stage,payload_files(target,engine,source)|web_payload())
+        stage=Path(td)/'payload';write_files(stage,payload_files(target,engine,source)|web_payload()|smartdns_payload(target,cache,offline))
         hooks={key:package_hook(target,action)for key,action in [('preinst','preinstall'),('postinst','postinstall'),('prerm','preremove'),('postrm','postremove')]}
         if target['format']=='ipk':
             metadata='Package: nfqws2-native\nVersion: '+target['version']+'\nArchitecture: '+target['arch']+'\nDepends: '+', '.join(target['dependencies'])+'\nMaintainer: madworldpay\nSection: net\nLicense: MIT\nDescription: NFQWS2 community native OpenWrt service\n'

@@ -4,6 +4,9 @@ require_once __DIR__.'/../webui/web/public/asus.php';
 require_once __DIR__.'/../webui/web/public/openwrt-web.php';
 function expect(bool $ok,string $message):void{if(!$ok)throw new RuntimeException($message);}
 function rejected(callable $fn):void{try{$fn();}catch(RuntimeException $e){return;}throw new RuntimeException('Unsafe platform input accepted');}
+expect(NfqwsPlatform::procNetIPv4('127.0.0.1',true)==='0100007F','little-endian kernel socket address');
+expect(NfqwsPlatform::procNetIPv4('127.0.0.1',false)==='7F000001','big-endian kernel socket address');
+rejected(fn()=>NfqwsPlatform::procNetIPv4('::1'));
 expect(NfqwsPlatform::settings('asus-entware')['root']==='/opt','existing ASUS root');
 expect(NfqwsPlatform::settings('openwrt')['root']==='','native root');
 rejected(fn()=>NfqwsPlatform::settings('other'));

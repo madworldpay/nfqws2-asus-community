@@ -46,7 +46,7 @@ final class AsusSmartDnsConfigApi
         }
         if ($cmd==='wanaddresses') return (new AsusRouterWan($deps['wan_io']??new AsusReportIO()))->collect();
         $store=$deps['store']??new AsusSmartDnsStore();
-        $backend=$deps['backend']??new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller());
+        $backend=$deps['backend']??AsusSmartDnsNativeBackend::create($store,new AsusSmartDnsInstaller());
         $jobs=new AsusSmartDnsConfigJobs($store,$backend,$deps['jobs_deps']??[]);
         if ($cmd==='smartdnsconfigstatus') {
             $status=$jobs->status();$intent=$store->intent();

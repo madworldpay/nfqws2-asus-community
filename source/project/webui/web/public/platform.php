@@ -57,6 +57,13 @@ final class NfqwsPlatform
         if($path==='/opt'||str_starts_with($path,'/opt/'))throw new RuntimeException('unmapped_platform_path');
         return $path;
     }
+    /** /proc/net IPv4 fields use kernel word byte order, including MIPS BE. */
+    public static function procNetIPv4(string $address,?bool $littleEndian=null):string
+    {
+        $bytes=@inet_pton($address);if($bytes===false||strlen($bytes)!==4)throw new RuntimeException('invalid_ipv4_address');
+        $littleEndian??=pack('L',1)==="\x01\x00\x00\x00";
+        return strtoupper(bin2hex($littleEndian?strrev($bytes):$bytes));
+    }
     public static function serviceCommand(string $action,?string $profile=null):array
     {
         if(!in_array($action,['start','stop','restart','status','check','diagnostics'],true))throw new RuntimeException('invalid_service_action');
@@ -77,9 +84,11 @@ final class NfqwsPlatform
         return $path;
     }
     /** Fixed argv selected by trusted callers, bounded output and deadline. */
-    public static function run(array $argv,float $timeout=15):array
+    public static function run(array $argv,float $timeout=15,array $inherited=[]):array
     {
-        $pipes=[];$p=@proc_open($argv,[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,null,['PATH'=>'/usr/sbin:/usr/bin:/sbin:/bin']);
+        $descriptors=[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']];
+        foreach($inherited as $fd=>$stream){if(!is_int($fd)||$fd<3||$fd>9||!is_resource($stream))throw new RuntimeException('invalid_inherited_descriptor');$descriptors[$fd]=$stream;}
+        $pipes=[];$p=@proc_open($argv,$descriptors,$pipes,null,['PATH'=>'/usr/sbin:/usr/bin:/sbin:/bin']);
         if(!is_resource($p))return ['status'=>1,'output'=>[]];
         foreach($pipes as $f)stream_set_blocking($f,false);
         $raw='';$until=microtime(true)+$timeout;$status=1;

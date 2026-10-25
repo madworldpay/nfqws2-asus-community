@@ -77,6 +77,11 @@ nfqws_package_preinstall() {
     if [ -e /etc/init.d/nfqws2-native-web ] || [ -L /etc/init.d/nfqws2-native-web ]; then
         [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ] || { echo native_web_owner_conflict >&2; return 1; }
     fi
+    for dns_service in nfqws2-native-dns nfqws2-native-dns-resume; do
+        if [ -e "/etc/init.d/$dns_service" ] || [ -L "/etc/init.d/$dns_service" ]; then
+            [ -L "/etc/init.d/$dns_service" ] && [ "$(readlink "/etc/init.d/$dns_service")" = "/usr/lib/nfqws2/smartdns/$dns_service" ] || { echo native_dns_owner_conflict >&2; return 1; }
+        fi
+    done
     nfqws_package_snapshot && nfqws_package_prepare_upgrade
 }
 
@@ -104,6 +109,14 @@ nfqws_package_defaults() {
                 leaf="$dst/${file##*/}"
                 if [ ! -e "$leaf" ] && [ ! -L "$leaf" ]; then cp "$file" "$leaf" && chmod 644 "$leaf" || return 1; fi
             done
+        fi
+    done
+    for dns_service in nfqws2-native-dns nfqws2-native-dns-resume; do
+        if [ -f "$root/usr/lib/nfqws2/smartdns/$dns_service" ]; then
+            dst="$root/etc/init.d/$dns_service"
+            if [ -e "$dst" ] || [ -L "$dst" ]; then
+                [ -L "$dst" ] && [ "$(readlink "$dst")" = "/usr/lib/nfqws2/smartdns/$dns_service" ] || return 1
+            else ln -s "/usr/lib/nfqws2/smartdns/$dns_service" "$dst" || return 1; fi
         fi
     done
     chmod 600 "$root/etc/nfqws2/nfqws2.conf"
@@ -169,6 +182,8 @@ nfqws_package_postinstall() {
         else /etc/init.d/nfqws2-native-web disable || return 1; fi
         [ "$web_running" != 1 ] || /etc/init.d/nfqws2-native-web start || return 1
     fi
+    if [ -x /etc/init.d/nfqws2-native-dns ]; then /etc/init.d/nfqws2-native-dns disable || return 1; fi
+    if [ -x /etc/init.d/nfqws2-native-dns-resume ]; then /etc/init.d/nfqws2-native-dns-resume enable || return 1; fi
     rm -f "$nfqws_package_state_dir/state"
     rmdir "$nfqws_package_state_dir" 2>/dev/null || :
 }

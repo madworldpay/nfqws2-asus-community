@@ -41,6 +41,26 @@ final class NfqwsOpenWrtWeb
             'diagnostics'=>['ark'=>['present'=>$loaded?'present':'absent','loaded'=>$loaded?'loaded':'unloaded'],
                 'nfqueue'=>$q,'process_running'=>$d['process_running']??null]];
     }
+    /** Read-only native DNS projection, with no queries or resolver changes. */
+    public static function dnsFacts():array
+    {
+        require_once __DIR__.'/smartdns-native.php';require_once __DIR__.'/smartdns-report.php';
+        $store=new AsusSmartDnsStore();$installer=new AsusSmartDnsInstaller();$backend=AsusSmartDnsNativeBackend::create($store,$installer);
+        $cap=$installer->availability();$installed=false;$known=false;$connect=[];
+        try{$installed=$installer->installed()['installed'];}catch(Throwable $e){$connect[]='unsupported_binary';}
+        $healthy=$backend->healthy();
+        try{require_once __DIR__.'/openwrt-smartdns-resolver.php';$resolver=new NfqwsOpenWrtDnsmasqResolver();$resolver->primary();$known=true;if(!$healthy)$resolver->collect();}
+        catch(Throwable $e){$connect[]=in_array($e->getMessage(),['existing_dns_rules','recovery_unavailable','restore_required'],true)?$e->getMessage():'primary_dns_unverified';}
+        if(!$installed)$connect[]='not_installed';
+        if(time()<1704067200)$connect[]='invalid_clock';
+        if(!is_readable('/etc/ssl/certs/ca-certificates.crt'))$connect[]='https_unavailable';
+        $managed=(new AsusSmartDnsReport($store,[$installer,'installed']))->collect();$managed['runtime_verified']=$healthy;
+        try{$state=$backend->state();$routing=$state===null||$state['phase']==='rolled_back'?'inactive':$backend->forwarding();}
+        catch(Throwable $e){$routing='unknown';$connect[]='invalid_state';}
+        return ['install'=>['ready'=>$cap['available'],'codes'=>$cap['available']?[]:[$cap['code']]],
+            'connect'=>['ready'=>$connect===[],'codes'=>array_values(array_unique($connect))],
+            'data'=>['platform'=>'openwrt','resolver_owner'=>$known?'dnsmasq':'unverified','routing'=>$routing,'managed_smartdns'=>$managed]];
+    }
     public static function checkup():array
     {
         $board=self::board();$d=self::diagnostics();$q=$d['nfqueue']??[];$running=($d['process_running']??false)===true;
@@ -52,6 +72,7 @@ final class NfqwsOpenWrtWeb
         $available=$mem['MemAvailable']??($mem['MemFree']??null);$rss=null;$pid=$d['pid']??null;
         if(is_int($pid)&&$pid>1&&preg_match('/^VmRSS:\s+([0-9]+) kB$/m',(string)@file_get_contents('/proc/'.$pid.'/status'),$m))$rss=(float)$m[1];
         $free=@disk_free_space('/etc/nfqws2');
+        $dns=self::dnsFacts();
         $items=[
             $item('platform','info',['platform'=>'openwrt','model'=>$board['model']??'OpenWrt','kernel'=>$board['kernel']??null,
                 'firmware'=>$board['release']['version']??null,'target'=>$board['release']['target']??null,'package_arch'=>$arch[1]??null,'package_version'=>self::version()]),
@@ -61,9 +82,11 @@ final class NfqwsOpenWrtWeb
             $item('process',$running?'ready':'info',['running'=>$running,'rss_kib'=>$rss],'process_is_not_service_success'),
             $item('nfqueue',$bound?'ready':'info',['number'=>$q['queue_number']??null,'bound'=>$bound,'traffic_tested'=>false],'check_queue_and_full_service_response'),
         ];
+        $items[]=$item('dns_runtime',$dns['data']['managed_smartdns']['runtime_verified']?'ready':'info',['managed_runtime'=>$dns['data']['managed_smartdns']['runtime_verified'],'connectivity_tested'=>false]);
+        $items[]=$item('smartdns_engine',$dns['data']['managed_smartdns']['engine_installed']?'ready':'info',['installed'=>$dns['data']['managed_smartdns']['engine_installed']]);
         return ['schema_version'=>1,'checked_at'=>gmdate('Y-m-d\TH:i:s\Z'),'items'=>$items,
             'readiness'=>['nfqws2'=>['ready'=>$running&&$bound&&!$loaded,'codes'=>$bound?[]:['queue_not_bound']],
-                'smartdns_install'=>['ready'=>false,'codes'=>['unsupported_runtime']], 'smartdns_connect'=>['ready'=>false,'codes'=>['unsupported_runtime']]],
+                'smartdns_install'=>$dns['install'], 'smartdns_connect'=>$dns['connect']],
             'limits'=>['read_only','write_access_estimated','dns_not_queried','service_success_not_tested']];
     }
 }

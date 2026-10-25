@@ -150,6 +150,8 @@ require $argv[1].'/index.php';'''
         finally:self.sh('rm -f /etc/nfqws2/lists/private-diagnostic-canary.list')
         self.assertEqual(code,200,report)
         self.assertEqual(report['model'],'OpenWrt')
+        self.assertEqual(report['sections']['dns']['data']['platform'],'openwrt')
+        self.assertIn('managed_smartdns',report['sections']['dns']['data'])
         platform=report['sections']['platform']['data']
         self.assertEqual(platform['platform'],'openwrt')
         self.assertEqual(platform['package_arch'],'x86_64')

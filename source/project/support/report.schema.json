@@ -4320,6 +4320,172 @@
               "additionalProperties": false
             },
             {
+              "type": "object",
+              "properties": {
+                "platform": {
+                  "const": "openwrt"
+                },
+                "resolver_owner": {
+                  "enum": [
+                    "dnsmasq",
+                    "unverified"
+                  ]
+                },
+                "routing": {
+                  "enum": [
+                    "inactive",
+                    "managed",
+                    "external",
+                    "unknown"
+                  ]
+                },
+                "managed_smartdns": {
+                  "type": "object",
+                  "properties": {
+                    "read_state": {
+                      "enum": [
+                        "missing",
+                        "available",
+                        "unavailable"
+                      ]
+                    },
+                    "engine_installed": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "engine_version": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[0-9][0-9a-zA-Z._+\\-]{0,63}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "journal_state": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "idle",
+                            "validating",
+                            "preview_ready",
+                            "applying",
+                            "awaiting_confirmation",
+                            "confirmed",
+                            "rolling_back",
+                            "rolled_back",
+                            "failed",
+                            "conflict"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "profile_hash": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fixed_records": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 64
+                    },
+                    "fixed_suffix_records": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 64
+                    },
+                    "runtime_verified": {
+                      "const": false
+                    },
+                    "upstreams": {
+                      "type": "array",
+                      "maxItems": 32,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "enum": [
+                              "udp",
+                              "tcp",
+                              "dot",
+                              "doh"
+                            ]
+                          },
+                          "default": {
+                            "type": "boolean"
+                          },
+                          "exact_rules": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 256
+                          },
+                          "suffix_rules": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 256
+                          },
+                          "bootstrap_addresses": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 8
+                          },
+                          "tls_verification_required": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "protocol",
+                          "default",
+                          "exact_rules",
+                          "suffix_rules",
+                          "bootstrap_addresses",
+                          "tls_verification_required"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "read_state",
+                    "engine_installed",
+                    "engine_version",
+                    "journal_state",
+                    "profile_hash",
+                    "fixed_records",
+                    "fixed_suffix_records",
+                    "runtime_verified",
+                    "upstreams"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "platform",
+                "resolver_owner",
+                "routing",
+                "managed_smartdns"
+              ],
+              "additionalProperties": false
+            },
+            {
               "type": "array",
               "maxItems": 0
             }

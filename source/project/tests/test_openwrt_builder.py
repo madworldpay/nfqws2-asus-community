@@ -97,6 +97,7 @@ class NativeBuilderTests(unittest.TestCase):
     def test_offline_install_preserves_config_and_readable_engine_resources(self):
         target=builder.native_metadata('24.10','arm_cortex-a9')
         files=builder.payload_files(target,(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes())
+        files|=builder.smartdns_runtime_files()
         for name in ['lua/zapret-lib.lua','blobs/tls_clienthello.bin']:
             files['usr/share/nfqws2/defaults/'+name]=(b'test',0o644)
         with tempfile.TemporaryDirectory()as td:
@@ -116,6 +117,8 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertEqual(stat.S_IMODE((root/'etc/nfqws2/lists/user.list').stat().st_mode),0o644)
             self.assertEqual(stat.S_IMODE(active.stat().st_mode),0o600)
             self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native-web'),'/usr/lib/nfqws2-web/nfqws2-native-web')
+            self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native-dns'),'/usr/lib/nfqws2/smartdns/nfqws2-native-dns')
+            self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native-dns-resume'),'/usr/lib/nfqws2/smartdns/nfqws2-native-dns-resume')
             auth=json.loads((root/'etc/nfqws2-web/auth.json').read_text())
             self.assertEqual(auth,{'mode':'system','username':'root','password_hash':''})
             self.assertEqual(stat.S_IMODE((root/'etc/nfqws2-web/auth.json').stat().st_mode),0o600)

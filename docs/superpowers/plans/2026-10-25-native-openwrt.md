@@ -59,10 +59,10 @@ Interfaces: trusted build/runtime profile resolves paths, service commands, mode
 
 ### Task 5: Portable import, cloud catalog, diagnostics and export
 Files: common import/resource path abstraction, native DPI/diagnostics runtime adapter, tests/test_openwrt_import.php, tests/test_openwrt_diagnostics.php.
-- [ ] Test native/Entware JSON round trips, author defaults, built-in/custom blobs, preview/apply/undo and hostile/traversal paths.
-- [ ] Adapt only trusted known resource paths, retain schema/author intent and the existing cloud catalog endpoint.
-- [ ] Integrate native DPI binaries/jobs and safe support/export facts; test terminal states and cancellation.
-- [ ] Exercise local JSON and cloud profile through the real panel plus DPI collection/export; commit.
+- [x] Test native/Entware JSON round trips, author defaults, built-in/custom blobs, preview/apply/undo and hostile/traversal paths.
+- [x] Adapt only trusted known resource paths, retain schema/author intent and the existing cloud catalog endpoint.
+- [x] Integrate native DPI binaries/jobs and safe support/export facts; test terminal states and cancellation.
+- [x] Exercise local JSON and cloud profile through the real panel plus DPI collection/export; commit.
 
 ### Task 6: Native SmartDNS with owned resolver integration
 Files: openwrt/smartdns adapter and common lifecycle/platform boundary; tests/test_openwrt_smartdns.py/php.

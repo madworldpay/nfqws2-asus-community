@@ -88,7 +88,8 @@ final class NfqwsOpenWrtReport
             'acceleration'=>in_array($facts['acceleration']??null,['none','system','managed'],true)?$facts['acceleration']:'unknown'],$facts!==[]?'available':'partial',$facts!==[]?null:'unsupported');
         $sections['resources']=self::resources($io,is_array($baseline)?$baseline:[],$before,$runtime);
         $sections['errors']=$section(['observed_prerequisite_failures'=>$before===''?['configuration_missing']:[],'historical_startup_error'=>'unknown']);
-        $sections['dns']=$section([], 'unavailable','unsupported');
+        $dns=NfqwsOpenWrtWeb::dnsFacts()['data'];$dnsReady=$dns['resolver_owner']==='dnsmasq'&&$dns['managed_smartdns']['read_state']!=='unavailable';
+        $sections['dns']=$section($dns,$dnsReady?'available':'partial',$dnsReady?null:'unsupported');
         $io->pause(max(0,10-($io->now()-$first['_time'])));
         $last=$shared->queueSample($q,self::identity(NfqwsOpenWrtWeb::diagnostics()));$comparison=$shared->compareQueue($first,$last);
         if($before!==self::config('/etc/nfqws2','nfqws2.conf')||$runtime!==self::config('/tmp/run/nfqws2-native','config.env'))$comparison=['result'=>'changed_during_collection','delta'=>null,'interval_ms'=>$comparison['interval_ms']];
