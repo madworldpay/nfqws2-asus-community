@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { API } from '@/api/client';
+import { getPackageUpdateNotes } from '@/api/packageUpdateNotes';
 import {
   applyPackageUpdate,
   checkPackageUpdate,
@@ -44,6 +45,19 @@ export function usePackageUpdates(
       q.state.data?.check.state === 'checking'
         ? 2000
         : false,
+  });
+  const candidate =
+    query.data?.check.state === 'available' ? query.data.check.candidate : null;
+  const installed = query.data?.check.installed_version;
+  const notesEnabled = enabled && open && !!candidate && !!installed;
+  const notesQuery = useQuery({
+    queryKey: ['package-update-notes', installed, candidate?.revision],
+    enabled: notesEnabled,
+    queryFn: ({ signal }) =>
+      getPackageUpdateNotes(installed!, candidate!.build, signal),
+    staleTime: 300000,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
   const refresh = useCallback(
     async (force = false) => {
@@ -110,6 +124,8 @@ export function usePackageUpdates(
   return {
     data: enabled ? query.data : undefined,
     pending,
+    notes: candidate ? notesQuery.data : undefined,
+    notesLoading: notesEnabled && notesQuery.isFetching,
     error:
       error ??
       (query.error instanceof PackageUpdateError
