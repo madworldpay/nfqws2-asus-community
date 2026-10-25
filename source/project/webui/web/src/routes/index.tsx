@@ -27,6 +27,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { API } from '@/api/client';
 
 import { App } from '@/components/App';
+import { ClientIpv4Help } from '@/components/ClientIpv4Help';
 import { Error404 } from '@/components/Error404';
 import { FormEditor } from '@/components/FormEditor';
 import { RouterTrafficHelp } from '@/components/RouterTrafficHelp';
@@ -384,7 +385,7 @@ function RouteComponent() {
               fullWidth
               value={form.ASUS_CLIENTS4}
               onChange={changeHandler('ASUS_CLIENTS4')}
-              helperText={t('form.ASUS_CLIENT_HELP')}
+              helperText={<ClientIpv4Help mode={form.ASUS_CLIENT_MODE} />}
               spellCheck={false}
             />
             <RouterWanInfo
