@@ -45,10 +45,14 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
         if(!rename($tmp,$file)){unlink($tmp);throw new RuntimeException('storage_unavailable');}
     }
     private function save(array $s):void{$this->write('state.json',json_encode($s,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES)."\n");}
-    private function locked(callable $fn):mixed
+    private function locked(callable $fn,int $budget=8):mixed
     {
         $this->directory();$mask=umask(0077);try{$f=fopen($this->file('state.lock'),'c');}finally{umask($mask);}if(!$f)throw new RuntimeException('storage_unavailable');
-        try{if(!flock($f,LOCK_EX|LOCK_NB))throw new RuntimeException('busy');return $fn($f);}finally{flock($f,LOCK_UN);fclose($f);}
+        try{
+            $end=hrtime(true)+min(8,max(0,$budget))*1000000000;
+            while(!flock($f,LOCK_EX|LOCK_NB)){if(hrtime(true)>=$end)throw new RuntimeException('busy');usleep(20000);}
+            return $fn($f);
+        }finally{flock($f,LOCK_UN);fclose($f);}
     }
     private function checked(array $job):array
     {
@@ -224,7 +228,7 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
             if($reason===null&&$s['phase']==='confirmed'&&!$this->resolver->sourcesUnchanged($s['resolver']))$reason='stale_baseline';
             if($reason!==null){$this->restoreState($s,$reason,$lease);return 1;}
             return $s['phase']==='confirmed'?10:0;
-        });
+        },0);
     }
     public function canStop():bool
     {$s=$this->state();return $s===null||$s['phase']==='rolled_back';}

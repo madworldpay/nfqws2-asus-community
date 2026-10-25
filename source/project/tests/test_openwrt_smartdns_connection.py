@@ -192,6 +192,18 @@ case "$action" in start) start_service;; stop)
         self.assertEqual(self.sh('cat '+self.base+'/main.pid').stdout,main,'Do not switch clients to an engine whose upstream is not ready')
         self.assertEqual(self.query('example.com')['answers'],['8.8.8.8'])
 
+    def test_confirmation_waits_for_a_short_native_health_check_lease(self):
+        applied=self.begin('d')
+        self.sh('/bin/busybox start-stop-daemon -S -b -x /usr/bin/flock -- -x /tmp/nfqws2-native-state/smartdns-runtime/state.lock /bin/sh -c "touch '+self.base+'/lease-held; sleep 1"')
+        end=time.monotonic()+3
+        while time.monotonic()<end:
+            if self.sh('test -f '+self.base+'/lease-held',check=False).returncode==0:break
+            time.sleep(.02)
+        else:self.fail('Lease fixture did not start')
+        confirmed=self.api('smartdnsconfirm',request_id=applied['request_id'])
+        self.assertEqual(confirmed.get('state'),'confirmed',confirmed)
+        self.assertEqual(self.api('smartdnsrollback',request_id=applied['request_id'])['state'],'rolled_back')
+
     def test_unconfirmed_deadline_restores_native_dns_and_stops_only_owned_engine(self):
         applied=self.begin('3')
         self.php('$p="/tmp/nfqws2-native-state/smartdns-runtime/state.json";$s=json_decode(file_get_contents($p),true);$s["deadline"]=(string)((float)explode(" ",file_get_contents("/proc/uptime"))[0]-1);file_put_contents($p,json_encode($s));')
