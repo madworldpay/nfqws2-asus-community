@@ -1,0 +1,9 @@
+{
+  "arm": {"class": 1, "endian": 1, "machine": 40, "baseline": "ARMv6 soft-float EABI"},
+  "arm64": {"class": 2, "endian": 1, "machine": 183, "baseline": "ARMv8-A"},
+  "mips": {"class": 1, "endian": 2, "machine": 8, "baseline": "MIPS32 soft-float"},
+  "mipsel": {"class": 1, "endian": 1, "machine": 8, "baseline": "MIPS32 soft-float"},
+  "mips64": {"class": 2, "endian": 2, "machine": 8, "baseline": "MIPS64"},
+  "x86": {"class": 1, "endian": 1, "machine": 3, "baseline": "i586"},
+  "x86_64": {"class": 2, "endian": 1, "machine": 62, "baseline": "x86-64"}
+}
