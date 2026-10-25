@@ -29,17 +29,17 @@
 ### Task 1: Platform and architecture contracts
 Files: openwrt/platform.py, openwrt/architectures.json, tests/test_openwrt_platform.py; platform/path contract used by later tasks.
 Interfaces: resolve_platform(release, board, package_manager, architectures) returns OS, release series, package format, target, package architecture and engine family. validate_engine(data, target) checks ELF class/machine/endianness; no model whitelist.
-- [ ] Write behavioral tests for RT-AC87U, Qualcomm ARMv7, MediaTek ARM64/MIPSel, big-endian MIPS, x86_64, apk vs opkg, corrupt metadata and mismatched ELF.
-- [ ] Run and confirm missing implementation failures; implement strict deterministic resolution.
-- [ ] Run platform tests plus existing builder/platform regression baseline; commit.
+- [x] Write behavioral tests for RT-AC87U, Qualcomm ARMv7, MediaTek ARM64/MIPSel, big-endian MIPS, x86_64, apk vs opkg, corrupt metadata and mismatched ELF.
+- [x] Run and confirm missing implementation failures; implement strict deterministic resolution.
+- [x] Run platform tests plus existing builder/platform regression baseline; commit.
 
 ### Task 2: Native service and nftables delivery
 Files: openwrt/platform.sh, openwrt/firewall.sh, openwrt/nfqws2.init, openwrt/defaults.conf, tests/test_openwrt_firewall.py, tests/test_openwrt_lifecycle.py.
 Interfaces: nfqws2-native {start,stop,reload,status,check,diagnostics}; diagnostics reports process and queue facts, selected uplinks and acceleration state.
-- [ ] Write failing tests for logical WAN discovery, multiple WANs, both conntrack directions, selected clients, queue bypass, repeated reload and removal of only owned state.
-- [ ] Implement procd supervision and a rendered own nftables ruleset; bounded literal config parsing and argument handling reuse existing validated strategy semantics.
-- [ ] Test failure rollback and offload ownership/restore; compile nft rules in a native test environment.
-- [ ] Commit after the suite passes.
+- [x] Write failing tests for logical WAN discovery, multiple WANs, both conntrack directions, selected clients, queue bypass, repeated reload and removal of only owned state.
+- [x] Implement procd supervision and a rendered own nftables ruleset; bounded literal config parsing and argument handling reuse existing validated strategy semantics.
+- [x] Test failure rollback and offload ownership/restore; compile nft rules in a native test environment.
+- [x] Commit after the suite passes.
 
 ### Task 3: Native packages and real core installation
 Files: openwrt/package/Makefile, openwrt/build.py, openwrt/assets.json, tests/test_openwrt_builder.py.

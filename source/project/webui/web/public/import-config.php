@@ -47,6 +47,18 @@ final class AsusImportConfig
         foreach(array_merge(self::BLOCKS,self::SHARED,self::PORTS) as $key)if(isset($records[$key]))$out[$key]=$resolve($key);
         return $out;
     }
+    /** Settings are literal data; unlike strategy blocks they never expand variables. */
+    public static function literalValues(string $text,array $keys): array
+    {
+        [$records]=self::scan($text);$out=[];
+        foreach($keys as $key) {
+            if(!is_string($key)||!preg_match('/^[A-Z][A-Z0-9_]*$/D',$key))throw new RuntimeException('invalid_config_key');
+            if(!isset($records[$key]))continue;$value=$records[$key]['value'];
+            if(str_contains($value,'$')||str_contains($value,'`'))throw new RuntimeException('unsafe_import');
+            $out[$key]=$value;
+        }
+        return $out;
+    }
     public static function replace(string $text,array $changes): string
     {
         if(array_diff(array_keys($changes),array_merge(self::BLOCKS,self::SHARED,self::PORTS)))throw new RuntimeException('invalid_import_selection');

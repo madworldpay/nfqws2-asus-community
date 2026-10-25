@@ -1,0 +1,100 @@
+{
+  "nftables": [
+    {
+      "metainfo": {
+        "version": "1.1.1",
+        "release_name": "Commodore Bullmoose #2",
+        "json_schema_version": 1
+      }
+    },
+    {
+      "table": {
+        "family": "inet",
+        "name": "fw4",
+        "handle": 11
+      }
+    },
+    {
+      "chain": {
+        "family": "inet",
+        "table": "fw4",
+        "name": "forward",
+        "handle": 1,
+        "type": "filter",
+        "hook": "forward",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
+      "flowtable": {
+        "family": "inet",
+        "name": "ft",
+        "table": "fw4",
+        "handle": 2,
+        "hook": "ingress",
+        "prio": 0,
+        "dev": "eth0"
+      }
+    },
+    {
+      "rule": {
+        "family": "inet",
+        "table": "fw4",
+        "chain": "forward",
+        "handle": 4,
+        "expr": [
+          {
+            "match": {
+              "op": "==",
+              "left": {
+                "meta": {
+                  "key": "l4proto"
+                }
+              },
+              "right": {
+                "set": [
+                  "tcp",
+                  "udp"
+                ]
+              }
+            }
+          },
+          {
+            "flow": {
+              "op": "add",
+              "flowtable": "@ft"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "rule": {
+        "family": "inet",
+        "table": "fw4",
+        "chain": "forward",
+        "handle": 5,
+        "expr": [
+          {
+            "match": {
+              "op": "in",
+              "left": {
+                "ct": {
+                  "key": "state"
+                }
+              },
+              "right": [
+                "established",
+                "related"
+              ]
+            }
+          },
+          {
+            "accept": null
+          }
+        ]
+      }
+    }
+  ]
+}
