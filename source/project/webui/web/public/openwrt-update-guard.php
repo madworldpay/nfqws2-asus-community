@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/openwrt-update-runtime.php';
 require_once __DIR__.'/update-lifecycle.php';
+require_once __DIR__.'/openwrt-manual-context.php';
 
 /** Native system CGI + immutable application closure + actual manager ancestry. */
 final class NfqwsOpenWrtUpdateGuard
@@ -44,7 +45,9 @@ final class NfqwsOpenWrtUpdateGuard
     public function authorize(string $action):bool
     {
         if(!in_array($action,['core-start','core-stop','web-start','web-stop','hook-prerm','hook-postinst','dns-restore'],true))throw new RuntimeException('invalid_request');
-        $t=$this->ticket();if($t===null||!$this->worker($t)||!self::ancestor($t['worker']['pid']))return false;
+        $t=$this->ticket();
+        if($action==='dns-restore'&&($t===null||$t['phase']==='finished'||!AsusUpdateLifecycle::alive($t['worker'])&&!$this->managerAlive($t))&&NfqwsOpenWrtManualContext::authorize())return true;
+        if($t===null||!$this->worker($t)||!self::ancestor($t['worker']['pid']))return false;
         $manager=$this->managerAlive($t)&&self::ancestor($t['manager']['pid']);
         if($t['phase']==='installing')return $manager;
         if($t['phase']!=='starting')return false;
