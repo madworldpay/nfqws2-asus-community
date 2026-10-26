@@ -45,11 +45,27 @@ nfqws_package_snapshot() {
     nfqws_package_guard "$nfqws_package_state_dir" || return 1
     [ ! -L "$nfqws_package_state_dir/state" ] || return 1
     previous=$(sed -n 's/^manager=//p' "$nfqws_package_state_dir/state" 2>/dev/null)
-    [ "$previous" != "$manager" ] || return 0
+    if [ "$previous" = "$manager" ]; then nfqws_package_resource_snapshot; return $?; fi
+    if [ -e "$nfqws_package_state_dir/previous-resources.json" ] || [ -L "$nfqws_package_state_dir/previous-resources.json" ]; then
+        [ -f "$nfqws_package_state_dir/previous-resources.json" ] && [ ! -L "$nfqws_package_state_dir/previous-resources.json" ] || return 1
+        rm "$nfqws_package_state_dir/previous-resources.json" || return 1
+    fi
     {
         printf 'manager=%s\n' "$manager"
         nfqws_package_service_state
     } > "$nfqws_package_state_dir/state"
+    nfqws_package_resource_snapshot
+}
+
+nfqws_package_resource_snapshot() {
+    local src=/usr/share/nfqws2/report-baseline.json dst=$nfqws_package_state_dir/previous-resources.json
+    [ ! -L "$dst" ] || return 1
+    if [ -e "$dst" ]; then [ -f "$dst" ]; return $?; fi
+    [ -e "$src" ] || [ -L "$src" ] || return 0
+    [ -f "$src" ] && [ ! -L "$src" ] || return 1
+    case "$(LC_ALL=C ls -ln "$src" | awk '{print $1,$2,$3}')" in '-rw-r--r-- 1 0'|'-rw------- 1 0') ;; *) return 1;; esac
+    [ "$(wc -c < "$src")" -le 1048576 ] || return 1
+    cp "$src" "$dst" && chmod 600 "$dst"
 }
 
 nfqws_package_prepare_upgrade() {
@@ -215,6 +231,9 @@ nfqws_package_postinstall() {
             case "$web_enabled:$web_running" in 0:0|0:1|1:0|1:1) ;; *) return 1;; esac
         fi
     fi
+    if [ -e "$nfqws_package_state_dir/previous-resources.json" ] || [ -L "$nfqws_package_state_dir/previous-resources.json" ]; then
+        /usr/bin/php-cgi -d register_argc_argv=1 -q -f /usr/lib/nfqws2/resource-upgrade.php || return 1
+    fi
     path=$(uci -q get firewall.nfqws2_native.path)
     if [ -n "$(uci -q get firewall.nfqws2_native)" ]; then
         [ "$path" = /usr/lib/nfqws2/firewall-hook.sh ] || { echo firewall_include_owner_conflict >&2; return 1; }
@@ -234,7 +253,7 @@ nfqws_package_postinstall() {
     fi
     if [ -x /etc/init.d/nfqws2-native-dns ]; then /etc/init.d/nfqws2-native-dns disable || return 1; fi
     if [ -x /etc/init.d/nfqws2-native-dns-resume ]; then /etc/init.d/nfqws2-native-dns-resume enable || return 1; fi
-    rm -f "$nfqws_package_state_dir/state"
+    rm -f "$nfqws_package_state_dir/state" "$nfqws_package_state_dir/previous-resources.json"
     rmdir "$nfqws_package_state_dir" 2>/dev/null || :
     # The detached worker revalidates only previously confirmed consent.
     # First installation remains inert when no saved DNS intent exists.

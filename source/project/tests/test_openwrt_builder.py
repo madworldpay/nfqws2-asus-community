@@ -96,7 +96,7 @@ class NativeBuilderTests(unittest.TestCase):
         raw=(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes()
         files=builder.payload_files(builder.native_metadata('24.10','arm_cortex-a9'),raw)
         self.assertEqual(files['usr/bin/nfqws2'],(raw,0o755))
-        for name in ['usr/lib/nfqws2/control.sh','usr/lib/nfqws2/nfqws2-native','usr/share/nfqws2/defaults/nfqws2.conf','lib/upgrade/keep.d/nfqws2-native']:
+        for name in ['usr/lib/nfqws2/control.sh','usr/lib/nfqws2/resource-upgrade.php','usr/lib/nfqws2/nfqws2-native','usr/share/nfqws2/defaults/nfqws2.conf','lib/upgrade/keep.d/nfqws2-native']:
             self.assertIn(name,files.keys())
         self.assertNotIn('etc/init.d/nfqws2-native',files)  # no default_postinst auto-start
         self.assertNotIn('etc/nfqws2/nfqws2.conf',files)  # never overwrite active files

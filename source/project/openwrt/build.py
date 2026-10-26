@@ -113,7 +113,7 @@ def payload_files(target,engine,source=None):
         'usr/share/nfqws2/defaults/nfqws2.conf':(native_defaults(),0o600),
         'usr/share/nfqws2/platform.json':(json.dumps({k:target[k]for k in ['series','arch','engine','format','version','application_build']}|{'platform':'openwrt'},sort_keys=True).encode()+b'\n',0o644),
         'lib/upgrade/keep.d/nfqws2-native':(b'/etc/nfqws2/\n/etc/nfqws2-web/\n/etc/config/nfqws2-web\n',0o644)}
-    for name in ['control.sh','platform.sh','firewall.sh','firewall-hook.sh','config.php','config-cli.php','flow.php','flow-cli.php','nfqws2.init']:
+    for name in ['control.sh','platform.sh','firewall.sh','firewall-hook.sh','config.php','config-cli.php','flow.php','flow-cli.php','resource-upgrade.php','nfqws2.init']:
         installed='nfqws2-native'if name=='nfqws2.init'else name
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
     files['usr/lib/nfqws2/import-config.php']=((ROOT/'webui/web/public/import-config.php').read_bytes(),0o644)
