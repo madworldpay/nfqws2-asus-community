@@ -30,7 +30,7 @@ final class NfqwsOpenWrtUpdateManager
         }
         if(count($out)>4096||count($out)<1)throw new RuntimeException('pending_packages');ksort($out);return $out;
     }
-    private static function raw(array $environment):string
+    public static function raw(array $environment):string
     {
         $file=match($environment['format']??null){'ipk'=>'/usr/lib/opkg/status','apk'=>'/lib/apk/db/installed',default=>throw new RuntimeException('unsupported_abi')};
         $path=realpath($file);if($path===false)throw new RuntimeException('pending_packages');$s=@lstat($path);
@@ -53,11 +53,21 @@ final class NfqwsOpenWrtUpdateManager
             }
         }return $out;
     }
+    private static function unresolved(array $environment,array $installed,array $depends,bool $ownTransition):array
+    {
+        if(!array_is_list($depends)||count($depends)>64)throw new RuntimeException('invalid_package');
+        foreach($depends as $name)if(!is_string($name)||!preg_match('/^[a-z0-9][a-z0-9+._-]{0,80}$/D',$name))throw new RuntimeException('invalid_package');
+        $missing=array_values(array_diff($depends,array_keys($installed)));
+        if($missing){$provided=self::provided($environment,$installed,$ownTransition);$missing=array_values(array_filter($missing,fn($name)=>!isset($provided[$name])));}
+        return $missing;
+    }
+    public static function missing(array $environment,array $depends,bool $ownTransition=false):array
+    {return self::unresolved($environment,self::installed($environment,$ownTransition),$depends,$ownTransition);}
     public static function argv(string $path,array $environment,array $installed,array $record,?string $keys=null,bool $simulate=false,bool $ownTransition=false):array
     {
         if(($record['name']??null)!=='nfqws2-native'||!is_array($record['depends']??null))throw new RuntimeException('invalid_package');
         if(!str_starts_with($path,'/')||strpbrk($path,"\0\r\n")!==false)throw new RuntimeException('invalid_state');
-        $missing=array_values(array_diff($record['depends'],array_keys($installed)));if($missing){$provided=self::provided($environment,$installed,$ownTransition);foreach($missing as $name)if(!isset($provided[$name]))throw new RuntimeException('missing_dependencies');}
+        if(self::unresolved($environment,$installed,$record['depends'],$ownTransition))throw new RuntimeException('missing_dependencies');
         if(($environment['format']??null)==='ipk')return array_merge(['/bin/opkg','--nodeps'],$simulate?['--noaction']:[],['install',$path]);
         if(($environment['format']??null)!=='apk')throw new RuntimeException('unsupported_abi');
         if($keys===null)throw new RuntimeException('invalid_signature');$argv=['/usr/bin/apk','add','--network=no','--cache=no','--repositories-file','/dev/null','--keys-dir',$keys];
