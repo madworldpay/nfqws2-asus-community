@@ -277,7 +277,7 @@ def package_hook(target,action,upgrade=False):
     return (text+(HERE/'package-lifecycle.sh').read_text()).encode()
 
 
-def build_native(series,package_arch,cache,output,offline=False,upx=None,release=1):
+def build_native(series,package_arch,cache,output,offline=False,upx=None,release=1,sign_key=None):
     target=native_metadata(series,package_arch,release);output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
     source=source_payload(cache,offline);engine=prepare_engine(target,source,upx)
     with tempfile.TemporaryDirectory(prefix='nfqws-native-package-')as td:
@@ -291,14 +291,14 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
                 env={**os.environ,'SOURCE_DATE_EPOCH':'0'},stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=60)
             package=output/package_filename(target)
         else:
-            package=build_apk(target,stage,hooks,cache,output,offline)
+            package=build_apk(target,stage,hooks,cache,output,offline,sign_key)
         if not package.is_file():raise RuntimeError('Native package tool did not produce its expected artifact')
     checksum=digest(package)
     (output/(package.name+'.sha256')).write_text(checksum+'  '+package.name+'\n')
     return package
 
 
-def build_apk(target,stage,hooks,cache,output,offline):
+def build_apk(target,stage,hooks,cache,output,offline,sign_key=None):
     sdk=pinned_asset(ASSETS['apk_sdk'],cache,offline)
     with tempfile.TemporaryDirectory(prefix='nfqws-native-apk-tool-')as td:
         tools=Path(td)/'tools';tools.mkdir()
@@ -319,6 +319,14 @@ def build_apk(target,stage,hooks,cache,output,offline):
             '--info','origin:nfqws2-native','--info','url:https://github.com/madworldpay/nfqws2-asus-community',
             '--info','maintainer:madworldpay','--info','depends:'+' '.join(target['dependencies']),
             '--files',str(stage),'--output',str(package)]
+        keys=None
+        if sign_key is not None:
+            sign_key=Path(sign_key).absolute();s=sign_key.lstat()
+            if sign_key.is_symlink()or not sign_key.is_file()or s.st_nlink!=1 or s.st_uid not in (0,os.getuid())or s.st_mode&0o077:
+                raise ValueError('APK signing key must be a private regular file')
+            keys=Path(td)/'keys';keys.mkdir(mode=0o700)
+            subprocess.run(['openssl','pkey','-in',str(sign_key),'-pubout','-out',str(keys/'nfqws2-native.pem')],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=10)
+            args+=['--sign-key',str(sign_key)]
         for name in list(pairs)+['pre-upgrade','post-upgrade']:args+=['--script',name+':'+str(scripts/name)]
         filelist='lib/apk/packages/nfqws2-native.list'
         allfiles=sorted('/'+str(p.relative_to(stage))for p in stage.rglob('*')if p.is_file())+['/'+filelist]
@@ -326,6 +334,13 @@ def build_apk(target,stage,hooks,cache,output,offline):
         env={**os.environ,'SOURCE_DATE_EPOCH':'0','STAGING_DIR_HOST':str(tools)}
         env.pop('LD_PRELOAD',None)
         subprocess.run(args,check=True,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=60)
+        if keys is not None:
+            # Never treat a signing command's zero exit alone as trust proof.
+            # The router uses native trust verification, with no bypass flag.
+            try:subprocess.run([str(tools/'bin/apk'),'verify','--keys-dir',str(keys),str(package)],check=True,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=20)
+            except Exception:
+                package.unlink(missing_ok=True)
+                raise
         return package
 
 
@@ -334,8 +349,9 @@ def main():
     p.add_argument('--series',required=True,choices=['24.10','25.12']);p.add_argument('--arch',required=True)
     p.add_argument('--cache',required=True,type=Path);p.add_argument('--output',required=True,type=Path)
     p.add_argument('--offline',action='store_true');p.add_argument('--upx');p.add_argument('--release',default=1,type=int)
+    p.add_argument('--sign-key',type=Path,help='Private signing key for native APK creation; keep outside source/output')
     args=p.parse_args()
-    try:print(build_native(args.series,args.arch,args.cache,args.output,args.offline,args.upx,args.release))
+    try:print(build_native(args.series,args.arch,args.cache,args.output,args.offline,args.upx,args.release,args.sign_key))
     except subprocess.CalledProcessError as e:
         raise SystemExit((e.stdout or b'').decode(errors='replace')+(e.stderr or b'').decode(errors='replace'))
     except (RuntimeError,ValueError)as e:raise SystemExit(str(e))
