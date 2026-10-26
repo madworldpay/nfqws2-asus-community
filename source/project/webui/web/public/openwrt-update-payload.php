@@ -10,7 +10,7 @@ final class NfqwsOpenWrtUpdatePayload
         if(!array_is_list($paths)||count($paths)<1||count($paths)>512)throw new RuntimeException('invalid_state');
         $root=rtrim($root,'/');AsusUpdateStore::noLinks($root===''?'/':$root);$files=[];$bytes=0;
         foreach($paths as $name){
-            if(!is_string($name)||strlen($name)>512||!preg_match('~^/(?:usr/bin/nfqws2|usr/(?:lib/nfqws2(?:-web)?|share/nfqws2(?:-web)?|share/licenses/nfqws2-native)/[A-Za-z0-9_+./-]+|lib/upgrade/keep\.d/nfqws2-native|lib/apk/packages/nfqws2-native\.list|lib/apk/commit_hooks\.d/10-nfqws2-native)$~D',$name)||in_array('..',explode('/',$name),true)||in_array('.',explode('/',$name),true)||isset($files[$name]))throw new RuntimeException('invalid_state');
+            if(!is_string($name)||strlen($name)>512||!preg_match('~^/(?:usr/bin/nfqws2(?:-dpi)?|usr/(?:lib/nfqws2(?:-web)?|share/nfqws2(?:-web)?|share/licenses/nfqws2-native)/[A-Za-z0-9_+./-]+|lib/upgrade/keep\.d/nfqws2-native|lib/apk/packages/nfqws2-native\.list|lib/apk/commit_hooks\.d/10-nfqws2-native)$~D',$name)||in_array('..',explode('/',$name),true)||in_array('.',explode('/',$name),true)||isset($files[$name]))throw new RuntimeException('invalid_state');
             $path=$root.$name;AsusUpdateStore::noLinks($path);clearstatcache(true,$path);$s=@lstat($path);
             if(!$s||!is_file($path)||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0022)!==0||$s['size']>33554432)throw new RuntimeException('invalid_state');
             $bytes+=$s['size'];if($bytes>134217728)throw new RuntimeException('output_limit');$hash=hash_file('sha256',$path);if(!is_string($hash))throw new RuntimeException('invalid_state');

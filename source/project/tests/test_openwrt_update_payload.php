@@ -3,6 +3,10 @@ $module=dirname(__DIR__).'/webui/web/public/openwrt-update-payload.php';
 function ok($v,$m){if(!$v)throw new RuntimeException($m);}function refused($f){try{$f();}catch(RuntimeException $e){return;}throw new RuntimeException('unsafe payload inventory accepted');}
 ok(is_file($module),'native original-payload fingerprint missing');require $module;
 $root=$argv[1];$owner=(int)$argv[2];mkdir($root.'/usr/share/nfqws2',0755,true);$p=$root.'/usr/share/nfqws2/fixture';file_put_contents($p,'old bytes');chmod($p,0644);
+mkdir($root.'/usr/bin',0755,true);$dpi=$root.'/usr/bin/nfqws2-dpi';file_put_contents($dpi,"#!/bin/sh\nexit 0\n");chmod($dpi,0755);
+$dv=NfqwsOpenWrtUpdatePayload::fromPaths(['/usr/bin/nfqws2-dpi'],$root,$owner);ok(NfqwsOpenWrtUpdatePayload::unchanged($dv,$root,$owner),'owned native optional DPI launcher is included');
+file_put_contents($dpi,"#!/bin/sh\nexit 1\n");ok(!NfqwsOpenWrtUpdatePayload::unchanged($dv,$root,$owner),'DPI launcher replacement is detected');
+refused(fn()=>NfqwsOpenWrtUpdatePayload::fromPaths(['/usr/bin/unrelated'],$root,$owner));
 $paths=['/usr/share/nfqws2/fixture'];$v=NfqwsOpenWrtUpdatePayload::fromPaths($paths,$root,$owner);
 ok(NfqwsOpenWrtUpdatePayload::unchanged($v,$root,$owner),'unchanged original payload');
 file_put_contents($p,'new bytes');ok(!NfqwsOpenWrtUpdatePayload::unchanged($v,$root,$owner),'partial replacement must not restart old services');file_put_contents($p,'old bytes');
