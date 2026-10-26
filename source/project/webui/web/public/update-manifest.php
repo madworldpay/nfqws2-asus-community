@@ -32,14 +32,20 @@ final class AsusPackageManifest
             if(isset($seen[$package['family']])||!is_int($package['size'])||$package['filename']!=='nfqws2-asus_'.$manifest['package_version'].'_'.$package['family'].'.ipk')throw new RuntimeException('invalid_manifest');
             $seen[$package['family']]=true;
         }
+        self::verifySignature($json,$signature,$publicKey);
+        $manifest['revision']=hash('sha256',$json);
+        return $manifest;
+    }
+
+    /** Shared signature primitive; each platform keeps its own closed identity schema. */
+    public static function verifySignature(string $json,string $signature,string $publicKey):void
+    {
         if(!extension_loaded('openssl'))throw new RuntimeException('signature_unavailable');
         if(strlen($signature)>1024)throw new RuntimeException('invalid_signature');
         $signature=trim($signature);$bytes=base64_decode($signature,true);
         if($bytes===false||strlen($bytes)!==384||base64_encode($bytes)!==$signature)throw new RuntimeException('invalid_signature');
         $key=@openssl_pkey_get_public($publicKey);$details=$key===false?false:openssl_pkey_get_details($key);
         if(!$details||$details['type']!==OPENSSL_KEYTYPE_RSA||$details['bits']!==3072||@openssl_verify($json,$bytes,$key,OPENSSL_ALGO_SHA256)!==1)throw new RuntimeException('invalid_signature');
-        $manifest['revision']=hash('sha256',$json);
-        return $manifest;
     }
 
     public static function candidate(array $manifest,string $family,string $installedVersion): ?array

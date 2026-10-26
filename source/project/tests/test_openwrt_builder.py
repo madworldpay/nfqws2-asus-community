@@ -17,6 +17,16 @@ ENGINE_DIR=os.environ.get('NFQWS_TEST_ENGINE_DIR')
 
 
 class NativeBuilderTests(unittest.TestCase):
+    def test_release_filenames_are_unique_across_series_and_architectures(self):
+        names=[]
+        for series in ['24.10','25.12']:
+            for arch in ['arm_cortex-a9','x86_64']:
+                m=builder.native_metadata(series,arch,72)
+                name=builder.package_filename(m)
+                self.assertEqual(name,f"nfqws2-native_{m['version']}_{arch}.{m['format']}")
+                names.append(name)
+        self.assertEqual(len(set(names)),4)
+
     def test_ipk_apk_metadata_is_native_and_does_not_change_entware(self):
         for series,fmt,version in [('24.10','ipk','1.3.2-1'),('25.12','apk','1.3.2-r1')]:
             with self.subTest(series=series):
@@ -78,6 +88,8 @@ class NativeBuilderTests(unittest.TestCase):
         self.assertEqual((hashlib.sha256(raw).hexdigest(),mode),('c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863',0o644))
         for name in ['strategy-v2.schema.json','profile-catalog.schema.json','profile-catalog-public.pem']:
             self.assertIn('usr/share/nfqws2/'+name,files.keys())
+        self.assertEqual(files['usr/share/nfqws2/openwrt-package-manifest.schema.json'][0],(ROOT/'updates/openwrt-package-manifest.schema.json').read_bytes())
+        self.assertEqual(files['usr/share/nfqws2/update-release-key.pem'][0],(ROOT/'updates/trusted-release-key.pem').read_bytes())
 
     @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
     def test_payload_only_contains_selected_static_engine_and_native_paths(self):

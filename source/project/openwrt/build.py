@@ -40,6 +40,10 @@ def native_metadata(series,arch,release=1):
                 dependencies=DEPENDENCIES.copy(),elf=platform.ENGINES[engine].copy())
 
 
+def package_filename(target):
+    return f"nfqws2-native_{target['version']}_{target['arch']}.{target['format']}"
+
+
 def digest(path):
     h=hashlib.sha256()
     with Path(path).open('rb')as f:
@@ -135,6 +139,8 @@ def payload_files(target,engine,source=None):
             prefix='usr/share/nfqws2/defaults/'+directory+'/'
             if name.startswith(prefix):baseline['resources'][kind+'/'+name[len(prefix):]]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
     files['usr/share/nfqws2/report-baseline.json']=((json.dumps(baseline,sort_keys=True,separators=(',',':'))+'\n').encode(),0o644)
+    for source,name in [('openwrt-package-manifest.schema.json','openwrt-package-manifest.schema.json'),('trusted-release-key.pem','update-release-key.pem')]:
+        files['usr/share/nfqws2/'+name]=((ROOT/'updates'/source).read_bytes(),0o644)
     for name in ['profile-catalog.schema.json','dpi-catalog.json','dpi-profile.json','dpi-native-defaults.json',
                  'dpi-analysis-v2.schema.json','dpi-report.schema.json','dpi-envelope.schema.json','dpi-saved.schema.json',
                  'strategy.schema.json','strategy-v2.schema.json','resources.schema.json','dns-share.schema.json',
@@ -283,7 +289,7 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
             tool=pinned_asset(ASSETS['ipkg_build'],cache,offline)
             subprocess.run(['fakeroot','sh',str(tool),str(stage),str(output)],check=True,
                 env={**os.environ,'SOURCE_DATE_EPOCH':'0'},stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=60)
-            package=output/(target['package']+'_'+target['version']+'_'+target['arch']+'.ipk')
+            package=output/package_filename(target)
         else:
             package=build_apk(target,stage,hooks,cache,output,offline)
         if not package.is_file():raise RuntimeError('Native package tool did not produce its expected artifact')
@@ -305,7 +311,7 @@ def build_apk(target,stage,hooks,cache,output,offline):
         for name,key in pairs.items():(scripts/name).write_bytes(hooks[key])
         (scripts/'pre-upgrade').write_bytes(package_hook(target,'preinstall',True))
         (scripts/'post-upgrade').write_bytes(package_hook(target,'postinstall',True))
-        package=output/(target['package']+'-'+target['version']+'.apk')
+        package=output/package_filename(target)
         # sdk fakeroot uses its own matching preload library and loader.
         args=[str(tools/'bin/fakeroot'),str(tools/'bin/apk'),'mkpkg','--info','name:'+target['package'],
             '--info','version:'+target['version'],'--info','arch:'+target['arch'],

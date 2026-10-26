@@ -59,6 +59,56 @@ nfqws_package_prepare_upgrade() {
     nfqws_package_preremove upgrade
 }
 
+nfqws_package_service_owner() {
+    local name=$1 target path
+    case "$name" in
+        nfqws2-native) target=/usr/lib/nfqws2/nfqws2-native;;
+        nfqws2-native-web) target=/usr/lib/nfqws2-web/nfqws2-native-web;;
+        nfqws2-native-dns|nfqws2-native-dns-resume) target=/usr/lib/nfqws2/smartdns/$name;;
+        *) return 1;;
+    esac
+    path=/etc/init.d/$name
+    [ -e "$path" ] || [ -L "$path" ] || return 0
+    [ -L "$path" ] && [ "$(readlink "$path")" = "$target" ] && [ -x "$path" ] || { echo native_service_owner_conflict >&2; return 1; }
+}
+
+nfqws_package_service() {
+    local name=$1 action=$2 path=/etc/init.d/$1
+    case "$action" in start|stop|disable) ;; *) return 1;; esac
+    nfqws_package_service_owner "$name" || return 1
+    [ -e "$path" ] || [ -L "$path" ] || return 0
+    "$path" "$action"
+}
+
+nfqws_package_dns_control() {
+    local mode=$1 path=/usr/lib/nfqws2/smartdns/control.php
+    case "$mode" in upgrade|remove) ;; *) return 1;; esac
+    if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+        # Older core-only packages have no DNS component. Existing journals
+        # without their controller require recovery before files are replaced.
+        [ ! -e /etc/nfqws2-web/smartdns ] && [ ! -L /etc/nfqws2-web/smartdns ] &&
+        [ ! -e /tmp/nfqws2-native-state/smartdns-runtime ] && [ ! -L /tmp/nfqws2-native-state/smartdns-runtime ] || { echo dns_restore_required >&2; return 1; }
+        return 0
+    fi
+    [ -f "$path" ] && [ ! -L "$path" ] || return 1
+    case "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" in '-rw-r--r-- 1 0'|'-rw------- 1 0') ;; *) return 1;; esac
+    /usr/bin/php-cgi -d register_argc_argv=1 -q -f "$path" -- "$mode" || { echo dns_restore_failed >&2; return 1; }
+}
+
+nfqws_package_stop_services() {
+    local name
+    for name in nfqws2-native nfqws2-native-web nfqws2-native-dns nfqws2-native-dns-resume; do
+        nfqws_package_service_owner "$name" || return 1
+    done
+    # Verify fallback DNS while the old engine and controller still exist.
+    # A conflict aborts the package-manager pre-commit hook.
+    nfqws_package_dns_control "$1" &&
+    nfqws_package_service nfqws2-native-dns stop &&
+    nfqws_package_service nfqws2-native-dns-resume stop &&
+    nfqws_package_service nfqws2-native stop &&
+    nfqws_package_service nfqws2-native-web stop
+}
+
 nfqws_package_preinstall() {
     [ -z "$IPKG_INSTROOT" ] || return 0
     [ -f /etc/openwrt_release ] || { echo native_openwrt_required >&2; return 1; }
@@ -186,6 +236,9 @@ nfqws_package_postinstall() {
     if [ -x /etc/init.d/nfqws2-native-dns-resume ]; then /etc/init.d/nfqws2-native-dns-resume enable || return 1; fi
     rm -f "$nfqws_package_state_dir/state"
     rmdir "$nfqws_package_state_dir" 2>/dev/null || :
+    # The detached worker revalidates only previously confirmed consent.
+    # First installation remains inert when no saved DNS intent exists.
+    nfqws_package_service nfqws2-native-dns-resume start
 }
 
 nfqws_package_preremove() {
@@ -193,13 +246,15 @@ nfqws_package_preremove() {
     if [ -e /etc/init.d/nfqws2-native ] || [ -L /etc/init.d/nfqws2-native ]; then
         [ -L /etc/init.d/nfqws2-native ] && [ "$(readlink /etc/init.d/nfqws2-native)" = /usr/lib/nfqws2/nfqws2-native ] || return 1
     fi
-    if [ "$PKG_UPGRADE" = 1 ] || [ "$1" = upgrade ]; then nfqws_package_snapshot || return 1
-    else [ ! -x /etc/init.d/nfqws2-native ] || /etc/init.d/nfqws2-native disable || return 1; fi
-    [ ! -x /etc/init.d/nfqws2-native ] || /etc/init.d/nfqws2-native stop || return 1
-    if [ -e /etc/init.d/nfqws2-native-web ] || [ -L /etc/init.d/nfqws2-native-web ]; then
-        [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ] || return 1
-        if [ "$PKG_UPGRADE" != 1 ] && [ "$1" != upgrade ]; then /etc/init.d/nfqws2-native-web disable || return 1; fi
-        /etc/init.d/nfqws2-native-web stop || return 1
+    if [ "$PKG_UPGRADE" = 1 ] || [ "$1" = upgrade ]; then nfqws_package_snapshot || return 1; fi
+    local mode=remove
+    if [ "$PKG_UPGRADE" = 1 ] || [ "$1" = upgrade ]; then mode=upgrade; fi
+    nfqws_package_stop_services "$mode" || return 1
+    if [ "$mode" = remove ]; then
+        nfqws_package_service nfqws2-native disable &&
+        nfqws_package_service nfqws2-native-web disable &&
+        nfqws_package_service nfqws2-native-dns disable &&
+        nfqws_package_service nfqws2-native-dns-resume disable || return 1
     fi
 }
 
@@ -210,6 +265,9 @@ nfqws_package_postremove() {
         rm /etc/init.d/nfqws2-native
     fi
     if [ -L /etc/init.d/nfqws2-native-web ] && [ "$(readlink /etc/init.d/nfqws2-native-web)" = /usr/lib/nfqws2-web/nfqws2-native-web ]; then rm /etc/init.d/nfqws2-native-web; fi
+    for dns_service in nfqws2-native-dns nfqws2-native-dns-resume; do
+        if [ -L "/etc/init.d/$dns_service" ] && [ "$(readlink "/etc/init.d/$dns_service")" = "/usr/lib/nfqws2/smartdns/$dns_service" ]; then rm "/etc/init.d/$dns_service"; fi
+    done
     if [ "$(uci -q get firewall.nfqws2_native.path)" = /usr/lib/nfqws2/firewall-hook.sh ]; then
         uci -q delete firewall.nfqws2_native && uci commit firewall || return 1
     fi

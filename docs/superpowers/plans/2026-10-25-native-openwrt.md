@@ -66,9 +66,9 @@ Files: common import/resource path abstraction, native DPI/diagnostics runtime a
 
 ### Task 6: Native SmartDNS with owned resolver integration
 Files: openwrt/smartdns adapter and common lifecycle/platform boundary; tests/test_openwrt_smartdns.py/php.
-- [ ] Test dnsmasq integration without replacing existing server/ipset/nftset entries, multiple instances, another resolver owner, reboot, rollback and concurrent operator changes.
-- [ ] Implement a separate native SmartDNS process and managed resolver state, preserving current apply/confirm/undo semantics.
-- [ ] Validate actual LAN DNS with core on/off and a disposable VPN/DNS fixture; commit.
+- [x] Test dnsmasq integration without replacing existing server/ipset/nftset entries, multiple instances, another resolver owner, reboot, rollback and concurrent operator changes.
+- [x] Implement a separate native SmartDNS process and managed resolver state, preserving current apply/confirm/undo semantics.
+- [x] Validate actual LAN DNS with core on/off and a disposable VPN/DNS fixture; commit.
 
 ### Task 7: Native updates and install selection
 Files: native release/format resolver, native update lifecycle, installer platform branch, tests/test_openwrt_updates.py/php.

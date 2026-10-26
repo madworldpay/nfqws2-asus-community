@@ -9,6 +9,47 @@ LIB=Path(__file__).resolve().parents[1]/'openwrt/package-lifecycle.sh'
 
 
 class NativePackageLifecycleTests(unittest.TestCase):
+    def test_foreign_service_is_rejected_before_any_dns_or_service_change(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_service_owner() { [ "$1" != nfqws2-native-web ]; }
+nfqws_package_dns_control() { echo unexpected-dns-change; }
+nfqws_package_service() { echo unexpected-service-change; }
+nfqws_package_stop_services upgrade
+'''],capture_output=True,text=True)
+        self.assertNotEqual(r.returncode,0)
+        self.assertEqual(r.stdout,'')
+
+    def test_dns_is_restored_before_core_or_web_can_stop(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_dns_control() { printf 'dns-control-%s\\n' "$1"; }
+nfqws_package_service() { printf '%s-%s\\n' "$1" "$2"; }
+nfqws_package_stop_services upgrade
+'''],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(r.stdout.splitlines(),['dns-control-upgrade','nfqws2-native-dns-stop','nfqws2-native-dns-resume-stop','nfqws2-native-stop','nfqws2-native-web-stop'])
+
+    def test_failed_dns_restoration_cannot_replace_live_component_files(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_dns_control() { echo dns-restore-failed; return 1; }
+nfqws_package_service() { echo unexpected-service-change; }
+nfqws_package_stop_services upgrade
+'''],capture_output=True,text=True)
+        self.assertNotEqual(r.returncode,0)
+        self.assertEqual(r.stdout.splitlines(),['dns-restore-failed'])
+
+    def test_remove_clears_dns_consent_before_stopping_owned_services(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_dns_control() { printf 'dns-control-%s\\n' "$1"; }
+nfqws_package_service() { printf '%s-%s\\n' "$1" "$2"; }
+nfqws_package_stop_services remove
+'''],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(r.stdout.splitlines()[0],'dns-control-remove')
+
     def test_apk_upgrade_stops_old_process_before_replacing_its_executable(self):
         source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
         r=subprocess.run(['sh','-c',source+'''
