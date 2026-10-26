@@ -84,8 +84,9 @@ final class NfqwsPlatform
         return $path;
     }
     /** Fixed argv selected by trusted callers, bounded output and deadline. */
-    public static function run(array $argv,float $timeout=15,array $inherited=[]):array
+    public static function run(array $argv,float $timeout=15,array $inherited=[],int $outputLimit=65536):array
     {
+        if($outputLimit<1||$outputLimit>1048576)throw new RuntimeException('invalid_output_limit');
         $descriptors=[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']];
         foreach($inherited as $fd=>$stream){if(!is_int($fd)||$fd<3||$fd>9||!is_resource($stream))throw new RuntimeException('invalid_inherited_descriptor');$descriptors[$fd]=$stream;}
         $pipes=[];$p=@proc_open($argv,$descriptors,$pipes,null,['PATH'=>'/usr/sbin:/usr/bin:/sbin:/bin']);
@@ -93,10 +94,11 @@ final class NfqwsPlatform
         foreach($pipes as $f)stream_set_blocking($f,false);
         $raw='';$until=microtime(true)+$timeout;$status=1;
         try{do{foreach($pipes as $f)$raw.=stream_get_contents($f);$s=proc_get_status($p);
-            if(strlen($raw)>65536||microtime(true)>$until){proc_terminate($p,9);break;}
+            if(strlen($raw)>$outputLimit||microtime(true)>$until){proc_terminate($p,9);break;}
             if(!$s['running']){$status=$s['exitcode'];foreach($pipes as $f)$raw.=stream_get_contents($f);break;}usleep(20000);
         }while(true);}finally{foreach($pipes as $f)fclose($f);proc_close($p);}
-        return ['status'=>$status,'output'=>explode("\n",rtrim(substr($raw,0,65536)))];
+        if(strlen($raw)>$outputLimit)$status=1;
+        return ['status'=>$status,'output'=>explode("\n",rtrim(substr($raw,0,$outputLimit)))];
     }
     public static function guardFile(string $directory,string $name,int $owner=0):string
     {

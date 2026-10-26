@@ -52,7 +52,7 @@ final class AsusUpdatePackage
             if($name==='control.tar.gz')$control=$raw;elseif($name==='debian-binary'&&$raw!=="2.0\n")throw new RuntimeException('invalid_package');
         }}finally{gzclose($f);}
         if(count($found)!==3||$control===null)throw new RuntimeException('invalid_package');$tar=@gzdecode($control,4194304);if(!is_string($tar)||strlen($tar)>4194304)throw new RuntimeException('invalid_package');$fields=null;$seen=[];$bootstrap=[];
-        $helpers=$family==='armv7'?['busybox-migration-armv7-2.6','busybox-migration-armv7-3.2']:['busybox-migration-aarch64-3.10'];
+        $helpers=$family==='native'?[]:($family==='armv7'?['busybox-migration-armv7-2.6','busybox-migration-armv7-3.2']:['busybox-migration-aarch64-3.10']);
         for($p=0,$n=0;$p+512<=strlen($tar)&&$n<16;$n++){$block=substr($tar,$p,512);$h=self::header($block);$p+=512;if($h===null)break;
             $helper=in_array($h['name'],$helpers,true);
             if((!$helper&&!in_array($h['name'],['control','preinst','postinst','prerm','postrm','conffiles'],true))||isset($seen[$h['name']])||$h['size']>($helper?1048576:131072)||$p+$h['size']>strlen($tar))throw new RuntimeException('invalid_package');$seen[$h['name']]=true;
@@ -66,6 +66,7 @@ final class AsusUpdatePackage
             if($h['name']==='control'){if($h['size']>16384)throw new RuntimeException('invalid_package');$fields=self::fields(substr($tar,$p,$h['size']));}$p+=(int)(ceil($h['size']/512)*512);
         }if($fields===null)throw new RuntimeException('invalid_package');sort($bootstrap);sort($helpers);if($bootstrap!==[]&&$bootstrap!==$helpers)throw new RuntimeException('invalid_package');return $fields;
     }
+    public static function nativeControl(string $path):array{return self::control($path,'native');}
     public static function inspect(string $path,array $candidate,string $status,string $abi,string $machine): array
     {
         $family=$candidate['package']['family']??null;
