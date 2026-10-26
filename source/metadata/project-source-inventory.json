@@ -2096,8 +2096,8 @@
   },
   {
     "path": "tests/test_share_ui.mjs",
-    "bytes": 8777,
-    "sha256": "382db6f942f3ff8ec4d00092c303b367a286568d3d39a90305f0dc3258f3169e"
+    "bytes": 9253,
+    "sha256": "02964a1f157d9b568375b1baeaf699d954c73b9181b2f06e8cc25b904b927a1f"
   },
   {
     "path": "tests/test_share_v4.py",

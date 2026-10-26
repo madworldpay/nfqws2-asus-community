@@ -22,8 +22,8 @@
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 6041,
-      "sha256": "9eccd7b89254177fc1eac36dfa90a9bf1d7a6fbef13eb12241b8aa24ae86dd2e"
+      "bytes": 6342,
+      "sha256": "f54144108ff6a4d0011be1ac2271464b5e938449e1268f74c99a47817c9934f9"
     },
     {
       "file": "DOMRU.md",
@@ -37,13 +37,13 @@
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 3394,
-      "sha256": "00085fc924f32c8f4160d4eb348e3da190b7d7e0f5064ea6f39b19e400765ca7"
+      "bytes": 3706,
+      "sha256": "09094165a50aec30eecd6068c1032ac25fc67a33b1425627c956e4b4b12c99ba"
     },
     {
       "file": "IMPORT.md",
-      "bytes": 7968,
-      "sha256": "3b2d81f1c81525d55dfc0fcc2dfdd85e1ba53242e63ef2720f3fd14c25b85c6f"
+      "bytes": 8343,
+      "sha256": "6de947f837b87a0f8ddf32c84a70936fcf54c858124e3377811290232d15ad59"
     },
     {
       "file": "INSTALL.md",
@@ -77,8 +77,8 @@
     },
     {
       "file": "PRESETS.md",
-      "bytes": 2124,
-      "sha256": "cd31908ea7ee8ccdb4d751d6a961b0a4e8c21d6e26bd6ce13263acbc1923b151"
+      "bytes": 2446,
+      "sha256": "a9e4ea40357563fe9dc6fe33212d8d93d9e9661e7bb8afbc8e02d87afa00123a"
     },
     {
       "file": "QUICKSTART.md",
@@ -97,8 +97,8 @@
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 7590,
-      "sha256": "014b60be8b92e87cffd01fdb0df98a99f89516e0f9ebaecd42a3ede1b765abdb"
+      "bytes": 7934,
+      "sha256": "ae9e195bc06220c931be828b218526babb50d5cab4c18976ae601ab1e88f4750"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
@@ -112,8 +112,8 @@
     },
     {
       "file": "USAGE.md",
-      "bytes": 4719,
-      "sha256": "b902f181070249da387784d4fcf772ed76696e8b7f969a5e51b7f808ef6df057"
+      "bytes": 5029,
+      "sha256": "1de8a9631da5de159a1c9974d70fcbb1d3b9eb80ecad9fa3c7c8af05fc901a3d"
     },
     {
       "file": "build.svg",
