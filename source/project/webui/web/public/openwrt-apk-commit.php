@@ -23,9 +23,20 @@ final class NfqwsOpenWrtApkCommit
             $script.='exec /usr/bin/php8-cgi -d register_argc_argv=1 -q -f '.escapeshellarg($entry).' -- hook-apk-precommit '.escapeshellarg($id)."\n";
             $f=@fopen($path,'xb');if(!$f)throw new RuntimeException('invalid_state');
             try{if(fwrite($f,$script)!==strlen($script)||!fflush($f)||!chmod($path,0700))throw new RuntimeException('insufficient_space');}finally{fclose($f);}
-            $token=['id'=>$id,'sha256'=>hash('sha256',$script),'directory_created'=>$made];
+            $token=['id'=>$id,'sha256'=>hash('sha256',$script),'directory_created'=>$made,'worker'=>$w];
             $store->writeFile('operations/'.$id.'/apk-commit.json',json_encode($token,JSON_THROW_ON_ERROR));return $token;
         }finally{umask($mask);}
+    }
+    /** Reclaim an abandoned exact gate before its private token is rotated away. */
+    public static function prune(AsusUpdateStore $store,string $id):bool
+    {
+        $raw=$store->readFile('operations/'.$id.'/apk-commit.json',2048);if($raw===null)return true;
+        $token=json_decode($raw,true,16,JSON_THROW_ON_ERROR);
+        if(!is_array($token)||($token['id']??null)!==$id||!is_array($token['worker']??null))return false;
+        if(AsusUpdateLifecycle::alive($token['worker']))return false;
+        $guard=new NfqwsOpenWrtUpdateGuard($store);$ticket=$guard->ticket();
+        if($ticket!==null&&$ticket['id']===$id&&$guard->managerAlive($ticket))return false;
+        return self::remove($token);
     }
     public static function remove(array $token):bool
     {

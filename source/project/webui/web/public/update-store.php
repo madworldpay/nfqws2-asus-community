@@ -94,6 +94,12 @@ final class AsusUpdateStore
     private function clean(string $id): void
     {
         $dir=$this->path('operations/'.$id);if(!is_dir($dir))return;$this->directory('operations/'.$id);
+        // A native APK gate lives outside this directory. Its exact private
+        // token must not disappear while leaving an owned inactive hook behind.
+        if($this->owner===0&&NfqwsPlatform::native()&&$this->readFile('operations/'.$id.'/apk-commit.json',2048)!==null){
+            require_once __DIR__.'/openwrt-apk-commit.php';
+            if(!NfqwsOpenWrtApkCommit::prune($this,$id))return;
+        }
         // Unknown operator files and links are deliberately left alone.
         $this->pruneTree('operations/'.$id.'/backup','snapshot.json');
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;

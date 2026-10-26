@@ -124,13 +124,13 @@ final class NfqwsOpenWrtUpdateWorker
                 // Package replacement is finished. SH still prevents another
                 // update, while fresh isolated DNS validators can also hold SH.
                 if(!flock($lease,LOCK_SH))throw new RuntimeException('busy');$this->resume();NfqwsOpenWrtUpdateSnapshot::verify($this->store->path($base.'/backup'),$root);
-                $this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
+                (new NfqwsOpenWrtUpdateHook($this->store,$this->options))->complete($t);$this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
             }catch(Throwable $e){
                 $patch=['state'=>'failed','code'=>AsusUpdatePrepare::code($e)];
                 if($ticket&&$managerStarted&&$original!==null&&NfqwsOpenWrtUpdatePayload::unchanged($original)){
                     try{if(is_dir($this->store->path($base.'/backup')))NfqwsOpenWrtUpdateSnapshot::verify($this->store->path($base.'/backup'),$root);$after=$this->recoveryEnvironment($environment);if($after['installed']!==$environment['installed'])throw new RuntimeException('version_mismatch');
                         $current=NfqwsOpenWrtUpdateManager::installed($after,true);$old=json_decode($this->store->readFile($base.'/native-preflight.json')??'',true,32,JSON_THROW_ON_ERROR)['installed']??null;if(!is_array($old))throw new RuntimeException('invalid_state');unset($old['nfqws2-native']);if($current!==$old)throw new RuntimeException('dependency_change');if($after['recovery_pending']??false)$patch['code']='pending_packages';$t=$this->ticket($id,'starting');$patch['core_state']=$this->restore($t['intent']);
-                        if(!flock($lease,LOCK_SH))throw new RuntimeException('busy');$this->resume();$patch['installed_version']=$after['installed'];
+                        if(!flock($lease,LOCK_SH))throw new RuntimeException('busy');$this->resume();(new NfqwsOpenWrtUpdateHook($this->store,$this->options))->complete($t);$patch['installed_version']=$after['installed'];
                     }catch(Throwable $recovery){$patch['code']=AsusUpdatePrepare::code($recovery);}
                 }
                 if($ticket){try{$this->ticket($id,'finished');}catch(Throwable $ignored){}}

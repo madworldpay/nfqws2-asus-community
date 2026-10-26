@@ -273,6 +273,39 @@ nfqws_package_mark_starting() {
     (umask 077; printf '%s\nstarting\n' "$manager" > "$path")
 }
 
+# OPKG may retry only postinst for an unpacked package. Keep the saved intent
+# from the dead manager instead of treating all previously stopped services as
+# the operator's new choice. This never changes the package database.
+nfqws_package_adopt_configure() {
+    local current=$1 path=$nfqws_package_state_dir/state previous boot old_pid old_ticks actual_ticks next
+    [ "$NFQWS_PKG_FORMAT" = ipk ] && [ -f "$path" ] && [ ! -L "$path" ] || return 1
+    [ "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] && [ "$(wc -c < "$path")" -le 4096 ] || return 1
+    awk -F= '
+      $1=="manager" {if(NF!=2 || seen[$1]++)exit 1;next}
+      $1~/^(enabled|running|web_present|web_enabled|web_running)$/ {if(NF!=2 || $2!~/^[01]$/ || seen[$1]++)exit 1;next}
+      {exit 1}
+      END {if(length(seen)!=6)exit 1}
+    ' "$path" || return 1
+    previous=$(sed -n 's/^manager=//p' "$path")
+    boot=$(cat /proc/sys/kernel/random/boot_id) || return 1
+    printf '%s\n' "$previous" | awk -F: -v boot="$boot" 'NF!=3 || $1!=boot || $2!~/^[1-9][0-9]*$/ || $2>2147483647 || $3!~/^[1-9][0-9]*$/ {exit 1}' || return 1
+    old_pid=$(printf '%s\n' "$previous" | cut -d: -f2)
+    old_ticks=$(printf '%s\n' "$previous" | cut -d: -f3)
+    actual_ticks=$(sed 's/.*) //' "/proc/$old_pid/stat" 2>/dev/null | awk '{print $20}')
+    [ "$actual_ticks" != "$old_ticks" ] || return 1
+    # opkg itself holds its lock: read its current native database rather than
+    # spawning another opkg command from a maintainer script.
+    awk 'BEGIN {RS=""}
+      $0~/(^|\n)Package: nfqws2-native(\n|$)/ {
+        package++; if($0!~/(^|\n)Status: (install|hold) (ok|user|prefer|hold)(,(ok|user|prefer|hold))* unpacked(\n|$)/)bad=1
+      }
+      END {if(package!=1 || bad)exit 1}
+    ' /usr/lib/opkg/status || return 1
+    next=$(mktemp "$nfqws_package_state_dir/configure.XXXXXX") || return 1
+    if ! { printf 'manager=%s\n' "$current"; sed '/^manager=/d' "$path"; } > "$next"; then rm -f "$next"; return 1; fi
+    mv "$next" "$path"
+}
+
 nfqws_package_postinstall() {
     nfqws_package_defaults || return 1
     [ -z "$IPKG_INSTROOT" ] || return 0
@@ -280,7 +313,7 @@ nfqws_package_postinstall() {
     nfqws_package_guard "$nfqws_package_state_dir" || return 1
     if [ -f "$nfqws_package_state_dir/state" ] && [ ! -L "$nfqws_package_state_dir/state" ]; then
         manager=$(nfqws_package_manager) || return 1
-        [ "$(sed -n 's/^manager=//p' "$nfqws_package_state_dir/state")" = "$manager" ] || { echo stale_package_transaction >&2; return 1; }
+        [ "$(sed -n 's/^manager=//p' "$nfqws_package_state_dir/state")" = "$manager" ] || nfqws_package_adopt_configure "$manager" || { echo stale_package_transaction >&2; return 1; }
         enabled=$(sed -n 's/^enabled=\([01]\)$/\1/p' "$nfqws_package_state_dir/state")
         running=$(sed -n 's/^running=\([01]\)$/\1/p' "$nfqws_package_state_dir/state")
         case "$enabled:$running" in 0:0|0:1|1:0|1:1) ;; *) return 1;; esac

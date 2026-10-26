@@ -18,6 +18,22 @@ final class NfqwsOpenWrtUpdateHook
         $mode=$v['running']==='1'?'running':(($ticket['intent']['mode']==='waiting_for_wan'&&$v['enabled']==='1')?'waiting_for_wan':'stopped');
         return ['mode'=>$mode,'enabled'=>$v['enabled']==='1','web_enabled'=>$v['web_enabled']==='1','web_running'=>$v['web_running']==='1'];
     }
+    /** Retire saved intent only after verified restoration, never on partial failure. */
+    public function complete(array $ticket):void
+    {
+        $path=$this->options['journal']??'/tmp/nfqws2-native-package/state';
+        if(!file_exists($path)&&!is_link($path))return;
+        $this->journal($ticket);$dir=dirname($path);$d=@lstat($dir);
+        if(!$d||!is_dir($dir)||$d['uid']!==0||($d['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
+        $files=[$path];
+        foreach(['previous-resources.json'=>1048576,'phase'=>256]as $name=>$limit){
+            $file=$dir.'/'.$name;AsusUpdateStore::noLinks($file);$s=@lstat($file);if($s===false)continue;
+            if(!is_file($file)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0777)!==0600||$s['size']>$limit)throw new RuntimeException('invalid_state');$files[]=$file;
+        }
+        // Native manager has exited and the worker still owns the apply lease.
+        if(AsusUpdateLifecycle::alive($ticket['manager']))throw new RuntimeException('busy');
+        foreach($files as $file)if(!unlink($file))throw new RuntimeException('invalid_state');@rmdir($dir);
+    }
     public function run(string $action):bool
     {
         if(!in_array($action,['verify','capture','postinstall'],true))throw new RuntimeException('invalid_request');$guard=new NfqwsOpenWrtUpdateGuard($this->store);$ticket=$guard->ticket();

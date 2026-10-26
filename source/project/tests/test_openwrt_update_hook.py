@@ -60,8 +60,11 @@ $exit=proc_close($p);if($commit!==null&&trim(file_get_contents($base.'/case'))!=
    if case=='abandoned':
     self.assertEqual(format,'apk');self.sh('rm -rf '+base+'/store/operations/'+ident+'/runtime')
     self.assertEqual(self.sh('/etc/apk/commit_hooks.d/00-nfqws2-native-'+ident+' pre-commit'),'')
-    code='require $argv[1];$v=json_decode(file_get_contents($argv[2]),true);if(!NfqwsOpenWrtApkCommit::remove($v))throw new RuntimeException("owned gate cleanup failed");'
-    self.sh('php-cli -r '+shlex.quote(code)+' '+shlex.quote(str(ROOT/'webui/web/public/openwrt-apk-commit.php'))+' '+base+'/store/operations/'+ident+'/apk-commit.json');result['abandoned_gate_inert']=True
+    token=self.sh('cat '+base+'/store/operations/'+ident+'/apk-commit.json')
+    self.addCleanup(lambda:self.sh('php-cli -r '+shlex.quote('require $argv[1];NfqwsOpenWrtApkCommit::remove(json_decode($argv[2],true));')+' '+shlex.quote(str(ROOT/'webui/web/public/openwrt-apk-commit.php'))+' '+shlex.quote(token)))
+    code='require $argv[1]."/openwrt-apk-commit.php";$s=new AsusUpdateStore($argv[2]);$s->update($argv[3],["state"=>"failed","code"=>"interrupted"]);for($n=1;$n<=2;$n++){$r=str_repeat("d",64);$j=$s->reserve($r,str_pad(dechex($n),32,"0",STR_PAD_LEFT),["revision"=>$r,"package_version"=>"1.3.2-r72"]);$s->update($j["id"],["state"=>"failed","code"=>"interrupted"]);} '
+    self.sh('php-cli -r '+shlex.quote(code)+' '+base+'/source/app '+base+'/store '+ident)
+    self.sh('test ! -e /etc/apk/commit_hooks.d/00-nfqws2-native-'+ident);result['abandoned_gate_inert']=True
    return result
   finally:self.sh(('opkg remove'if format=='ipk'else'apk del --network=no')+' nfqws2-native >/dev/null 2>&1 || :')
  def test_real_manager_descendant_captures_current_settings_under_its_lock(self):
