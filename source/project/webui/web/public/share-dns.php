@@ -7,7 +7,11 @@ final class AsusShareDns
     private string $legacy;
     private AsusShareRead $reader;
     public function __construct(?string $legacy=null,private int $owner=0,private array $deps=[])
-    { $alias=$deps['opt_alias']??'/opt';$this->legacy=$legacy??AsusDpiStore::optPath('/etc/smartdns',$alias).'/smartdns.conf';$this->reader=$legacy===null?new AsusShareRead($owner,realpath($alias),$alias):new AsusShareRead($owner); }
+    {
+        $alias=$deps['opt_alias']??'/opt';$native=NfqwsPlatform::native()&&$alias==='/opt';
+        $this->legacy=$legacy??($native?'/etc/smartdns/smartdns.conf':AsusDpiStore::optPath('/etc/smartdns',$alias).'/smartdns.conf');
+        $this->reader=$legacy===null&&!$native?new AsusShareRead($owner,realpath($alias),$alias):new AsusShareRead($owner);
+    }
     private static function safeUrl(string $url): bool
     {
         $p=parse_url($url);

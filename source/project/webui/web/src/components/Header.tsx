@@ -54,7 +54,7 @@ export const Header = () => {
   const open = Boolean(anchorEl);
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
 
-  const { service, nfqws2, arkLoaded } = useStatus();
+  const { service, nfqws2, arkLoaded, platform } = useStatus();
 
   const config = useConfig(nfqws2);
 
@@ -81,7 +81,9 @@ export const Header = () => {
     handleMenuClose();
     setOutput(true);
     const { data } = await API.action(command);
-    setOutput(`> nfqws2-asus ${command}\n${data?.output?.join('\n') || ''}`);
+    setOutput(
+      `> ${platform === 'openwrt' ? 'nfqws2-native' : 'nfqws2-asus'} ${command}\n${data?.output?.join('\n') || ''}`,
+    );
     void API.invalidateStatus();
 
     if (command === 'upgrade') {
@@ -142,7 +144,7 @@ export const Header = () => {
                   },
                 }}
               >
-                ASUS
+                {platform === 'openwrt' ? 'OpenWrt' : 'ASUS'}
               </Typography>
               <Typography
                 component="h2"

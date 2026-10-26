@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PHP = os.environ.get('PHP_TLS_TEST_BINARY')
 EXTENSION = os.environ.get('PHP_OPENSSL_TEST_EXTENSION')
 METADATA = 'https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/public.json'
+NATIVE_METADATA = 'https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/openwrt/public.json'
 RELEASES = 'https://github.com/madworldpay/nfqws2-asus-community/releases/download/'
 ASSET_HOST = 'release-assets.githubusercontent.com'
 
@@ -74,7 +75,7 @@ class GithubUpdateTransportTests(unittest.TestCase):
                                  self.asset: (200, self.body, {})}
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True);self.thread.start();self.addCleanup(self.stop)
         self.app = self.base/'app';self.app.mkdir()
-        for name in ['update-transport.php', 'update-github.php', 'update-manifest.php', 'dpi-store.php', 'dpi-options.php', 'support-json-schema.php']:
+        for name in ['update-transport.php', 'update-github.php', 'update-manifest.php', 'dpi-store.php', 'dpi-options.php', 'support-json-schema.php', 'platform.php']:
             source = ROOT/'webui/web/public'/name
             if source.exists():shutil.copy2(source, self.app/name)
         (self.base/'resources').mkdir()
@@ -82,6 +83,7 @@ class GithubUpdateTransportTests(unittest.TestCase):
         public = self.app/'update-github.php'
         if public.exists():
             raw = public.read_text().replace(METADATA, self.origin+'/updates/public.json').replace(RELEASES, self.origin+'/releases/download/')
+            raw = raw.replace(NATIVE_METADATA,self.origin+'/updates/openwrt/public.json')
             raw = raw.replace("'"+ASSET_HOST+"'", "'127.0.0.1'").replace('private const HTTPS_PORT=443;', f'private const HTTPS_PORT={self.server.server_port};')
             public.write_text(raw)
         opt = self.base/'opt';(opt/'etc/nfqws-asus-web').mkdir(parents=True)
@@ -90,11 +92,11 @@ class GithubUpdateTransportTests(unittest.TestCase):
 
     def stop(self):self.server.shutdown();self.server.server_close();self.thread.join(timeout=2)
 
-    def call(self, action='manifest', package=None, config='default', ca=None, direct=False):
+    def call(self, action='manifest', package=None, config='default', ca=None, direct=False, platform='asus-entware'):
         package = package or {'filename': self.name, 'size': len(self.body), 'sha256': hashlib.sha256(self.body).hexdigest()}
         script = '''require $argv[1].'/update-transport.php';$p=json_decode(stream_get_contents(STDIN),true);
         try{$times=['metadata'=>0.4,'download'=>0.4];
-        if($p['direct']){if(!class_exists('AsusGithubUpdateSource'))throw new RuntimeException('missing_public_transport');$t=new AsusGithubUpdateSource((int)$argv[2],$argv[3],$times);}
+        if($p['direct']){if(!class_exists('AsusGithubUpdateSource'))throw new RuntimeException('missing_public_transport');$t=new AsusGithubUpdateSource((int)$argv[2],$argv[3],$times,$p['platform']);}
         else $t=new AsusUpdateTransport($p['config']==='default'?null:$p['config'],(int)$argv[2],$argv[3],$times);
         if($p['action']==='construct')$v='ready';elseif($p['action']==='manifest')$v=$t->manifest();
         elseif($p['action']==='verify'){require $argv[1].'/update-manifest.php';$raw=$t->manifest();
@@ -104,7 +106,7 @@ class GithubUpdateTransportTests(unittest.TestCase):
         echo json_encode(['value'=>$v]);}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
         result = subprocess.run([PHP, '-n', '-d', 'extension='+EXTENSION, '-r', script,
                                  str(self.app), str(os.getuid()), str(ca or self.cert), str(self.base/'download.ipk')],
-                                input=json.dumps({'action': action, 'package': package, 'config': config, 'direct': direct, 'key': self.release_public}),
+                                input=json.dumps({'action': action, 'package': package, 'config': config, 'direct': direct, 'key': self.release_public,'platform':platform}),
                                 capture_output=True, text=True, timeout=5)
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr);self.assertEqual(result.stderr, '')
         return json.loads(result.stdout)
@@ -121,6 +123,27 @@ class GithubUpdateTransportTests(unittest.TestCase):
 
     def test_public_source_implements_the_existing_interface(self):
         self.assertEqual(self.call(direct=True), {'value': {'json': self.manifest.decode(), 'signature': self.signature}})
+
+    def test_native_discovery_uses_separate_public_identity_without_credentials(self):
+        self.server.responses['/updates/openwrt/public.json']=(200,json.dumps(self.envelope).encode(),{})
+        self.assertEqual(self.call(direct=True,platform='openwrt'),{'value':{'json':self.manifest.decode(),'signature':self.signature}})
+        self.assertEqual([p for p,_ in self.server.seen],['/updates/openwrt/public.json']);self.assert_no_credentials()
+
+    def test_native_packages_use_signed_build_tag_and_never_download_entware(self):
+        for name in ['nfqws2-native_1.3.2-r72_x86_64.apk','nfqws2-native_1.3.2-72_arm_cortex-a9.ipk']:
+            self.server.responses['/releases/download/build72/'+name]=(302,b'',{'Location':self.origin+self.asset})
+            package={'filename':name,'size':len(self.body),'sha256':hashlib.sha256(self.body).hexdigest()}
+            self.assertEqual(self.call('download',package=package,direct=True,platform='openwrt'),{'value':'downloaded'})
+            self.assert_no_credentials();self.server.seen.clear();(self.base/'download.ipk').unlink()
+        for name in ['nfqws2-native_1.3.2-r72_x86_64.ipk','nfqws2-native_1.3.2-72_x86_64.apk']:
+            package={'filename':name,'size':len(self.body),'sha256':hashlib.sha256(self.body).hexdigest()}
+            self.assertEqual(self.call('download',package=package,direct=True,platform='openwrt'),{'error':'invalid_manifest'})
+        self.assertEqual(self.call('download',direct=True,platform='openwrt'),{'error':'invalid_manifest'})
+        self.assertEqual(self.server.seen,[])
+
+    def test_unknown_platform_cannot_select_a_download_origin(self):
+        self.assertEqual(self.call(direct=True,platform='custom'),{'error':'invalid_channel'})
+        self.assertEqual(self.server.seen,[])
 
     def test_public_envelope_still_requires_pinned_manifest_signature_verification(self):
         value = {'schema_version': 1, 'package_version': '1.3.1-asus6+b63', 'core_version': '1.3.1-asus6',

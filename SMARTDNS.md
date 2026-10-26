@@ -1,5 +1,7 @@
 # SmartDNS
 
+Мастер SmartDNS доступен на ASUS/Entware и OpenWrt. Описание hook `dnsmasq.postconf` и путей `/opt` ниже относится к ASUS/Entware; нативный OpenWrt использует свою интеграцию с dnsmasq. [Настройка на OpenWrt](OPENWRT.md#настроить-панель).
+
 ## Зачем он нужен
 
 **SmartDNS — отдельная утилита, а не встроенная функция ASUS.**

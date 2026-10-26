@@ -15,7 +15,7 @@ final class AsusImportTransaction
     public function __construct(?AsusImportStore $store=null,?AsusSmartDnsStore $dns=null,?string $resourceRoot=null,?string $configPath=null,private int $owner=0,private array $deps=[])
     {
         $this->store=$store??new AsusImportStore();$this->dns=$dns??new AsusSmartDnsStore();$this->root=$resourceRoot??AsusDpiStore::optPath('/etc/nfqws2');$this->config=$configPath??$this->root.'/nfqws2.conf';
-        $this->reader=$resourceRoot===null?new AsusShareRead($owner,realpath('/opt'),'/opt',true):new AsusShareRead($owner,null,null,true);$this->resources=new AsusShareResources($resourceRoot,$owner);
+        $this->reader=$resourceRoot===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true);$this->resources=new AsusShareResources($resourceRoot,$owner);
     }
     public function writer(callable $fn): mixed {return $this->store->locked($fn);}
     private function checkpoint(string $phase): void {if(isset($this->deps['checkpoint']))($this->deps['checkpoint'])($phase);}

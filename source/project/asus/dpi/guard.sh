@@ -2,16 +2,14 @@
 # This process owns the lifetime even when HTTP, browser or PHP worker disappears.
 set -f
 umask 077
-bb=/opt/libexec/nfqws2-asus/busybox
-root=/opt/var/lib/nfqws2-asus/dpi-detector
-"$bb" usleep 1 || exit 1
+. "${0%/*}/paths.sh" || exit 1
 job=${1:-}
 case "$job" in ''|*[!a-f0-9]*) exit 1;; esac
 [ "${#job}" = 32 ] || exit 1
 run=$root/runs/$job
 [ -d "$run" ] && [ ! -L "$run" ] || exit 1
 uid=$("$bb" id -u)
-[ "$("$bb" stat -t "$run" | "$bb" awk '{print $5}')" = "$uid" ] || exit 1
+[ "$("$bb" ls -ldn "$run" | "$bb" awk '{print $3}')" = "$uid" ] || exit 1
 boot=$("$bb" cat /proc/sys/kernel/random/boot_id) || exit 1
 guard_exe=$("$bb" readlink "/proc/$$/exe") || exit 1
 printf '%s\n' "$boot" > "$run/boot"
@@ -38,7 +36,7 @@ trap 'reason=cancelled; ending=1' HUP INT TERM
 printf '%s %s\n' "$$" "$(startof "$$")" > "$run/guard.pid"
 # Readiness precedes the worker: even an immediate first request is admitted.
 printf 'ready\n' > "$run/ack"
-/opt/bin/php-cgi -d register_argc_argv=1 -q -f /opt/lib/nfqws2-asus/dpi/worker.php -- "$job" >/dev/null 2>&1 &
+"$php" -d register_argc_argv=1 -q -f "$lib/worker.php" -- "$job" >/dev/null 2>&1 &
 worker=$!
 worker_start=$(startof "$worker")
 while same "$worker" "$worker_start"; do
@@ -78,7 +76,7 @@ while same "$worker" "$worker_start"; do
         "$bb" rm -f "$run/probe.request"
         (
             cd "$cwd" || exit 1
-            exec "$bb" env -i PATH=/opt/bin:/usr/bin:/bin LANG=C LC_ALL=C TZ=UTC HOME="$cwd" XDG_CONFIG_HOME="$cwd" XDG_CACHE_HOME="$cwd" XDG_STATE_HOME="$cwd" TMPDIR="$cwd" TOKIO_WORKER_THREADS=1 "$bb" sh /opt/lib/nfqws2-asus/dpi/probe.sh "$job"
+            exec "$bb" env -i PATH="$probe_path" LANG=C LC_ALL=C TZ=UTC HOME="$cwd" XDG_CONFIG_HOME="$cwd" XDG_CACHE_HOME="$cwd" XDG_STATE_HOME="$cwd" TMPDIR="$cwd" TOKIO_WORKER_THREADS=1 "$bb" sh "$lib/probe.sh" "$job"
         ) < /dev/null >> "$run/g0.stdout" 2>> "$run/g0.stderr" &
         probe=$!
         probe_start=$(startof "$probe")
@@ -86,7 +84,7 @@ while same "$worker" "$worker_start"; do
         # therefore still owned and terminated if PHP disappears at this point.
         if [ -n "$probe_start" ]; then printf '%s %s\n' "$probe" "$probe_start" > "$run/spawn.pid"; fi
     fi
-    "$bb" usleep 250000
+    pause_tick
 done
 printf '%s\n' "$reason" > "$run/ending.reason"
 printf 'closed\n' > "$run/closing"
@@ -111,10 +109,10 @@ set +f
 "$bb" rm -rf -- "/tmp/nfqws2-dpi/$job"
 # PHP finally is not run after TERM/KILL. Clean only this install's own regular
 # staging files; active hash binaries and manual installations are never touched.
-for file in "/opt/lib/nfqws2-asus/dpi-detector/.stage-$job" "/opt/lib/nfqws2-asus/dpi-detector/.active-$job"; do
+for file in "$install_root/.stage-$job" "$install_root/.active-$job"; do
     [ -f "$file" ] && [ ! -L "$file" ] || continue
-    set -- $("$bb" stat -t "$file")
-    [ "$5" = "$uid" ] && [ "$9" = 1 ] && "$bb" rm -f -- "$file"
+    set -- $("$bb" ls -ldn "$file")
+    [ "$3" = "$uid" ] && [ "$2" = 1 ] && "$bb" rm -f -- "$file"
 done
 "$bb" awk '{print $1}' /proc/uptime > "$run/ended.uptime"
 printf '%s\n' "$reason" > "$run/outcome.new"

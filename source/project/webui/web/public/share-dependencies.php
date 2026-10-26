@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/share-strategy.php';
+require_once __DIR__.'/resource-paths.php';
 /** Bounded static inspection. Nothing here opens a referenced path or runs code. */
 final class AsusShareDependencies
 {
@@ -35,6 +36,7 @@ final class AsusShareDependencies
         $add=function(string $path,string $source,string $option)use(&$references,&$unresolved,$files,$selected):?string {
             $path=str_starts_with($path,'@')?substr($path,1):$path;
             if($path===''||str_contains($path,'$')){$unresolved[]=['source'=>$source,'kind'=>'unresolved_path'];return null;}
+            $path=NfqwsResourcePaths::canonical($path)??$path;
             $key=$path;$id=substr(hash('sha256',$path),0,32);
             if(!isset($references[$key])&&count($references)>=128){$unresolved[]=['source'=>'analysis','kind'=>'reference_limit'];return null;}
             $name=basename($path);$state='outside';$resource=null;$bundled=false;

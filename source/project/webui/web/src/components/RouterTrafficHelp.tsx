@@ -2,6 +2,7 @@ import { useId, useState, type ReactNode } from 'react';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { Alert, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 
+import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const RouterTrafficHelp = ({
@@ -12,6 +13,7 @@ export const RouterTrafficHelp = ({
   title?: string;
 }) => {
   const { t } = useTranslation();
+  const { platform } = useStatus();
   const [open, setOpen] = useState(false);
   const id = useId();
   const helpTitle = title ?? t('share.dpi_help_title');
@@ -48,7 +50,11 @@ export const RouterTrafficHelp = ({
               ip -4 route get 1.1.1.1
             </Typography>
             <Typography variant="body2">
-              {t('share.dpi_help_command')}
+              {t(
+                platform === 'openwrt'
+                  ? 'share.dpi_help_command_openwrt'
+                  : 'share.dpi_help_command',
+              )}
             </Typography>
             <Typography variant="body2">{t('share.dpi_help_all')}</Typography>
             <Typography variant="body2">{t('share.dpi_help_paths')}</Typography>

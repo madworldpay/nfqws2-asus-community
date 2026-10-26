@@ -40,6 +40,13 @@ pages([Array.from({length:30}, (_, i) => release(i + 1)), [release(71), release(
 assert.deepEqual((await getPackageUpdateNotes('1.3.2-asus6+b69',71)).releases.map(r=>r.build), [70,71]);
 assert.equal(calls.length,2);
 
+for(const native of ['1.3.2-69','1.3.2-r69']){
+ pages([[release(70),release(71)]]);
+ const nativeNotes=await getPackageUpdateNotes(native,71);
+ assert.equal(nativeNotes.complete,true);
+ assert.deepEqual(nativeNotes.releases.map(r=>r.build),[70,71]);
+}
+
 // Do not claim a complete changelog when target/middle text is missing or the
 // fetch is bounded before the last page. Never invent a missing Build.
 pages([[release(70)]]);

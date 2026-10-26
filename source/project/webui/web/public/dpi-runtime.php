@@ -4,13 +4,15 @@ final class AsusDpiRuntime
 {
     private const ROOT='/opt/var/lib/nfqws2-asus/dpi-detector';
     public const BUSYBOX='/opt/libexec/nfqws2-asus/busybox';
+    private static function root():string{return NfqwsPlatform::translate(self::ROOT);}
+    public static function busybox():string{return NfqwsPlatform::native()?'/bin/busybox':self::BUSYBOX;}
     public function capabilities(): array
     {
         $status=@file_get_contents('/proc/self/status');
         if(!is_string($status)||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',$status))return ['available'=>false,'code'=>'root_required'];
         foreach(['CapInh','CapAmb'] as $key)if(preg_match('/^'.$key.':\s+(\S+)/m',$status,$m)&&trim($m[1],'0')!=='')return ['available'=>false,'code'=>'unsupported_privileges'];
         foreach(['proc_open','proc_get_status','stream_select','hash_file','chown','chgrp'] as $name)if(!function_exists($name))return ['available'=>false,'code'=>'unsupported_runtime'];
-        if(!is_executable(self::BUSYBOX)||!is_executable('/opt/bin/php-cgi')||!is_file('/opt/lib/nfqws2-asus/dpi/guard.sh'))return ['available'=>false,'code'=>'unsupported_runtime'];
+        if(!is_executable(self::busybox())||!is_executable(NfqwsPlatform::translate('/opt/bin/php-cgi'))||!is_file(NfqwsPlatform::translate('/opt/lib/nfqws2-asus/dpi/guard.sh')))return ['available'=>false,'code'=>'unsupported_runtime'];
         return ['available'=>true,'code'=>'ready'];
     }
     public static function identity(int $pid): ?array
@@ -27,7 +29,7 @@ final class AsusDpiRuntime
         if(!preg_match('/^[0-9a-f]{32}$/D',$jobId)||!in_array($kind,['run','install'],true))throw new RuntimeException('invalid_request');
         $store=new AsusDpiStore();$job=$store->status()['active'];
         if(($job['id']??null)!==$jobId||$job['kind']!==$kind)throw new RuntimeException('missing_job');
-        $root=self::ROOT.'/runs';if(is_link($root))throw new RuntimeException('invalid_state');
+        $root=self::root().'/runs';if(is_link($root))throw new RuntimeException('invalid_state');
         if(!is_dir($root)&&!mkdir($root,0700))throw new RuntimeException('invalid_state');
         $run=$root.'/'.$jobId;
         if(is_dir($run)) {
@@ -39,9 +41,9 @@ final class AsusDpiRuntime
         if(!mkdir($run,0700))throw new RuntimeException('invalid_state');
         $deadline=(float)explode(' ',file_get_contents('/proc/uptime'))[0]+($kind==='install'?120:($store->readOptions($jobId)['limits']['total_seconds']));
         file_put_contents($run.'/deadline',(string)$deadline."\n",LOCK_EX);chmod($run.'/deadline',0600);
-        $p=@proc_open([self::BUSYBOX,'start-stop-daemon','-S','-b','-p',$run.'/unused-guard-lookup.pid','-x',self::BUSYBOX,'--','sh','/opt/lib/nfqws2-asus/dpi/guard.sh',$jobId],
+        $p=@proc_open([self::busybox(),'start-stop-daemon','-S','-b','-p',$run.'/unused-guard-lookup.pid','-x',self::busybox(),'--','sh',NfqwsPlatform::translate('/opt/lib/nfqws2-asus/dpi/guard.sh'),$jobId],
             [0=>['pipe','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$pipes,'/',
-            ['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','HOME'=>'/'],['bypass_shell'=>true]);
+            ['PATH'=>NfqwsPlatform::native()?'/usr/sbin:/usr/bin:/sbin:/bin':'/opt/bin:/usr/bin:/bin','LANG'=>'C','HOME'=>'/'],['bypass_shell'=>true]);
         if(!is_resource($p))throw new RuntimeException('launch_failed');fclose($pipes[0]);$exit=proc_close($p);
         $end=microtime(true)+2;
         do {if(is_file($run.'/ack'))break;usleep(25000);}while(microtime(true)<$end);
@@ -66,7 +68,7 @@ final class AsusDpiRuntime
         if(!preg_match('/^[a-f0-9]{32}$/D',$jobId)||$seconds<1||$seconds>1800||count($argv)<1||count($argv)>48)throw new RuntimeException('invalid_request');
         foreach($argv as $arg)if(!is_string($arg)||strlen($arg)>4096||strpbrk($arg,"\r\n\0")!==false)throw new RuntimeException('invalid_request');
         if($cwd!=='/'&&$cwd!=='/tmp/nfqws2-dpi/'.$jobId)throw new RuntimeException('invalid_state');
-        $run=self::ROOT.'/runs/'.$jobId;
+        $run=self::root().'/runs/'.$jobId;
         if(!is_dir($run)||is_link($run)||!is_file($run.'/ack'))throw new RuntimeException('invalid_state');
         if(is_file($run.'/cancel'))throw new RuntimeException('cancelled');
         if(is_file($run.'/closing'))throw new RuntimeException(self::endingReason($run));
@@ -100,7 +102,7 @@ final class AsusDpiRuntime
         if(($job['id']??null)!==$jobId)throw new RuntimeException('missing_job');
         $identity=$job['identity']??null;
         if(!is_array($identity)||self::identity($identity['pid'])!==$identity)throw new RuntimeException('interrupted');
-        $run=self::ROOT.'/runs/'.$jobId;
+        $run=self::root().'/runs/'.$jobId;
         if(is_link($run)||is_link($run.'/cancel'))throw new RuntimeException('invalid_state');
         file_put_contents($run.'/cancel',"cancel\n",LOCK_EX);chmod($run.'/cancel',0600);
         return ['id'=>$jobId,'state'=>'stopping'];

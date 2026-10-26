@@ -3,9 +3,32 @@ require_once __DIR__.'/smartdns-connect.php';
 require_once __DIR__.'/smartdns-baseline.php';
 require_once __DIR__.'/smartdns-candidate.php';
 
-/** Trusted native recovery files. Paths/dependencies are local fixtures only. */
-final class AsusSmartDnsNativeBackend
+/** Shared transaction boundary; each platform owns its resolver and processes. */
+interface NfqwsSmartDnsBackend
 {
+    public function state():?array;
+    public function prepare(array $job,array $snapshot):void;
+    public function baseline():array;
+    public function healthy():bool;
+    public function forwarding():string;
+    public function lastCode(string $id):?string;
+    public function guard(array $job,array $profile):array;
+    public function forward(array $job):array;
+    public function dns():bool;
+    public function confirm(array $job):bool;
+    public function restore(array $job,array $snapshot):bool;
+    public function stop(array $job):bool;
+    public function dependencies():array;
+}
+
+/** Trusted native recovery files. Paths/dependencies are local fixtures only. */
+final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
+{
+    public static function create(AsusSmartDnsStore $store,AsusSmartDnsInstaller $installer):NfqwsSmartDnsBackend
+    {
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-smartdns-backend.php';return new NfqwsOpenWrtSmartDnsBackend($store,$installer);}
+        return new self($store,$installer);
+    }
     private array $paths;
     private int $owner;
     private const FIELDS=['schema','request_id','boot_id','phase','deadline','guard_pid','guard_ticks','runtime_pid','runtime_ticks','runtime_exe','hook_created','profile_hash'];

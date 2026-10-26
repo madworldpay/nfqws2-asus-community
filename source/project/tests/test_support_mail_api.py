@@ -35,7 +35,7 @@ class SupportMailApiTests(auth_api.PasswordApiTests):
         self.origin='http://localhost'
         for source in (ROOT/'webui/web/public').glob('support-*.php'):
             (self.base/source.name).write_text(source.read_text())
-        for name in ['smartdns-report.php','smartdns-store.php','smartdns-profile.php','smartdns-install.php','dpi-store.php','dpi-install.php','dpi-runtime.php','dpi-catalog.php','dpi-options.php']:
+        for name in ['smartdns-report.php','smartdns-store.php','smartdns-profile.php','smartdns-install.php','dpi-store.php','dpi-install.php','openwrt-dpi.php','dpi-runtime.php','dpi-catalog.php','dpi-options.php']:
             (self.base/name).write_text((ROOT/'webui/web/public'/name).read_text())
         self.marker=self.base/'sent.json'
         (self.base/'support-mail.php').write_text('''<?php

@@ -26,6 +26,7 @@ final class AsusReportPlatform
     }
     public static function model(?string $s): string
     {
+        if($s==='OpenWrt')return $s;
         return is_string($s) && preg_match('/^(?:(?:GT|RT|TUF|DSL|4G)-(?:AC|AXE?|BE)[0-9]{2,6}(?:U|G|Go|Pro|AI|S|P|V[0-9]){0,2}|(?:RT-)?BE[0-9]{2,4}|ZenWiFi_(?:XT|ET|BT)[0-9]{1,3})$/D',$s) ? $s : 'ASUS-unknown';
     }
     public function identity(): array

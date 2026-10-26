@@ -403,6 +403,9 @@ components:
       type: object
       required: [status, service, nfqws2, version, anonym, csrf_token, username]
       properties:
+        platform:
+          type: string
+          enum: [asus-entware, openwrt]
         status:
           type: integer
           enum: [0]

@@ -61,6 +61,7 @@ final class AsusSmartDnsInstaller
     public function artifact(): array
     {
         if($this->artifact!==null)return $this->artifact;
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-smartdns-install.php';return NfqwsOpenWrtSmartDnsInstall::artifact();}
         $p=@proc_open([AsusDpiRuntime::BUSYBOX,'sh','-c','. /opt/lib/nfqws2-asus/abi.sh; asus_entware_primary_abi'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C']);
         if(!is_resource($p))throw new RuntimeException('unsupported_abi');$abi=trim(stream_get_contents($pipes[1],64));fclose($pipes[1]);$exit=proc_close($p);
         if($exit!==0||!in_array($abi,['armv7-2.6','armv7-3.2','aarch64-3.10'],true))throw new RuntimeException('unsupported_abi');
@@ -104,11 +105,11 @@ final class AsusSmartDnsInstaller
     {if(!$this->installed()['installed'])throw new RuntimeException('not_installed');return $this->root.'/'.$this->artifact()['sha256'];}
     public function availability(): array
     {
-        try{$this->artifact();if(!function_exists('gzopen')||!function_exists('proc_open'))throw new RuntimeException('unsupported_runtime');
+        try{$a=$this->artifact();if(!function_exists('gzopen')||!function_exists('proc_open'))throw new RuntimeException('unsupported_runtime');
             if(time()<1704067200)throw new RuntimeException('invalid_clock');
-            if(!extension_loaded('openssl')||!is_readable('/opt/etc/ssl/certs/ca-certificates.crt'))throw new RuntimeException('https_unavailable');
-            if(AsusDpiInstaller::availableMemoryKiB(file_get_contents('/proc/meminfo'))<65536)throw new RuntimeException('insufficient_memory');
-            if((float)@disk_free_space('/opt')<50331648)throw new RuntimeException('insufficient_space');return ['available'=>true,'code'=>'ready'];
+            if(!extension_loaded('openssl')||!is_readable(NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt')))throw new RuntimeException('https_unavailable');
+            if(AsusDpiInstaller::availableMemoryKiB(file_get_contents('/proc/meminfo'))<(NfqwsPlatform::native()?16384:65536))throw new RuntimeException('insufficient_memory');
+            if((float)@disk_free_space(NfqwsPlatform::native()?dirname($this->root):'/opt')<(NfqwsPlatform::native()?1048576+3*($a['files']['smartdns']['size']??8388608):50331648))throw new RuntimeException('insufficient_space');return ['available'=>true,'code'=>'ready'];
         }catch(Throwable $e){return ['available'=>false,'code'=>self::code($e->getMessage())];}
     }
     private static function removeStage(string $path): void
@@ -147,11 +148,16 @@ final class AsusSmartDnsInstaller
         if(file_exists($stage)||is_link($stage)||file_exists($next)||is_link($next))throw new RuntimeException('invalid_state');
         if(!mkdir($stage,0700)||!mkdir($stage.'/lib',0700))throw new RuntimeException('invalid_state');
         try{$ipk=$stage.'/download.ipk';$deadline=microtime(true)+115;
+            if(($a['source']??null)==='bundled-native'){
+                require_once __DIR__.'/openwrt-smartdns-install.php';
+                NfqwsOpenWrtSmartDnsInstall::stage($a,NfqwsPlatform::settings()['share'].'/optional/smartdns',$stage,$this->owner);
+            }else{
             if($this->fetcher!==null)($this->fetcher)($a,$ipk,$deadline);else (new AsusDpiDownload(maxBytes:16777216))->fetch($a,$ipk,$deadline);
             $s=self::regular($ipk,$this->owner);if($s['size']!==$a['size'])throw new RuntimeException('download_size');if(!hash_equals($a['sha256'],hash_file('sha256',$ipk)))throw new RuntimeException('download_hash');
             AsusSmartDnsArchive::extract($ipk,$stage,$a);unlink($ipk);
+            }
             $h=file_get_contents($stage.'/smartdns',false,null,0,64);
-            if(strlen($h)<20||substr($h,0,4)!=="\x7fELF"||ord($h[4])!==$a['elf_class']||ord($h[5])!==1||unpack('v',substr($h,18,2))[1]!==$a['elf_machine'])throw new RuntimeException('unsupported_binary');
+            if(strlen($h)<20||substr($h,0,4)!=="\x7fELF"||ord($h[4])!==$a['elf_class']||ord($h[5])!==($a['elf_data']??1)||unpack(($a['elf_data']??1)===1?'v':'n',substr($h,18,2))[1]!==$a['elf_machine'])throw new RuntimeException('unsupported_binary');
             $r=$this->probe($stage);if(($r['exit']??-1)!==0||trim($r['stdout']??'')!==$a['version_output'])throw new RuntimeException('unsupported_binary');
             if(file_exists($target)||is_link($target))throw new RuntimeException('invalid_state');
             if(!rename($stage,$target))throw new RuntimeException('invalid_state');$this->activate($id,$a);

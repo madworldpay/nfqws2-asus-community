@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/support-json-schema.php';
 require_once __DIR__.'/dpi-options.php';
+require_once __DIR__.'/platform.php';
 /** Root-private, lock-serialized state. No browser-supplied filesystem path. */
 final class AsusDpiStore
 {
@@ -10,6 +11,7 @@ final class AsusDpiStore
      * trusted boundary, then reject symlinks in all managed descendants. */
     public static function optPath(string $suffix,string $alias='/opt'): string
     {
+        if($alias==='/opt'&&NfqwsPlatform::native())return NfqwsPlatform::translate('/opt'.$suffix);
         $base=realpath($alias);
         if($base===false||!is_dir($base)||!preg_match('~^/[a-z0-9/-]+$~D',$suffix))throw new RuntimeException('invalid_state');
         return rtrim($base,'/').$suffix;

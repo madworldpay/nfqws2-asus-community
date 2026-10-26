@@ -1,0 +1,54 @@
+{
+  "engine_archive": {
+    "name": "nfqws2-keenetic_1.3.2_all_entware.ipk",
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.2/nfqws2-keenetic_1.3.2_all_entware.ipk",
+    "sha256": "6de14a39345e05c887cd0d9af573bf42b4a489773d36011079c6f5c2fe2a0dd9"
+  },
+  "engines": {
+    "arm": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-armv7",
+      "packed_sha256": "19da1dd9e7f49e061bc7735f690d1a42b55f562976fa820a5794c28695412cbe",
+      "unpacked_sha256": "8bdb300328a358c069d11e957e4f88b23883abbbeb659c9ffa1ff48090ad70c6"
+    },
+    "arm64": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-aarch64",
+      "packed_sha256": "4b9e7bce9e9df239488ec24e939375a2a052b6d6aea75724e54c1d66a37a0ff2",
+      "unpacked_sha256": "3835b40c4ce9f638f0b1c2771bd4d02393803ccf28a6e26ef83ac6fb374e3442"
+    },
+    "mips": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-mips",
+      "packed_sha256": "7d73be2054c7d3b8f0181c8ca94ce61f038d1abbdd8c10828c19cf6d5cd1340c",
+      "unpacked_sha256": "b4733d845d08d1677b280d8eacf4fb476d27e5800192d035b410a45c22b21dec"
+    },
+    "mipsel": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-mipsel",
+      "packed_sha256": "cfd8f16c595ae92670d05af0b7af1c12514d793228bb373660567ea73061b497",
+      "unpacked_sha256": "6776ef81747777ae739a9e23b0db5f6d95d60c58fd7504a87c7a33febfc69196"
+    },
+    "mips64": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-mips64",
+      "packed_sha256": "f89bc2cb1a59f90ba63e203d6f3ac03c7afff2b3d4dad35ec3441880c5483988",
+      "unpacked_sha256": "f89bc2cb1a59f90ba63e203d6f3ac03c7afff2b3d4dad35ec3441880c5483988"
+    },
+    "x86": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-x86",
+      "packed_sha256": "a8a7eca55fbab76105678cefb7028c11ab18196a4af45f43dfbd0eda4886da3a",
+      "unpacked_sha256": "1ce6d725090e747c7f886e8356bf691783c82fb1cf61dba31d9316b50616e6b0"
+    },
+    "x86_64": {
+      "member": "opt/tmp/nfqws2_binary/nfqws2-x86_64",
+      "packed_sha256": "cc964ae7538df288be8a94bfa64f06982b99280b44da2eb44c552e530ed52544",
+      "unpacked_sha256": "5d49c20c35cb5f95fd31293575d39629700800124305d83dc0d99d39822e7c3b"
+    }
+  },
+  "ipkg_build": {
+    "name": "ipkg-build",
+    "url": "https://raw.githubusercontent.com/openwrt/openwrt/v24.10.8/scripts/ipkg-build",
+    "sha256": "60714afe9b93fd0d3ecfd2fcef7839928b1a99e826ae30e2e3c0e24f1efde474"
+  },
+  "apk_sdk": {
+    "url": "https://downloads.openwrt.org/releases/25.12.6/targets/x86/64/openwrt-sdk-25.12.6-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst",
+    "sha256": "1864152619092e781fa36a401960c8e9ae42d6a364c44ee5f0b197ca5f3c0fcc",
+    "name": "openwrt-sdk-25.12.6-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
+  }
+}

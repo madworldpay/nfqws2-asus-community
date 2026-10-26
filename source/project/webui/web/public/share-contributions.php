@@ -55,6 +55,7 @@ final class AsusShareContributions
         foreach($bindings as $alias=>$binding) {
             if($binding['kind']!=='file')continue;
             $path=str_starts_with($binding['value'],'@')?substr($binding['value'],1):$binding['value'];
+            $path=NfqwsResourcePaths::canonical($path)??$path;
             if(!preg_match('~^/opt/etc/nfqws2/lua/([^/]+)$~D',$path,$m))continue;
             $resource=substr(hash('sha256',"lua\0".$m[1]),0,32);
             foreach($inventory['files'] as $file)if($file['id']===$resource&&($file['bundled_lua']??false)===true) {
@@ -79,6 +80,7 @@ final class AsusShareContributions
             $resourceId=null;
             if($binding['kind']==='file') {
                 $path=str_starts_with($binding['value'],'@')?substr($binding['value'],1):$binding['value'];
+            $path=NfqwsResourcePaths::canonical($path)??$path;
                 $ref=substr(hash('sha256',$path),0,32);$refAliases[$ref][]=$alias;
                 if(preg_match('~^/opt/etc/nfqws2/(lists|lua|blobs)/([^/]+)$~D',$path,$m))$resourceId=substr(hash('sha256',$m[1]."\0".$m[2]),0,32);
             }elseif($binding['kind']==='blob') {

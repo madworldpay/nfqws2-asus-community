@@ -1,11 +1,12 @@
 <?php
+require_once __DIR__.'/platform.php';
 /** Compile typed settings into the unchanged native CLI. Never accepts a command or path. */
 final class AsusDpiOptions
 {
     public static function metadata(): array
     {
         static $data;
-        if($data===null){$p='/opt/share/nfqws2-asus/dpi-native-defaults.json';if(!is_file($p))$p=dirname(__DIR__,3).'/support/dpi-native-defaults.json';$data=json_decode(file_get_contents($p),true,32,JSON_THROW_ON_ERROR);}
+        if($data===null){$p=NfqwsPlatform::sharedFile('dpi-native-defaults.json',dirname(__DIR__,3).'/support/dpi-native-defaults.json');$data=json_decode(file_get_contents($p),true,32,JSON_THROW_ON_ERROR);}
         return $data;
     }
     public static function defaults(): array

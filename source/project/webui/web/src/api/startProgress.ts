@@ -30,7 +30,10 @@ export function startProgress(input: {
     {
       id: 'install',
       state:
-        platform?.package_version && platform?.entware_abi ? 'done' : 'unknown',
+        platform?.package_version &&
+        (platform?.entware_abi || platform?.platform === 'openwrt')
+          ? 'done'
+          : 'unknown',
     },
     {
       id: 'ark',

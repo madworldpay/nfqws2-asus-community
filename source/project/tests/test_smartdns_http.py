@@ -10,7 +10,7 @@ class SmartDnsHttpTests(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.base = self.fixture.base
-        for name in ['smartdns-api.php','smartdns-install.php','dpi-install.php','dpi-runtime.php','dpi-store.php','dpi-catalog.php','dpi-options.php']:
+        for name in ['smartdns-api.php','smartdns-install.php','dpi-install.php','openwrt-dpi.php','dpi-runtime.php','dpi-store.php','dpi-catalog.php','dpi-options.php']:
             (self.base/name).write_text((PUBLIC/name).read_text())
         p=self.base/'smartdns-api.php'
         p.write_text(p.read_text().replace('$jobs=new AsusSmartDnsJobs();', '''$jobs=new AsusSmartDnsJobs(

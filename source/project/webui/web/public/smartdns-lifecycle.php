@@ -4,12 +4,12 @@ require_once __DIR__.'/smartdns-config-jobs.php';
 /** Root package/boot operations. Callers own the ordinary or updater lease. */
 final class AsusSmartDnsLifecycle
 {
-    private AsusSmartDnsNativeBackend $backend;
+    private NfqwsSmartDnsBackend $backend;
     private AsusSmartDnsInstaller $installer;
-    public function __construct(private AsusSmartDnsStore $store,?AsusSmartDnsNativeBackend $backend=null,?AsusSmartDnsInstaller $installer=null,private array $deps=[])
+    public function __construct(private AsusSmartDnsStore $store,?NfqwsSmartDnsBackend $backend=null,?AsusSmartDnsInstaller $installer=null,private array $deps=[])
     {
         $this->installer=$installer??new AsusSmartDnsInstaller();
-        $this->backend=$backend??new AsusSmartDnsNativeBackend($store,$this->installer);
+        $this->backend=$backend??AsusSmartDnsNativeBackend::create($store,$this->installer);
     }
     public function remember(): void
     {

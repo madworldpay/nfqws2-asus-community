@@ -27,6 +27,7 @@ try {
   assert.equal(states({...ready,dns:{status:{state:'failed'},draft:{upstreams:[{}],records:[]}}}).dns,'partial');
   assert.equal(states({...ready,dns:{status:{state:'idle'},draft:null}}).dns,'optional');
   const changed = (id, facts) => ({items:checkup.items.map(x=>x.id===id?{...x,facts}:x)});
+  assert.equal(states({...ready,checkup:changed('platform',{platform:'openwrt',package_version:'1.3.2-6',package_arch:'arm_cortex-a9'})}).install,'done');
   assert.equal(states({...ready,checkup:changed('ark',{loaded:true})}).ark,'todo');
   assert.equal(states({...ready,checkup:changed('nfqueue',{bound:false})}).start,'partial');
   assert.equal(states({...ready,checkup:changed('process',{running:false})}).start,'todo');

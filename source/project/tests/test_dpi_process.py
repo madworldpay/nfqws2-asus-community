@@ -8,13 +8,23 @@ import unittest
 from test_dpi_normalize import PHP, PUBLIC, ROOT
 
 
+def stage_paths(base,busybox,worker=None,probe=None):
+    text=(ROOT/'asus/dpi/paths.sh').read_text().replace('/opt/libexec/nfqws2-asus/busybox',str(busybox)).replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state'))
+    if worker is not None:text=text.replace('/opt/bin/php-cgi',str(worker))
+    # A fixture directory holds only trusted worker/probe test programs.
+    text=text.replace('/opt/lib/nfqws2-asus/dpi',str(base))
+    if probe is not None:
+        (base/'probe.sh').write_bytes(probe.read_bytes())
+    (base/'paths.sh').write_text(text)
+
+
 class DpiProcessTests(unittest.TestCase):
     def test_guard_deadline_is_reported_as_timeout_before_outcome_is_published(self):
         with tempfile.TemporaryDirectory() as directory:
             base=Path(directory);run=base/'state'/'runs'/('d'*32);run.mkdir(parents=True,mode=0o700)
             for name,text in [('ack','ready'),('closing','closed'),('ending.reason','timed_out')]:
                 (run/name).write_text(text+'\n');(run/name).chmod(0o600)
-            for name in ['dpi-store.php','dpi-options.php','support-json-schema.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
+            for name in ['dpi-store.php','dpi-options.php','support-json-schema.php','platform.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
             (base/'dpi-runtime.php').write_text((PUBLIC/'dpi-runtime.php').read_text().replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')))
             code="require $argv[1];try{(new AsusDpiRuntime())->probe(str_repeat('d',32),['/native'],'/',5);}catch(Throwable $e){echo $e->getMessage();}"
             p=subprocess.run([PHP,'-n','-r',code,str(base/'dpi-runtime.php')],capture_output=True,text=True)
@@ -23,7 +33,7 @@ class DpiProcessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             base=Path(directory);run=base/'state'/'runs'/('d'*32);run.mkdir(parents=True,mode=0o700)
             for name in ['ack','cancel']:(run/name).write_text('ready\n');(run/name).chmod(0o600)
-            for name in ['dpi-store.php','dpi-options.php','support-json-schema.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
+            for name in ['dpi-store.php','dpi-options.php','support-json-schema.php','platform.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
             (base/'dpi-runtime.php').write_text((PUBLIC/'dpi-runtime.php').read_text().replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')))
             code='''require $argv[1];try{(new AsusDpiRuntime())->probe(str_repeat('d',32),['/synthetic-binary','--version'],'/',5);}catch(Throwable $e){echo $e->getMessage();}'''
             p=subprocess.run([PHP,'-n','-r',code,str(base/'dpi-runtime.php')],capture_output=True,text=True)
@@ -37,7 +47,7 @@ class DpiProcessTests(unittest.TestCase):
             busybox=Path(os.environ.get('BUSYBOX_TEST_BINARY',str(ROOT/'.work/packaging-audit-20261012/aarch64-busybox-wrapper')))
             script=(ROOT/'asus/dpi/probe.sh').read_text().replace('/opt/libexec/nfqws2-asus/busybox',str(busybox)).replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')).replace('= 0 ]','= '+str(os.getuid())+' ]').replace('= 0 ]','= '+str(os.getuid())+' ]')
             script=script[:script.index('ulimit -S -v')]+f'printf escaped > "{run}/escaped"\n'
-            copy=base/'probe.sh';copy.write_text(script)
+            stage_paths(base,busybox);copy=base/'probe.sh';copy.write_text(script)
             p=subprocess.run([str(busybox),'sh',str(copy),'c'*32],capture_output=True,text=True)
             self.assertFalse((run/'escaped').exists(),'late probe executed after guardian closed admission')
 
@@ -62,9 +72,11 @@ class DpiProcessTests(unittest.TestCase):
             worker=base/'worker';worker.write_text(('#!/bin/sh\n[ -f "RUN/ack" ] || exit 91\nprintf / > "RUN/probe.cwd"\nprintf ready > "RUN/probe.request"\nwhile [ ! -f "RUN/child-seen" ]; do sleep 0.01; done\n'+('exit 1\n' if mode in ['worker_dies','delayed'] else 'while [ ! -f "RUN/probe.exit" ]; do sleep 0.01; done\n')).replace('RUN',str(run)));worker.chmod(0o755)
             busybox=Path(os.environ.get('BUSYBOX_TEST_BINARY',str(ROOT/'.work/packaging-audit-20261012/aarch64-busybox-wrapper')))
             copy=base/'guard.sh';copy.write_text(guard.read_text().replace('/opt/libexec/nfqws2-asus/busybox',str(busybox)).replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')).replace('/opt/bin/php-cgi',str(worker)).replace('/opt/lib/nfqws2-asus/dpi/worker.php',str(base/'ignored.php')).replace('/opt/lib/nfqws2-asus/dpi/probe.sh',str(probe)))
+            stage_paths(base,busybox,worker,probe)
             if mode=='next_group':
                 probe.write_text(('#!/bin/sh\nif [ ! -e "RUN/first-done" ]; then touch "RUN/first-done"; exit 0; fi\ntrap "" TERM\nprintf "%s\\n" "$$" > "RUN/child-seen"\nexec sleep 30\n').replace('RUN',str(run)))
                 worker.write_text(('#!/bin/sh\nprintf / > "RUN/probe.cwd"\nprintf ready > "RUN/probe.request"\nwhile [ ! -f "RUN/probe.exit" ]; do sleep 0.01; done\nrm "RUN/probe.exit"\nawk \'{print $1+1}\' /proc/uptime > "RUN/probe.deadline"\nprintf ready > "RUN/probe.request"\nwhile [ ! -f "RUN/probe.exit" ]; do sleep 0.01; done\n').replace('RUN',str(run)))
+                (base/'probe.sh').write_bytes(probe.read_bytes())
                 copy.write_text(copy.read_text().replace('"$bb" mv "$run/probe.exit.new" "$run/probe.exit"','"$bb" mv "$run/probe.exit.new" "$run/probe.exit"\n        "$bb" usleep 200000'))
             now=float(Path('/proc/uptime').read_text().split()[0]);(run/'deadline').write_text(str(now+(1.5 if mode=='overall' else 20)));(run/'deadline').chmod(0o600)
             if mode=='group':(run/'probe.deadline').write_text(str(now+1.5));(run/'probe.deadline').chmod(0o600)
@@ -104,6 +116,7 @@ class DpiProcessTests(unittest.TestCase):
             (run/'deadline').write_text(str(float(Path('/proc/uptime').read_text().split()[0])+2));(run/'deadline').chmod(0o600)
             busybox=Path(os.environ.get('BUSYBOX_TEST_BINARY',str(ROOT/'.work/packaging-audit-20261012/aarch64-busybox-wrapper')))
             copy=base/'guard.sh';copy.write_text(guard.read_text().replace('/opt/libexec/nfqws2-asus/busybox',str(busybox)).replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')).replace('/opt/bin/php-cgi',str(worker)))
+            stage_paths(base,busybox,worker)
             try:
                 p=subprocess.run([str(busybox),'sh',str(copy),'b'*32],capture_output=True,text=True,timeout=6)
                 self.assertEqual(p.returncode,0,p.stderr);self.assertEqual(p.stderr,'');self.assertIsNone(canary.poll())

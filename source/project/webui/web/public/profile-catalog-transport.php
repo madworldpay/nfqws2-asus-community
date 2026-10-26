@@ -13,16 +13,18 @@ final class AsusProfileCatalogTransport
     private int $build;
     public function __construct(?string $publicKey=null,?callable $read=null,?string $cache=null,private int $owner=0,?callable $clock=null,?int $build=null,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt')
     {
-        $keyFile=is_file('/opt/share/nfqws2-asus/profile-catalog-public.pem')?'/opt/share/nfqws2-asus/profile-catalog-public.pem':dirname(__DIR__,3).'/asus/profile-catalog-public.pem';
+        $this->ca=NfqwsPlatform::translate($this->ca);
+        $keyFile=NfqwsPlatform::sharedFile('profile-catalog-public.pem',dirname(__DIR__,3).'/asus/profile-catalog-public.pem');
         $this->key=$publicKey??(string)@file_get_contents($keyFile,false,null,0,2049);
         $this->cache=$cache??'/tmp/nfqws2-asus-profile-catalog';$this->read=$read??fn($url,$cap,$deadline)=>self::https($url,$cap,$deadline,$this->ca);$this->clock=$clock??time(...);
         $this->build=$build??self::installedBuild();
     }
     private static function installedBuild(): int
     {
-        $path='/opt/share/nfqws2-asus/report-baseline.json';
+        $path=NfqwsPlatform::sharedFile('report-baseline.json',dirname(__DIR__,3).'/report-baseline.json');
         if(is_file($path)) {
             $v=json_decode((string)@file_get_contents($path,false,null,0,131073),true);
+            if(NfqwsPlatform::native()&&is_int($v['build_number']??null)&&$v['build_number']>0&&$v['build_number']<1000000000)return $v['build_number'];
             if(preg_match('/\+b([1-9][0-9]{0,8})$/D',$v['package_version']??'',$m))return (int)$m[1];
         }
         $raw=trim((string)@file_get_contents(dirname(__DIR__,3).'/BUILD_NUMBER'));

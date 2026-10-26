@@ -27,7 +27,8 @@ class ApiCommandTests(unittest.TestCase):
             (Path(tmp) / 'asus.php').write_text(
                 (ROOT / 'webui/web/public/asus.php').read_text().replace(
                     '/opt/etc/nfqws-asus-web/auth.json', str(Path(tmp) / 'auth.json')))
-            shutil.copyfile(ROOT / 'webui/web/public/ark.php', Path(tmp) / 'ark.php')
+            for name in ['ark.php','platform.php']:
+                shutil.copyfile(ROOT / 'webui/web/public'/name, Path(tmp)/name)
             (Path(tmp) / 'auth.json').write_text(
                 '{"mode":"password","username":"root","password_hash":""}')
             script = '''

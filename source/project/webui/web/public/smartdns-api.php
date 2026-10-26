@@ -55,7 +55,7 @@ final class AsusSmartDnsJobs
         });
         if($launch){try{
             if(isset($this->deps['launch']))($this->deps['launch'])($id);
-            else{$bb=AsusDpiRuntime::BUSYBOX;$p=@proc_open([$bb,'start-stop-daemon','-S','-b','-p',$this->installer->directory().'/unused.pid','-x',$bb,'--','sh','/opt/lib/nfqws2-asus/smartdns/worker.sh',$id],
+            else{$bb=AsusDpiRuntime::busybox();$p=@proc_open([$bb,'start-stop-daemon','-S','-b','-p',$this->installer->directory().'/unused.pid','-x',$bb,'--','sh',NfqwsPlatform::translate('/opt/lib/nfqws2-asus/smartdns/worker.sh'),$id],
                 [0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C']);
                 if(!is_resource($p)||proc_close($p)!==0)throw new RuntimeException('launch_failed');}
         }catch(Throwable $e){$this->locked(function()use(&$job){$job['state']='failed';$job['code']='launch_failed';$this->write($job);});throw new RuntimeException('launch_failed');}}
@@ -67,7 +67,7 @@ final class AsusSmartDnsJobs
     {
         $job=$this->locked(fn()=>$this->reconcile($this->read()));
         return ['available'=>$this->installer->availability(),'installed'=>$this->installer->installed(),'version'=>$this->installer->artifact()['version'],
-            'external_detected'=>is_file('/opt/etc/init.d/S50smartdns')||is_file('/opt/etc/smartdns/smartdns.conf'),'job'=>self::publicJob($job)];
+            'external_detected'=>NfqwsPlatform::native()?is_file('/etc/config/smartdns'):is_file('/opt/etc/init.d/S50smartdns')||is_file('/opt/etc/smartdns/smartdns.conf'),'job'=>self::publicJob($job)];
     }
     public function work(string $id): void
     {

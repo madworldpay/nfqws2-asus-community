@@ -1,5 +1,7 @@
 # Быстрый старт
 
+Для **OpenWrt**: [нативная установка и таблица совместимости](OPENWRT.md) ([English](OPENWRT.en.md)).
+
 Для тех, у кого уже работают Merlin, SSH и Entware в `/opt`.
 [Загрузки](DOWNLOADS.md).
 

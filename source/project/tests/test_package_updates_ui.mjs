@@ -34,6 +34,22 @@ assert.equal(calls.at(-1)[1].body.get('csrf_token'), 'csrf');
 assert.equal((await api.getPackageUpdate('csrf', operation.id)).id, operation.id);
 assert.equal((await api.getPackageUpdateOverview('csrf')).operation.state, 'applying');
 
+for(const [version,installed,family,format]of [
+ ['1.3.2-r72','1.3.2-r71','x86_64','apk'],
+ ['1.3.2-72','1.3.2-71','arm_cortex-a9','ipk'],
+]){
+ const nativeCandidate={...candidate,package_version:version,core_version:'1.3.2',build:72,
+  package:{family,filename:`nfqws2-native_${version}_${family}.${format}`,size:1000,sha256:'b'.repeat(64)}};
+ const nativeAvailable={...available,candidate:nativeCandidate,installed_version:installed};
+ globalThis.fetch=async()=>Response.json(nativeAvailable);
+ assert.deepEqual(await api.checkPackageUpdate('csrf'),nativeAvailable);
+ assert.deepEqual(api.packageUpdateBadges(nativeAvailable,installed,'0.1.4','71'),{core:false,web:false,build:true});
+ globalThis.fetch=async()=>Response.json({...nativeAvailable,installed_version:'1.3.2-asus6+b71'});
+ await assert.rejects(api.checkPackageUpdate('csrf'),e=>e.code==='invalid_response');
+ globalThis.fetch=async()=>Response.json({...nativeAvailable,candidate:{...nativeCandidate,package:{...nativeCandidate.package,family:'armv7-3.2'}}});
+ await assert.rejects(api.checkPackageUpdate('csrf'),e=>e.code==='invalid_response');
+}
+
 globalThis.fetch = async () => Response.json({ error: 'busy' }, { status: 409 });
 await assert.rejects(api.checkPackageUpdate('csrf', false), error => error.code === 'busy');
 globalThis.fetch = async () => Response.json({ ...available, token: 'PRIVATE_CANARY' });

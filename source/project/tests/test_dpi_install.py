@@ -70,6 +70,19 @@ class DpiInstallTests(unittest.TestCase):
             self.assertEqual([v[1:] for v in versions],[['--version']]);self.assertEqual(manual,'PRIVATE_CANARY')
             self.assertEqual((p/'managed/active.json').stat().st_mode&0o777,0o600)
 
+    def test_big_endian_pinned_mips_can_install(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory);payload=bytearray(64);payload[:6]=b'\x7fELF\x01\x02';payload[18:20]=b'\0\x08'
+            (p/'asset').write_bytes(payload)
+            fixture={'size':64,'sha256':hashlib.sha256(payload).hexdigest(),'elf_class':1,'elf_data':2,'elf_machine':8}
+            (p/'fixture').write_text(json.dumps(fixture))
+            code='''require $argv[1].'/dpi-install.php';umask(0077);$a=json_decode(file_get_contents($argv[2].'/fixture'),true);
+            $i=new AsusDpiInstaller($argv[2].'/managed',fileowner($argv[2]),$a,function($a,$dest){copy(dirname($dest).'/../asset',$dest);},function(){return ['exit'=>0,'stdout'=>"dpi-detector 5.0.0-alpha.21\\n"];});
+            echo json_encode($i->install(str_repeat('a',32)));'''
+            r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(p)],capture_output=True,text=True)
+            self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+            self.assertTrue(json.loads(r.stdout)['installed'])
+
     def test_bad_hash_elf_or_version_cannot_activate(self):
         code='''require $argv[1].'/dpi-install.php';$root=$argv[2];$a=['size'=>64,'sha256'=>hash('sha256',str_repeat('x',64)),'elf_class'=>2,'elf_machine'=>183,'name'=>'test','url'=>'https://github.com/test'];
         $i=new AsusDpiInstaller($root,fileowner(dirname($root)),$a,function($a,$dest){file_put_contents($dest,str_repeat('x',64));},function(){throw new Exception('version must not run');});

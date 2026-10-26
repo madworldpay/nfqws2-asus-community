@@ -5,27 +5,36 @@
 
 ## Лицензии компонентов
 
-MIT в [LICENSE](LICENSE) относится к нашей ASUS-адаптации. Сторонние компоненты
+MIT в [LICENSE](LICENSE) относится к нашему коду адаптации. Сторонние компоненты
 сохраняют свои лицензии и уведомления об авторских правах.
 
 NFQWS2 Keenetic, WebUI Keenetic, zapret2 и DPI Detector сохраняют уведомления MIT.
 BusyBox и модуль старого ядра используют GPLv2, библиотеки netfilter — GPLv2/LGPLv2.1.
 lighttpd использует BSD-3-Clause. LuaJIT, musl, Rust и зависимости интерфейса
-сохраняют собственные уведомления. Необязательный SmartDNS Release48.4 использует GPLv3.
+сохраняют собственные уведомления. SmartDNS использует GPLv3; версии для разных платформ описаны ниже.
 Полный перечень авторства и условий сохранён в [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 
 ## Происхождение и изменения
 
-Это самостоятельная community-адаптация для ASUS, не официальный
+Это самостоятельная community-адаптация для ASUS/Entware и OpenWrt, не официальный
 пакет ASUS, Entware или авторов исходных проектов.
 
-Установщик SmartDNS использует официальный
+В пакетах **ASUS/Entware** установщик SmartDNS использует официальный
 [Release48.4](https://github.com/pymumu/smartdns/releases/tag/Release48.4).
 Размеры и SHA256 пакетов ARM/AArch64, движка и комплектных библиотек закреплены
 в `support/smartdns-catalog.json`. Бинарные файлы не изменяются и не включаются
 в основной IPK: они загружаются после согласия пользователя. Лицензия движка — GPLv3. Штатные init/UI
 и установочные скрипты этого пакета не выполняются. Исходники, авторство и
 условия лицензии: [pymumu/smartdns](https://github.com/pymumu/smartdns/tree/Release48.4).
+
+В **нативных пакетах OpenWrt** используются системные PHP, uhttpd и firewall4.
+Комплектный SmartDNS взят из официальных пакетов OpenWrt: 1.2023.43 для 24.10
+и 46.1 для 25.12. Его бинарники не изменяются; компонент включается отдельно
+в панели. Точные входы и SHA256: [smartdns-assets.json](source/project/openwrt/smartdns-assets.json).
+Соответствующие исходники и снимки рецептов включены в архив выпуска:
+[источники](source/metadata/openwrt-smartdns-sources.json),
+[рецепты OpenWrt](source/recipes/openwrt-smartdns/README.md).
+Нативные пакеты не включают модуль старого ядра ASUS или частный runtime Entware.
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — импорт коммита
   `5d155f33ab00f3a4879c485c1094e8ec1e014586`, пакет v1.3.2; MIT, исходное авторство сохранено.

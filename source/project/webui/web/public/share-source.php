@@ -54,8 +54,9 @@ final class AsusShareSource
     }
     public function capture(bool $consent,array $versions): array
     {
-        $io=$this->io??new AsusReportIO();$platform=new AsusReportPlatform($io,new AsusReportValues());$nv=$platform->readNvram();
-        $out=self::platform($nv['values'],trim($io->read('kernel',128)['value']),$versions);
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-report.php';$p=NfqwsOpenWrtReport::platform();$out=self::platform(['firmver'=>$p['release']],$p['kernel']??'',$versions);$out['model']='OpenWrt';}
+        else {$io=$this->io??new AsusReportIO();$platform=new AsusReportPlatform($io,new AsusReportValues());$nv=$platform->readNvram();
+        $out=self::platform($nv['values'],trim($io->read('kernel',128)['value']),$versions);}
         $id=$this->identity($consent);if($id!==null)$out['installation_id']=$id;return $out;
     }
 }

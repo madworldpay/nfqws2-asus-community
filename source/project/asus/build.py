@@ -280,7 +280,7 @@ def build_one(cache, output, offline, arch, build_number=None):
                     '# ASUS client selection: all, include or exclude\nASUS_CLIENT_MODE="all"\n'
                     '# Space-separated IP addresses or CIDRs\nASUS_CLIENTS4=""\nASUS_CLIENTS6=""', config, flags=re.S)
     core['opt/etc/nfqws2/nfqws2.conf.notactive'] = config.encode(), 0o600
-    for name in ['guard.sh', 'probe.sh', 'drop.sh', 'stop.sh', 'worker.php', 'cli.php']:
+    for name in ['guard.sh', 'probe.sh', 'drop.sh', 'stop.sh', 'worker.php', 'cli.php', 'paths.sh']:
         core['opt/lib/nfqws2-asus/dpi/'+name] = local('asus/dpi/'+name)
     core['opt/bin/nfqws2-dpi'] = local('asus/dpi/cli.sh', True)
     if family == 'armv7':
@@ -355,7 +355,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     conffiles = ''  # Active NFQWS2 config/lists are created once, never unpacked over.
 
     dist = ROOT/'webui/web/dist'
-    for name in ['index.html', 'index.php', 'asus.php', 'ark.php', 'support-report.php',
+    for name in ['index.html', 'index.php', 'asus.php', 'ark.php', 'platform.php', 'resource-paths.php', 'support-report.php',
                  'support-report-io.php', 'support-report-values.php',
                  'support-report-platform.php', 'support-report-network.php',
                  'support-mail.php', 'support-mail-proof.php', 'support-report-dns.php',

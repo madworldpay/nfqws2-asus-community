@@ -15,7 +15,8 @@ final class AsusShareApi
     private const FIELDS=['sharestates'=>[],'sharesavedrefresh'=>[],'sharesavedread'=>['id'],'sharesaveddelete'=>['id'],
         'sharestrategydraft'=>[],'shareinventory'=>[],'sharednssources'=>[],'shareresourceread'=>['id','source_sha256'],'shareanalyze'=>['selection'],'shareprepare'=>['selection'],'sharesend'=>['envelope','proof','consent','submission_id'],'sharelocation'=>[],'sharechannelconnect'=>[]];
     public function __construct(private ?AsusDpiSavedStore $saved=null,private ?AsusDpiStore $legacy=null,private ?AsusSupportMail $mail=null,
-        private string $configPath='/opt/etc/nfqws2/nfqws2.conf',private ?array $versions=null,private ?AsusShareSource $source=null,private ?AsusShareResources $resourceStore=null,private ?AsusShareDns $dnsStore=null){}
+        private string $configPath='/opt/etc/nfqws2/nfqws2.conf',private ?array $versions=null,private ?AsusShareSource $source=null,private ?AsusShareResources $resourceStore=null,private ?AsusShareDns $dnsStore=null)
+    {$this->configPath=NfqwsPlatform::translate($this->configPath);}
     public static function validate(array $post): void
     {
         $cmd=$post['cmd']??null;if(!is_string($cmd)||!array_key_exists($cmd,self::FIELDS))throw new RuntimeException('invalid_request');
@@ -33,13 +34,15 @@ final class AsusShareApi
     private function mail(): AsusSupportMail {return $this->mail??=new AsusSupportMail();}
     private function config(): string
     {
+        if(NfqwsPlatform::native())NfqwsPlatform::guardFile(dirname($this->configPath),basename($this->configPath));
         $raw=@file_get_contents($this->configPath,false,null,0,262145);
         if(!is_string($raw)||strlen($raw)>262144)throw new RuntimeException('strategy_unavailable');return $raw;
     }
     private function versions(): array
     {
         if($this->versions!==null)return $this->versions;
-        $raw=@file_get_contents('/opt/share/nfqws2-asus/report-baseline.json',false,null,0,131073);$v=is_string($raw)&&strlen($raw)<=131072?json_decode($raw,true):null;
+        $path=NfqwsPlatform::sharedFile('report-baseline.json',__DIR__.'/missing-baseline.json');
+        $raw=@file_get_contents($path,false,null,0,131073);$v=is_string($raw)&&strlen($raw)<=131072?json_decode($raw,true):null;
         $out=[];foreach(['package_version'=>'core','web_version'=>'web'] as $key=>$name)$out[$name]=is_array($v)&&is_string($v[$key]??null)&&preg_match('/^[A-Za-z0-9.+_-]{1,64}$/D',$v[$key])?$v[$key]:'unknown';
         return $out;
     }

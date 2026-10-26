@@ -87,7 +87,7 @@
     "strategy_default_unavailable": "Could not read the default strategy. Fields were left unchanged.",
     "ISP_INTERFACE": "WAN interfaces (ISP_INTERFACE)",
     "ISP_INTERFACE_AUTO": "Automatic",
-    "ISP_INTERFACE_HELP": "Leave empty to automatically select active ASUS WAN interfaces. For manual selection, enter one interface name or several names separated by spaces.",
+    "ISP_INTERFACE_HELP": "Leave empty to automatically select the router’s active WAN interfaces. For manual selection, enter one interface name or several names separated by spaces.",
     "NFQWS_BASE_ARGS": "Startup arguments",
     "NFQWS_ARGS": "Base strategy",
     "NFQWS_ARGS_QUIC": "Quic strategy",
@@ -116,7 +116,7 @@
     "ASUS_CLIENT_HELP": "Separate addresses and subnets with spaces. In «Only listed devices» mode, an empty IPv4 or IPv6 list leaves that traffic unprocessed by NFQWS2.",
     "WAN_TITLE": "This router's WAN IPv4",
     "WAN_LOADING": "Reading active WAN interface addresses…",
-    "WAN_UNAVAILABLE": "Current WAN address could not be determined. Check the stock ASUS panel: Network Map → Internet Status.",
+    "WAN_UNAVAILABLE": "The current WAN address could not be determined. Check it in the router’s own administration panel.",
     "WAN_PARTIAL": "Found addresses are shown; information about other WAN interfaces is incomplete.",
     "WAN_HELP": "This is the router interface address. Behind another router or NAT it can be private. Add it for tests originating on ASUS; VPN or routing policies may choose a different source address. Refresh the entry if WAN IP changes.",
     "WAN_ALL": "In All devices mode this traffic is already selected.",
@@ -249,7 +249,7 @@
       "dns": "SmartDNS: choose DNS and sites → Check profile → Connect.",
       "verify": "Open the required services on a selected device and test new connections.",
       "recover": "For help: Share → Preview. To disconnect SmartDNS: Restore previous DNS.",
-      "ark": "Check whether ARK is loaded. Prepare ASUS only if needed, then reboot it.",
+      "ark": "Check the platform and packet capture. If ARK is loaded on ASUS, follow the preparation instructions.",
       "start": "Start or restart NFQWS2 after changing its strategy. Check that the queue is bound."
     },
     "details": "Details and limits",
@@ -265,7 +265,7 @@
         "unknown": "Not checked"
       },
       "steps": {
-        "install": "Package and Entware",
+        "install": "Package and platform",
         "ark": "ARK check",
         "configure": "Devices and strategy",
         "dns": "SmartDNS — DNS for sites",
@@ -317,7 +317,7 @@
     },
     "sections": {
       "platform": "Platform",
-      "package": "Package and Entware",
+      "package": "Package and platform",
       "engine": "Engine",
       "ark": "ARK",
       "process": "Process",
@@ -588,7 +588,9 @@
       "https_unavailable": "Sending is unavailable: HTTPS (TLS) or trusted certificates are unavailable on the router. Preview and JSON saving remain available.",
       "invalid_config": "Invalid sending configuration. Check it on the router. Preview and JSON saving remain available.",
       "unavailable": "Sending is currently unavailable. Preview and JSON saving remain available. Refresh the panel status."
-    }
+    },
+    "native_hint_openwrt": "Run the original DPI Detector over SSH on OpenWrt using the command below. Choose tests, press S to save, then refresh this list. You can view the original; sharing creates a sanitized JSON without rerunning tests.",
+    "dpi_help_command_openwrt": "Run the command above over SSH on OpenWrt. The address after src is the source IPv4 for this route; add it to the list, with /32 if needed. Check the entry again if the WAN address changes."
   },
   "smartdns": {
     "intro": "SmartDNS is a separate utility installed and configured by this panel. Assign DNS to specific sites and pin IP addresses: up to 32 DNS servers, 256 domain-to-DNS assignments and 64 fixed replies.",
@@ -846,5 +848,14 @@
       "global": "Global strategies",
       "update": "Update the package to use this preset."
     }
+  },
+  "openwrt": {
+    "install": "Install the native IPK or APK matching your OpenWrt release and exact package architecture. Panel: http://router-IP:90.",
+    "platform": "Platform: uses the native OpenWrt package manager. Match the firmware release and DISTRIB_ARCH. Requires UID 0, firewall4 and compatible NFQUEUE modules from your firmware feeds.",
+    "storage": "Memory and storage: allow space for the package, dependencies and backups. Jobs and temporary files in /tmp use RAM. Configuration is stored in /etc/nfqws2.",
+    "transit": "SmartDNS integrates through native OpenWrt facilities. Existing DHCP settings, local names and rules owned by other DNS services are preserved. Use “Restore previous DNS” to undo. A browser or VPN may use its own DNS.",
+    "verify": "Check the process, queue binding, packet delivery and a complete service response from the selected device. New connections and actual video or voice matter more than one successful HTTPS request. A VPN or another NFQWS2 on the path may affect the result.",
+    "updates": "Updates preserve the active settings. First installation creates the initial configuration with processing disabled. Updates restore the previous service state.",
+    "auth_required": "Set a root password in the OpenWrt administration panel, then reload this page. If a separate panel password is already configured, check its authorization file at /etc/nfqws2-web/auth.json."
   }
 }

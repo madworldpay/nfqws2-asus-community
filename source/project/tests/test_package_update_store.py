@@ -78,6 +78,24 @@ class PackageUpdateStoreTests(unittest.TestCase):
         for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
         self.assertFalse(own.exists());self.assertEqual(unknown.read_text(),'KEEP')
 
+    def test_rotation_reclaims_native_archives_journals_and_only_unchanged_scoped_keys(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        names=['package.apk','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log']
+        for name in names:
+            p=folder/name;p.write_text('{}');p.chmod(0o600)
+        ring=folder/'apk-keys-prepare';ring.mkdir(mode=0o700);files={}
+        for name,raw in [('feed@openwrt.pem',b'original-key'),('edited.pem',b'original-key')]:
+            p=ring/name;p.write_bytes(raw);p.chmod(0o600);files[name]={'mode':0o600,'size':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+        index=ring/'keys-index.json';index.write_text(json.dumps({'files':files}));index.chmod(0o600)
+        (ring/'edited.pem').write_bytes(b'operator-edit');(ring/'operator-note').write_text('KEEP')
+        partial=folder/'apk-keys-apply';partial.mkdir(mode=0o700);p=partial/'own.pem';p.write_bytes(b'part');p.chmod(0o600)
+        p=partial/'staging.json';p.write_text(json.dumps({'files':{'own.pem':{'mode':0o600,'size':10,'sha256':hashlib.sha256(b'full bytes').hexdigest()}}}));p.chmod(0o600)
+        self.call([['update',[job,{'state':'failed','code':'download_hash'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        for name in names:self.assertFalse((folder/name).exists(),name)
+        self.assertFalse((ring/'feed@openwrt.pem').exists());self.assertFalse(index.exists());self.assertEqual((ring/'edited.pem').read_bytes(),b'operator-edit');self.assertEqual((ring/'operator-note').read_text(),'KEEP');self.assertFalse(partial.exists())
+
     def test_symlink_and_foreign_owner_refused_without_touching_target(self):
         self.call([['status',[]]])
         outside=self.base/'outside';outside.write_text('KEEP')

@@ -52,7 +52,7 @@ final class AsusSmartDnsCandidate
         if ((int)$worker[0]!==getmypid() || !is_numeric($guard[3]) || !is_finite((float)$guard[3]) || (float)$guard[3]<=$this->now() || (float)$guard[3]>$this->now()+151) throw new RuntimeException('guard_unavailable');
         $status=file_get_contents('/proc/self/status');
         if (!preg_match('/^PPid:\s+'.$anchor[0].'\s*$/m',$status)) throw new RuntimeException('guard_unavailable');
-        $expected=['/bin/sh','/opt/lib/nfqws2-asus/smartdns/config-worker.sh'];
+        $expected=['/bin/sh',NfqwsPlatform::translate('/opt/lib/nfqws2-asus/smartdns/config-worker.sh')];
         $a=explode("\0",rtrim((string)@file_get_contents('/proc/'.$anchor[0].'/cmdline'),"\0"));
         $g=explode("\0",rtrim((string)@file_get_contents('/proc/'.$guard[0].'/cmdline'),"\0"));
         if ($a!==array_merge($expected,['session',$this->id,$guard[0],$guard[1]]) || $g!==array_merge($expected,[$this->id])) throw new RuntimeException('guard_unavailable');
@@ -61,6 +61,7 @@ final class AsusSmartDnsCandidate
     private function probe(): string
     {
         if (isset($this->deps['probe'])) return ($this->deps['probe'])();
+        if(NfqwsPlatform::native())return '';
         $base='/opt/lib/nfqws2-asus/smartdns';$path=$base.'/tools.json';$s=@lstat($path);
         if (!$s || ($s['mode']&0170000)!==0100000 || $s['uid']!==0 || ($s['mode']&0022)!==0 || $s['nlink']!==1 || $s['size']>4096) throw new RuntimeException('unsupported_binary');
         try { $m=json_decode(file_get_contents($path),true,8,JSON_THROW_ON_ERROR); }
@@ -129,7 +130,7 @@ final class AsusSmartDnsCandidate
     }
     public static function ownsPorts(int $pid,int $port): bool
     {
-        $owned=self::inodes($pid);$address='0100007F:'.sprintf('%04X',$port);
+        $owned=self::inodes($pid);$address=NfqwsPlatform::procNetIPv4('127.0.0.1').':'.sprintf('%04X',$port);
         foreach (['udp','tcp'] as $protocol) {
             $found=false;$raw=@file_get_contents('/proc/net/'.$protocol);
             foreach (explode("\n",is_string($raw)?$raw:'') as $line) {
@@ -148,6 +149,9 @@ final class AsusSmartDnsCandidate
         // avoid overlapping these reservations; keep the same total deadline.
         foreach ($types as $type) {
             $this->checkpoint($engine,$deadline);
+            if(NfqwsPlatform::native()){
+                require_once __DIR__.'/openwrt-dns-probe.php';$out[$type]=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$port,$name,$type,$transport);$this->checkpoint($engine,$deadline);continue;
+            }
             $child=$this->start([$probe,'127.0.0.1',(string)$port,$name,$type,$transport,'2500'],'/',8192);
             try {
                 do {

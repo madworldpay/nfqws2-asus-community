@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "version": "v5.0.0-alpha.21",
+  "source_commit": "a09d03b58d452c71bd63a9b3d410713dd22049f6",
+  "artifacts": {
+    "arm": {
+      "name": "dpi-detector-armv5te",
+      "size": 3778448,
+      "sha256": "c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863",
+      "elf_machine": 40,
+      "elf_class": 1,
+      "source": "bundled-legacy",
+      "source_commit": "a09d03b58d452c71bd63a9b3d410713dd22049f6",
+      "build_target": "armv5te-unknown-linux-musleabi",
+      "accepted_installed": [
+        {
+          "name": "dpi-detector-linux-armv7",
+          "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-armv7",
+          "size": 3762124,
+          "sha256": "296fb0305c7e11addeaf74724f8884a3d0bfcd3efad88a10d54b3384e0d1f896",
+          "elf_class": 1,
+          "elf_data": 1,
+          "elf_machine": 40
+        }
+      ],
+      "elf_data": 1
+    },
+    "arm64": {
+      "name": "dpi-detector-linux-arm64",
+      "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-arm64",
+      "size": 6339000,
+      "sha256": "721e005cee83a72d17b403a26bd051fed280f9fd44218d517329f0a60f8ea27a",
+      "elf_class": 2,
+      "elf_data": 1,
+      "elf_machine": 183
+    },
+    "mips": {
+      "name": "dpi-detector-linux-mips",
+      "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-mips",
+      "size": 4788296,
+      "sha256": "1cacd0bb7970d2c09777295271c5e61cfae322a98f53219b9fb0c49b2813b96f",
+      "elf_class": 1,
+      "elf_data": 2,
+      "elf_machine": 8
+    },
+    "mipsel": {
+      "name": "dpi-detector-linux-mipsel",
+      "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-mipsel",
+      "size": 4808784,
+      "sha256": "0fc88a603c33c2239da1160ed3f231aa63107da57e10a7fa2337179c7ff36005",
+      "elf_class": 1,
+      "elf_data": 1,
+      "elf_machine": 8
+    },
+    "x86_64": {
+      "name": "dpi-detector-linux-x86_64",
+      "url": "https://github.com/Runnin4ik/dpi-detector/releases/download/v5.0.0-alpha.21/dpi-detector-linux-x86_64",
+      "size": 7662680,
+      "sha256": "35b8cbb66f3ab49829ec580aa2a3f0e956bf83851a581237575ddc748daed867",
+      "elf_class": 2,
+      "elf_data": 1,
+      "elf_machine": 62
+    }
+  }
+}

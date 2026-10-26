@@ -5,10 +5,10 @@ require_once __DIR__.'/update-guard.php';
 /** Read-only projection is separate from durable, lease-protected reconciliation. */
 final class AsusSmartDnsConfigJobs
 {
-    private AsusSmartDnsNativeBackend $backend;
+    private NfqwsSmartDnsBackend $backend;
     private int $owner;
-    public function __construct(private AsusSmartDnsStore $store,?AsusSmartDnsNativeBackend $backend=null,private array $deps=[])
-    { $this->backend=$backend??new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller());$this->owner=$deps['owner']??0; }
+    public function __construct(private AsusSmartDnsStore $store,?NfqwsSmartDnsBackend $backend=null,private array $deps=[])
+    { $this->backend=$backend??AsusSmartDnsNativeBackend::create($store,new AsusSmartDnsInstaller());$this->owner=$deps['owner']??0; }
     private function now(): float
     { return isset($this->deps['uptime'])?($this->deps['uptime'])():(float)explode(' ',file_get_contents('/proc/uptime'))[0]; }
     private function native(): ?array
@@ -29,8 +29,8 @@ final class AsusSmartDnsConfigJobs
     private function launch(string $id,string $run): void
     {
         if (isset($this->deps['launch'])) {($this->deps['launch'])($id);return;}
-        $bb=AsusDpiRuntime::BUSYBOX;
-        $p=@proc_open([$bb,'start-stop-daemon','-S','-b','-p',$run.'/guard-launch.pid','-x','/bin/sh','--','/opt/lib/nfqws2-asus/smartdns/config-worker.sh',$id],
+        $bb=AsusDpiRuntime::busybox();
+        $p=@proc_open([$bb,'start-stop-daemon','-S','-b','-p',$run.'/guard-launch.pid','-x','/bin/sh','--',NfqwsPlatform::translate('/opt/lib/nfqws2-asus/smartdns/config-worker.sh'),$id],
             [0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C']);
         if (!is_resource($p) || proc_close($p)!==0) throw new RuntimeException('launch_failed');
     }
@@ -191,7 +191,7 @@ final class AsusSmartDnsConfigJobs
             $patch=['state'=>'conflict','code'=>'invalid_state'];
         } else {
             $phase=$native['phase'];
-            if ($phase==='rolled_back') $patch=['state'=>'rolled_back','active'=>null,'code'=>$job['code']??null];
+            if ($phase==='rolled_back') $patch=['state'=>'rolled_back','active'=>null,'code'=>$this->nativeCode($job['request_id'])??$job['code']??null];
             elseif ($phase==='awaiting_confirmation' || $phase==='confirmed') {
                 if (!$this->healthy()) $patch=['state'=>'conflict','code'=>'guard_unavailable'];
                 elseif ($phase==='awaiting_confirmation') $patch=['state'=>$phase,'code'=>null,'deadline_uptime'=>(float)$native['deadline']];
@@ -202,7 +202,7 @@ final class AsusSmartDnsConfigJobs
                         $patch=['state'=>'confirmed','code'=>null,'active'=>['profile'=>$profile,'profile_hash'=>$job['profile_hash'],'backup_id'=>$job['backup_id']]];
                     } catch (Throwable $e) {$patch=['state'=>'conflict','code'=>'invalid_state'];}
                 }
-            } elseif ($phase==='rolling_back') $patch=['state'=>'rolling_back','code'=>$job['code']??null];
+            } elseif ($phase==='rolling_back') $patch=['state'=>'rolling_back','code'=>$this->nativeCode($job['request_id'])??$job['code']??null];
             elseif ($phase==='conflict') $patch=['state'=>'conflict','code'=>$this->nativeCode($job['request_id'])??$job['code']??'connection_failed'];
             elseif ($job['state']!=='applying') $patch=['state'=>'conflict','code'=>'invalid_state'];
         }

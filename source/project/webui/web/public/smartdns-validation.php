@@ -10,6 +10,7 @@ final class AsusSmartDnsValidationJob
     { $this->installer??=new AsusSmartDnsInstaller(); }
     private function baseline(): array
     {
+        if(NfqwsPlatform::native()&&!isset($this->deps['baseline'])){require_once __DIR__.'/smartdns-native.php';return AsusSmartDnsNativeBackend::create($this->store,$this->installer)->baseline();}
         $value=isset($this->deps['baseline'])?($this->deps['baseline'])():(new AsusSmartDnsBaseline(new AsusReportIO(),$this->installer))->collect();
         if (!is_array($value) || !is_string($value['hash']??null) || !preg_match('/^[a-f0-9]{64}$/D',$value['hash'])) throw new RuntimeException('baseline_unavailable');
         return $value;

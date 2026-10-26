@@ -37,10 +37,11 @@ export function renderHeader(language,path,anonymous,runtime={}){
  const router=createRouter({routeTree:createRootRoute(),history:createMemoryHistory({initialEntries:[path]})});
  return renderToStaticMarkup(h(QueryClientProvider,{client:queryClient},h(RouterContextProvider,{router},local(Header,{},language))));
 }
-export function renderPart(which,language){
+export function renderPart(which,language,platform='asus-entware'){
+ const key=createAPIClient().indexPhp.postIndexCmd.getQueryKey({body:{cmd:'status'}});queryClient.setQueryData(key,{status:0,anonym:true,authenticated:true,nfqws2:true,service:true,version:'1.3.1-asus6+b16',csrf_token:'fixture-csrf',platform});
  const none=()=>{};const form={draft:{blocks:[{key:'NFQWS_ARGS',value:'--filter-tcp=443'}],config:'NFQWS_ARGS="--filter-tcp=443"'},selected:[],full:false,context:{purpose:'video',operator:'Example ISP',region:'Berlin',share_location:false,comment:''},locationEdited:false};
  const state={mail:{configured:false,sharing_v3:false,code:'not_configured'},dpi:{available:{available:true,code:'ready'},installed:{installed:true,version:'5'},version:'5',default_tests:[],active:null,history:[]},saved:{reports:[],code:'ready',skipped:0,scan_truncated:false}};
- return renderToStaticMarkup(local(which==='strategy'?ShareStrategySection:which==='dpi'?ShareDpiSection:SharePreview,which==='strategy'?{csrfToken:'csrf',value:form,disabled:false,onChange:none,onLocation:none,onError:none}:which==='dpi'?{csrfToken:'csrf',state,disabled:false,onChange:none,onState:none,onError:none}:{snapshot:{files:[{type:'strategy',filename:'NFQWS2_STRATEGY_2026-10-16_10-00-00Z.json',blob:new Blob(['x']),text:'{"comment":"<script>PRIVATE_HTML_CANARY</script>"}',complete:true}],source:undefined}},language));
+ return renderToStaticMarkup(h(QueryClientProvider,{client:queryClient},local(which==='strategy'?ShareStrategySection:which==='dpi'?ShareDpiSection:SharePreview,which==='strategy'?{csrfToken:'csrf',value:form,disabled:false,onChange:none,onLocation:none,onError:none}:which==='dpi'?{csrfToken:'csrf',state,disabled:false,onChange:none,onState:none,onError:none}:{snapshot:{files:[{type:'strategy',filename:'NFQWS2_STRATEGY_2026-10-16_10-00-00Z.json',blob:new Blob(['x']),text:'{"comment":"<script>PRIVATE_HTML_CANARY</script>"}',complete:true}],source:undefined}},language)));
 }
 `},tsconfig:fileURLToPath(new URL('../webui/web/tsconfig.app.json',import.meta.url)),define:{'window.location.origin':'"http://localhost"','process.env.APP_VERSION':'"0.1.4"'},bundle:true,platform:'node',format:'cjs',outfile,logLevel:'silent',plugins:[{name:'server-store-fixture',setup(b){b.onResolve({filter:/useAppStore$/},()=>({path:'store',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`import {create} from 'zustand';export const useAppStore=create(set=>({auth:true,setAuth:auth=>set({auth}),needSave:false,needReload:false,setNeedReload:needReload=>set({needReload}),onSave:async()=>{}}));`,resolveDir:fileURLToPath(new URL('../webui/web/',import.meta.url))}));}}]});
 const render=await import(pathToFileURL(outfile));
@@ -56,6 +57,7 @@ for(const lang of ['ru','en']){
  }
  const strategy=render.renderPart('strategy',lang);assert.equal((strategy.match(/ required=""/g)||[]).length,2);assert.doesNotMatch(strategy,/ checked=""/);assert.match(strategy,/https:\/\/db-ip.com/);
  const dpi=render.renderPart('dpi',lang);assert.match(dpi,/\/opt\/bin\/nfqws2-dpi/);assert.doesNotMatch(dpi,/startDpi|DpiSettings/);
+ const nativeDpi=render.renderPart('dpi',lang,'openwrt');assert.match(nativeDpi,/\/usr\/bin\/nfqws2-dpi/);assert.doesNotMatch(nativeDpi,/\/opt\/bin\/nfqws2-dpi/);
  const preview=render.renderPart('preview',lang);assert.ok(preview.includes('&lt;script&gt;PRIVATE_HTML_CANARY&lt;/script&gt;'));assert.ok(!preview.includes('<script>PRIVATE_HTML_CANARY'));
 }
 console.log('PASS actual rendered Header across routes/auth modes, RU/EN strategy consent/required fields, original command and text-only preview');

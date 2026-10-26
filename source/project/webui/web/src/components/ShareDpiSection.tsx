@@ -25,6 +25,7 @@ import { newSupportSubmissionId } from '@/api/supportReport';
 
 import { RouterTrafficHelp } from '@/components/RouterTrafficHelp';
 
+import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const ShareDpiSection = ({
@@ -45,6 +46,8 @@ export const ShareDpiSection = ({
   onError: (e: unknown) => void;
 }) => {
   const { t } = useTranslation();
+  const { platform } = useStatus();
+  const native = platform === 'openwrt';
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [view, setView] = useState<{ name: string; raw: string }>();
@@ -115,12 +118,14 @@ export const ShareDpiSection = ({
       <RouterTrafficHelp>
         <Typography variant="subtitle1">DPI Detector</Typography>
       </RouterTrafficHelp>
-      <Typography variant="body2">{t('share.native_hint')}</Typography>
+      <Typography variant="body2">
+        {t(native ? 'share.native_hint_openwrt' : 'share.native_hint')}
+      </Typography>
       <Typography
         component="code"
         sx={{ userSelect: 'all', overflowWrap: 'anywhere' }}
       >
-        /opt/bin/nfqws2-dpi
+        {native ? '/usr/bin/nfqws2-dpi' : '/opt/bin/nfqws2-dpi'}
       </Typography>
       {!state.dpi.installed.installed && !confirm && (
         <Button

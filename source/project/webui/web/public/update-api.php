@@ -27,15 +27,22 @@ final class AsusUpdateApi
         $out['code']=isset($job['code'])?AsusUpdatePrepare::code(new RuntimeException($job['code'])):null;
         $out['service_intent']=in_array($job['intent']['mode']??null,['running','waiting_for_wan','stopped'],true)?$job['intent']['mode']:null;return $out;
     }
+    private static function checkResult(array $value):array
+    {
+        // Native preparation keeps manager-only metadata internally. Older
+        // frontends require this exact shared four-field package projection.
+        if(is_array($value['candidate']['package']??null))$value['candidate']['package']=array_intersect_key($value['candidate']['package'],array_flip(['family','filename','size','sha256']));
+        return $value;
+    }
     public static function dispatch(array $post): array
     {
         self::validate($post);$store=new AsusUpdateStore();$dispatch=new AsusUpdateDispatch($store);
-        if($post['cmd']==='packageupdatecheck')return (new AsusUpdateCheck($store))->request($post['force']==='1');
+        if($post['cmd']==='packageupdatecheck')return self::checkResult((new AsusUpdateCheck($store))->request($post['force']==='1'));
         if($post['cmd']==='packageupdateprepare')return self::operation($dispatch->prepare($post['revision'],$post['request_id']));
         if($post['cmd']==='packageupdateapply')return self::operation($dispatch->apply($post['operation_id'],$post['revision'],$post['request_id']));
         $job=null;if($post['operation_id']!=='')$job=$dispatch->status($post['operation_id']);else{
             $status=$store->status();$job=$status['active']??($status['history'][0]??null);if($job!==null)$job=$dispatch->status($job['id']);
         }
-        return ['check'=>(new AsusUpdateCheck($store))->status(),'operation'=>self::operation($job)];
+        return ['check'=>self::checkResult((new AsusUpdateCheck($store))->status()),'operation'=>self::operation($job)];
     }
 }

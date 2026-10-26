@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+START=96
+STOP=9
+
+case "$action" in start|stop|restart|reload|boot|shutdown)
+    . /usr/lib/nfqws2/update/service-lease.sh || exit 1
+    nfqws_native_update_enter web "$action" || exit 1;;
+esac
+
+nfqws_web_prepare() {
+    . /usr/lib/nfqws2-web/web.sh || return 1
+    config_load nfqws2-web
+    NFQWS_WEB_LISTENERS=$(nfqws_web_listeners) || { echo invalid_panel_listener >&2; return 1; }
+    nfqws_web_private_directory /tmp/nfqws2-native-web &&
+        nfqws_web_private_directory /tmp/nfqws2-native-web/sessions || return 1
+}
+
+# As with the core, reject an invalid restart before rc.common closes the
+# existing procd instance. A malformed administrator edit keeps the old panel.
+case "$action" in start|restart|reload|boot) nfqws_web_prepare || exit 1;; esac
+
+start_service() {
+    local address
+    [ -n "$NFQWS_WEB_LISTENERS" ] || nfqws_web_prepare || return 1
+    procd_open_instance main
+    procd_set_param command /usr/sbin/uhttpd -f -D -S -c /dev/null \
+        -h /usr/share/nfqws2-web -I index.php -E /index.php \
+        -i .php=/usr/lib/nfqws2-web/php-cgi.sh -t 35 -T 30 -k 5 -n 3 -N 16
+    for address in $NFQWS_WEB_LISTENERS; do procd_append_param command -p "$address"; done
+    procd_set_param respawn 3600 5 5
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance
+}
+
+reload_service() { stop; start; }
+service_triggers() {
+    procd_add_reload_trigger nfqws2-web network
+    procd_add_raw_trigger 'interface.*' 1000 /etc/init.d/nfqws2-native-web reload
+}
