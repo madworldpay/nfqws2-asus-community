@@ -20,6 +20,17 @@ final class NfqwsOpenWrtManualContext
         }
         throw new RuntimeException('invalid_state');
     }
+    /** Private journal + native process identity, independent of controller lifetime. */
+    public static function activeManager():?array
+    {
+        if(!NfqwsPlatform::native())return null;$path='/tmp/nfqws2-native-package/state';
+        try{AsusUpdateStore::noLinks($path);}catch(Throwable $e){return null;}$dir=@lstat(dirname($path));$s=@lstat($path);
+        if(!$dir||!is_dir(dirname($path))||$dir['uid']!==0||($dir['mode']&0777)!==0700||!$s||!is_file($path)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0777)!==0600||$s['size']>4096)return null;
+        $raw=file_get_contents($path);if(!is_string($raw)||preg_match_all('/^manager=([^\r\n]*)$/m',$raw,$rows)!==1||!preg_match('/^([A-Za-z0-9-]{8,64}):([1-9][0-9]{0,9}):([1-9][0-9]{0,19})$/D',$rows[1][0],$m)||(float)$m[2]>2147483647||$m[1]!==AsusUpdateStore::boot())return null;
+        $i=AsusUpdateLifecycle::identity((int)$m[2]);if($i===null||$i['uid']!==0||$i['start_ticks']!==$m[3]||$i['boot_id']!==$m[1])return null;
+        foreach(['ipk'=>'/bin/opkg','apk'=>'/usr/bin/apk']as $format=>$path){$exe=realpath($path);if($exe!==false&&$exe===$i['exe']&&AsusUpdateLifecycle::alive($i))return ['format'=>$format,'identity'=>$i];}
+        return null;
+    }
     public static function authorize():bool
     {
         if(!NfqwsPlatform::native())return false;$entry='/usr/lib/nfqws2/update/quiesce.php';

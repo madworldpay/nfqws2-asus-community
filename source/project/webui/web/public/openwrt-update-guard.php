@@ -65,6 +65,7 @@ final class NfqwsOpenWrtUpdateGuard
             // Only the verified worker itself may validate/resume saved DNS
             // after replacing EX with SH and after its manager has exited.
             if($t!==null&&$t['phase']==='starting'&&$t['worker']['pid']===getmypid()&&$this->worker($t)&&!$this->managerAlive($t))return $f;
+            if(NfqwsOpenWrtManualContext::activeManager()!==null)throw new RuntimeException('busy');
             if($t!==null&&$t['phase']!=='finished'&&($this->worker($t)||$this->managerAlive($t)))throw new RuntimeException('busy');
             $this->store->reconcile(AsusUpdateStore::boot(),AsusUpdateStore::uptime());$job=$this->store->status()['active'];
             if(($job['state']??null)==='applying'){

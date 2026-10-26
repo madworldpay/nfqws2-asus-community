@@ -60,10 +60,12 @@ require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-con
   try:
    command='opkg --nodeps install '+base+'/package.ipk'if fmt=='ipk'else'apk add --network=no --cache=no --repositories-file /dev/null --keys-dir '+base+'/keys '+base+'/package.apk'
    self.sh(command)
+   released='require $argv[1]."/openwrt-update-guard.php";$s=new AsusUpdateStore($argv[2]."/store");if(NfqwsOpenWrtManualContext::activeManager()!==null)throw new RuntimeException("dead manager still blocks");$f=(new NfqwsOpenWrtUpdateGuard($s))->mutationLease();flock($f,LOCK_UN);fclose($f);echo "released";'
+   self.assertEqual(self.sh('php-cli -r '+shlex.quote(released)+' '+base+'/app '+base),'released')
    if production and case=='unsafe-wrapper':return {'refused':self.sh('cat '+base+'/exit').strip()!='0','entry_started':self.sh('test -e '+base+'/entry-started; printf %s $?').strip()=='0'}
    if production and case=='busy':
     self.sh('test ! -e '+base+'/result.json');self.assertIn('busy',self.sh('cat '+base+'/controller.error'));return {'busy':self.sh('cat '+base+'/exit').strip()!='0'}
-   outside=json.loads(self.sh('cat '+base+'/outside.json'));inside=json.loads(self.sh('cat '+base+'/result.json'));self.assertFalse(outside['authorized'],'manager alone cannot bypass updater lease');return inside
+   outside=json.loads(self.sh('cat '+base+'/outside.json'));inside=json.loads(self.sh('cat '+base+'/result.json'));self.assertFalse(outside['authorized'],'manager alone cannot bypass updater lease');self.assertTrue(outside['ordinary_blocked'],'live native manager must block ordinary changes even before EX quiesce');return inside
   finally:
    self.sh(('opkg remove'if fmt=='ipk'else'apk del --network=no')+' nfqws2-native >/dev/null 2>&1 || :',check=False)
    self.sh('rm -rf /tmp/nfqws2-native-package',check=False)

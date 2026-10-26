@@ -22,7 +22,7 @@ final class NfqwsOpenWrtUpdateHook
     {
         if(!in_array($action,['verify','capture','postinstall'],true))throw new RuntimeException('invalid_request');$guard=new NfqwsOpenWrtUpdateGuard($this->store);$ticket=$guard->ticket();
         if($ticket===null||$ticket['phase']==='finished')return false;
-        if(!AsusUpdateLifecycle::alive($ticket['worker'])&&!$guard->managerAlive($ticket)){if(NfqwsOpenWrtManualContext::authorize())return false;$f=$guard->mutationLease();flock($f,LOCK_UN);fclose($f);return false;}
+        if(!AsusUpdateLifecycle::alive($ticket['worker'])&&!$guard->managerAlive($ticket)){if(NfqwsOpenWrtManualContext::authorize())return false;try{$active=NfqwsOpenWrtManualContext::activeManager();$actual=NfqwsOpenWrtManualContext::manager();if($active!==null&&$active['identity']===$actual['identity'])return false;}catch(Throwable $ignored){}$f=$guard->mutationLease();flock($f,LOCK_UN);fclose($f);return false;}
         $end=AsusUpdateStore::uptime()+2;
         do{
             $ticket=$guard->context($ticket['id']);
