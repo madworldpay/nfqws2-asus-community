@@ -25,7 +25,7 @@ final class NfqwsOpenWrtUpdateEnvironment
     {
         $v=AsusUpdatePackage::fields($raw);$status=preg_split('/\s+/',trim($v['Status']??''));
         $flags=explode(',',$status[1]??'');
-        if(count($status)!==3||!in_array($status[0],['install','hold'],true)||$status[2]!=='installed'||count($flags)!==count(array_unique($flags))||array_diff($flags,['ok','user','prefer']))throw new RuntimeException('pending_packages');
+        if(count($status)!==3||!in_array($status[0],['install','hold'],true)||$status[2]!=='installed'||count($flags)!==count(array_unique($flags))||array_diff($flags,['ok','user','prefer','hold']))throw new RuntimeException('pending_packages');
         return ['name'=>$v['Package']??null,'version'=>$v['Version']??null,'arch'=>$v['Architecture']??null];
     }
 

@@ -13,6 +13,6 @@ foreach([['platform'=>'asus-entware'],['series'=>'25.12'],['arch'=>'x86_64'],['f
 foreach([['name'=>'nfqws2-asus'],['arch'=>'armv7'],['version'=>'1.3.2-24']]as $delta)rejects(fn()=>NfqwsOpenWrtUpdateEnvironment::resolve($release,$profile,array_replace($record,$delta)),'version_mismatch');
 rejects(fn()=>NfqwsOpenWrtUpdateEnvironment::resolve($release."DISTRIB_ARCH='x86_64'\n",$profile,$record),'unsupported_abi');
 rejects(fn()=>NfqwsOpenWrtUpdateEnvironment::resolve(str_replace('24.10.8','SNAPSHOT',$release),$profile,$record),'unsupported_abi');
-foreach(['install ok installed','install user installed','hold ok installed','install prefer,user installed']as $status){$p="Package: nfqws2-native\nVersion: 1.3.2-23\nArchitecture: arm_cortex-a9\nStatus: $status\n";check(NfqwsOpenWrtUpdateEnvironment::opkgRecord($p)===$record,'valid opkg flags');}
+foreach(['install ok installed','install user installed','hold ok installed','install hold installed','install prefer,user installed']as $status){$p="Package: nfqws2-native\nVersion: 1.3.2-23\nArchitecture: arm_cortex-a9\nStatus: $status\n";check(NfqwsOpenWrtUpdateEnvironment::opkgRecord($p)===$record,'valid opkg flags');}
 rejects(fn()=>NfqwsOpenWrtUpdateEnvironment::opkgRecord("Package: nfqws2-native\nVersion: 1.3.2-23\nArchitecture: arm_cortex-a9\nStatus: install ok unpacked\n"),'pending_packages');
 echo "Native firmware/package-manager identity and healthy package flags passed\n";
