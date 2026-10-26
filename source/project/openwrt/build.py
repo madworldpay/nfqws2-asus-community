@@ -116,6 +116,11 @@ def payload_files(target,engine,source=None):
     for name in ['control.sh','platform.sh','firewall.sh','firewall-hook.sh','config.php','config-cli.php','flow.php','flow-cli.php','resource-upgrade.php','nfqws2.init']:
         installed='nfqws2-native'if name=='nfqws2.init'else name
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
+    for name,mode in [('quiesce.php',0o644),('quiesce.sh',0o755)]:
+        files['usr/lib/nfqws2/update/'+name]=((HERE/'update'/name).read_bytes(),mode)
+    lifecycle=(HERE/'package-lifecycle.sh').read_text();boundary='case "$NFQWS_PKG_ACTION" in'
+    if lifecycle.count(boundary)!=1:raise RuntimeError('Native package function boundary is ambiguous')
+    files['usr/lib/nfqws2/update/package-functions.sh']=(lifecycle.split(boundary,1)[0].encode(),0o644)
     files['usr/lib/nfqws2/import-config.php']=((ROOT/'webui/web/public/import-config.php').read_bytes(),0o644)
     args=re.search(r'^_startup_args\(\) \{.*?^\}',(ROOT/'core/etc/init.d/common').read_text(),re.M|re.S)
     if not args:raise RuntimeError('Shared startup argument contract missing')
@@ -260,6 +265,12 @@ def web_payload(dist=None):
     dist=Path(dist)if dist is not None else ROOT/'webui/web/dist'
     for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php','resource-paths.php']:
         if not (dist/name).is_file():raise RuntimeError('Build the shared production frontend before native packaging')
+    # Vite copies PHP unchanged. A stale backend is unsafe when native hooks
+    # depend on a newer module, even if an old frontend directory still exists.
+    for source in (ROOT/'webui/web/public').glob('*.php'):
+        installed=dist/source.name
+        if not installed.is_file()or installed.read_bytes()!=source.read_bytes():
+            raise RuntimeError('Rebuild the shared production frontend: native backend is stale')
     files={'usr/share/nfqws2-web/'+str(p.relative_to(dist)):(p.read_bytes(),0o644)
            for p in sorted(dist.rglob('*'))if p.is_file()and not p.name.endswith('.map')}
     files['usr/share/nfqws2-web/platform-profile.json']=(b'{"schema_version":1,"platform":"openwrt"}\n',0o644)

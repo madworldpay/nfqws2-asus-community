@@ -53,7 +53,8 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertIn(dep,builder.DEPENDENCIES)
         with tempfile.TemporaryDirectory()as td:
             dist=Path(td)
-            for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php','resource-paths.php']:(dist/name).write_text('fixture')
+            (dist/'index.html').write_text('fixture')
+            for source in (ROOT/'webui/web/public').glob('*.php'):(dist/source.name).write_bytes(source.read_bytes())
             files=builder.web_payload(dist)
             profile=json.loads(files['usr/share/nfqws2-web/platform-profile.json'][0])
             self.assertEqual(profile,{'schema_version':1,'platform':'openwrt'})
@@ -61,6 +62,13 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertIn('usr/lib/nfqws2-web/php-cgi.sh',files.keys())
             self.assertNotIn('etc/config/uhttpd',files)
             self.assertNotIn('etc/init.d/uhttpd',files)
+
+    def test_native_package_refuses_stale_backend_even_when_all_filenames_exist(self):
+        with tempfile.TemporaryDirectory()as td:
+            dist=Path(td);(dist/'index.html').write_text('fixture')
+            for source in (ROOT/'webui/web/public').glob('*.php'):(dist/source.name).write_bytes(source.read_bytes())
+            (dist/'openwrt-package-quiesce.php').write_text('<?php /* older backend */')
+            with self.assertRaises(RuntimeError):builder.web_payload(dist)
 
     def test_staging_never_inherits_group_writable_developer_directories(self):
         with tempfile.TemporaryDirectory()as td:
@@ -84,6 +92,12 @@ class NativeBuilderTests(unittest.TestCase):
         self.assertEqual((artifact['arch'],artifact['engine']),('arm_cortex-a9','arm'))
         self.assertEqual(artifact['artifact']['sha256'],'c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863')
         self.assertIn('usr/lib/nfqws2/dpi/paths.sh',files)
+        for name,mode in [('quiesce.php',0o644),('quiesce.sh',0o755),('package-functions.sh',0o644)]:
+            self.assertTrue('usr/lib/nfqws2/update/'+name in files,'Missing native controller payload: '+name)
+            self.assertEqual(files['usr/lib/nfqws2/update/'+name][1],mode)
+        functions=files['usr/lib/nfqws2/update/package-functions.sh'][0].decode()
+        self.assertIn('nfqws_package_stop_services_internal()',functions)
+        self.assertNotIn('case "$NFQWS_PKG_ACTION" in',functions)
         raw,mode=files['usr/share/nfqws2/optional/dpi-detector-armv5te']
         self.assertEqual((hashlib.sha256(raw).hexdigest(),mode),('c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863',0o644))
         for name in ['strategy-v2.schema.json','profile-catalog.schema.json','profile-catalog-public.pem']:

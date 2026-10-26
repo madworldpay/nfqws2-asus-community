@@ -140,6 +140,25 @@ nfqws_package_native_update() {
 }
 
 nfqws_package_stop_services() {
+    local path=/usr/lib/nfqws2/update/quiesce.php parent
+    if [ -e "$path" ] || [ -L "$path" ]; then
+        [ -f "$path" ] && [ ! -L "$path" ] || return 1
+        case "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" in '-rw-r--r-- 1 0'|'-rw------- 1 0') ;; *) return 1;; esac
+        parent=${path%/*}
+        while [ -n "$parent" ] && [ "$parent" != / ]; do
+            [ -d "$parent" ] && [ ! -L "$parent" ] || return 1
+            LC_ALL=C ls -dn "$parent" | awk '{if($3!=0 || substr($1,1,1)!="d" || substr($1,6,1)=="w" || substr($1,9,1)=="w")exit 1}' || return 1
+            parent=${parent%/*}
+        done
+        /usr/bin/php8-cgi -d register_argc_argv=1 -q -f "$path" -- "$1"
+    else
+        # Earlier experimental native packages predate the controller. Their
+        # own UI updater is absent; retain the verified inline DNS fallback.
+        nfqws_package_stop_services_internal "$1"
+    fi
+}
+
+nfqws_package_stop_services_internal() {
     local name
     for name in nfqws2-native nfqws2-native-web nfqws2-native-dns nfqws2-native-dns-resume; do
         nfqws_package_service_owner "$name" || return 1

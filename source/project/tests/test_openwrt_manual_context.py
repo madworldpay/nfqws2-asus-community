@@ -9,7 +9,7 @@ class ManualNativeContext(unittest.TestCase):
   p=subprocess.run(['docker','exec','-i',CONTAINER,'sh','-c',code],input=input,text=True,capture_output=True,timeout=25)
   if check:self.assertEqual(p.returncode,0,p.stdout+p.stderr)
   return p.stdout
- def run_case(self,case):
+ def run_case(self,case,production=False):
   self.assertTrue((ROOT/'webui/web/public/openwrt-manual-context.php').exists(),'manual controller proof missing')
   self.assertTrue(CONTAINER.startswith('nfqws-openwrt'));self.assertNotEqual(json.loads(subprocess.check_output(['docker','inspect',CONTAINER]))[0]['HostConfig']['NetworkMode'],'host')
   fmt='apk'if'25'in CONTAINER else'ipk'
@@ -25,16 +25,28 @@ require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-con
 '''
   self.sh('cat > '+base+'/probe.php',helper)
   controller="<?php\nrequire "+json.dumps(base+"/app/update-guard.php")+";$s=new AsusUpdateStore("+json.dumps(base+'/store')+");$f=$s->lease('apply.lock');$p=proc_open(['/usr/bin/php8-cgi','-d','register_argc_argv=1','-q','-f',"+json.dumps(base+'/probe.php')+"],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);$raw=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($p);if($exit!==0)throw new RuntimeException($error.$raw);file_put_contents("+json.dumps(base+'/result.json')+",$raw);"
+  if production:
+   script='/usr/lib/nfqws2/update/quiesce.sh';self.sh('test ! -e '+script)
+   self.sh('cat > '+script,'#!/bin/sh\n/usr/bin/php8-cgi -d register_argc_argv=1 -q -f '+base+'/probe.php > '+base+'/result.json\n');self.sh('chmod 755 '+script);self.addCleanup(lambda:self.sh('rm -f '+script,check=False))
+   controller=(ROOT/'openwrt/update/quiesce.php').read_text().replace('/usr/share/nfqws2-web',base+'/app').replace('new AsusUpdateStore()', 'new AsusUpdateStore('+json.dumps(base+'/store')+')')
+  if production and case=='unsafe-wrapper':controller=controller.replace('<?php', '<?php file_put_contents('+json.dumps(base+'/entry-started')+',"started");',1)
   self.sh('cat > '+entry,controller);self.sh('chmod 644 '+entry)
   self.addCleanup(lambda:self.sh('rm -f '+entry,check=False))
-  if case=='unsafe-controller-dir':
+  if case in ['unsafe-controller-dir','unsafe-wrapper']:
    original=self.sh('php-cli -r '+shlex.quote('echo decoct(fileperms($argv[1])&0777);')+' /usr/lib/nfqws2/update').strip();self.sh('chmod 777 /usr/lib/nfqws2/update');self.addCleanup(lambda:self.sh('chmod '+original+' /usr/lib/nfqws2/update',check=False))
   library=(ROOT/'openwrt/package-lifecycle.sh').read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
   body='#!/bin/sh\numask 077\n'+library+'\nNFQWS_PKG_FORMAT='+fmt+'\nnfqws_package_snapshot || exit 1\n'
   body+='/usr/bin/php8-cgi -d register_argc_argv=1 -q -f '+base+'/probe.php > '+base+'/outside.json\n'
   if case=='stale':body+="sed -i 's/^manager=.*/manager=stale:2:3/' /tmp/nfqws2-native-package/state\n"
   if case=='unsafe':body+='chmod 666 /tmp/nfqws2-native-package/state\n'
-  body+='/usr/bin/php8-cgi -d register_argc_argv=1 -q -f '+entry+' -- upgrade\n'
+  if production and case=='busy':
+   holder='<?php require __DIR__."/app/update-store.php";$s=new AsusUpdateStore(__DIR__."/store");$f=$s->lease("apply.lock",true);file_put_contents(__DIR__."/ready","ready");$end=microtime(true)+5;while(!is_file(__DIR__."/release")&&microtime(true)<$end)usleep(10000);'
+   self.sh('cat > '+base+'/holder.php',holder)
+   body+='/usr/bin/php8-cgi -d register_argc_argv=1 -q -f '+base+'/holder.php & holder=$!\nwhile [ ! -f '+base+'/ready ]; do sleep 1; done\n'
+  body+=(('nfqws_package_stop_services upgrade'+(' 2> '+base+'/controller.error'if case=='busy'else'')+'\n')if production else'/usr/bin/php8-cgi -d register_argc_argv=1 -q -f '+entry+' -- upgrade\n')
+  if production and case=='unsafe-wrapper':body+='code=$?; printf %s "$code" > '+base+'/exit; exit 0\n'
+  if production and case=='busy':body+='code=$?; printf %s "$code" > '+base+'/exit; touch '+base+'/release; wait "$holder"; exit 0\n'
+
   with tempfile.TemporaryDirectory()as td:
    stage=Path(td)/'payload';out=Path(td)/'out';out.mkdir();target=f.builder.native_metadata('25.12'if fmt=='apk'else'24.10','x86_64',72);target['dependencies']=[]
    f.builder.write_files(stage,{'usr/share/nfqws2/manual-context-fixture':(b'inert',0o644)})
@@ -48,6 +60,9 @@ require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-con
   try:
    command='opkg --nodeps install '+base+'/package.ipk'if fmt=='ipk'else'apk add --network=no --cache=no --repositories-file /dev/null --keys-dir '+base+'/keys '+base+'/package.apk'
    self.sh(command)
+   if production and case=='unsafe-wrapper':return {'refused':self.sh('cat '+base+'/exit').strip()!='0','entry_started':self.sh('test -e '+base+'/entry-started; printf %s $?').strip()=='0'}
+   if production and case=='busy':
+    self.sh('test ! -e '+base+'/result.json');self.assertIn('busy',self.sh('cat '+base+'/controller.error'));return {'busy':self.sh('cat '+base+'/exit').strip()!='0'}
    outside=json.loads(self.sh('cat '+base+'/outside.json'));inside=json.loads(self.sh('cat '+base+'/result.json'));self.assertFalse(outside['authorized'],'manager alone cannot bypass updater lease');return inside
   finally:
    self.sh(('opkg remove'if fmt=='ipk'else'apk del --network=no')+' nfqws2-native >/dev/null 2>&1 || :',check=False)
