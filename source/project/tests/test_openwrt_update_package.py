@@ -25,6 +25,13 @@ class NativeIpkPreflight(unittest.TestCase):
         script='require $argv[1];$p=json_decode(stream_get_contents(STDIN),true);try{echo json_encode(["value"=>NfqwsOpenWrtUpdatePackage::inspect($argv[2],$p["candidate"],$p["environment"],null,(int)$argv[3])]);}catch(Throwable $e){echo json_encode(["error"=>$e->getMessage()]);}'
         r=subprocess.run([PHP,'-n','-r',script,str(ROOT/'webui/web/public/openwrt-update-package.php'),str(self.path),str(os.getuid())],input=json.dumps({'candidate':self.candidate,'environment':{'platform':'openwrt','series':'24.10','arch':'x86_64','format':'ipk'}}),text=True,capture_output=True,timeout=10)
         self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'');self.assertFalse(self.marker.exists(),'Archive inspection ran a maintainer script');return json.loads(r.stdout)
+    def test_shared_archive_reader_can_bootstrap_without_installed_panel_or_journal(self):
+        self.package();module=ROOT/'webui/web/public/update-package.php'
+        self.assertTrue(module.is_file(),'A standalone inert archive reader is required for native bootstrap')
+        isolated=self.root/'reader.php';isolated.write_bytes(module.read_bytes())
+        code='require $argv[1];echo json_encode(AsusUpdatePackage::nativeControl($argv[2]));'
+        r=subprocess.run([PHP,'-n','-r',code,str(isolated),str(self.path)],capture_output=True,text=True,timeout=10)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(json.loads(r.stdout)['Package'],'nfqws2-native');self.assertFalse(self.marker.exists())
     def test_native_control_is_read_and_bound_before_hooks(self):
         self.package();r=self.call();self.assertIn('value',r,r);self.assertEqual(r['value']['name'],'nfqws2-native');self.assertEqual(r['value']['depends'],['libc','php8-cgi'])
     def test_wrong_package_version_architecture_or_conflict_cannot_reach_install(self):
