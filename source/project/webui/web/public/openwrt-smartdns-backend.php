@@ -165,9 +165,9 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
         $s=$this->resolverOwner($id,$operation,$instance);$routing=$this->overlay->routing($s['resolver']);
         if($routing==='unknown'||$operation==='forward'&&$routing!=='external')throw new RuntimeException('hook_conflict');
     }
-    public function resolverSwap(string $id,string $operation,string $instance,array $frame):void
+    public function resolverSwap(string $id,string $operation,string $instance,array $frame,string $nonce):void
     {
-        $s=$this->resolverOwner($id,$operation,$instance);NfqwsOpenWrtDnsmasqResolver::validateCommit($frame,$instance,$s['resolver']['config']);
+        $s=$this->resolverOwner($id,$operation,$instance);NfqwsOpenWrtDnsmasqResolver::validateCommit($frame,$instance,$s['resolver']['config'],$id.':'.$operation.':'.$nonce);
         $fresh=$this->baseline();$s['resolver']=$fresh['snapshot'];$this->save($s);
         if($operation==='forward'){
             if(!hash_equals($s['baseline_hash'],$fresh['hash']))throw new RuntimeException('stale_baseline');

@@ -9,10 +9,10 @@ try{
     if($operation==='launch'&&$args===[]){$spec=$b->launchSpec();if($spec!==null)echo $spec,"\n";exit(0);}
     if($operation==='can-stop'&&$args===[])exit($b->canStop()?0:2);
     $id=array_shift($args);if(!is_string($id)||!preg_match('/^[a-f0-9]{32}$/D',$id))exit(2);
-    if(in_array($operation,['resolver-preflight','resolver-swap'],true)&&count($args)===2){
+    if(in_array($operation,['resolver-preflight','resolver-swap'],true)&&count($args)===($operation==='resolver-preflight'?2:3)){
         [$mode,$instance]=$args;if(!in_array($mode,['forward','restore'],true)||!preg_match('/^[A-Za-z0-9_]{1,64}$/D',$instance))exit(2);
-        if($operation==='resolver-preflight')$b->resolverPreflight($id,$mode,$instance);
-        else{$raw=file_get_contents('php://stdin',false,null,0,65537);$frame=is_string($raw)&&strlen($raw)<=65536?json_decode($raw,true,32):null;if(!is_array($frame))throw new RuntimeException('invalid_state');$b->resolverSwap($id,$mode,$instance,$frame);}
+        if($operation==='resolver-preflight'){$b->resolverPreflight($id,$mode,$instance);echo bin2hex(random_bytes(8));}
+        else{$nonce=$args[2];if(!is_string($nonce)||!preg_match('/^[a-f0-9]{16}$/D',$nonce))exit(2);$raw=file_get_contents('php://stdin',false,null,0,65537);$frame=is_string($raw)&&strlen($raw)<=65536?json_decode($raw,true,32):null;if(!is_array($frame))throw new RuntimeException('invalid_state');$b->resolverSwap($id,$mode,$instance,$frame,$nonce);}
         exit(0);
     }
     if($operation==='ready'&&count($args)===2){

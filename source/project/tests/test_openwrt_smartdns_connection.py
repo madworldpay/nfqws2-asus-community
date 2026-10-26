@@ -49,6 +49,10 @@ base=/tmp/nfqws-native-dns-connection
 if [ "$1 $2 $3" = 'call service add' ]; then
  printf '%s' "$4" > "$base/commit.json"
  php-cli -r '$v=json_decode(file_get_contents("/tmp/nfqws-native-dns-connection/commit.json"),true);if(($v["name"]??null)!=="dnsmasq"||array_keys($v["instances"]??[])!==["nfqws_main"])exit(1);' || exit 1
+ # A real procd does not restart an identical instance configuration.
+ signature=$(php-cli -r '$v=file_get_contents("/tmp/nfqws-native-dns-connection/commit.json");echo hash("sha256",$v.file_get_contents("/var/etc/dnsmasq.conf.nfqws_main"));') || exit 1
+ if [ "$(cat "$base/last-commit.sha" 2>/dev/null)" = "$signature" ]; then exit 0; fi
+ printf '%s' "$signature" > "$base/last-commit.sha"
  pid=$(cat "$base/main.pid") || exit 1
  kill "$pid" || exit 1
  n=0
@@ -89,9 +93,20 @@ start_service() {
  procd_set_param respawn 3600 5 5
  procd_set_param file /var/etc/dnsmasq.conf.nfqws_main /etc/config/dhcp
  procd_set_param env KEEP_OPERATOR_VALUE=keep
+ if [ -e /tmp/nfqws-native-dns-connection/reserved-env ]; then
+  procd_append_param env NFQWS2_DNS_GENERATION=operator
+ fi
  procd_add_jail dnsmasq ubus log requirejail
  procd_add_jail_mount /var/etc/dnsmasq.conf.nfqws_main
+ _procd_call _nfqws_fixture_policy
  procd_close_instance
+}
+_nfqws_fixture_policy() {
+ json_add_object opaque_future_policy
+ json_add_object empty
+ json_close_object
+ json_add_int exact_integer 9007199254740993
+ json_close_object
 }
 ''','755')
         # Consume the real init's command and stop preflight, replacing only
@@ -149,6 +164,9 @@ case "$action" in start) start_service;; stop)
         self.assertEqual(frame['instances']['nfqws_main']['env']['KEEP_OPERATOR_VALUE'],'keep')
         self.assertIn('/etc/config/dhcp',frame['instances']['nfqws_main']['file'])
         self.assertTrue(frame['instances']['nfqws_main']['jail']['requirejail'])
+        self.assertIn('/var/etc/dnsmasq.conf.nfqws_main',frame['instances']['nfqws_main']['jail']['mount'])
+        self.assertEqual(frame['instances']['nfqws_main']['opaque_future_policy'],{'empty':{},'exact_integer':9007199254740993})
+        self.assertRegex(frame['instances']['nfqws_main']['env']['NFQWS2_DNS_GENERATION'],r'^[a-f0-9]{32}:forward:[a-f0-9]{16}$')
         self.assertEqual(self.query('vpn.example')['answers'],['8.8.4.4'])
         confirmed=self.api('smartdnsconfirm',request_id=id);self.assertEqual(confirmed.get('state'),'confirmed',confirmed)
         # Unknown concurrent edits to our file are retained, with a live engine.
@@ -232,6 +250,32 @@ case "$action" in start) start_service;; stop)
         self.assertEqual(status['status']['state'],'confirmed',result.stdout+str(status))
         self.assertEqual(status['routing'],'managed',status)
         self.assertEqual(self.api('smartdnsrollback',request_id=status['status']['request_id'])['state'],'rolled_back')
+
+    def test_recovery_completes_when_ordinary_dns_was_already_regenerated(self):
+        applied=self.begin('1');confirmed=self.api('smartdnsconfirm',request_id=applied['request_id']);self.assertEqual(confirmed['state'],'confirmed')
+        owner=self.sh('cat '+self.base+'/owner.pid').stdout.strip();self.sh('kill -KILL '+owner)
+        # Simulate loss of a recovery worker after native dnsmasq accepted the
+        # ordinary config but before the recovery journal was finalized.
+        self.sh('cp '+self.base+'/main.source /var/etc/dnsmasq.conf.nfqws_main; /bin/ubus call service add "$(cat '+self.base+'/commit.json)"')
+        self.php('require "/usr/share/nfqws2-web/smartdns-native.php";$b=AsusSmartDnsNativeBackend::create(new AsusSmartDnsStore(),new AsusSmartDnsInstaller());$p="/tmp/nfqws2-native-state/smartdns-runtime/state.json";$s=json_decode(file_get_contents($p),true);$s["phase"]="rolling_back";$s["resolver"]=$b->baseline()["snapshot"];file_put_contents($p,json_encode($s));')
+        self.sh('/etc/init.d/nfqws2-native-dns start')
+        status=self.poll(['rolled_back','conflict'],35);self.assertEqual(status['state'],'rolled_back',status)
+        self.assertEqual(self.query('example.com')['answers'],['8.8.8.8']);self.poll_engine_gone()
+        self.api('smartdnsrollback',request_id=applied['request_id'])
+
+    def test_reserved_operator_environment_refuses_switch_without_overwrite(self):
+        self.put(self.base+'/reserved-env','1')
+        main=self.sh('cat '+self.base+'/main.pid').stdout
+        profile={'schema_version':1,'upstreams':[{'id':'fixture','label':'Fixture','protocol':'udp','address':self.private_ip,'port':11553,'bootstrap':[],'tls_name':'','url':'','default':True,'domains':[]}],'records':[]}
+        saved=self.api('smartdnsdraft',profile=json.dumps(profile));self.assertIn('profile_hash',saved,saved)
+        self.api('smartdnsvalidate',request_id='1'*32,profile_hash=saved['profile_hash'])
+        status=self.poll(['preview_ready','failed']);self.assertEqual(status['state'],'preview_ready',status)
+        preview=self.api('smartdnspreview',preview_id=status['preview_id'])
+        applied=self.api('smartdnsapply',request_id='2'*32,preview_id=status['preview_id'],profile_hash=saved['profile_hash'],baseline_hash=preview['baseline_hash'])
+        self.assertIn(applied.get('state'),['conflict','failed','rolled_back'],applied)
+        self.assertEqual(self.sh('cat '+self.base+'/main.pid').stdout,main)
+        self.assertEqual(self.query('example.com')['answers'],['8.8.8.8'])
+        self.assertNotEqual(self.sh('test -f '+self.base+'/commit.json',check=False).returncode,0,'Do not send any altered operator frame')
 
     def test_owner_loss_restores_before_ending_the_orphan_engine(self):
         applied=self.begin('5');confirmed=self.api('smartdnsconfirm',request_id=applied['request_id']);self.assertEqual(confirmed['state'],'confirmed')

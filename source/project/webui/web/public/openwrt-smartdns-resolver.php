@@ -141,7 +141,7 @@ final class NfqwsOpenWrtDnsmasqResolver
         }catch(Throwable $e){return false;}
     }
     /** Validate only the commit boundary; preserve the complete native payload. */
-    public static function validateCommit(array $frame,string $instance,string $config):void
+    public static function validateCommit(array $frame,string $instance,string $config,?string $generation=null):void
     {
         if(($frame['name']??null)!=='dnsmasq'||!is_array($frame['instances']??null)||array_keys($frame['instances'])!==[$instance])throw new RuntimeException('primary_dns_unverified');
         $args=$frame['instances'][$instance]['command']??null;
@@ -149,6 +149,7 @@ final class NfqwsOpenWrtDnsmasqResolver
         foreach($args as $arg)if(!is_string($arg))throw new RuntimeException('primary_dns_unverified');
         $paths=[];for($i=1;$i<count($args);$i++)if($args[$i]==='-C')$paths[]=$args[++$i]??null;
         if($paths!==[$config])throw new RuntimeException('primary_dns_unverified');
+        if($generation!==null&&(!preg_match('/^[a-f0-9]{32}:(?:forward|restore):[a-f0-9]{16}$/D',$generation)||($frame['instances'][$instance]['env']['NFQWS2_DNS_GENERATION']??null)!==$generation))throw new RuntimeException('hook_conflict');
     }
     public function transaction(array $snapshot,string $operation,string $id,$lease):void
     {

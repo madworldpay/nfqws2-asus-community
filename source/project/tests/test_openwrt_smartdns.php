@@ -9,6 +9,11 @@ $frame=['name'=>'dnsmasq','instances'=>['main'=>['command'=>['/usr/sbin/dnsmasq'
 $before=$frame;
 NfqwsOpenWrtDnsmasqResolver::validateCommit($frame,'main','/var/etc/dnsmasq.conf.main');
 check($frame===$before,'native procd metadata must pass unchanged, including hidden/future policy');
+$generation=str_repeat('a',32).':restore:'.str_repeat('b',16);
+$owned=$frame;$owned['instances']['main']['env']['NFQWS2_DNS_GENERATION']=$generation;
+NfqwsOpenWrtDnsmasqResolver::validateCommit($owned,'main','/var/etc/dnsmasq.conf.main',$generation);
+rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::validateCommit($frame,'main','/var/etc/dnsmasq.conf.main',$generation),'generation must reach native transport');
+rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::validateCommit($owned,'main','/var/etc/dnsmasq.conf.main',str_repeat('c',32).':forward:'.str_repeat('d',16)),'wrong generation must not cross the commit boundary');
 $both=$frame;$both['instances']['guest']=$frame['instances']['main'];rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::validateCommit($both,'main','/var/etc/dnsmasq.conf.main'),'must not commit another instance');
 $foreign=$frame;$foreign['instances']['main']['command'][0]='/bin/sh';rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::validateCommit($foreign,'main','/var/etc/dnsmasq.conf.main'),'must not replace another command');
 rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::validateCommit($frame,'main','/var/etc/dnsmasq.conf.guest'),'must not adopt another config');
