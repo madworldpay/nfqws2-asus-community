@@ -43,6 +43,24 @@ class NativeApkAdapter(unittest.TestCase):
   self.sh(self.command+self.base+'/nfqws2-native1.3.2-r72.apk');self.assertEqual(self.sh('cat '+self.file).stdout,'1.3.2-r72');self.assertEqual(self.sh('cat '+self.base+'/stopped').stdout,'upgrade')
  def test_remove_failure_keeps_installed_payload(self):
   self.sh('touch '+self.base+'/deny');p=self.sh('apk del --network=no nfqws2-native',check=False);self.assertNotEqual(p.returncode,0);self.assertEqual(self.sh('cat '+self.file).stdout,'1.3.2-r71');self.assertEqual(self.sh('cat '+self.base+'/stopped').stdout,'remove')
+ def test_quiet_upgrade_cannot_bypass_denied_quiescence(self):
+  self.sh('touch '+self.base+'/deny')
+  for flags in ['-q','--quiet','-qq','--quiet --quiet','-qv']:
+   with self.subTest(flags=flags):
+    p=self.sh(self.command+flags+' '+self.base+'/nfqws2-native1.3.2-r72.apk',check=False)
+    self.assertNotEqual(p.returncode,0,p.stdout+p.stderr)
+    self.assertEqual(self.sh('cat '+self.file).stdout,'1.3.2-r71')
+    self.assertEqual(self.sh('cat '+self.base+'/stopped').stdout,'upgrade')
+    self.assertEqual(json.loads(self.sh('apk query --installed --format json --fields version nfqws2-native').stdout)[0]['version'],'1.3.2-r71')
+ def test_quiet_removal_cannot_bypass_denied_quiescence(self):
+  self.sh('touch '+self.base+'/deny')
+  for flags in ['-q','--quiet','-qq','--quiet --quiet','-qv']:
+   with self.subTest(flags=flags):
+    p=self.sh('apk '+flags+' del --network=no nfqws2-native',check=False)
+    self.assertNotEqual(p.returncode,0,p.stdout+p.stderr)
+    self.assertEqual(self.sh('cat '+self.file).stdout,'1.3.2-r71')
+    self.assertEqual(self.sh('cat '+self.base+'/stopped').stdout,'remove')
+    self.assertEqual(json.loads(self.sh('apk query --installed --format json --fields version nfqws2-native').stdout)[0]['version'],'1.3.2-r71')
  def test_unrelated_package_does_not_call_quiesce(self):
   self.sh('touch '+self.base+'/deny');self.sh(self.command+self.base+'/nfqws-native-unrelated-fixture1.apk');self.sh('test ! -e '+self.base+'/stopped');self.assertEqual(self.sh('cat '+self.file).stdout,'1.3.2-r71')
  def test_direct_http_or_cli_call_cannot_impersonate_native_manager(self):

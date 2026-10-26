@@ -36,7 +36,10 @@ final class NfqwsOpenWrtApkCommand
                 if($value!==null&&!in_array(strtolower($value),['yes','no','true','false','1','0','auto'],true))self::fail();
                 if(in_array($key,['simulate','pretty-print','progress'],true))return;$options[]='--'.$key.($value===null?'':'='.$value);return;
             }
-            if(!in_array($key,self::FLAGS,true)||$value!==null)self::fail();$options[]='--'.$key;
+            if(!in_array($key,self::FLAGS,true)||$value!==null)self::fail();
+            // The hook parses mutation rows; caller verbosity must not hide them.
+            if(in_array($key,['quiet','verbose'],true))return;
+            $options[]='--'.$key;
         };
         for($i=1;$i<count($argv);$i++){
             $arg=$argv[$i];if(!$literal&&$arg==='--'){$literal=true;continue;}

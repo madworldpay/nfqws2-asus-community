@@ -10,16 +10,28 @@ nfqws_interface_valid() {
 nfqws_uplinks() (
     set -f
     local iface dump found='' count=0 entry up proto routes target
+    dump=$(ubus call network.interface dump 2>/dev/null) || exit 1
+    [ "${#dump}" -le 1048576 ] || exit 1
     if [ -n "$ISP_INTERFACE" ]; then
         [ "${#ISP_INTERFACE}" -le 1024 ] || exit 1
         for iface in $ISP_INTERFACE; do
-            count=$((count+1)); [ "$count" -le 64 ] && nfqws_interface_valid "$iface" || exit 1
+            count=$((count+1)); [ "$count" -le 64 ] && [ "${#iface}" -le 64 ] || exit 1
+            case "$iface" in *[!a-zA-Z0-9_.:-]*) exit 1;; esac
+            entry=$(printf '%s\n' "$dump" | jsonfilter -e "@.interface[@.interface=\"$iface\"]" 2>/dev/null || :)
+            if [ -n "$entry" ]; then
+                # Multiple matching logical names are ambiguous, never physical fallback.
+                case "$entry" in *'
+'*) exit 1;; esac
+                [ "${#entry}" -le 65536 ] || exit 1
+                up=$(jsonfilter -s "$entry" -e '@.up' 2>/dev/null)
+                [ "$up" = true ] || exit 1
+                iface=$(jsonfilter -s "$entry" -e '@.l3_device' 2>/dev/null)
+            fi
+            nfqws_interface_valid "$iface" || exit 1
             found="$found$iface
 "
         done
     else
-        dump=$(ubus call network.interface dump 2>/dev/null) || exit 1
-        [ "${#dump}" -le 1048576 ] || exit 1
         found=$(printf '%s\n' "$dump" | jsonfilter -e '@.interface[*]' | while IFS= read -r entry; do
             [ "${#entry}" -le 65536 ] || continue
             up=$(jsonfilter -s "$entry" -e '@.up' 2>/dev/null)

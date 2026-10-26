@@ -131,5 +131,20 @@ nfqws_uplinks
         r=self.run_discovery([{'interface':'lan','up':True,'l3_device':'br-lan','route':[]}])
         self.assertNotEqual(r.returncode,0);self.assertEqual(r.stdout,'')
 
+    def test_explicit_logical_interfaces_resolve_current_devices_after_reconnect(self):
+        for device in ['pppoe-wan','pppoe-relink']:
+            entries=[{'interface':'wan','up':True,'l3_device':device,'proto':'pppoe'},
+                     {'interface':'wan6','up':True,'l3_device':device,'proto':'dhcpv6'}]
+            r=self.run_discovery(entries,'wan wan6 wg0')
+            self.assertEqual(r.returncode,0,r.stderr)
+            self.assertEqual(r.stdout.splitlines(),[device,'wg0'])
+
+    def test_down_or_ambiguous_logical_selection_does_not_fall_back_to_device(self):
+        for entries in [[{'interface':'wan','up':False,'l3_device':'pppoe-wan'}],
+                        [{'interface':'wan','up':True,'l3_device':'pppoe-wan'}]*2]:
+            r=self.run_discovery(entries,'wan')
+            self.assertNotEqual(r.returncode,0)
+            self.assertEqual(r.stdout,'')
+
 
 if __name__=='__main__':unittest.main()
