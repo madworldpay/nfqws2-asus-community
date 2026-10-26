@@ -5,8 +5,8 @@ require_once __DIR__.'/update-lifecycle.php';
 /** A separate bounded read-only job; checking cannot rotate update backups. */
 final class AsusUpdateCheck
 {
-    private AsusUpdatePrepare $prepare;
-    public function __construct(private AsusUpdateStore $store,?AsusUpdatePrepare $prepare=null,private array $options=[])
+    private NfqwsUpdatePreparation $prepare;
+    public function __construct(private AsusUpdateStore $store,?NfqwsUpdatePreparation $prepare=null,private array $options=[])
     {$this->prepare=$prepare??new AsusUpdatePrepare($store);}
     private function task(): ?array
     {

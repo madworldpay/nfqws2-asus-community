@@ -31,13 +31,15 @@ final class AsusUpdatePackage
             if(isset($db[$name])||!in_array($status[1],['ok','user'],true))throw new RuntimeException('pending_packages');$db[$name]=$p;
         }return $db;
     }
-    private static function header(string $h): ?array
+    private static function header(string $h,bool $nativeRoot=false): ?array
     {
         if(strlen($h)!==512)throw new RuntimeException('invalid_package');if($h===str_repeat("\0",512))return null;
         $size=trim(substr($h,124,12)," \0");$sum=trim(substr($h,148,8)," \0");
         if(!preg_match('/^[0-7]{1,11}$/D',$size)||!preg_match('/^[0-7]{1,7}$/D',$sum))throw new RuntimeException('invalid_package');
         $actual=array_sum(unpack('C*',substr_replace($h,str_repeat(' ',8),148,8)));if($actual!==octdec($sum))throw new RuntimeException('invalid_package');
-        $name=rtrim(substr($h,0,100),"\0");if(str_starts_with($name,'./'))$name=substr($name,2);
+        $name=rtrim(substr($h,0,100),"\0");
+        if($nativeRoot&&in_array($name,['.','./'],true)&&$h[156]==='5'&&octdec($size)===0&&trim(substr($h,345,155),"\0")==='')return ['name'=>'.','size'=>0,'directory'=>true];
+        if(str_starts_with($name,'./'))$name=substr($name,2);
         if(trim(substr($h,345,155),"\0")!==''||!in_array($h[156],["\0",'0'],true)||!preg_match('/^[a-zA-Z0-9.-]+$/D',$name))throw new RuntimeException('invalid_package');
         return ['name'=>$name,'size'=>(int)octdec($size)];
     }
@@ -53,7 +55,8 @@ final class AsusUpdatePackage
         }}finally{gzclose($f);}
         if(count($found)!==3||$control===null)throw new RuntimeException('invalid_package');$tar=@gzdecode($control,4194304);if(!is_string($tar)||strlen($tar)>4194304)throw new RuntimeException('invalid_package');$fields=null;$seen=[];$bootstrap=[];
         $helpers=$family==='native'?[]:($family==='armv7'?['busybox-migration-armv7-2.6','busybox-migration-armv7-3.2']:['busybox-migration-aarch64-3.10']);
-        for($p=0,$n=0;$p+512<=strlen($tar)&&$n<16;$n++){$block=substr($tar,$p,512);$h=self::header($block);$p+=512;if($h===null)break;
+        for($p=0,$n=0;$p+512<=strlen($tar)&&$n<16;$n++){$block=substr($tar,$p,512);$h=self::header($block,$family==='native');$p+=512;if($h===null)break;
+            if(isset($h['directory'])){if(isset($seen['.']))throw new RuntimeException('invalid_package');$seen['.']=true;continue;}
             $helper=in_array($h['name'],$helpers,true);
             if((!$helper&&!in_array($h['name'],['control','preinst','postinst','prerm','postrm','conffiles'],true))||isset($seen[$h['name']])||$h['size']>($helper?1048576:131072)||$p+$h['size']>strlen($tar))throw new RuntimeException('invalid_package');$seen[$h['name']]=true;
             if($helper){
@@ -137,8 +140,18 @@ final class AsusUpdateSnapshot
     }
 }
 
+/** Shared local/worker contract, with independent platform implementations. */
+interface NfqwsUpdatePreparation
+{
+    public function environment():array;
+    public function check(bool $force=false):array;
+    public function cached():?array;
+    public function reserveCached(string $revision,string $requestId):array;
+    public function completePrepare(string $id,?callable $stage=null):array;
+}
+
 /** Preparation has no service/opkg actions. A worker may call it after detaching. */
-final class AsusUpdatePrepare
+final class AsusUpdatePrepare implements NfqwsUpdatePreparation
 {
     private AsusUpdateStore $store;
     public function __construct(?AsusUpdateStore $store=null,private ?AsusUpdateSource $source=null,private array $environment=[],private ?string $publicKey=null,private ?AsusUpdateDeadline $deadline=null)

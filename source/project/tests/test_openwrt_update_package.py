@@ -30,6 +30,19 @@ class NativeIpkPreflight(unittest.TestCase):
     def test_wrong_package_version_architecture_or_conflict_cannot_reach_install(self):
         for delta in [{'Package':'nfqws2-asus'},{'Version':'1.3.2-71'},{'Architecture':'mips_24kc'},{'Conflicts':'amneziawg'},{'Replaces':'dnsmasq'}]:
             with self.subTest(delta=delta):self.package(**delta);self.assertEqual(self.call(),{'error':'invalid_package'})
+    def test_official_native_control_root_directory_is_inert_but_other_directories_are_rejected(self):
+        for name,accepted in [('.',True),('unexpected',False)]:
+            self.package();
+            with tarfile.open(self.path)as outer:parts={m.name:outer.extractfile(m).read()for m in outer}
+            stream=io.BytesIO()
+            with tarfile.open(fileobj=stream,mode='w:gz')as out:
+                root=tarfile.TarInfo(name);root.type=tarfile.DIRTYPE;root.mode=0o755;out.addfile(root)
+                with tarfile.open(fileobj=io.BytesIO(parts['control.tar.gz']))as inner:
+                    for member in inner:out.addfile(member,inner.extractfile(member))
+            parts['control.tar.gz']=stream.getvalue();self.path.write_bytes(archive(parts));self.candidate['package'].update(size=self.path.stat().st_size,sha256=hashlib.sha256(self.path.read_bytes()).hexdigest())
+            result=self.call()
+            if accepted:self.assertIn('value',result,result)
+            else:self.assertEqual(result,{'error':'invalid_package'})
     def test_byte_tamper_and_incomplete_download_are_rejected_before_reading_control(self):
         self.package();raw=bytearray(self.path.read_bytes());raw[len(raw)//2]^=1;self.path.write_bytes(raw);self.assertEqual(self.call(),{'error':'download_hash'})
         self.path.write_bytes(raw[:-1]);self.assertEqual(self.call(),{'error':'download_size'})

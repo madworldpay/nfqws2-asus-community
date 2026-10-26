@@ -4,8 +4,8 @@ require_once __DIR__.'/update-worker.php';
 /** Short HTTP coordination; detached children perform all network/installation. */
 final class AsusUpdateDispatch
 {
-    private AsusUpdatePrepare $prepare;
-    public function __construct(private AsusUpdateStore $store,?AsusUpdatePrepare $prepare=null,private array $options=[])
+    private NfqwsUpdatePreparation $prepare;
+    public function __construct(private AsusUpdateStore $store,?NfqwsUpdatePreparation $prepare=null,private array $options=[])
     {$this->prepare=$prepare??new AsusUpdatePrepare($store);}
     private function guard(): AsusUpdateGuard
     {return new AsusUpdateGuard($this->store,$this->options['owner']??0,$this->options['opkg']??'/opt/bin/opkg');}
