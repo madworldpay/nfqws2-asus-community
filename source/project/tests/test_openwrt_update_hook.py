@@ -20,7 +20,9 @@ class NativeUpdateHook(unittest.TestCase):
   worker='''<?php
 require __DIR__.'/app/openwrt-update-hook.php';
 $s=new AsusUpdateStore(dirname(__DIR__,3));$id=basename(dirname(__DIR__));$base=dirname(__DIR__,4);$format=trim(file_get_contents($base.'/format'));$managerPath=$format==='apk'?'/usr/bin/apk':'/bin/opkg';$g=new NfqwsOpenWrtUpdateGuard($s);$mode=$argv[count($argv)-2];
-if(in_array($mode,['hook-verify','hook-capture','hook-apk-precommit'],true)){$h=new NfqwsOpenWrtUpdateHook($s,['root'=>$base.'/system','journal'=>$base.'/journal']);$mode==='hook-apk-precommit'?($h->run('verify')&&$h->run('capture')):$h->run(substr($mode,5));exit(0);}
+if(in_array($mode,['hook-verify','hook-capture','hook-apk-precommit'],true)){$h=new NfqwsOpenWrtUpdateHook($s,['root'=>$base.'/system','journal'=>$base.'/journal']);$mode==='hook-apk-precommit'?($h->run('verify')&&$h->run('capture')):$h->run(substr($mode,5));
+if($mode==='hook-apk-precommit'){require __DIR__.'/app/openwrt-apk-command.php';$m=NfqwsOpenWrtApkCommand::manager();$t=$g->context($id);if($m['identity']!==$t['manager'])throw new RuntimeException('wrong real manager');$plan=NfqwsPlatform::run(NfqwsOpenWrtApkCommand::simulation($m['argv']),10);if($plan['status']!==0||NfqwsOpenWrtApkCommand::affects(implode("\\n",$plan['output']))!=='upgrade')throw new RuntimeException('locked read-only APK simulation failed');}
+exit(0);}
 $lease=$s->lease('apply.lock');$worker=AsusUpdateLifecycle::identity(getmypid());$ticket=['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>$worker,'manager'=>null,'phase'=>'installing','format'=>$format,'intent'=>['mode'=>'stopped']];$s->writeFile('native-transaction.json',json_encode($ticket));$s->update($id,['identity'=>$worker]);
 $db=NfqwsOpenWrtUpdateManager::installed(['format'=>$format]);unset($db['nfqws2-native']);if(trim(file_get_contents($base.'/case'))==='changed')$db['operator-new-package']='1';
 $s->writeFile('operations/'.$id.'/native-preflight.json',json_encode(['installed'=>$db]));

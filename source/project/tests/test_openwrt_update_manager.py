@@ -10,6 +10,18 @@ class NativeApkTransaction(NativeApkPreflight):
     test_signed_apk_metadata_is_read_by_native_tool_without_running_hooks=None
     test_missing_key_cannot_be_bypassed_by_archive_reader=None
     test_signed_wrong_package_revision_is_rejected=None
+    def setUp(self):
+        super().setUp();self.sh('rm -f '+self.marker)
+
+    def test_reconstructed_simulation_cannot_be_overridden_or_cross_end_of_options(self):
+        before=self.sh('sha256sum /lib/apk/db/installed /etc/apk/world').stdout
+        script='require $argv[1]."/openwrt-apk-command.php";require $argv[1]."/platform.php";$args=json_decode(stream_get_contents(STDIN),true);$cmd=NfqwsOpenWrtApkCommand::simulation($args);$p=NfqwsPlatform::run($cmd,20);if($p["status"]!==0)throw new RuntimeException(json_encode($p));echo NfqwsOpenWrtApkCommand::affects(implode("\\n",$p["output"]));'
+        for options in [[],['--simulate=no']]:
+            with self.subTest(options=options):
+                argv=['/usr/bin/apk','add','--keys-dir',self.remote+'/keys','--network=no','--cache=no','--repositories-file','/dev/null']+options+['--',self.remote+'/package.apk']
+                p=self.sh('php-cli -r '+shlex.quote(script)+' '+shlex.quote(str(ROOT/'webui/web/public')),json.dumps(argv));self.assertEqual(p.stdout,'upgrade')
+                self.assertEqual(self.sh('sha256sum /lib/apk/db/installed /etc/apk/world').stdout,before);self.sh('test ! -e '+self.marker)
+
     def test_native_manager_changes_only_application_and_own_world_entry(self):
         r=self.sh("apk query --installed --format json --fields name,version '*'");before=json.loads(r.stdout)
         self.assertNotIn('nfqws2-native',[p['name']for p in before],'Refusing to replace an existing package in test container')
