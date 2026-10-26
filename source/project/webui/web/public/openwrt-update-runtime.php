@@ -31,7 +31,7 @@ final class NfqwsOpenWrtUpdateRuntime
         $add('app/platform-profile.json',$app.'/platform-profile.json');
         $add('worker.php',$options['entry']??'/usr/lib/nfqws2/update/worker.php');
         foreach(['openwrt-package-manifest.schema.json','update-release-key.pem']as $name)$add('resources/'.$name,$resources.'/'.$name);
-        $runner="#!/bin/sh\nset -f\numask 077\nPATH=/usr/sbin:/usr/bin:/sbin:/bin\nexport PATH\nunset REQUEST_METHOD QUERY_STRING CONTENT_TYPE CONTENT_LENGTH SCRIPT_FILENAME\n[ \"\$#\" = 2 ] || exit 2\ncase \"\$1\" in check|prepare|apply|guard-check|guard-prepare) ;; *) exit 2;; esac\ncase \"\$2\" in ''|*[!a-f0-9]*) exit 2;; esac\n[ \"\${#2}\" = 32 ] || exit 2\nexec ".escapeshellarg($php['path']).' -d register_argc_argv=1 -q -f '.escapeshellarg($destination.'/worker.php').' -- "$1" "$2"'."\n";
+        $runner="#!/bin/sh\nset -f\numask 077\nPATH=/usr/sbin:/usr/bin:/sbin:/bin\nexport PATH\nunset REQUEST_METHOD QUERY_STRING CONTENT_TYPE CONTENT_LENGTH SCRIPT_FILENAME\n[ \"\$#\" = 2 ] || exit 2\ncase \"\$1\" in check|prepare|apply|guard-check|guard-prepare|guard-apply) ;; *) exit 2;; esac\ncase \"\$2\" in ''|*[!a-f0-9]*) exit 2;; esac\n[ \"\${#2}\" = 32 ] || exit 2\nexec ".escapeshellarg($php['path']).' -d register_argc_argv=1 -q -f '.escapeshellarg($destination.'/worker.php').' -- "$1" "$2"'."\n";
         $total+=strlen($runner);$free=$options['free']??disk_free_space(dirname($destination));
         if(!is_numeric($free)||!is_finite((float)$free)||$free<$total+4194304)throw new RuntimeException('insufficient_space');
         $index=[];foreach($sources as $name=>$s)$index[$name]=array_intersect_key($s,array_flip(['mode','size','sha256']));

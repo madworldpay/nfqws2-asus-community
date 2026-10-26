@@ -20,6 +20,7 @@ $t=['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>AsusUpdat
 $s->writeFile('native-transaction.json',json_encode($t));$s->update($id,['identity'=>$t['worker']]);
 if($g->context($id)!==$t||$g->authorize('dns-restore'))throw new RuntimeException('bad worker proof');
 $t['phase']='starting';$s->writeFile('native-transaction.json',json_encode($t));if(!$g->authorize('web-start')||$g->authorize('core-start'))throw new RuntimeException('wrong phase or intent');
+$resumeLease=$g->mutationLease();flock($resumeLease,LOCK_UN);fclose($resumeLease);
 if(!(new AsusUpdateGuard($s))->authorize('web-start'))throw new RuntimeException('common guard did not select native boundary');
 $t['worker']['start_ticks']='1';$s->writeFile('native-transaction.json',json_encode($t));if($g->authorize('web-start'))throw new RuntimeException('stale process accepted');echo 'PASS';
 '''

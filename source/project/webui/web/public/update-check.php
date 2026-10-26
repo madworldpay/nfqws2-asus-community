@@ -7,7 +7,7 @@ final class AsusUpdateCheck
 {
     private NfqwsUpdatePreparation $prepare;
     public function __construct(private AsusUpdateStore $store,?NfqwsUpdatePreparation $prepare=null,private array $options=[])
-    {$this->prepare=$prepare??new AsusUpdatePrepare($store);}
+    {if($prepare===null&&NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-prepare.php';$prepare=new NfqwsOpenWrtUpdatePrepare($store);}$this->prepare=$prepare??new AsusUpdatePrepare($store);}
     private function task(): ?array
     {
         $raw=$this->store->readFile('check-task.json',4096);if($raw===null)return null;$task=json_decode($raw,true,16,JSON_THROW_ON_ERROR);
@@ -53,7 +53,7 @@ final class AsusUpdateCheck
                 $age=AsusUpdateStore::uptime()-$task['started_uptime'];if($task['boot_id']===AsusUpdateStore::boot()&&$age>=0&&$age<17)return null;
             }
             // Validate private local config before launching; no connection here.
-            if(isset($this->options['channel_probe']))($this->options['channel_probe'])();else new AsusUpdateTransport();
+            if(isset($this->options['channel_probe']))($this->options['channel_probe'])();elseif(!NfqwsPlatform::native())new AsusUpdateTransport();
             $id=bin2hex(random_bytes(16));$this->save(['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'started_uptime'=>AsusUpdateStore::uptime(),'state'=>'checking','guardian'=>null,'child'=>null,'code'=>null]);return $id;
         });}catch(RuntimeException $e){
             if($e->getMessage()==='channel_unconfigured')return $this->result('unconfigured','channel_unconfigured');
@@ -61,6 +61,7 @@ final class AsusUpdateCheck
         }
         if($id===null)return $this->status();
         try{
+            if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-launch.php';NfqwsOpenWrtUpdateLaunch::launch($this->store,'check',$id);return $this->status();}
             $busybox=$this->options['busybox']??AsusUpdateStore::installed('libexec/nfqws2-asus/busybox');$entry=$this->options['entry']??AsusUpdateStore::installed('lib/nfqws2-asus/update/check.sh');
             foreach([[$busybox,0],[$entry,$this->options['owner']??0]] as [$path,$owner]){AsusUpdateStore::noLinks($path);$s=@lstat($path);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0022)!==0||!is_executable($path))throw new RuntimeException('invalid_state');}
             $p=@proc_open([$busybox,'start-stop-daemon','-S','-b','-p',$this->store->path('unused-check-guard.pid'),'-x',$busybox,'--','sh',$entry,$id],

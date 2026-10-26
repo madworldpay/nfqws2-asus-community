@@ -15,7 +15,7 @@ class NativeApkTransaction(NativeApkPreflight):
 
     def test_reconstructed_simulation_cannot_be_overridden_or_cross_end_of_options(self):
         before=self.sh('sha256sum /lib/apk/db/installed /etc/apk/world').stdout
-        script='require $argv[1]."/openwrt-apk-command.php";require $argv[1]."/platform.php";$args=json_decode(stream_get_contents(STDIN),true);$cmd=NfqwsOpenWrtApkCommand::simulation($args);$p=NfqwsPlatform::run($cmd,20);if($p["status"]!==0)throw new RuntimeException(json_encode($p));echo NfqwsOpenWrtApkCommand::affects(implode("\\n",$p["output"]));'
+        script='require $argv[1]."/openwrt-apk-command.php";require_once $argv[1]."/platform.php";$args=json_decode(stream_get_contents(STDIN),true);$cmd=NfqwsOpenWrtApkCommand::simulation($args);$p=NfqwsPlatform::run($cmd,20);if($p["status"]!==0)throw new RuntimeException(json_encode($p));echo NfqwsOpenWrtApkCommand::affects(implode("\\n",$p["output"]));'
         for options in [[],['--simulate=no']]:
             with self.subTest(options=options):
                 argv=['/usr/bin/apk','add','--keys-dir',self.remote+'/keys','--network=no','--cache=no','--repositories-file','/dev/null']+options+['--',self.remote+'/package.apk']
@@ -32,6 +32,9 @@ class NativeApkTransaction(NativeApkPreflight):
         try:
             self.sh('apk add --network=no --cache=no --repositories-file /dev/null --keys-dir '+self.remote+'/keys '+self.remote+'/package.apk')
             self.sh('test -f '+self.marker)
+            inventory='require $argv[1];$v=NfqwsOpenWrtUpdatePayload::capture("apk");if(!NfqwsOpenWrtUpdatePayload::unchanged($v))throw new RuntimeException("original package inventory mismatch");echo json_encode(array_keys($v["files"]));'
+            paths=json.loads(self.sh('php-cli -r '+shlex.quote(inventory)+' '+shlex.quote(str(ROOT/'webui/web/public/openwrt-update-payload.php'))).stdout)
+            self.assertEqual(set(paths),{'/usr/share/nfqws2/not-executed.txt','/lib/apk/packages/nfqws2-native.list'})
             after=json.loads(self.sh("apk query --installed --format json --fields name,version '*'").stdout)
             self.assertEqual([p for p in after if p['name']!='nfqws2-native'],before)
             later=self.sh('cat /etc/apk/world').stdout.splitlines();self.assertEqual([s for s in later if not s.startswith('nfqws2-native')],world)
@@ -60,6 +63,8 @@ class NativeIpkTransaction(unittest.TestCase):
             self.assertEqual(sh('php-cli -r '+shlex.quote(code)+' '+shlex.quote(str(ROOT/'webui/web/public/openwrt-update-manager.php'))+' '+remote+'/package.ipk'),'PASS')
             sh('test ! -e '+marker)
             sh('opkg --nodeps install '+remote+'/package.ipk');sh('test -f '+marker)
+            inventory='require $argv[1];$v=NfqwsOpenWrtUpdatePayload::capture("ipk");if(!NfqwsOpenWrtUpdatePayload::unchanged($v))throw new RuntimeException("original package inventory mismatch");echo json_encode(array_keys($v["files"]));'
+            self.assertEqual(json.loads(sh('php-cli -r '+shlex.quote(inventory)+' '+shlex.quote(str(ROOT/'webui/web/public/openwrt-update-payload.php')))),['/usr/share/nfqws2/inert-fixture'])
             after=sh('opkg list-installed');self.assertEqual(''.join(x+'\n'for x in after.splitlines()if not x.startswith('nfqws2-native - ')),before)
         finally:
             sh('opkg remove nfqws2-native');sh('rm -rf '+remote)

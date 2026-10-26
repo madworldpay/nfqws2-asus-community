@@ -6,7 +6,7 @@ final class AsusUpdateDispatch
 {
     private NfqwsUpdatePreparation $prepare;
     public function __construct(private AsusUpdateStore $store,?NfqwsUpdatePreparation $prepare=null,private array $options=[])
-    {$this->prepare=$prepare??new AsusUpdatePrepare($store);}
+    {if($prepare===null&&NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-prepare.php';$prepare=new NfqwsOpenWrtUpdatePrepare($store);}$this->prepare=$prepare??new AsusUpdatePrepare($store);}
     private function guard(): AsusUpdateGuard
     {return new AsusUpdateGuard($this->store,$this->options['owner']??0,$this->options['opkg']??'/opt/bin/opkg');}
     private function executable(string $path,int $owner): void
@@ -15,6 +15,7 @@ final class AsusUpdateDispatch
     }
     private function launch(string $id,string $kind): void
     {
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-launch.php';NfqwsOpenWrtUpdateLaunch::launch($this->store,$kind,$id);return;}
         $busybox=$this->options['busybox']??AsusUpdateStore::installed('libexec/nfqws2-asus/busybox');$this->executable($busybox,0);
         if($kind==='apply'){
             $runtime=AsusUpdateRuntime::load($this->store->path('operations/'.$id.'/runtime'),$this->options['owner']??0);
