@@ -45,4 +45,20 @@ $strategy['config']=str_replace('/opt/etc/nfqws2/','/etc/nfqws2/',$strategy['con
 $document=AsusImportDocument::read([json_encode($strategy,JSON_THROW_ON_ERROR)]);$selection['shared'][0]['value']=$document['values']['NFQWS_BASE_ARGS'];
 $plan=AsusImportPlan::prepare($document,$selection,$before,$inventory,null,'asus-entware');
 check($plan['ready']&&str_contains($plan['config'],'@/opt/etc/nfqws2/lua/zapret-lib.lua'),'native JSON can return to Entware');
+// Exported log destinations are anonymized, not downloadable input resources.
+foreach(['openwrt','asus-entware']as $profile){
+ $strategy['config'].="\nMODE_AUTO=\"--hostlist-auto-debug=RESOURCE_11\"\nNFQWS_EXTRA_ARGS=\"--debug @RESOURCE_14\"\n";
+ $document=AsusImportDocument::read([json_encode($strategy,JSON_THROW_ON_ERROR)]);
+ $selection['shared']=[];foreach($document['values']as $key=>$value)if(in_array($key,AsusImportConfig::SHARED,true))$selection['shared'][]=['key'=>$key,'value'=>$value];
+ $plan=AsusImportPlan::prepare($document,$selection,$before,$inventory,null,$profile);
+ check($plan['ready'],'redacted output logs are not missing input resources: '.json_encode($plan['problems']));
+ $values=AsusImportConfig::parse($plan['config']);$log=NfqwsPlatform::translate('/opt/var/log/nfqws2.log',$profile);
+ check($values['MODE_AUTO']==='--hostlist-auto-debug='.$log,'auto-hostlist output log is local');
+ check($values['NFQWS_EXTRA_ARGS']==='--debug @'.$log,'debug output log is local');
+ $original=$selection['blocks'][0]['value'];$selection['blocks'][0]['value'].=' --hostlist=RESOURCE_11';
+ $missing=AsusImportPlan::prepare($document,$selection,$before,$inventory,null,$profile);
+ check(!$missing['ready']&&in_array('unresolved_file',array_column($missing['problems'],'code'),true),'log mapping cannot resolve a missing input file');
+ $selection['blocks'][0]['value']=$original;
+ $strategy['config']=strstr($strategy['config'],"\nMODE_AUTO=",true);
+}
 echo "Portable native/Entware imports, author intent and resource boundaries passed\n";

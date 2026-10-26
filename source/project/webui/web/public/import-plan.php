@@ -36,7 +36,8 @@ final class AsusImportPlan
     private static function bind(string $value,array $aliases,array &$problems,?string $profile=null): string
     {
         if(preg_match('/\b(?:NETWORK|VARIABLE)_[1-9][0-9]*\b/',$value))$problems[]=['code'=>'unresolved_identity'];
-        $words=self::words($value);$fileOperand=false;
+        // Redacted output-log destinations are local outputs, not input files.
+        $words=NfqwsResourcePaths::arguments(self::words($value),$profile);$fileOperand=false;
         foreach($words as &$word){$at=$fileOperand||preg_match('/^--(?:lua-init|blob)=/',$word);$fileOperand=in_array($word,['--lua-init','--blob'],true);
             // Exports can retain the original @ before an anonymized path.
             // Canonicalize the file marker instead of producing @@/opt/...

@@ -32,7 +32,8 @@ final class NfqwsResourcePaths
             $value=$separate?($tokens[$index]??''):substr($token,$eq+1);
             if(!is_string($value))throw new RuntimeException('invalid_resource');
             if(in_array($option,['--debug','--hostlist-auto-debug'],true)){
-                if(preg_match('~^(@?)(?:/opt)?(/var/log/nfqws2(?:[-.][A-Za-z0-9_-]+)?\.log)$~D',$value,$m))$value=$m[1].NfqwsPlatform::translate('/opt'.$m[2],$profile);
+                if(preg_match('/^@?RESOURCE_[1-9][0-9]*$/D',$value))$value=($option==='--debug'?'@':'').NfqwsPlatform::translate('/opt/var/log/nfqws2.log',$profile);
+                elseif(preg_match('~^(@?)(?:/opt)?(/var/log/nfqws2(?:[-.][A-Za-z0-9_-]+)?\.log)$~D',$value,$m))$value=$m[1].NfqwsPlatform::translate('/opt'.$m[2],$profile);
             }elseif($option==='--blob'){
                 if(preg_match('/^([A-Za-z_][A-Za-z0-9_]*):(@.*)$/D',$value,$m))$value=$m[1].':'.self::operand($m[2],$profile);
             }elseif($option!=='--lua-init'||str_starts_with($value,'@'))$value=self::operand($value,$profile);
