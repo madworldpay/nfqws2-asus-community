@@ -115,10 +115,10 @@ nfqws_package_dns_control() {
 # A staged update survives replacement/removal of the old application files.
 # Only protected native state chooses this entry; no environment or HTTP path.
 nfqws_package_native_update() {
-    local action=$1 dir=$nfqws_package_updates_dir phase id path parent
-    case "$action" in verify|capture) ;; *) return 1;; esac
+    local action=$1 dir=$nfqws_package_updates_dir phase id path parent inactive=0
+    case "$action" in verify|capture) ;; postinstall) inactive=10;; *) return 1;; esac
     path=$dir/native-transaction.json
-    [ -e "$path" ] || [ -L "$path" ] || return 0
+    [ -e "$path" ] || [ -L "$path" ] || return "$inactive"
     parent=$path
     while [ "$parent" != / ] && [ -n "$parent" ]; do
         [ ! -L "$parent" ] || return 1
@@ -127,7 +127,7 @@ nfqws_package_native_update() {
     [ -d "$dir" ] && nfqws_package_guard "$dir" || return 1
     [ -f "$path" ] && [ "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] && [ "$(wc -c < "$path")" -le 16384 ] || return 1
     phase=$(jsonfilter -i "$path" -e '@.phase') || return 1
-    case "$phase" in finished) return 0;; validating|installing|starting) ;; *) return 1;; esac
+    case "$phase" in finished) return "$inactive";; validating|installing|starting) ;; *) return 1;; esac
     id=$(jsonfilter -i "$path" -e '@.id') || return 1
     case "$id" in ''|*[!a-f0-9]*) return 1;; esac
     [ "${#id}" = 32 ] || return 1
@@ -266,7 +266,7 @@ nfqws_package_defaults() {
 nfqws_package_postinstall() {
     nfqws_package_defaults || return 1
     [ -z "$IPKG_INSTROOT" ] || return 0
-    local enabled=0 running=0 path manager web_enabled=1 web_running=1
+    local enabled=0 running=0 path manager web_enabled=1 web_running=1 defer=0
     nfqws_package_guard "$nfqws_package_state_dir" || return 1
     if [ -f "$nfqws_package_state_dir/state" ] && [ ! -L "$nfqws_package_state_dir/state" ]; then
         manager=$(nfqws_package_manager) || return 1
@@ -292,16 +292,21 @@ nfqws_package_postinstall() {
         uci set firewall.nfqws2_native.path=/usr/lib/nfqws2/firewall-hook.sh &&
         uci set firewall.nfqws2_native.fw4_compatible=1 && uci commit firewall || return 1
     fi
+    # A controlled panel update starts nothing until its immutable worker has
+    # verified manager success, installed version, and the latest settings.
+    nfqws_package_native_update postinstall
+    case "$?" in 0) defer=1;; 10) ;; *) return 1;; esac
     if [ "$enabled" = 1 ]; then /etc/init.d/nfqws2-native enable || return 1
     else /etc/init.d/nfqws2-native disable || return 1; fi
-    [ "$running" != 1 ] || /etc/init.d/nfqws2-native start || return 1
+    [ "$defer" = 1 ] || [ "$running" != 1 ] || /etc/init.d/nfqws2-native start || return 1
     if [ -x /etc/init.d/nfqws2-native-web ]; then
         if [ "$web_enabled" = 1 ]; then /etc/init.d/nfqws2-native-web enable || return 1
         else /etc/init.d/nfqws2-native-web disable || return 1; fi
-        [ "$web_running" != 1 ] || /etc/init.d/nfqws2-native-web start || return 1
+        [ "$defer" = 1 ] || [ "$web_running" != 1 ] || /etc/init.d/nfqws2-native-web start || return 1
     fi
     if [ -x /etc/init.d/nfqws2-native-dns ]; then /etc/init.d/nfqws2-native-dns disable || return 1; fi
     if [ -x /etc/init.d/nfqws2-native-dns-resume ]; then /etc/init.d/nfqws2-native-dns-resume enable || return 1; fi
+    [ "$defer" != 1 ] || return 0
     rm -f "$nfqws_package_state_dir/state" "$nfqws_package_state_dir/previous-resources.json"
     rmdir "$nfqws_package_state_dir" 2>/dev/null || :
     # The detached worker revalidates only previously confirmed consent.

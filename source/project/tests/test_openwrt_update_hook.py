@@ -20,7 +20,7 @@ class NativeUpdateHook(unittest.TestCase):
   worker='''<?php
 require __DIR__.'/app/openwrt-update-hook.php';
 $s=new AsusUpdateStore(dirname(__DIR__,3));$id=basename(dirname(__DIR__));$base=dirname(__DIR__,4);$format=trim(file_get_contents($base.'/format'));$managerPath=$format==='apk'?'/usr/bin/apk':'/bin/opkg';$g=new NfqwsOpenWrtUpdateGuard($s);$mode=$argv[count($argv)-2];
-if(in_array($mode,['hook-verify','hook-capture','hook-apk-precommit'],true)){$h=new NfqwsOpenWrtUpdateHook($s,['root'=>$base.'/system','journal'=>$base.'/journal']);$mode==='hook-apk-precommit'?($h->run('verify')&&$h->run('capture')):$h->run(substr($mode,5));
+if(in_array($mode,['hook-verify','hook-capture','hook-apk-precommit','hook-postinstall'],true)){$h=new NfqwsOpenWrtUpdateHook($s,['root'=>$base.'/system','journal'=>$base.'/journal']);$mode==='hook-apk-precommit'?($h->run('verify')&&$h->run('capture')):$h->run(substr($mode,5));if($mode==='hook-postinstall')file_put_contents($base.'/postinstall','deferred');
 if($mode==='hook-apk-precommit'){require __DIR__.'/app/openwrt-apk-command.php';$m=NfqwsOpenWrtApkCommand::manager();$t=$g->context($id);if($m['identity']!==$t['manager'])throw new RuntimeException('wrong real manager');$plan=NfqwsPlatform::run(NfqwsOpenWrtApkCommand::simulation($m['argv']),10);if($plan['status']!==0||NfqwsOpenWrtApkCommand::affects(implode("\\n",$plan['output']))!=='upgrade')throw new RuntimeException('locked read-only APK simulation failed');}
 exit(0);}
 $lease=$s->lease('apply.lock');$worker=AsusUpdateLifecycle::identity(getmypid());$ticket=['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>$worker,'manager'=>null,'phase'=>'installing','format'=>$format,'intent'=>['mode'=>'stopped']];$s->writeFile('native-transaction.json',json_encode($ticket));$s->update($id,['identity'=>$worker]);
@@ -41,18 +41,22 @@ $exit=proc_close($p);if($commit!==null&&trim(file_get_contents($base.'/case'))!=
   ident=self.sh('php-cli -r '+shlex.quote(setup)+' '+base+'/source/app '+base)
   with tempfile.TemporaryDirectory()as td:
    stage=Path(td)/'payload';out=Path(td)/'out';out.mkdir();meta='Package: nfqws2-native\nVersion: 1.3.2-72\nArchitecture: x86_64\nDescription: Native manager hook fixture\n'
+   posthook=('#!/bin/sh\n'+(ROOT/'openwrt/package-lifecycle.sh').read_text().split('case "$NFQWS_PKG_ACTION" in')[0]+'\nnfqws_package_updates_dir='+base+'/store\nnfqws_package_native_update postinstall\n').encode() if case in ['postinstall','uncaptured']else b'#!/bin/sh\nexit 0\n'
    hook='#!/bin/sh\n'+(ROOT/'openwrt/package-lifecycle.sh').read_text().split('case "$NFQWS_PKG_ACTION" in')[0]+'\nnfqws_package_updates_dir='+base+'/store\nnfqws_package_native_update verify && nfqws_package_native_update capture\n'
+   if case=='uncaptured':hook=hook.replace(' && nfqws_package_native_update capture','')
    fixtures.builder.write_files(stage,{'usr/share/nfqws2/hook-fixture':(b'inert',0o644)})
    if format=='ipk':
-    fixtures.builder.write_files(stage,{'CONTROL/control':(meta.encode(),0o644),'CONTROL/preinst':(hook.encode(),0o755)})
+    fixtures.builder.write_files(stage,{'CONTROL/control':(meta.encode(),0o644),'CONTROL/preinst':(hook.encode(),0o755),'CONTROL/postinst':(posthook,0o755)})
     tool=fixtures.builder.pinned_asset(fixtures.builder.ASSETS['ipkg_build'],CACHE,True);subprocess.run(['fakeroot','sh',str(tool),str(stage),str(out)],check=True,capture_output=True);package=next(out.glob('*.ipk'))
    else:
     key=Path(td)/'key.pem';pub=Path(td)/'public.pem';subprocess.run(['openssl','genpkey','-algorithm','RSA','-pkeyopt','rsa_keygen_bits:3072','-out',str(key)],check=True,capture_output=True);key.chmod(0o600);subprocess.run(['openssl','pkey','-in',str(key),'-pubout','-out',str(pub)],check=True,capture_output=True)
-    target=fixtures.builder.native_metadata('25.12','x86_64',72);target['dependencies']=[];package=fixtures.builder.build_apk(target,stage,{'preinst':hook.encode(),'postinst':b'#!/bin/sh\nexit 0\n','prerm':b'#!/bin/sh\nexit 0\n','postrm':b'#!/bin/sh\nexit 0\n'},CACHE,out,True,key)
+    target=fixtures.builder.native_metadata('25.12','x86_64',72);target['dependencies']=[];package=fixtures.builder.build_apk(target,stage,{'preinst':hook.encode(),'postinst':posthook,'prerm':b'#!/bin/sh\nexit 0\n','postrm':b'#!/bin/sh\nexit 0\n'},CACHE,out,True,key)
     self.sh('cat > '+base+'/fixture-public.pem',pub.read_text())
    subprocess.run(['docker','cp',str(package),CONTAINER+':'+base+'/package.'+format],check=True,capture_output=True)
   try:
    result=json.loads(self.sh(base+'/store/operations/'+ident+'/runtime/run.sh apply '+ident))
+   if case=='postinstall':self.sh('test -f '+base+'/postinstall')
+   if case=='uncaptured':self.sh('test ! -e '+base+'/postinstall')
    if case=='abandoned':
     self.assertEqual(format,'apk');self.sh('rm -rf '+base+'/store/operations/'+ident+'/runtime')
     self.assertEqual(self.sh('/etc/apk/commit_hooks.d/00-nfqws2-native-'+ident+' pre-commit'),'')
@@ -62,6 +66,11 @@ $exit=proc_close($p);if($commit!==null&&trim(file_get_contents($base.'/case'))!=
   finally:self.sh(('opkg remove'if format=='ipk'else'apk del --network=no')+' nfqws2-native >/dev/null 2>&1 || :')
  def test_real_manager_descendant_captures_current_settings_under_its_lock(self):
   r=self.run_case('ok');self.assertEqual(r,{'exit':0,'backup':True,'config':'latest-settings','payload':True})
+ def test_controlled_postinstall_requires_actual_quiesced_transaction(self):
+  r=self.run_case('postinstall');self.assertEqual(r,{'exit':0,'backup':True,'config':'latest-settings','payload':True})
+ def test_postinstall_without_capture_cannot_authorize_deferred_service_restore(self):
+  if '25' in CONTAINER:self.skipTest('APK scoped precommit already guarantees capture')
+  r=self.run_case('uncaptured');self.assertNotEqual(r['exit'],0);self.assertFalse(r['backup']);self.assertEqual(r['config'],'latest-settings')
  def test_hook_waits_for_its_parent_journal_publication(self):
   r=self.run_case('delayed');self.assertEqual(r,{'exit':0,'backup':True,'config':'latest-settings','payload':True})
  def test_abandoned_apk_gate_is_inert_even_after_runtime_cleanup(self):

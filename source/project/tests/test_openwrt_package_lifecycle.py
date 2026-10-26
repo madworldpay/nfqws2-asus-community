@@ -9,6 +9,43 @@ LIB=Path(__file__).resolve().parents[1]/'openwrt/package-lifecycle.sh'
 
 
 class NativePackageLifecycleTests(unittest.TestCase):
+    def postinstall_calls(self,mode):
+        with tempfile.TemporaryDirectory()as td:
+            root=Path(td);init=root/'init';init.mkdir();state=root/'state';state.mkdir()
+            (state/'state').write_text('manager=boot:123:456\nenabled=1\nrunning=1\nweb_present=1\nweb_enabled=1\nweb_running=1\n')
+            for name in ['nfqws2-native','nfqws2-native-web','nfqws2-native-dns','nfqws2-native-dns-resume']:
+                path=init/name;path.write_text('#!/bin/sh\nprintf "%s:%s\\n" '+name+' "$1"\n');path.chmod(0o755)
+            source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0].replace('/etc/init.d/',str(init)+'/')
+            body=source+"""
+nfqws_package_state_dir="$TEST_STATE"
+nfqws_package_defaults() { return 0; }
+nfqws_package_guard() { return 0; }
+nfqws_package_manager() { echo boot:123:456; }
+nfqws_package_native_update() { [ "$1" = postinstall ] || return 0; return "$TEST_MODE"; }
+nfqws_package_service() { printf '%s:%s\n' "$1" "$2"; }
+uci() { case "$*" in '-q get firewall.nfqws2_native.path') echo /usr/lib/nfqws2/firewall-hook.sh;; '-q get firewall.nfqws2_native') echo include;; *) return 1;; esac; }
+nfqws_package_postinstall
+rc=$?
+[ ! -f "$TEST_STATE/state" ] || echo journal-retained
+exit "$rc"
+"""
+            return subprocess.run(['sh','-c',body],env={**os.environ,'TEST_STATE':str(state),'TEST_MODE':str(mode)},capture_output=True,text=True)
+
+    def test_controlled_postinstall_defers_all_starts_and_keeps_original_intent(self):
+        r=self.postinstall_calls(0);self.assertEqual(r.returncode,0,r.stderr)
+        self.assertFalse(any(line.endswith(':start')for line in r.stdout.splitlines()),r.stdout)
+        self.assertIn('nfqws2-native:enable',r.stdout);self.assertIn('journal-retained',r.stdout)
+
+    def test_manual_postinstall_restores_services_and_cleans_transaction_journal(self):
+        r=self.postinstall_calls(10);self.assertEqual(r.returncode,0,r.stderr)
+        for name in ['nfqws2-native','nfqws2-native-web','nfqws2-native-dns-resume']:self.assertIn(name+':start',r.stdout)
+        self.assertNotIn('journal-retained',r.stdout)
+
+    def test_failed_controlled_postinstall_proof_cannot_start_any_service(self):
+        r=self.postinstall_calls(1);self.assertNotEqual(r.returncode,0)
+        self.assertFalse(any(line.endswith(':start')for line in r.stdout.splitlines()),r.stdout)
+        self.assertIn('journal-retained',r.stdout)
+
     def test_foreign_service_is_rejected_before_any_dns_or_service_change(self):
         source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
         r=subprocess.run(['sh','-c',source+'''

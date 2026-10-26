@@ -20,7 +20,7 @@ final class NfqwsOpenWrtUpdateHook
     }
     public function run(string $action):bool
     {
-        if(!in_array($action,['verify','capture'],true))throw new RuntimeException('invalid_request');$guard=new NfqwsOpenWrtUpdateGuard($this->store);$ticket=$guard->ticket();
+        if(!in_array($action,['verify','capture','postinstall'],true))throw new RuntimeException('invalid_request');$guard=new NfqwsOpenWrtUpdateGuard($this->store);$ticket=$guard->ticket();
         if($ticket===null||$ticket['phase']==='finished')return false;
         if(!AsusUpdateLifecycle::alive($ticket['worker'])&&!$guard->managerAlive($ticket)){if(NfqwsOpenWrtManualContext::authorize())return false;$f=$guard->mutationLease();flock($f,LOCK_UN);fclose($f);return false;}
         $end=AsusUpdateStore::uptime()+2;
@@ -36,6 +36,10 @@ final class NfqwsOpenWrtUpdateHook
         $current=NfqwsOpenWrtUpdateManager::installed(['format'=>$ticket['format']],true);$expected=$preflight['installed'];unset($expected['nfqws2-native']);ksort($expected);
         if($current!==$expected)throw new RuntimeException('dependency_change');
         $ticket['intent']=$this->journal($ticket);$this->store->writeFile('native-transaction.json',json_encode($ticket,JSON_THROW_ON_ERROR));$this->store->update($id,['intent'=>$ticket['intent']]);
+        if($action==='postinstall'){
+            $raw=$this->store->readFile($base.'/quiesced.json',1024);
+            if($raw===null||json_decode($raw,true)!==['captured'=>true])throw new RuntimeException('invalid_state');
+        }
         if($action==='capture'){
             $backup=$this->store->path($base.'/backup');$root=$this->options['root']??'/';
             if(!is_dir($backup))NfqwsOpenWrtUpdateSnapshot::capture($backup,$root);else NfqwsOpenWrtUpdateSnapshot::verify($backup,$root);
