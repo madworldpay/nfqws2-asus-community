@@ -25,6 +25,11 @@ $args=NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.apk',$env,$db,$recor
 check($args===['/usr/bin/apk','add','--network=no','--cache=no','--repositories-file','/dev/null','--keys-dir','/tmp/private/keys','/tmp/private/package.apk'],'apk reads only installed packages and signed application, without changing world constraints');
 rejects(fn()=>NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.apk',$env,$db,$record),'invalid_signature');
 check(NfqwsOpenWrtUpdateManager::plan("Installing nfqws2-native (1.3.2-72) to root...\n",'ipk',array_replace($record,['version'=>'1.3.2-72'])),'ipk install plan');
+$warning="Multiple packages (nfqws2-native and nfqws2-native) providing same name marked HOLD or PREFER. Using latest.\n";
+$retry=$warning."Upgrading nfqws2-native on root from 1.3.2-34 to 1.3.2-72...\n";
+check(NfqwsOpenWrtUpdateManager::plan($retry,'ipk',array_replace($record,['version'=>'1.3.2-72'])),'retained absent own row warning must not block a verified one-app upgrade');
+rejects(fn()=>NfqwsOpenWrtUpdateManager::plan(str_replace('and nfqws2-native','and foreign-provider',$retry),'ipk',array_replace($record,['version'=>'1.3.2-72'])),'dependency_change');
+
 check(NfqwsOpenWrtUpdateManager::plan("Upgrading nfqws2-native on root from 1.3.2-71 to 1.3.2-72...\n",'ipk',array_replace($record,['version'=>'1.3.2-72'])),'ipk upgrade plan');
 check(NfqwsOpenWrtUpdateManager::plan("(1/1) Upgrading nfqws2-native (1.3.2-r71 -> 1.3.2-r72)\nOK: 37.5 MiB in 197 packages\n",'apk',$record),'apk upgrade plan');
 foreach(["(1/2) Upgrading php8-cgi (1 -> 2)\n(2/2) Installing nfqws2-native (1.3.2-r72)\n","(1/1) Purging dnsmasq (1)\n",'UNKNOWN output']as $bad)rejects(fn()=>NfqwsOpenWrtUpdateManager::plan($bad,'apk',$record),'dependency_change');

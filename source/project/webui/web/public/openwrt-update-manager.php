@@ -79,6 +79,7 @@ final class NfqwsOpenWrtUpdateManager
         if(strlen($raw)>65536||str_contains($raw,"\0"))throw new RuntimeException('dependency_change');$seen=0;$version=preg_quote($record['version']??'','#');
         foreach(explode("\n",trim($raw))as $line){
             if($line==='')continue;
+            if($format==='ipk'&&$line==='Multiple packages (nfqws2-native and nfqws2-native) providing same name marked HOLD or PREFER. Using latest.')continue;
             if($format==='ipk'&&preg_match('#^(?:Installing nfqws2-native \('.$version.'\) to root|Upgrading nfqws2-native on root from [A-Za-z0-9.+_:~\-]+ to '.$version.')\.\.\.$#D',$line)){$seen++;continue;}
             if($format==='apk'&&preg_match('#^\(1/1\) (?:Installing nfqws2-native \('.$version.'\)|Upgrading nfqws2-native \([A-Za-z0-9.+_:~\-]+ -> '.$version.'\))$#D',$line)){$seen++;continue;}
             if($format==='apk'&&preg_match('/^OK: [0-9]+(?:\.[0-9]+)? (?:B|KiB|MiB|GiB) in [0-9]+ packages$/D',$line))continue;
