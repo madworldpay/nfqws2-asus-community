@@ -6,7 +6,7 @@ export type PackageCandidate = {
   build: number;
   notes: string;
   package: {
-    family: 'aarch64-3.10' | 'armv7';
+    family: string;
     filename: string;
     size: number;
     sha256: string;
@@ -47,7 +47,9 @@ export class PackageUpdateError extends Error {
     this.code = code;
   }
 }
-const VERSION = /^[0-9]+\.[0-9]+\.[0-9]+-asus[1-9][0-9]*\+b[1-9][0-9]*$/;
+const ASUS_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+-asus[1-9][0-9]*\+b[1-9][0-9]*$/;
+const NATIVE_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+-r?[1-9][0-9]*$/;
+const validVersion = (v: string) => ASUS_VERSION.test(v) || NATIVE_VERSION.test(v);
 const HEX32 = /^[a-f0-9]{32}$/;
 const HEX64 = /^[a-f0-9]{64}$/;
 const record = (v: unknown): v is Record<string, unknown> =>
@@ -81,9 +83,9 @@ function candidate(value: unknown): PackageCandidate {
     typeof value.revision !== 'string' ||
     !HEX64.test(value.revision) ||
     typeof value.package_version !== 'string' ||
-    !VERSION.test(value.package_version) ||
+    !validVersion(value.package_version) ||
     typeof value.core_version !== 'string' ||
-    !/^[0-9]+\.[0-9]+\.[0-9]+-asus[1-9][0-9]*$/.test(value.core_version) ||
+    !/^[0-9]+\.[0-9]+\.[0-9]+(?:-asus[1-9][0-9]*)?$/.test(value.core_version) ||
     typeof value.web_version !== 'string' ||
     !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(value.web_version) ||
     !Number.isSafeInteger(value.build) ||
@@ -94,9 +96,18 @@ function candidate(value: unknown): PackageCandidate {
     !keys(p, ['family', 'filename', 'size', 'sha256'])
   )
     return invalid();
+  const native = NATIVE_VERSION.test(value.package_version);
+  const filenameMatches = native
+    ? typeof p.family === 'string' &&
+      /^[a-z0-9][a-z0-9_+-]{0,99}$/.test(p.family) &&
+      !value.core_version.includes('-') &&
+      value.package_version.startsWith(value.core_version + '-') &&
+      p.filename === `nfqws2-native_${value.package_version}_${p.family}.${value.package_version.includes('-r') ? 'apk' : 'ipk'}`
+    : (p.family === 'aarch64-3.10' || p.family === 'armv7') &&
+      value.core_version === value.package_version.replace(/\+b[0-9]+$/, '') &&
+      p.filename === `nfqws2-asus_${value.package_version}_${p.family}.ipk`;
   if (
-    (p.family !== 'aarch64-3.10' && p.family !== 'armv7') ||
-    p.filename !== `nfqws2-asus_${value.package_version}_${p.family}.ipk` ||
+    !filenameMatches ||
     !Number.isSafeInteger(p.size) ||
     (p.size as number) < 1 ||
     (p.size as number) > 33554432 ||
@@ -116,10 +127,16 @@ function check(value: unknown): PackageCheck {
     !code(value.code) ||
     (value.installed_version !== null &&
       (typeof value.installed_version !== 'string' ||
-        !VERSION.test(value.installed_version)))
+        !validVersion(value.installed_version)))
   )
     return invalid();
-  if (value.state === 'available') candidate(value.candidate);
+  if (value.state === 'available') {
+    const c = candidate(value.candidate);
+    if (typeof value.installed_version === 'string' &&
+        (ASUS_VERSION.test(c.package_version) !== ASUS_VERSION.test(value.installed_version) ||
+         c.package_version.includes('-r') !== value.installed_version.includes('-r')))
+      return invalid();
+  }
   else if (value.candidate !== null) return invalid();
   return value as PackageCheck;
 }
@@ -157,7 +174,7 @@ function operation(value: unknown): PackageOperation {
       'interrupted',
     ].includes(String(value.state)) ||
     typeof value.package_version !== 'string' ||
-    !VERSION.test(value.package_version) ||
+    !validVersion(value.package_version) ||
     !code(value.code) ||
     (value.service_intent !== null && !coreState(value.service_intent))
   )
@@ -177,7 +194,7 @@ function operation(value: unknown): PackageOperation {
   if (
     value.installed_version !== undefined &&
     (typeof value.installed_version !== 'string' ||
-      !VERSION.test(value.installed_version))
+      !validVersion(value.installed_version))
   )
     return invalid();
   if (value.core_state !== undefined && !coreState(value.core_state))
@@ -331,7 +348,9 @@ export function packageUpdateBadges(
     }
   }
   return {
-    core: !!installed && c.core_version !== installed.replace(/\+b[0-9]+$/, ''),
+    core: !!installed && c.core_version !== (NATIVE_VERSION.test(installed)
+      ? installed.replace(/-r?[1-9][0-9]*$/, '')
+      : installed.replace(/\+b[0-9]+$/, '')),
     web: webNew,
     build: c.build > Number(build ?? 0),
   };

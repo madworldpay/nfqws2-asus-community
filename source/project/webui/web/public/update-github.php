@@ -3,13 +3,16 @@
 final class AsusGithubUpdateSource implements AsusUpdateSource
 {
     private const METADATA='https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/public.json';
+    private const NATIVE_METADATA='https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/openwrt/public.json';
     private const RELEASES='https://github.com/madworldpay/nfqws2-asus-community/releases/download/';
     private const ASSET_HOST='release-assets.githubusercontent.com';
     private const HTTPS_PORT=443;
     private const ENVELOPE_LIMIT=46080;
     private const CORE='(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})-asus[1-9][0-9]{0,5}';
+    private const NATIVE_CORE='(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})';
 
-    public function __construct(private int $owner=0,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt',private array $timeouts=['metadata'=>15,'download'=>180]){}
+    public function __construct(private int $owner=0,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt',private array $timeouts=['metadata'=>15,'download'=>180],private string $platform='asus-entware')
+    {if(!in_array($platform,['asus-entware','openwrt'],true))throw new RuntimeException('invalid_channel');}
 
     private static function redirect(string $url): string
     {
@@ -69,7 +72,7 @@ final class AsusGithubUpdateSource implements AsusUpdateSource
 
     public function manifest(): array
     {
-        $raw=$this->request(self::METADATA,self::ENVELOPE_LIMIT,microtime(true)+min(15,$this->timeouts['metadata']));
+        $raw=$this->request($this->platform==='openwrt'?self::NATIVE_METADATA:self::METADATA,self::ENVELOPE_LIMIT,microtime(true)+min(15,$this->timeouts['metadata']));
         $envelope=AsusSupportSchema::decode($raw,self::ENVELOPE_LIMIT,'invalid_manifest');
         if(!is_object($envelope))throw new RuntimeException('invalid_manifest');
         $keys=array_keys(get_object_vars($envelope));sort($keys);
@@ -83,9 +86,14 @@ final class AsusGithubUpdateSource implements AsusUpdateSource
 
     public function download(array $package,string $destination): void
     {
-        if(!is_string($package['filename']??null)||!preg_match('/^nfqws2-asus_'.self::CORE.'\+b([1-9][0-9]{0,9})_(?:aarch64-3\.10|armv7)\.ipk$/D',$package['filename'],$match)||(float)$match[1]>2147483647||
-            !is_int($package['size']??null)||$package['size']<1||$package['size']>33554432||!is_string($package['sha256']??null)||!preg_match('/^[a-f0-9]{64}$/D',$package['sha256']))throw new RuntimeException('invalid_manifest');
-        $url=self::RELEASES.'build'.$match[1].'/'.$package['filename'];
+        $filename=$package['filename']??null;if(!is_string($filename))throw new RuntimeException('invalid_manifest');
+        if($this->platform==='openwrt'){
+            if(!preg_match('/^nfqws2-native_'.self::NATIVE_CORE.'-(r?)([1-9][0-9]{0,9})_([a-z0-9][a-z0-9_+-]{0,99})\.(ipk|apk)$/D',$filename,$match)||($match[1]==='r')!==($match[4]==='apk'))throw new RuntimeException('invalid_manifest');$build=$match[2];
+        }else{
+            if(!preg_match('/^nfqws2-asus_'.self::CORE.'\+b([1-9][0-9]{0,9})_(?:aarch64-3\.10|armv7)\.ipk$/D',$filename,$match))throw new RuntimeException('invalid_manifest');$build=$match[1];
+        }
+        if((float)$build>2147483647||!is_int($package['size']??null)||$package['size']<1||$package['size']>33554432||!is_string($package['sha256']??null)||!preg_match('/^[a-f0-9]{64}$/D',$package['sha256']))throw new RuntimeException('invalid_manifest');
+        $url=self::RELEASES.'build'.$build.'/'.$filename;
         for($path=$destination;$path!=='/'&&$path!=='.';$path=dirname($path))if(is_link($path))throw new RuntimeException('invalid_state');
         $parent=@lstat(dirname($destination));
         if(!$parent||($parent['mode']&0170000)!==0040000||($parent['mode']&0777)!==0700||$parent['uid']!==$this->owner)throw new RuntimeException('invalid_state');

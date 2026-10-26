@@ -51,9 +51,9 @@ export async function getPackageUpdateNotes(
   signal?: AbortSignal,
 ): Promise<PackageUpdateNotes> {
   const match = installed.match(
-    /^[0-9]+\.[0-9]+\.[0-9]+-asus[1-9][0-9]*\+b([1-9][0-9]*)$/,
+    /^[0-9]+\.[0-9]+\.[0-9]+(?:-asus[1-9][0-9]*\+b([1-9][0-9]*)|-r?([1-9][0-9]*))$/,
   );
-  const from = Number(match?.[1]);
+  const from = Number(match?.[1] ?? match?.[2]);
   if (
     !Number.isSafeInteger(from) ||
     !Number.isSafeInteger(target) ||
