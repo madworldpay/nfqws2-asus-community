@@ -106,6 +106,17 @@ class NativeBuilderTests(unittest.TestCase):
         self.assertEqual(files['usr/share/nfqws2/update-release-key.pem'][0],(ROOT/'updates/trusted-release-key.pem').read_bytes())
 
     @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
+    def test_only_apk_packages_register_the_native_precommit_veto(self):
+        engine=(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes()
+        for series,expected in [('24.10',False),('25.12',True)]:
+            files=builder.payload_files(builder.native_metadata(series,'arm_cortex-a9'),engine)
+            hook='lib/apk/commit_hooks.d/10-nfqws2-native'
+            self.assertEqual(hook in files,expected,'Wrong native commit hook registration for '+series)
+            self.assertEqual('usr/lib/nfqws2/update/apk-precommit.php' in files,expected)
+            if expected:
+                self.assertEqual(files[hook],((ROOT/'openwrt/update/apk-precommit.sh').read_bytes(),0o755))
+
+    @unittest.skipUnless(ENGINE_DIR,'Requires verified upstream engine payloads')
     def test_payload_only_contains_selected_static_engine_and_native_paths(self):
         raw=(Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes()
         files=builder.payload_files(builder.native_metadata('24.10','arm_cortex-a9'),raw)

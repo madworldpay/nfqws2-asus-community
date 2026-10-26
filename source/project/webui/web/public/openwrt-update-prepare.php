@@ -80,7 +80,10 @@ final class NfqwsOpenWrtUpdatePrepare implements NfqwsUpdatePreparation
     {
         return $this->store->withOperationLock($id,function()use($id,$stage){
             $job=$this->store->readOperation($id);if($job['state']!=='preparing')return $job;
-            try{
+            $lease=null;try{
+                // Keep the installed source tree stable throughout download and
+                // immutable runtime copying; ordinary settings edits still use SH.
+                $lease=$this->store->lease('apply.lock',true);
                 $candidate=$this->candidate($id,true);$env=$this->environment();$base='operations/'.$id;$snapshot=NfqwsOpenWrtUpdateSnapshot::estimate($env['root'],$env['owner']);
                 NfqwsOpenWrtUpdatePackage::space($env['overlay_free'],$env['ram_free'],$candidate['package'],$snapshot,$env['runtime_bytes']);
                 $this->deadline?->begin(180);try{$this->source()->download($candidate['package'],$this->archive($id,$candidate));}finally{$this->deadline?->end();}
@@ -89,6 +92,7 @@ final class NfqwsOpenWrtUpdatePrepare implements NfqwsUpdatePreparation
                 if($stage!==null){$r=$stage($id,$env);if(!is_array($r)||!preg_match('/^[a-f0-9]{64}$/D',$r['digest']??''))throw new RuntimeException('invalid_state');$patch['runtime_digest']=$r['digest'];}
                 return $this->store->update($id,$patch);
             }catch(Throwable $e){return $this->store->update($id,['state'=>'failed','code'=>AsusUpdatePrepare::code($e)]);}
+            finally{if(is_resource($lease)){flock($lease,LOCK_UN);fclose($lease);}}
         });
     }
 }

@@ -118,6 +118,9 @@ def payload_files(target,engine,source=None):
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
     for name,mode in [('quiesce.php',0o644),('quiesce.sh',0o755)]:
         files['usr/lib/nfqws2/update/'+name]=((HERE/'update'/name).read_bytes(),mode)
+    if target['format']=='apk':
+        files['usr/lib/nfqws2/update/apk-precommit.php']=((HERE/'update/apk-precommit.php').read_bytes(),0o644)
+        files['lib/apk/commit_hooks.d/10-nfqws2-native']=((HERE/'update/apk-precommit.sh').read_bytes(),0o755)
     lifecycle=(HERE/'package-lifecycle.sh').read_text();boundary='case "$NFQWS_PKG_ACTION" in'
     if lifecycle.count(boundary)!=1:raise RuntimeError('Native package function boundary is ambiguous')
     files['usr/lib/nfqws2/update/package-functions.sh']=(lifecycle.split(boundary,1)[0].encode(),0o644)

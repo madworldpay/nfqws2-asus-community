@@ -22,7 +22,7 @@ class NativePreparation(unittest.TestCase):
 $p=$argv[1];$case=$argv[2];$app=$argv[3];
 if(!is_file($app.'/openwrt-update-prepare.php'))throw new RuntimeException('native prepare missing');
 require $app.'/openwrt-update-prepare.php';require $app.'/update-check.php';require $app.'/update-dispatch.php';
-class NativeFixtureSource implements AsusUpdateSource{public array $raw;public function __construct(public string $file){}public function manifest():array{return $this->raw;}public function download(array $p,string $destination):void{copy($this->file,$destination);chmod($destination,0600);}}
+class NativeFixtureSource implements AsusUpdateSource{public array $raw;public ?bool $leaseBlocked=null;public function __construct(public string $file){}public function manifest():array{return $this->raw;}public function download(array $p,string $destination):void{$s=new AsusUpdateStore(dirname($destination,3));try{$f=$s->lease('apply.lock');$this->leaseBlocked=false;flock($f,LOCK_UN);fclose($f);}catch(RuntimeException $e){if($e->getMessage()!=='busy')throw $e;$this->leaseBlocked=true;}copy($this->file,$destination);chmod($destination,0600);}}
 $config=$p.'/openssl.cnf';file_put_contents($config,"[req]\ndistinguished_name=req_dn\n[req_dn]\n");$key=openssl_pkey_new(['private_key_bits'=>3072,'private_key_type'=>OPENSSL_KEYTYPE_RSA,'config'=>$config]);$public=openssl_pkey_get_details($key)['key'];
 $record=['series'=>'24.10','arch'=>'x86_64','format'=>'ipk','version'=>'1.3.2-72','filename'=>'nfqws2-native_1.3.2-72_x86_64.ipk','size'=>filesize($p.'/source.ipk'),'installed_size'=>1048576,'sha256'=>hash_file('sha256',$p.'/source.ipk')];
 if($case==='wrong_target')$record['arch']='mips_24kc';if($case==='wrong_target')$record['filename']='nfqws2-native_1.3.2-72_mips_24kc.ipk';
@@ -32,13 +32,17 @@ $json=json_encode($m);openssl_sign($json,$signature,$key,OPENSSL_ALGO_SHA256);$s
 if($case==='signature')$source->raw['json'].=' ';
 $env=['platform'=>'openwrt','series'=>'24.10','arch'=>'x86_64','format'=>'ipk','installed'=>'1.3.2-71','build'=>71,'owner'=>0,'overlay_free'=>1000000000,'ram_free'=>$case==='low_ram'?1:1000000000];
 $s=new AsusUpdateStore($p.'/store');$prepare=new NfqwsOpenWrtUpdatePrepare($s,$source,$env,$public);$check=$prepare->check(true);$result=['check'=>$check];
-if($check['state']==='available'){$j=$prepare->reserveCached($check['candidate']['revision'],str_repeat('a',32));$again=$prepare->reserveCached($check['candidate']['revision'],str_repeat('a',32));if($again['id']!==$j['id'])throw new RuntimeException('idempotence');$result['operation']=$prepare->completePrepare($j['id'],fn()=>['digest'=>str_repeat('a',64)]);$result['cached']=(new AsusUpdateCheck($s,$prepare))->status();$result['dispatch']=(new AsusUpdateDispatch($s,$prepare))->status($j['id']);}
+if($check['state']==='available'){$j=$prepare->reserveCached($check['candidate']['revision'],str_repeat('a',32));$again=$prepare->reserveCached($check['candidate']['revision'],str_repeat('a',32));if($again['id']!==$j['id'])throw new RuntimeException('idempotence');$f=$case==='busy'?$s->lease('apply.lock'):null;$stageBlocked=null;$result['operation']=$prepare->completePrepare($j['id'],function()use($s,&$stageBlocked){try{$x=$s->lease('apply.lock');$stageBlocked=false;flock($x,LOCK_UN);fclose($x);}catch(RuntimeException $e){if($e->getMessage()!=='busy')throw $e;$stageBlocked=true;}return ['digest'=>str_repeat('a',64)];});if(is_resource($f)){flock($f,LOCK_UN);fclose($f);}$result['download_lease']=$source->leaseBlocked;$result['stage_lease']=$stageBlocked;$result['cached']=(new AsusUpdateCheck($s,$prepare))->status();$result['dispatch']=(new AsusUpdateDispatch($s,$prepare))->status($j['id']);}
 echo json_encode($result);
 '''
   self.sh('cat > '+self.base+'/probe.php',script)
   raw=self.sh('php-cli '+self.base+'/probe.php '+self.base+' '+case+' '+shlex.quote(str(ROOT/'webui/web/public')));self.sh('test ! -e '+self.base+'/hook');return json.loads(raw)
  def test_signed_native_candidate_prepares_idempotently_without_installing(self):
   r=self.call('ok');self.assertEqual(r['check']['state'],'available');self.assertEqual(r['operation']['state'],'prepared',r);self.assertEqual(r['cached']['state'],'available');self.assertEqual(r['dispatch']['state'],'prepared')
+ def test_preparation_blocks_package_replacement_during_download_and_runtime_copy(self):
+  r=self.call('lease');self.assertEqual(r['operation']['state'],'prepared',r);self.assertIs(r['download_lease'],True);self.assertIs(r['stage_lease'],True)
+ def test_active_package_mutation_refuses_prepare_before_download(self):
+  r=self.call('busy');self.assertEqual(r['operation']['state'],'failed',r);self.assertEqual(r['operation']['code'],'busy');self.assertIsNone(r['download_lease']);self.assertIsNone(r['stage_lease'])
  def test_corrupt_download_fails_before_hooks(self):
   r=self.call('corrupt');self.assertEqual(r['operation']['state'],'failed');self.assertEqual(r['operation']['code'],'download_hash')
  def test_low_ram_fails_before_package_download(self):
