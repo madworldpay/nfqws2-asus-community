@@ -1,5 +1,7 @@
 """Package hooks share state only within one live manager transaction."""
 import os
+import json
+import uuid
 from pathlib import Path
 import subprocess
 import tempfile
@@ -86,6 +88,37 @@ nfqws_package_stop_services remove
 '''],capture_output=True,text=True)
         self.assertEqual(r.returncode,0,r.stderr)
         self.assertEqual(r.stdout.splitlines()[0],'dns-control-remove')
+
+    def test_direct_removal_records_its_manager_before_guarded_dns_and_service_stop(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_snapshot() { echo manager-snapshot; }
+nfqws_package_stop_services() { printf 'stop-%s\\n' "$1"; }
+nfqws_package_service() { return 0; }
+nfqws_package_preremove remove
+'''],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stdout.splitlines(),['manager-snapshot','stop-remove'])
+
+    @unittest.skipUnless(os.environ.get('NFQWS_TEST_DOCKER'),'Requires isolated native root ownership')
+    def test_successful_removal_retires_only_its_saved_manager_journal(self):
+        container=os.environ['NFQWS_TEST_DOCKER'];spec=json.loads(subprocess.check_output(['docker','inspect',container]))[0]
+        self.assertTrue(container.startswith('nfqws-openwrt'));self.assertNotEqual(spec['HostConfig']['NetworkMode'],'host')
+        root='/tmp/native-retire-'+uuid.uuid4().hex
+        self.addCleanup(lambda:subprocess.run(['docker','exec',container,'rm','-rf',root],capture_output=True,check=True))
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0].replace('/etc/init.d/',root+'/init/')
+        body=source+"""
+umask 077
+nfqws_package_state_dir=ROOT
+mkdir "$nfqws_package_state_dir" || exit 1
+printf 'manager=boot:123:456\nenabled=1\nrunning=1\nweb_present=1\nweb_enabled=1\nweb_running=1\n' > "$nfqws_package_state_dir/state"
+nfqws_package_manager() { echo boot:123:456; }
+uci() { return 1; }
+nfqws_package_postremove remove || exit 1
+[ ! -e "$nfqws_package_state_dir/state" ] || exit 1
+echo retired
+""".replace('ROOT',root)
+        r=subprocess.run(['docker','exec',container,'sh','-c',body],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stdout.strip(),'retired')
 
     def test_native_update_checks_precede_dns_and_snapshot_follows_service_stop(self):
         source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]

@@ -365,7 +365,8 @@ nfqws_package_preremove() {
     if [ -e /etc/init.d/nfqws2-native ] || [ -L /etc/init.d/nfqws2-native ]; then
         [ -L /etc/init.d/nfqws2-native ] && [ "$(readlink /etc/init.d/nfqws2-native)" = /usr/lib/nfqws2/nfqws2-native ] || return 1
     fi
-    if [ "$PKG_UPGRADE" = 1 ] || [ "$1" = upgrade ]; then nfqws_package_snapshot || return 1; fi
+    # Removal needs the same live manager proof for its guarded DNS/core stops.
+    nfqws_package_snapshot || return 1
     local mode=remove
     if [ "$PKG_UPGRADE" = 1 ] || [ "$1" = upgrade ]; then mode=upgrade; fi
     nfqws_package_stop_services "$mode" || return 1
@@ -375,6 +376,21 @@ nfqws_package_preremove() {
         nfqws_package_service nfqws2-native-dns disable &&
         nfqws_package_service nfqws2-native-dns-resume disable || return 1
     fi
+}
+
+nfqws_package_retire() {
+    local manager path name
+    [ -e "$nfqws_package_state_dir/state" ] || [ -L "$nfqws_package_state_dir/state" ] || return 0
+    nfqws_package_guard "$nfqws_package_state_dir" || return 1
+    manager=$(nfqws_package_manager) || return 1
+    for name in state previous-resources.json phase; do
+        path=$nfqws_package_state_dir/$name
+        [ ! -L "$path" ] || return 1
+        [ ! -e "$path" ] || { [ -f "$path" ] && [ "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] && [ "$(wc -c < "$path")" -le 1048576 ]; } || return 1
+    done
+    [ "$(sed -n 's/^manager=//p' "$nfqws_package_state_dir/state")" = "$manager" ] || return 1
+    rm -f "$nfqws_package_state_dir/state" "$nfqws_package_state_dir/previous-resources.json" "$nfqws_package_state_dir/phase" || return 1
+    rmdir "$nfqws_package_state_dir" 2>/dev/null || :
 }
 
 nfqws_package_postremove() {
@@ -391,6 +407,7 @@ nfqws_package_postremove() {
         uci -q delete firewall.nfqws2_native && uci commit firewall || return 1
     fi
     # User configuration is intentionally retained for a later reinstall.
+    nfqws_package_retire
 }
 
 case "$NFQWS_PKG_ACTION" in
