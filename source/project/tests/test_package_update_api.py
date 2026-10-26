@@ -27,6 +27,17 @@ class PackageUpdateApiTests(unittest.TestCase):
         ''')
         (self.base/'update-check.php').write_text('<?php require_once __DIR__."/update-dispatch.php";')
     def request(self,params):return self.http.request(params)
+    def test_check_and_status_expose_only_the_shared_four_package_fields(self):
+        package={'family':'arm_cortex-a9','filename':'nfqws2-native_1.3.2-72_arm_cortex-a9.ipk','size':1000,'sha256':'a'*64,'format':'ipk','series':'24.10','installed_size':2000,'internal':'PRIVATE_INTERNAL'}
+        candidate={'revision':'b'*64,'package_version':'1.3.2-72','build':72,'notes':'Update','package':package}
+        path=self.base/'update-dispatch.php';path.write_text(path.read_text().replace("'candidate'=>null", "'candidate'=>json_decode('"+json.dumps(candidate)+"',true)"))
+        token=self.http.login()
+        for command,fields in [('packageupdatecheck',{'force':'0'}),('packageupdatestatus',{'operation_id':''})]:
+            code,value=self.request({'cmd':command,'csrf_token':token}|fields);self.assertEqual(code,200,value)
+            checked=value if command=='packageupdatecheck'else value['check']
+            self.assertEqual(set(checked['candidate']['package']),{'family','filename','size','sha256'})
+            self.assertNotIn('PRIVATE_INTERNAL',json.dumps(value))
+
     def test_new_commands_require_login(self):
         for cmd in ['packageupdatecheck','packageupdateprepare','packageupdateapply','packageupdatestatus']:
             self.assertEqual(self.request({'cmd':cmd,'csrf_token':'bad'})[0],401)
