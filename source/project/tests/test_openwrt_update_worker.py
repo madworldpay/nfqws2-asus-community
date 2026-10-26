@@ -46,6 +46,7 @@ echo json_encode((new NfqwsOpenWrtUpdateWorker($s,$prepare,$services))->apply($i
    if case=='settings-changed':post+='printf %s changed-by-hook > '+base+'/system/etc/nfqws2/nfqws2.conf\n'
    for version in [71,72]:
     stage=root/str(version);profile=builder.native_metadata(series,'x86_64',version);profile={k:profile[k]for k in ['series','arch','engine','format','version','application_build']}|{'platform':'openwrt'}
+    if case!='stale-build':profile['application_build']=version
     files={'usr/share/nfqws2/platform.json':(json.dumps(profile).encode(),0o644),'usr/share/nfqws2/worker-fixture':(str(version).encode(),0o644)}
     if fmt=='ipk':
      files['CONTROL/control']=(f'Package: nfqws2-native\nVersion: {v(version)}\nArchitecture: x86_64\nDescription: Inert native worker fixture\n'.encode(),0o644)
@@ -80,6 +81,8 @@ $env=['platform'=>'openwrt','series'=>'24.10','arch'=>'x86_64','format'=>'ipk','
   result['restore']=json.loads(self.sh('cat '+base+'/restored'))if self.sh('test -f '+base+'/restored; echo $?').strip()=='0'else None;result['dns_resumed']=self.sh('test -f '+base+'/dns-resumed; echo $?').strip()=='0';result['manager_log']=self.sh('cat '+base+'/store/operations/'+ident+'/manager.log 2>/dev/null',check=False);result['hook_error']=self.sh('cat '+base+'/hook-error 2>/dev/null',check=False);result['native_record']=self.sh('opkg status nfqws2-native'if fmt=='ipk'else'apk query --installed --format json nfqws2-native',check=False);result['payload']=self.sh('cat /usr/share/nfqws2/worker-fixture');result['config']=self.sh('cat '+base+'/system/etc/nfqws2/nfqws2.conf');return result
  def test_real_native_upgrade_verifies_version_settings_and_running_intent(self):
   r=self.run_case('ok');self.assertEqual(r['state'],'succeeded',r);self.assertEqual(r['payload'],'72');self.assertEqual(r['core_state'],'running');self.assertTrue(r['ordinary_start_allowed'],r);self.assertFalse(r['journal_retained'],r);self.assertTrue(r['settings_verified']);self.assertTrue(r['dns_resumed']);self.assertEqual(r['config'],'latest-settings')
+ def test_replaced_package_with_stale_application_identity_is_not_reported_successful(self):
+  r=self.run_case('stale-build');self.assertEqual(r['state'],'failed',r);self.assertEqual(r['code'],'version_mismatch');self.assertIsNone(r['restore']);self.assertFalse(r['dns_resumed'])
  def test_stopped_service_stays_stopped_after_successful_upgrade(self):
   r=self.run_case('ok','stopped');self.assertEqual(r['state'],'succeeded',r);self.assertEqual(r['core_state'],'stopped');self.assertFalse(r['restore']['enabled'])
  def test_manager_failure_before_replacement_restores_exact_old_application(self):

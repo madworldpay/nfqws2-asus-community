@@ -115,7 +115,7 @@ final class NfqwsOpenWrtUpdateWorker
                 $this->store->writeFile($base.'/native-preflight.json',json_encode($preflight,JSON_THROW_ON_ERROR));
                 $original=NfqwsOpenWrtUpdatePayload::capture($environment['format']);$this->store->writeFile($base.'/original-payload.json',json_encode($original,JSON_THROW_ON_ERROR));
                 $args=NfqwsOpenWrtUpdateManager::argv($this->prepare->archive($id,$candidate),$environment,$preflight['installed'],$preflight['record'],$preflight['keys']);$managerStarted=true;$this->install($id,$args,$environment);
-                $after=NfqwsOpenWrtUpdateEnvironment::collect();if($after['installed']!==$candidate['package_version'])throw new RuntimeException('version_mismatch');
+                $after=NfqwsOpenWrtUpdateEnvironment::collect();if($after['installed']!==$candidate['package_version']||$after['build']!==$candidate['build'])throw new RuntimeException('version_mismatch');
                 $db=NfqwsOpenWrtUpdateManager::installed($after);$expected=$preflight['installed'];unset($db['nfqws2-native'],$expected['nfqws2-native']);if($db!==$expected)throw new RuntimeException('dependency_change');
                 if(json_decode($this->store->readFile($base.'/quiesced.json',1024)??'',true)!==['captured'=>true])throw new RuntimeException('invalid_state');
                 NfqwsOpenWrtUpdateSnapshot::verify($this->store->path($base.'/backup'),$root);
