@@ -307,6 +307,11 @@ nfqws_package_adopt_configure() {
 }
 
 nfqws_package_postinstall() {
+    # A reboot can remove /tmp after unpacking but before configure. Observe
+    # existing boot flags before defaults create any new service links.
+    if [ -z "$IPKG_INSTROOT" ] && [ ! -e "$nfqws_package_state_dir/state" ] && [ ! -L "$nfqws_package_state_dir/state" ]; then
+        nfqws_package_snapshot || return 1
+    fi
     nfqws_package_defaults || return 1
     [ -z "$IPKG_INSTROOT" ] || return 0
     local enabled=0 running=0 path manager web_enabled=1 web_running=1 defer=0
