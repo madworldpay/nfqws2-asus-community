@@ -10,7 +10,7 @@ class NativeInstallPreparation(unittest.TestCase):
   p=subprocess.run(['docker','exec','-i',CONTAINER,'sh','-c',code],input=input,text=True,capture_output=True,timeout=25)
   if check:self.assertEqual(p.returncode,0,p.stdout+p.stderr)
   return p
- def run_case(self,corrupt):
+ def run_case(self,corrupt,execute=False):
   self.assertTrue((ROOT/'openwrt/install-prepare.php').exists(),'First install needs shared native signature/archive/dependency preparation without an installed panel')
   spec=json.loads(subprocess.check_output(['docker','inspect',CONTAINER]))[0];self.assertTrue(CONTAINER.startswith('nfqws-openwrt'));self.assertNotEqual(spec['HostConfig']['NetworkMode'],'host')
   fmt='apk'if'25'in CONTAINER else'ipk';series='25.12'if fmt=='apk'else'24.10';version='1.3.2-'+('r'if fmt=='apk'else'')+'72'
@@ -18,12 +18,13 @@ class NativeInstallPreparation(unittest.TestCase):
   spec=importlib.util.spec_from_file_location('bootstrap_bundle',ROOT/'openwrt/install-bundle.py');bundler=importlib.util.module_from_spec(spec);spec.loader.exec_module(bundler)
   self.sh('cat > '+base+'/bundle.php',bundler.render().decode())
   self.sh('printf %s '+shlex.quote('{"schema_version":1,"platform":"openwrt"}')+' > '+base+'/platform-profile.json; chmod 600 '+base+'/bundle.php '+base+'/platform-profile.json')
-  marker=base+'/hook-executed';target=builder.native_metadata(series,'x86_64',72);target['dependencies']=['libc','libgcc','nfqws-bootstrap-absent-fixture']
+  marker=base+'/hook-executed';target=builder.native_metadata(series,'x86_64',72);target['dependencies']=['libc','libgcc']+([]if execute else['nfqws-bootstrap-absent-fixture'])
   with tempfile.TemporaryDirectory()as td:
    root=Path(td);stage=root/'payload';out=root/'out';out.mkdir();key=root/'private.pem';pub=root/'public.pem'
    subprocess.run(['openssl','genpkey','-algorithm','RSA','-pkeyopt','rsa_keygen_bits:3072','-out',str(key)],check=True,capture_output=True);key.chmod(0o600);subprocess.run(['openssl','pkey','-in',str(key),'-pubout','-out',str(pub)],check=True,capture_output=True)
    hooks={name:('#!/bin/sh\ntouch '+marker+'\n').encode()for name in ['preinst','postinst','prerm','postrm']}
    files={'usr/share/nfqws2/bootstrap-preparation-fixture':(b'inert',0o644)}
+   if execute:files['usr/share/nfqws2/platform.json']=(json.dumps({'platform':'openwrt','series':series,'arch':'x86_64','format':fmt,'version':version,'application_build':72}).encode(),0o644)
    if fmt=='ipk':
     meta='Package: nfqws2-native\nVersion: '+version+'\nArchitecture: x86_64\nDepends: '+', '.join(target['dependencies'])+'\nDescription: Inert bootstrap fixture\n'
     files|={'CONTROL/control':(meta.encode(),0o644),**{'CONTROL/'+name:(body,0o755)for name,body in hooks.items()}};builder.write_files(stage,files);tool=builder.pinned_asset(builder.ASSETS['ipkg_build'],CACHE,True);subprocess.run(['fakeroot','sh',str(tool),str(stage),str(out)],check=True,capture_output=True);pkg=next(out.glob('*.ipk'))
@@ -36,6 +37,33 @@ class NativeInstallPreparation(unittest.TestCase):
   code='''require $argv[1];$base=$argv[2];class BootstrapFixtureSource implements AsusUpdateSource{function __construct(public string $p,public bool $bad){}function manifest():array{return ['json'=>file_get_contents($this->p.'/manifest.json'),'signature'=>file_get_contents($this->p.'/manifest.sig')];}function download(array $p,string $dest):void{copy($this->p.'/source.package',$dest);chmod($dest,0600);if($this->bad){$raw=file_get_contents($dest);$raw[10]=chr(ord($raw[10])^1);file_put_contents($dest,$raw);}}}
 $e=NfqwsOpenWrtUpdateEnvironment::firmware(file_get_contents('/etc/openwrt_release'));$before=NfqwsOpenWrtUpdateManager::raw($e);try{$r=(new NfqwsOpenWrtInstallPrepare($base.'/work',new BootstrapFixtureSource($base,$argv[3]==='bad'),file_get_contents($base.'/public.pem'),$argv[4]))->run();$out=['action'=>$r['action'],'format'=>$r['firmware']['format'],'missing'=>$r['missing']];}catch(RuntimeException $ex){$out=['error'=>$ex->getMessage()];}if($before!==NfqwsOpenWrtUpdateManager::raw($e))throw new RuntimeException('bootstrap preparation changed package database');echo json_encode($out);'''
   command='php-cli -r '+shlex.quote(code)+' '+shlex.quote(base+'/bundle.php')+' '+base+' '+('bad'if corrupt else'ok')+' '+shlex.quote(str(ROOT/'updates/openwrt-package-manifest.schema.json'))
+  if execute=='shell':
+   src="class ShellFixtureSource implements AsusUpdateSource{function manifest():array{return ['json'=>file_get_contents('"+base+"/manifest.json'),'signature'=>file_get_contents('"+base+"/manifest.sig')];}function download(array $p,string $d):void{copy('"+base+"/source.package',$d);chmod($d,0600);}}\n"
+   script=bundler.shell(pub.read_bytes()if pub.exists()else self.sh('cat '+base+'/public.pem').stdout.encode())
+   expected="$source=$this->source??new AsusGithubUpdateSource(0,'/etc/ssl/certs/ca-certificates.crt',['metadata'=>15,'download'=>180],'openwrt');"
+   self.assertEqual(script.count(expected),1);script=script.replace(expected,'$source=$this->source??new ShellFixtureSource();').replace('final class NfqwsOpenWrtInstallMain',src+'final class NfqwsOpenWrtInstallMain')
+   self.sh('cat > '+base+'/installer.sh',script+'\nnfqws_native_main "$@"\n')
+   before=self.sh('cat '+('/lib/apk/db/installed'if fmt=='apk'else'/usr/lib/opkg/status')).stdout
+   check=self.sh('sh '+base+'/installer.sh --check');self.assertIn('Подпись и пакет проверены',check.stdout);self.sh('test ! -e '+marker)
+   self.assertEqual(before,self.sh('cat '+('/lib/apk/db/installed'if fmt=='apk'else'/usr/lib/opkg/status')).stdout)
+   result=self.sh('sh '+base+'/installer.sh');self.assertIn('Готово:',result.stdout);self.sh('test -f '+marker)
+   self.sh('apk del nfqws2-native'if fmt=='apk'else'opkg remove nfqws2-native');return
+  if execute:
+   code=code.replace("$out=['action'=>$r['action'],'format'=>$r['firmware']['format'],'missing'=>$r['missing']];", "file_put_contents($base.'/plan.json',json_encode($r));chmod($base.'/plan.json',0600);$out=['prepared'=>true];")
+   command='php-cli -r '+shlex.quote(code)+' '+shlex.quote(base+'/bundle.php')+' '+base+' ok '+shlex.quote(str(ROOT/'updates/openwrt-package-manifest.schema.json'))
+   self.sh(command);self.sh('test ! -e '+marker)
+   if execute=='tamper':self.sh('printf x >> '+base+'/work/'+pkg.name)
+   program='require $argv[1];try{$r=NfqwsOpenWrtInstallExecute::direct($argv[2],file_get_contents($argv[2]."/public.pem"),$argv[3]);echo json_encode($r);}catch(RuntimeException $e){echo json_encode(["error"=>$e->getMessage()]);}'
+   r=self.sh('php-cli -r '+shlex.quote(program)+' '+base+'/bundle.php '+base+' '+shlex.quote(str(ROOT/'updates/openwrt-package-manifest.schema.json')))
+   result=json.loads(r.stdout)
+   if execute=='tamper':
+    self.assertEqual(result,{'error':'download_size'});self.sh('test ! -e '+marker)
+   else:
+    self.assertEqual(result,{'state':'installed','version':version});self.sh('test -f '+marker)
+    # No foreign/system package changed, and this fixture is removed using its
+    # own real manager only. Do not mutate the manager database by hand.
+    self.sh(('apk del nfqws2-native'if fmt=='apk'else'opkg remove nfqws2-native'))
+   return result
   result=self.sh(command);self.sh('test ! -e '+marker);return json.loads(result.stdout)
  def test_first_install_prepares_without_hooks_or_package_mutations_and_resolves_native_virtual_providers(self):
   self.assertEqual(self.run_case(False),{'action':'install','format':'apk'if'25'in CONTAINER else'ipk','missing':['nfqws-bootstrap-absent-fixture']})

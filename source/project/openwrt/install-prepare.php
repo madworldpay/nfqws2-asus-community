@@ -34,7 +34,7 @@ final class NfqwsOpenWrtInstallPrepare
             $firmware=NfqwsOpenWrtUpdateEnvironment::firmware((string)file_get_contents('/etc/openwrt_release'));$own=NfqwsOpenWrtInstallState::read($firmware);
             $key=$this->key??(defined('NFQWS_NATIVE_INSTALL_KEY')?NFQWS_NATIVE_INSTALL_KEY:throw new RuntimeException('signature_unavailable'));
             $source=$this->source??new AsusGithubUpdateSource(0,'/etc/ssl/certs/ca-certificates.crt',['metadata'=>15,'download'=>180],'openwrt');
-            $raw=$source->manifest();$plan=NfqwsOpenWrtInstallPlan::select($raw['json'],$raw['signature'],$key,(string)file_get_contents('/etc/openwrt_release'),$own,$this->schema());
+            $raw=$source->manifest();$plan=NfqwsOpenWrtInstallPlan::select($raw['json'],$raw['signature'],$key,(string)file_get_contents('/etc/openwrt_release'),$own,$this->schema());$plan+=['manifest'=>$raw['json'],'signature'=>$raw['signature']];
             if(in_array($plan['action'],['current','repair_required'],true))return $plan+['archive'=>null,'record'=>null,'keys'=>null,'missing'=>[]];
             $package=$plan['candidate']['package'];NfqwsOpenWrtUpdatePackage::space(disk_free_space(is_dir('/overlay')?'/overlay':'/'),disk_free_space($this->work),$package,0,1048576);
             $archive=$this->work.'/'.$package['filename'];$source->download($package,$archive);$keys=null;

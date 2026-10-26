@@ -16,12 +16,12 @@ MODULES=[PUBLIC/name for name in [
     'openwrt-update-manifest.php','update-store.php','update-lifecycle.php','update-package.php','openwrt-manual-context.php',
     'openwrt-update-environment.php','openwrt-update-package.php',
     'openwrt-update-manager.php','openwrt-apk-trust.php','update-github.php',
-]]+[ROOT/'openwrt/install-plan.php',ROOT/'openwrt/install-state.php',ROOT/'openwrt/install-prepare.php']
+]]+[ROOT/'openwrt/install-plan.php',ROOT/'openwrt/install-state.php',ROOT/'openwrt/install-prepare.php',ROOT/'openwrt/install-execute.php']
 
 def literal(text):
     return "'"+text.replace('\\','\\\\').replace("'","\\'")+"'"
 
-def render(public_key=None):
+def render(public_key=None,entry=False):
     key=(ROOT/'updates/trusted-release-key.pem').read_bytes()if public_key is None else public_key
     if not isinstance(key,bytes)or len(key)>8192 or not key.startswith(b'-----BEGIN PUBLIC KEY-----\n'):
         raise ValueError('A PEM public release key is required')
@@ -37,10 +37,32 @@ def render(public_key=None):
         parts.append('// '+str(source.relative_to(ROOT))+' sha256='+hashlib.sha256(raw).hexdigest()+'\n'+body+'\n')
     parts+=['const NFQWS_NATIVE_INSTALL_KEY = '+literal(key)+';\n',
             'const NFQWS_NATIVE_INSTALL_SCHEMA = '+literal(schema)+';\n']
+    if entry:
+        parts+=['const NFQWS_NATIVE_INSTALL_BRIDGE = '+literal((ROOT/'openwrt/install-update.php').read_text())+';\n', (ROOT/'openwrt/install-main.php').read_text()[6:]]
     return ''.join(parts).encode('utf-8')
 
+def shell(public_key=None):
+    code=render(public_key,entry=True).decode()
+    marker='NFQWS_NATIVE_BUNDLE'
+    if marker in code:raise ValueError('Bootstrap heredoc delimiter collision')
+    return (ROOT/'openwrt/install-shell.sh').read_text()+'\nnfqws_native_emit_bundle() {\ncat <<\''+marker+'\'\n'+code+'\n'+marker+'\n}\n'+(ROOT/'openwrt/install-entry.sh').read_text()
+
+def embed(path):
+    start='# BEGIN GENERATED NATIVE OPENWRT INSTALLER\n';end='# END GENERATED NATIVE OPENWRT INSTALLER\n'
+    text=path.read_text();block=start+shell()+end
+    if start in text:
+        a=text.index(start);b=text.index(end,a)+len(end);text=text[:a]+block+text[b:]
+    else:
+        marker='# Keep the entry point last so an incomplete piped download cannot run a partial installer.'
+        text=text.replace(marker,block+'\n'+marker).replace('main "$@"\n','if [ -f /etc/openwrt_release ]; then nfqws_native_main "$@"; else main "$@"; fi\n')
+    path.write_text(text)
+
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True);p.add_argument('--check',action='store_true');args=p.parse_args();data=render()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path);p.add_argument('--embed',type=Path);p.add_argument('--check',action='store_true');args=p.parse_args();
+    if args.embed:
+        embed(args.embed);return
+    if not args.output:p.error('--output or --embed is required')
+    data=render()
     if args.check:
         if not args.output.is_file()or args.output.read_bytes()!=data:p.error('Native installer verifier is stale; regenerate it from shared code')
     else:args.output.write_bytes(data)

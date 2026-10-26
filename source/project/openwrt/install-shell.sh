@@ -58,7 +58,7 @@ nfqws_native_install_only_plan() {
             /^$/ {next}
             /^Installing [a-z0-9][a-z0-9+._-]* \([A-Za-z0-9.+_:~\-]+\) to root\.\.\.$/ {planned++;next}
             /^Package [a-z0-9][a-z0-9+._-]* \([A-Za-z0-9.+_:~\-]+\) installed in root is up to date\.$/ {planned++;next}
-            /^Downloading https?:\/\/[^ \t\r]+$/ {next}
+            /^Downloading (https?:\/\/|file:\/\/\/)[^ \t\r]+$/ {next}
             {bad()}
             END {if(failed || !planned)exit 1}
         ';;
@@ -72,4 +72,58 @@ nfqws_native_install_only_plan() {
         ';;
         *) return 1;;
     esac
+}
+
+# No timeout or signal forwarding to a native package transaction. The private
+# work directory is retained if SSH exits before the command has completed.
+nfqws_native_background() {
+    NFQWS_NATIVE_KEEP=1
+    rm -f "$NFQWS_NATIVE_WORK/job.status" "$NFQWS_NATIVE_WORK/job.pid" || return 1
+    cat > "$NFQWS_NATIVE_WORK/job.sh" <<'NFQWS_JOB'
+#!/bin/sh
+trap '' HUP
+umask 077
+nfqws_job_dir=$1
+shift
+exec 9>&-
+printf '%s\n' "$$" > "$nfqws_job_dir/job.pid" || exit 1
+"$@" < /dev/null >> "$nfqws_job_dir/job.log" 2>&1
+nfqws_job_result=$?
+printf '%s\n' "$nfqws_job_result" > "$nfqws_job_dir/job.status.new" && mv "$nfqws_job_dir/job.status.new" "$nfqws_job_dir/job.status"
+exit "$nfqws_job_result"
+NFQWS_JOB
+    /bin/busybox start-stop-daemon -S -b -p "$NFQWS_NATIVE_WORK/unused-job.pid" -x /bin/sh -- "$NFQWS_NATIVE_WORK/job.sh" "$NFQWS_NATIVE_WORK" "$@" || return 1
+    nfqws_job_attempt=0
+    while [ ! -f "$NFQWS_NATIVE_WORK/job.pid" ]; do
+        nfqws_job_attempt=$((nfqws_job_attempt+1))
+        [ "$nfqws_job_attempt" -lt 5 ] || return 1
+        sleep 1
+    done
+    nfqws_job_pid=$(cat "$NFQWS_NATIVE_WORK/job.pid")
+    case "$nfqws_job_pid" in ''|*[!0-9]*) return 1;; esac
+    while [ ! -f "$NFQWS_NATIVE_WORK/job.status" ]; do
+        kill -0 "$nfqws_job_pid" 2>/dev/null || { [ -f "$NFQWS_NATIVE_WORK/job.status" ] && break; return 1; }
+        sleep 1
+    done
+    nfqws_job_status=$(cat "$NFQWS_NATIVE_WORK/job.status")
+    case "$nfqws_job_status" in 0) NFQWS_NATIVE_KEEP=0; return 0;; *) return 1;; esac
+}
+
+nfqws_native_signed_opkg() {
+    nfqws_config_files=/etc/opkg.conf
+    for nfqws_config in /etc/opkg/*.conf; do [ ! -f "$nfqws_config" ] || nfqws_config_files="$nfqws_config_files $nfqws_config"; done
+    nfqws_native_signed_config $nfqws_config_files
+}
+
+nfqws_native_bootstrap_lock() {
+    nfqws_lock_dir=/tmp/nfqws2-native-bootstrap
+    [ ! -L "$nfqws_lock_dir" ] || return 1
+    if [ ! -e "$nfqws_lock_dir" ]; then mkdir -m 700 "$nfqws_lock_dir" || return 1; fi
+    [ -d "$nfqws_lock_dir" ] && [ "$(LC_ALL=C ls -dn "$nfqws_lock_dir" | awk '{print $1,$3}')" = 'drwx------ 0' ] || return 1
+    [ ! -L "$nfqws_lock_dir/install.lock" ] || return 1
+    if [ -e "$nfqws_lock_dir/install.lock" ]; then
+        [ -f "$nfqws_lock_dir/install.lock" ] && [ "$(LC_ALL=C ls -ln "$nfqws_lock_dir/install.lock" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] || return 1
+    fi
+    exec 9> "$nfqws_lock_dir/install.lock" || return 1
+    flock -n 9
 }
