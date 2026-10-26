@@ -4,6 +4,12 @@ from pathlib import Path
 from test_openwrt_update_package import NativeApkPreflight,ROOT,builder,APK_CONTAINER,CACHE,APK_TOOL
 CONTAINER24=os.environ.get('NFQWS_TEST_DOCKER24')or(os.environ.get('NFQWS_TEST_DOCKER')if'24'in os.environ.get('NFQWS_TEST_DOCKER','')else None)
 
+@unittest.skipUnless(os.environ.get('PHP_TEST_BINARY'),'Requires matching PHP runtime')
+class NativeManagerContracts(unittest.TestCase):
+    def test_native_state_flags_and_own_service_health_scope(self):
+        p=subprocess.run([os.environ['PHP_TEST_BINARY'],'-n','-f',str(ROOT/'tests/test_openwrt_update_manager.php')],text=True,capture_output=True,timeout=10)
+        self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');self.assertIn('PASS:',p.stdout)
+
 @unittest.skipUnless(APK_CONTAINER and CACHE and APK_TOOL,'Requires isolated signed native25 package fixture')
 class NativeApkTransaction(NativeApkPreflight):
     # Reuse fixture setup, not archive-reader test methods.

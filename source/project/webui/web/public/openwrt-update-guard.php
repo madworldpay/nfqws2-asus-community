@@ -46,10 +46,12 @@ final class NfqwsOpenWrtUpdateGuard
     {
         if(!in_array($action,['core-start','core-stop','web-start','web-stop','hook-prerm','hook-postinst','dns-restore'],true))throw new RuntimeException('invalid_request');
         $t=$this->ticket();
-        if($action==='dns-restore'&&($t===null||$t['phase']==='finished'||!AsusUpdateLifecycle::alive($t['worker'])&&!$this->managerAlive($t))&&NfqwsOpenWrtManualContext::authorize())return true;
+        $inactive=$t===null||$t['phase']==='finished'||!AsusUpdateLifecycle::alive($t['worker'])&&!$this->managerAlive($t);
+        if($inactive&&in_array($action,['dns-restore','core-stop','web-stop'],true)&&NfqwsOpenWrtManualContext::authorize())return true;
+        if($inactive&&in_array($action,['core-start','web-start'],true)&&NfqwsOpenWrtManualContext::startingAuthorized($action))return true;
         if($t===null||!$this->worker($t)||!self::ancestor($t['worker']['pid']))return false;
         $manager=$this->managerAlive($t)&&self::ancestor($t['manager']['pid']);
-        if($t['phase']==='installing')return $manager;
+        if($t['phase']==='installing')return $manager&&in_array($action,['core-stop','web-stop','hook-prerm','hook-postinst','dns-restore'],true);
         if($t['phase']!=='starting')return false;
         return $action==='web-start'||($action==='core-start'&&$t['intent']['mode']!=='stopped');
     }

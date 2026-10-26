@@ -3,6 +3,11 @@ USE_PROCD=1
 START=95
 STOP=10
 
+case "$action" in start|stop|restart|reload|boot|shutdown)
+    . /usr/lib/nfqws2/update/service-lease.sh || exit 1
+    nfqws_native_update_enter core "$action" || exit 1;;
+esac
+
 NFQWS_CONTROL=${NFQWS_CONTROL:-/usr/lib/nfqws2/control.sh}
 NFQWS_RUN=${NFQWS_RUN:-/var/run/nfqws2-native}
 

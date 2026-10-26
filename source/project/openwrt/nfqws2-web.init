@@ -3,6 +3,11 @@ USE_PROCD=1
 START=96
 STOP=9
 
+case "$action" in start|stop|restart|reload|boot|shutdown)
+    . /usr/lib/nfqws2/update/service-lease.sh || exit 1
+    nfqws_native_update_enter web "$action" || exit 1;;
+esac
+
 nfqws_web_prepare() {
     . /usr/lib/nfqws2-web/web.sh || return 1
     config_load nfqws2-web

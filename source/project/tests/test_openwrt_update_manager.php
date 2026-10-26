@@ -13,6 +13,9 @@ foreach(['unpacked','half-installed','half-configured']as $status)rejects(fn()=>
 check(NfqwsOpenWrtUpdateManager::database(str_replace('A:x86_64',"A:x86_64\nf:S",$apk),'apk')===NfqwsOpenWrtUpdateManager::database($apk,'apk'),'APK digest format flag is healthy');
 foreach(['f','s','fS','sS']as $flag)rejects(fn()=>NfqwsOpenWrtUpdateManager::database(str_replace('P:libc','f:'.$flag."\nP:libc",$apk),'apk'),'pending_packages');
 rejects(fn()=>NfqwsOpenWrtUpdateManager::database($apk."\nP:libc\nV:2\n",'apk'),'pending_packages');
+$foreignBroken=str_replace('P:libc',"f:s\nP:libc",$apk);
+check(NfqwsOpenWrtUpdateManager::database($foreignBroken,'apk',false,true)===['nfqws2-native'=>'1.3.2-r71'],'ordinary service health is scoped to our own package');
+rejects(fn()=>NfqwsOpenWrtUpdateManager::database(str_replace('P:nfqws2-native',"f:s\nP:nfqws2-native",$apk),'apk',false,true),'pending_packages');
 $record=['name'=>'nfqws2-native','version'=>'1.3.2-72','depends'=>['libc']];$env=['format'=>'ipk'];
 $args=NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.ipk',$env,$db,$record);
 check($args===['/bin/opkg','--nodeps','install','/tmp/private/package.ipk'],'opkg updates only application after dependency checks');

@@ -14,7 +14,7 @@ class NativePackageLifecycleTests(unittest.TestCase):
             root=Path(td);init=root/'init';init.mkdir();state=root/'state';state.mkdir()
             (state/'state').write_text('manager=boot:123:456\nenabled=1\nrunning=1\nweb_present=1\nweb_enabled=1\nweb_running=1\n')
             for name in ['nfqws2-native','nfqws2-native-web','nfqws2-native-dns','nfqws2-native-dns-resume']:
-                path=init/name;path.write_text('#!/bin/sh\nprintf "%s:%s\\n" '+name+' "$1"\n');path.chmod(0o755)
+                path=init/name;path.write_text('#!/bin/sh\nif [ "$1" = start ]; then [ -f "$TEST_STATE/phase" ] || exit 99; fi\nprintf "%s:%s\\n" '+name+' "$1"\n');path.chmod(0o755)
             source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0].replace('/etc/init.d/',str(init)+'/')
             body=source+"""
 nfqws_package_state_dir="$TEST_STATE"

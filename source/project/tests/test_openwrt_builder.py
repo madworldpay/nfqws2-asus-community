@@ -92,7 +92,7 @@ class NativeBuilderTests(unittest.TestCase):
         self.assertEqual((artifact['arch'],artifact['engine']),('arm_cortex-a9','arm'))
         self.assertEqual(artifact['artifact']['sha256'],'c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863')
         self.assertIn('usr/lib/nfqws2/dpi/paths.sh',files)
-        for name,mode in [('quiesce.php',0o644),('quiesce.sh',0o755),('package-functions.sh',0o644),('worker.php',0o644),('worker.sh',0o755)]:
+        for name,mode in [('quiesce.php',0o644),('quiesce.sh',0o755),('package-functions.sh',0o644),('worker.php',0o644),('worker.sh',0o755),('service-guard.php',0o644),('service-lease.sh',0o644)]:
             self.assertTrue('usr/lib/nfqws2/update/'+name in files,'Missing native controller payload: '+name)
             self.assertEqual(files['usr/lib/nfqws2/update/'+name][1],mode)
         functions=files['usr/lib/nfqws2/update/package-functions.sh'][0].decode()

@@ -21,7 +21,7 @@ class ManualNativeContext(unittest.TestCase):
   self.sh('umask 077; mkdir -p '+base+'/app /usr/lib/nfqws2/update; cp '+shlex.quote(str(ROOT/'webui/web/public'))+'/*.php '+base+'/app/; chmod 644 '+base+'/app/*.php; printf %s '+shlex.quote('{"schema_version":1,"platform":"openwrt"}')+' > '+base+'/app/platform-profile.json')
   self.sh('printf %s '+case+' > '+base+'/case')
   helper='''<?php
-require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-context.php';$store=new AsusUpdateStore(__DIR__.'/store');$g=new AsusUpdateGuard($store);if(trim(file_get_contents(__DIR__.'/case'))==='stale-ui'){require __DIR__.'/app/openwrt-update-hook.php';$t=['schema'=>1,'id'=>str_repeat('d',32),'boot_id'=>AsusUpdateStore::boot(),'worker'=>['pid'=>2147483647,'start_ticks'=>'1','boot_id'=>AsusUpdateStore::boot(),'exe'=>'/usr/bin/php8-cgi','uid'=>0],'manager'=>null,'phase'=>'installing','format'=>is_file('/usr/bin/apk')?'apk':'ipk','intent'=>['mode'=>'stopped']];$store->writeFile('native-transaction.json',json_encode($t));if((new NfqwsOpenWrtUpdateHook($store))->run('verify'))throw new RuntimeException('dead UI hook must stay inert');}$manager=NfqwsOpenWrtManualContext::manager();if(!in_array($manager['format'],['ipk','apk'],true)||$manager['identity']['uid']!==0)throw new RuntimeException('wrong native manager frame');$authorized=$g->authorize('dns-restore');$blocked=false;try{$f=$g->mutationLease();fclose($f);}catch(RuntimeException $e){$blocked=$e->getMessage()==='busy';}echo json_encode(['authorized'=>$authorized,'ordinary_blocked'=>$blocked]);
+require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-context.php';$store=new AsusUpdateStore(__DIR__.'/store');$g=new AsusUpdateGuard($store);if(trim(file_get_contents(__DIR__.'/case'))==='stale-ui'){require __DIR__.'/app/openwrt-update-hook.php';$t=['schema'=>1,'id'=>str_repeat('d',32),'boot_id'=>AsusUpdateStore::boot(),'worker'=>['pid'=>2147483647,'start_ticks'=>'1','boot_id'=>AsusUpdateStore::boot(),'exe'=>'/usr/bin/php8-cgi','uid'=>0],'manager'=>null,'phase'=>'installing','format'=>is_file('/usr/bin/apk')?'apk':'ipk','intent'=>['mode'=>'stopped']];$store->writeFile('native-transaction.json',json_encode($t));if((new NfqwsOpenWrtUpdateHook($store))->run('verify'))throw new RuntimeException('dead UI hook must stay inert');}$manager=NfqwsOpenWrtManualContext::manager();if(!in_array($manager['format'],['ipk','apk'],true)||$manager['identity']['uid']!==0)throw new RuntimeException('wrong native manager frame');$authorized=$g->authorize('dns-restore');$blocked=false;try{$f=$g->mutationLease();fclose($f);}catch(RuntimeException $e){$blocked=$e->getMessage()==='busy';}$result=['authorized'=>$authorized,'ordinary_blocked'=>$blocked];$case=trim(file_get_contents(__DIR__.'/case'));if(str_starts_with($case,'phase-')){$result['before_core_start']=$g->authorize('core-start');$manager=NfqwsOpenWrtManualContext::manager()['identity'];$tuple=$manager['boot_id'].':'.$manager['pid'].':'.$manager['start_ticks'];if($case==='phase-stale')$tuple.='1';file_put_contents('/tmp/nfqws2-native-package/phase',$tuple."\\nstarting\\n");chmod('/tmp/nfqws2-native-package/phase',$case==='phase-unsafe'?0666:0600);$result['core_start']=$g->authorize('core-start');$result['web_start']=$g->authorize('web-start');}echo json_encode($result);
 '''
   self.sh('cat > '+base+'/probe.php',helper)
   controller="<?php\nrequire "+json.dumps(base+"/app/update-guard.php")+";$s=new AsusUpdateStore("+json.dumps(base+'/store')+");$f=$s->lease('apply.lock');$p=proc_open(['/usr/bin/php8-cgi','-d','register_argc_argv=1','-q','-f',"+json.dumps(base+'/probe.php')+"],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);$raw=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($p);if($exit!==0)throw new RuntimeException($error.$raw);file_put_contents("+json.dumps(base+'/result.json')+",$raw);"
@@ -35,7 +35,11 @@ require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-con
   if case in ['unsafe-controller-dir','unsafe-wrapper']:
    original=self.sh('php-cli -r '+shlex.quote('echo decoct(fileperms($argv[1])&0777);')+' /usr/lib/nfqws2/update').strip();self.sh('chmod 777 /usr/lib/nfqws2/update');self.addCleanup(lambda:self.sh('chmod '+original+' /usr/lib/nfqws2/update',check=False))
   library=(ROOT/'openwrt/package-lifecycle.sh').read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
-  body='#!/bin/sh\numask 077\n'+library+'\nNFQWS_PKG_FORMAT='+fmt+'\nnfqws_package_snapshot || exit 1\n'
+  body='#!/bin/sh\numask 077\n'+library+'\nNFQWS_PKG_FORMAT='+fmt+'\n'
+  if case.startswith('phase-')and case!='phase-first':
+   running='0'if case=='phase-stopped'else'1'
+   body+='nfqws_package_service_state() { printf "enabled=1\\nrunning='+running+'\\nweb_present=1\\nweb_enabled=1\\nweb_running='+running+'\\n"; }\n'
+  body+='nfqws_package_snapshot || exit 1\n'
   body+='/usr/bin/php8-cgi -d register_argc_argv=1 -q -f '+base+'/probe.php > '+base+'/outside.json\n'
   if case=='stale':body+="sed -i 's/^manager=.*/manager=stale:2:3/' /tmp/nfqws2-native-package/state\n"
   if case=='unsafe':body+='chmod 666 /tmp/nfqws2-native-package/state\n'
@@ -65,10 +69,18 @@ require __DIR__.'/app/update-guard.php';require __DIR__.'/app/openwrt-manual-con
    if production and case=='unsafe-wrapper':return {'refused':self.sh('cat '+base+'/exit').strip()!='0','entry_started':self.sh('test -e '+base+'/entry-started; printf %s $?').strip()=='0'}
    if production and case=='busy':
     self.sh('test ! -e '+base+'/result.json');self.assertIn('busy',self.sh('cat '+base+'/controller.error'));return {'busy':self.sh('cat '+base+'/exit').strip()!='0'}
-   outside=json.loads(self.sh('cat '+base+'/outside.json'));inside=json.loads(self.sh('cat '+base+'/result.json'));self.assertFalse(outside['authorized'],'manager alone cannot bypass updater lease');self.assertTrue(outside['ordinary_blocked'],'live native manager must block ordinary changes even before EX quiesce');return inside
+   outside=json.loads(self.sh('cat '+base+'/outside.json'));inside=json.loads(self.sh('cat '+base+'/result.json'));self.assertFalse(outside['authorized'],'manager alone cannot bypass updater lease');
+   if case.startswith('phase-'):self.assertFalse(outside['before_core_start'],'manual manager cannot start before its verified postinstall phase')
+   self.assertTrue(outside['ordinary_blocked'],'live native manager must block ordinary changes even before EX quiesce');return inside
   finally:
    self.sh(('opkg remove'if fmt=='ipk'else'apk del --network=no')+' nfqws2-native >/dev/null 2>&1 || :',check=False)
    self.sh('rm -rf /tmp/nfqws2-native-package',check=False)
+ def test_only_current_postinstall_phase_can_restore_original_service_intent(self):
+  for case,core,web in [('phase-running',True,True),('phase-first',False,True),('phase-stopped',False,False),('phase-stale',False,False),('phase-unsafe',False,False)]:
+   with self.subTest(case=case):
+    try:
+     r=self.run_case(case);self.assertEqual(r['core_start'],core,r);self.assertEqual(r['web_start'],web,r)
+    finally:self.doCleanups()
  def test_exact_controller_restores_dns_while_ordinary_mutations_stay_blocked(self):
   self.assertEqual(self.run_case('ok'),{'authorized':True,'ordinary_blocked':True})
  def test_manual_recovery_can_ignore_a_dead_ui_ticket_without_sh_lease_deadlock(self):

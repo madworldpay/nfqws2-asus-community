@@ -31,6 +31,20 @@ final class NfqwsOpenWrtManualContext
         foreach(['ipk'=>'/bin/opkg','apk'=>'/usr/bin/apk']as $format=>$path){$exe=realpath($path);if($exe!==false&&$exe===$i['exe']&&AsusUpdateLifecycle::alive($i))return ['format'=>$format,'identity'=>$i];}
         return null;
     }
+    /** Only this manager's completed payload/defaults may restore saved starts. */
+    public static function startingAuthorized(string $action):bool
+    {
+        if(!in_array($action,['core-start','web-start'],true))return false;$active=self::activeManager();if($active===null)return false;
+        try{$actual=self::manager();if($actual['identity']!==$active['identity'])return false;}catch(Throwable $e){return false;}
+        $m=$active['identity'];$tuple=$m['boot_id'].':'.$m['pid'].':'.$m['start_ticks'];$path='/tmp/nfqws2-native-package/phase';
+        try{AsusUpdateStore::noLinks($path);}catch(Throwable $e){return false;}$s=@lstat($path);
+        if(!$s||!is_file($path)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0777)!==0600||$s['size']>256||file_get_contents($path)!==$tuple."\nstarting\n")return false;
+        $raw=(string)file_get_contents('/tmp/nfqws2-native-package/state');$v=[];
+        foreach(explode("\n",trim($raw))as $line){if(!preg_match('/^([a-z_]+)=([^\r\n]*)$/D',$line,$r)||isset($v[$r[1]]))return false;$v[$r[1]]=$r[2];}
+        $keys=array_keys($v);sort($keys);$expected=['manager','enabled','running','web_present','web_enabled','web_running'];sort($expected);if($keys!==$expected||$v['manager']!==$tuple)return false;
+        foreach(array_diff($keys,['manager'])as $key)if(!in_array($v[$key],['0','1'],true))return false;
+        return AsusUpdateLifecycle::alive($m)&&($action==='core-start'?$v['running']==='1':($v['web_present']==='0'||$v['web_running']==='1'));
+    }
     public static function authorize():bool
     {
         if(!NfqwsPlatform::native())return false;$entry='/usr/lib/nfqws2/update/quiesce.php';

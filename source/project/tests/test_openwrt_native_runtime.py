@@ -27,6 +27,10 @@ class OpenWrtNativeRuntimeTests(unittest.TestCase):
         cls.write('/usr/lib/nfqws2/import-config.php',(ROOT/'webui/web/public/import-config.php').read_text())
         args=re.search(r'^_startup_args\(\) \{.*?^\}',(ROOT/'core/etc/init.d/common').read_text(),re.M|re.S).group()
         cls.write('/usr/lib/nfqws2/args.sh',args+'\n')
+        cls.sh('mkdir -p /usr/lib/nfqws2/update /usr/share/nfqws2-web; chmod 755 /usr/lib/nfqws2/update /usr/share/nfqws2-web')
+        for name in ['service-guard.php','service-lease.sh']:cls.write('/usr/lib/nfqws2/update/'+name,(ROOT/'openwrt/update'/name).read_text())
+        for source in (ROOT/'webui/web/public').glob('*.php'):cls.write('/usr/share/nfqws2-web/'+source.name,source.read_text())
+        cls.write('/usr/share/nfqws2-web/platform-profile.json','{"schema_version":1,"platform":"openwrt"}')
         cls.sh('chmod 755 /usr/lib/nfqws2/control.sh')
         # A process-boundary fixture, never a fake parser/firewall implementation.
         cls.write('/usr/bin/nfqws2',"""#!/bin/sh

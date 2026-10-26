@@ -2,24 +2,34 @@
 from pathlib import Path
 import subprocess
 import unittest
+import tempfile
 
 LIB=Path(__file__).resolve().parents[1]/'openwrt/web.sh'
 
 class NativeWebServiceTests(unittest.TestCase):
     def test_invalid_listener_is_rejected_before_procd_replaces_running_instance(self):
-        source=(LIB.parent/'nfqws2-web.init').read_text().replace('/usr/lib/nfqws2-web/web.sh',str(LIB))
-        script='''
+        r=self.run_init(False)
+        self.assertNotEqual(r.returncode,0)
+        self.assertNotIn('OLD_INSTANCE_CLOSED',r.stdout)
+        self.assertIn('invalid_panel_listener',r.stderr)
+
+    def run_init(self,busy):
+        with tempfile.TemporaryDirectory()as td:
+            guard=Path(td)/'guard.sh';guard.write_text('nfqws_native_update_enter() { return '+('1'if busy else'0')+'; }\n')
+            source=(LIB.parent/'nfqws2-web.init').read_text().replace('/usr/lib/nfqws2-web/web.sh',str(LIB)).replace('/usr/lib/nfqws2/update/service-lease.sh',str(guard))
+            script='''
 action=restart
-config_load() { :; }
+config_load() { echo CONFIG_READ; }
 config_get() { eval "$1=invalid"; }
 config_list_foreach() { :; }
 '''+source+'''
 printf 'OLD_INSTANCE_CLOSED\\n'
 start_service
 '''
-        r=subprocess.run(['sh','-c',script],text=True,capture_output=True)
-        self.assertNotEqual(r.returncode,0)
-        self.assertNotIn('OLD_INSTANCE_CLOSED',r.stdout)
+            return subprocess.run(['sh','-c',script],text=True,capture_output=True)
+
+    def test_update_refuses_listener_reads_and_procd_restart_before_mutation(self):
+        r=self.run_init(True);self.assertNotEqual(r.returncode,0);self.assertNotIn('CONFIG_READ',r.stdout);self.assertNotIn('OLD_INSTANCE_CLOSED',r.stdout)
 
     def run_listeners(self,addresses,override=''):
         script='''

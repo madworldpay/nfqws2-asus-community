@@ -12,7 +12,7 @@ JSONFILTER=os.environ.get('NFQWS_TEST_JSONFILTER')
 
 
 class OpenWrtServiceTests(unittest.TestCase):
-    def run_init(self, action, *, failed=False):
+    def run_init(self, action, *, failed=False, update_busy=False):
         """Real init script, with only procd/OS calls replaced at the boundary."""
         with tempfile.TemporaryDirectory() as td:
             binary=Path(td)/'bin';binary.mkdir()
@@ -20,6 +20,8 @@ class OpenWrtServiceTests(unittest.TestCase):
 printf '%s\\n' "$*" >> "$TEST_LOG"
 [ "$1" != preflight ] || [ "$FAIL_PREFLIGHT" != 1 ]
 ''');control.chmod(0o755)
+            guard=Path(td)/'service-lease.sh';guard.write_text('nfqws_native_update_enter() { [ "$FAIL_UPDATE_GUARD" != 1 ]; }\n')
+            init=Path(td)/'init';init.write_text((ROOT/'openwrt/nfqws2.init').read_text().replace('/usr/lib/nfqws2/update/service-lease.sh',str(guard)))
             launch=Path(td)/'launch.env';launch.write_text("NFQWS_LAUNCH_ARGS='--user=nobody --qnum=300 --filter-tcp=443'\n")
             body='''
 NFQWS_CONTROL="$CONTROL"; NFQWS_RUN="$RUN"; action="$ACTION"
@@ -31,10 +33,14 @@ start_service
 service_started
 '''
             r=subprocess.run(['sh','-c',body],capture_output=True,text=True,env={**os.environ,
-                'CONTROL':str(control),'RUN':td,'INIT':str(ROOT/'openwrt/nfqws2.init'),
-                'ACTION':action,'FAIL_PREFLIGHT':'1' if failed else '0','TEST_LOG':td+'/calls'})
+                'CONTROL':str(control),'RUN':td,'INIT':str(init),
+                'ACTION':action,'FAIL_UPDATE_GUARD':'1'if update_busy else'0','FAIL_PREFLIGHT':'1' if failed else '0','TEST_LOG':td+'/calls'})
             calls=Path(td+'/calls').read_text().splitlines() if Path(td+'/calls').exists() else []
             return r,calls
+
+    def test_active_update_is_rejected_before_preflight_firewall_or_procd(self):
+        for action in ['start','stop','restart','reload','boot','shutdown']:
+            r,calls=self.run_init(action,update_busy=True);self.assertNotEqual(r.returncode,0);self.assertEqual(calls,[])
 
     def test_failed_preflight_never_changes_existing_procd_instance(self):
         for action in ['start','restart','reload','boot']:

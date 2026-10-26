@@ -5,6 +5,10 @@ export PATH
 NFQWS_LIB=/usr/lib/nfqws2
 NFQWS_RUN=/var/run/nfqws2-native
 NFQWS_BIN=/usr/bin/nfqws2
+case "$1" in preflight|firewall|remove-firewall)
+    . /usr/lib/nfqws2/update/service-lease.sh || exit 1
+    nfqws_native_update_enter core "$1" || exit 1;;
+esac
 . "$NFQWS_LIB/platform.sh" || exit 1
 . "$NFQWS_LIB/firewall.sh" || exit 1
 

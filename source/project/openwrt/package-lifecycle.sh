@@ -263,6 +263,16 @@ nfqws_package_defaults() {
     fi
 }
 
+nfqws_package_mark_starting() {
+    local manager path=$nfqws_package_state_dir/phase
+    manager=$(nfqws_package_manager) || return 1
+    [ ! -L "$path" ] || return 1
+    if [ -e "$path" ]; then
+        [ -f "$path" ] && [ "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] || return 1
+    fi
+    (umask 077; printf '%s\nstarting\n' "$manager" > "$path")
+}
+
 nfqws_package_postinstall() {
     nfqws_package_defaults || return 1
     [ -z "$IPKG_INSTROOT" ] || return 0
@@ -298,16 +308,19 @@ nfqws_package_postinstall() {
     case "$?" in 0) defer=1;; 10) ;; *) return 1;; esac
     if [ "$enabled" = 1 ]; then /etc/init.d/nfqws2-native enable || return 1
     else /etc/init.d/nfqws2-native disable || return 1; fi
-    [ "$defer" = 1 ] || [ "$running" != 1 ] || /etc/init.d/nfqws2-native start || return 1
     if [ -x /etc/init.d/nfqws2-native-web ]; then
         if [ "$web_enabled" = 1 ]; then /etc/init.d/nfqws2-native-web enable || return 1
         else /etc/init.d/nfqws2-native-web disable || return 1; fi
-        [ "$defer" = 1 ] || [ "$web_running" != 1 ] || /etc/init.d/nfqws2-native-web start || return 1
     fi
     if [ -x /etc/init.d/nfqws2-native-dns ]; then /etc/init.d/nfqws2-native-dns disable || return 1; fi
     if [ -x /etc/init.d/nfqws2-native-dns-resume ]; then /etc/init.d/nfqws2-native-dns-resume enable || return 1; fi
     [ "$defer" != 1 ] || return 0
-    rm -f "$nfqws_package_state_dir/state" "$nfqws_package_state_dir/previous-resources.json"
+    nfqws_package_mark_starting || return 1
+    [ "$running" != 1 ] || /etc/init.d/nfqws2-native start || return 1
+    if [ -x /etc/init.d/nfqws2-native-web ]; then
+        [ "$web_running" != 1 ] || /etc/init.d/nfqws2-native-web start || return 1
+    fi
+    rm -f "$nfqws_package_state_dir/state" "$nfqws_package_state_dir/previous-resources.json" "$nfqws_package_state_dir/phase"
     rmdir "$nfqws_package_state_dir" 2>/dev/null || :
     # The detached worker revalidates only previously confirmed consent.
     # First installation remains inert when no saved DNS intent exists.
