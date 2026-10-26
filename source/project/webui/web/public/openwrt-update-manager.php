@@ -8,32 +8,33 @@ final class NfqwsOpenWrtUpdateManager
     {
         if(!preg_match('/^[a-z0-9][a-z0-9+._-]{0,127}$/D',$name)||!preg_match('/^[A-Za-z0-9][A-Za-z0-9.+_:~\-]{0,199}$/D',$version))throw new RuntimeException('pending_packages');
     }
-    public static function database(string $raw,string $format):array
+    public static function database(string $raw,string $format,bool $ownTransition=false):array
     {
         if(strlen($raw)>2097152||str_contains($raw,"\0")||!in_array($format,['ipk','apk'],true)||trim($raw)==='')throw new RuntimeException('pending_packages');
         $out=[];
         foreach(preg_split('/\n[ \t]*\n/',trim($raw))as $section){
             if($format==='ipk'){
-                $p=AsusUpdatePackage::fields($section);$status=preg_split('/\s+/',trim($p['Status']??''));$flags=explode(',',$status[1]??'');
+                $p=AsusUpdatePackage::fields($section);if($ownTransition&&($p['Package']??null)==='nfqws2-native')continue;$status=preg_split('/\s+/',trim($p['Status']??''));$flags=explode(',',$status[1]??'');
                 if(count($status)!==3||!in_array($status[0],['install','hold','deinstall','purge','unknown'],true)||array_diff($flags,['ok','user','prefer','hold'])||count($flags)!==count(array_unique($flags)))throw new RuntimeException('pending_packages');
                 if(in_array($status[2],['not-installed','config-files'],true))continue;
                 if($status[2]!=='installed'||!in_array($status[0],['install','hold'],true))throw new RuntimeException('pending_packages');
                 $name=$p['Package']??'';$version=$p['Version']??'';
             }else{
                 $p=[];foreach(explode("\n",$section)as $line){if(!preg_match('/^([A-Za-z]):(.*)$/D',$line,$m))throw new RuntimeException('pending_packages');
-                    if(in_array($m[1],['P','V'],true)){if(isset($p[$m[1]]))throw new RuntimeException('pending_packages');$p[$m[1]]=$m[2];}}
-                $name=$p['P']??'';$version=$p['V']??'';
+                    if(in_array($m[1],['P','V','f'],true)){if(isset($p[$m[1]]))throw new RuntimeException('pending_packages');$p[$m[1]]=$m[2];}}
+                $name=$p['P']??'';$version=$p['V']??'';if($ownTransition&&$name==='nfqws2-native')continue;
+                if(!preg_match('/^[Sx]*$/D',$p['f']??''))throw new RuntimeException('pending_packages');
             }
             self::package($name,$version);if(isset($out[$name]))throw new RuntimeException('pending_packages');$out[$name]=$version;
         }
         if(count($out)>4096||count($out)<1)throw new RuntimeException('pending_packages');ksort($out);return $out;
     }
-    public static function installed(array $environment):array
+    public static function installed(array $environment,bool $ownTransition=false):array
     {
         $file=match($environment['format']??null){'ipk'=>'/usr/lib/opkg/status','apk'=>'/lib/apk/db/installed',default=>throw new RuntimeException('unsupported_abi')};
         $path=realpath($file);if($path===false)throw new RuntimeException('pending_packages');$s=@lstat($path);
         if(!$s||!is_file($path)||$s['uid']!==0||($s['mode']&0022)!==0||$s['size']>2097152)throw new RuntimeException('pending_packages');
-        $raw=file_get_contents($path);if(!is_string($raw))throw new RuntimeException('pending_packages');return self::database($raw,$environment['format']);
+        $raw=file_get_contents($path);if(!is_string($raw))throw new RuntimeException('pending_packages');return self::database($raw,$environment['format'],$ownTransition);
     }
     public static function argv(string $path,array $environment,array $installed,array $record,?string $keys=null,bool $simulate=false):array
     {

@@ -1,5 +1,6 @@
 # Embedded verbatim in native package hooks. Never run downloaded shell code.
 nfqws_package_state_dir=/tmp/nfqws2-native-package
+nfqws_package_updates_dir=/tmp/nfqws2-native-state/updates
 
 nfqws_package_guard() {
     local path=$1
@@ -111,6 +112,33 @@ nfqws_package_dns_control() {
     /usr/bin/php-cgi -d register_argc_argv=1 -q -f "$path" -- "$mode" || { echo dns_restore_failed >&2; return 1; }
 }
 
+# A staged update survives replacement/removal of the old application files.
+# Only protected native state chooses this entry; no environment or HTTP path.
+nfqws_package_native_update() {
+    local action=$1 dir=$nfqws_package_updates_dir phase id path parent
+    case "$action" in verify|capture) ;; *) return 1;; esac
+    path=$dir/native-transaction.json
+    [ -e "$path" ] || [ -L "$path" ] || return 0
+    parent=$path
+    while [ "$parent" != / ] && [ -n "$parent" ]; do
+        [ ! -L "$parent" ] || return 1
+        parent=${parent%/*}
+    done
+    [ -d "$dir" ] && nfqws_package_guard "$dir" || return 1
+    [ -f "$path" ] && [ "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] && [ "$(wc -c < "$path")" -le 16384 ] || return 1
+    phase=$(jsonfilter -i "$path" -e '@.phase') || return 1
+    case "$phase" in finished) return 0;; validating|installing|starting) ;; *) return 1;; esac
+    id=$(jsonfilter -i "$path" -e '@.id') || return 1
+    case "$id" in ''|*[!a-f0-9]*) return 1;; esac
+    [ "${#id}" = 32 ] || return 1
+    for parent in "$dir/operations" "$dir/operations/$id" "$dir/operations/$id/runtime"; do
+        [ -d "$parent" ] && nfqws_package_guard "$parent" || return 1
+    done
+    path=$dir/operations/$id/runtime/worker.php
+    [ -f "$path" ] && [ ! -L "$path" ] && [ "$(LC_ALL=C ls -ln "$path" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] || return 1
+    /usr/bin/php-cgi -d register_argc_argv=1 -q -f "$path" -- "hook-$action" "$id"
+}
+
 nfqws_package_stop_services() {
     local name
     for name in nfqws2-native nfqws2-native-web nfqws2-native-dns nfqws2-native-dns-resume; do
@@ -118,11 +146,13 @@ nfqws_package_stop_services() {
     done
     # Verify fallback DNS while the old engine and controller still exist.
     # A conflict aborts the package-manager pre-commit hook.
+    nfqws_package_native_update verify &&
     nfqws_package_dns_control "$1" &&
     nfqws_package_service nfqws2-native-dns stop &&
     nfqws_package_service nfqws2-native-dns-resume stop &&
     nfqws_package_service nfqws2-native stop &&
-    nfqws_package_service nfqws2-native-web stop
+    nfqws_package_service nfqws2-native-web stop &&
+    nfqws_package_native_update capture
 }
 
 nfqws_package_preinstall() {

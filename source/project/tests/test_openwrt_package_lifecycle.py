@@ -50,6 +50,29 @@ nfqws_package_stop_services remove
         self.assertEqual(r.returncode,0,r.stderr)
         self.assertEqual(r.stdout.splitlines()[0],'dns-control-remove')
 
+    def test_native_update_checks_precede_dns_and_snapshot_follows_service_stop(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_native_update() { printf 'update-%s\\n' "$1"; }
+nfqws_package_service_owner() { return 0; }
+nfqws_package_dns_control() { echo dns; }
+nfqws_package_service() { printf '%s-%s\\n' "$1" "$2"; }
+nfqws_package_stop_services upgrade
+'''],capture_output=True,text=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(r.stdout.splitlines(),['update-verify','dns','nfqws2-native-dns-stop','nfqws2-native-dns-resume-stop','nfqws2-native-stop','nfqws2-native-web-stop','update-capture'])
+
+    def test_failed_native_manager_proof_cannot_change_dns_or_services(self):
+        source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
+        r=subprocess.run(['sh','-c',source+'''
+nfqws_package_native_update() { return 1; }
+nfqws_package_service_owner() { return 0; }
+nfqws_package_dns_control() { echo unexpected; }
+nfqws_package_service() { echo unexpected; }
+nfqws_package_stop_services upgrade
+'''],capture_output=True,text=True)
+        self.assertNotEqual(r.returncode,0);self.assertEqual(r.stdout,'')
+
     def test_apk_upgrade_stops_old_process_before_replacing_its_executable(self):
         source=LIB.read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
         r=subprocess.run(['sh','-c',source+'''

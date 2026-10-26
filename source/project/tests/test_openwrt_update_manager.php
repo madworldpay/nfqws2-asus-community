@@ -8,7 +8,10 @@ $db=NfqwsOpenWrtUpdateManager::database($ipk,'ipk');check($db===['libc'=>'1.2.5-
 check(NfqwsOpenWrtUpdateManager::database(str_replace('hold user,prefer installed','install hold installed',$ipk),'ipk')===$db,'native hold flag is healthy');
 $apk="C:Q1abc\nP:libc\nV:1.2.5-r1\nA:x86_64\n\nP:nfqws2-native\nV:1.3.2-r71\nA:x86_64\n";
 check(NfqwsOpenWrtUpdateManager::database($apk,'apk')===['libc'=>'1.2.5-r1','nfqws2-native'=>'1.3.2-r71'],'native apk database');
+check(NfqwsOpenWrtUpdateManager::database(str_replace('install user installed','install ok half-installed',$ipk),'ipk',true)===['libc'=>'1.2.5-r1'],'only own transition may be ignored under manager hook');
 foreach(['unpacked','half-installed','half-configured']as $status)rejects(fn()=>NfqwsOpenWrtUpdateManager::database(str_replace('hold user,prefer installed','install ok '.$status,$ipk),'ipk'),'pending_packages');
+check(NfqwsOpenWrtUpdateManager::database(str_replace('A:x86_64',"A:x86_64\nf:S",$apk),'apk')===NfqwsOpenWrtUpdateManager::database($apk,'apk'),'APK digest format flag is healthy');
+foreach(['f','s','fS','sS']as $flag)rejects(fn()=>NfqwsOpenWrtUpdateManager::database(str_replace('P:libc','f:'.$flag."\nP:libc",$apk),'apk'),'pending_packages');
 rejects(fn()=>NfqwsOpenWrtUpdateManager::database($apk."\nP:libc\nV:2\n",'apk'),'pending_packages');
 $record=['name'=>'nfqws2-native','version'=>'1.3.2-72','depends'=>['libc']];$env=['format'=>'ipk'];
 $args=NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.ipk',$env,$db,$record);
