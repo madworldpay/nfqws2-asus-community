@@ -1,0 +1,34 @@
+{
+  "recipes": [
+    {
+      "series": "24.10",
+      "file": "recipes/openwrt-smartdns/24.10/Makefile",
+      "sha256": "8e580cfa05c8542a888de1945e568a3df3bd72f4114f848c9014553846bdc85c",
+      "repository_commit": "d908e7514317bdde3ce5df56452fc76a947f5aca",
+      "url": "https://raw.githubusercontent.com/openwrt/packages/d908e7514317bdde3ce5df56452fc76a947f5aca/net/smartdns/Makefile"
+    },
+    {
+      "series": "25.12",
+      "file": "recipes/openwrt-smartdns/25.12/Makefile",
+      "sha256": "bcd9d32787b1a619933aa504bd1b60ac72fd32c161104c305f3c7a124491f941",
+      "repository_commit": "7e29621d865ee3fcb6690b06ed1d35ec2a9d15ad",
+      "url": "https://raw.githubusercontent.com/openwrt/packages/7e29621d865ee3fcb6690b06ed1d35ec2a9d15ad/net/smartdns/Makefile"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/smartdns-1ba6ee7c-source.tar.gz",
+      "url": "https://codeload.github.com/pymumu/smartdns/tar.gz/1ba6ee7cb98b5b6448bc2a2be318eb3518d4de79",
+      "sha256": "01a4b236e7b0c88b0a529768d0da2f5a4afed949d742988072a96a35f4457f08",
+      "bytes": 572440,
+      "tar_members": 240
+    },
+    {
+      "file": "sources/smartdns-Release46.1-source.tar.gz",
+      "url": "https://codeload.github.com/pymumu/smartdns/tar.gz/refs/tags/Release46.1",
+      "sha256": "6307503fa409b9c6b87556d1b1f8eaf99c7be5b06a9d479ec3589c875391a6b3",
+      "bytes": 636232,
+      "tar_members": 287
+    }
+  ]
+}

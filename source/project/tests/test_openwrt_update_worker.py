@@ -46,7 +46,7 @@ echo json_encode((new NfqwsOpenWrtUpdateWorker($s,$prepare,$services))->apply($i
    if case=='settings-changed':post+='printf %s changed-by-hook > '+base+'/system/etc/nfqws2/nfqws2.conf\n'
    for version in [71,72]:
     stage=root/str(version);profile=builder.native_metadata(series,'x86_64',version);profile={k:profile[k]for k in ['series','arch','engine','format','version','application_build']}|{'platform':'openwrt'}
-    if case!='stale-build':profile['application_build']=version
+    profile['application_build']=71 if case=='stale-build'else version
     files={'usr/share/nfqws2/platform.json':(json.dumps(profile).encode(),0o644),'usr/share/nfqws2/worker-fixture':(str(version).encode(),0o644)}
     if fmt=='ipk':
      files['CONTROL/control']=(f'Package: nfqws2-native\nVersion: {v(version)}\nArchitecture: x86_64\nDescription: Inert native worker fixture\n'.encode(),0o644)

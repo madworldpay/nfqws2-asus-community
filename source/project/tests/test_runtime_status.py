@@ -24,9 +24,13 @@ class RuntimeStatusTests(unittest.TestCase):
         init.write_text('#!/bin/sh\necho "nfqws2 is running"\n')
         init.chmod(0o755)
         index = self.base/'index.php'
-        source = index.read_text().replace("define('ROOT_DIR', '/opt');", "define('ROOT_DIR', '"+str(self.base/'opt')+"');")
+        source = index.read_text().replace("define('ROOT_DIR', NfqwsPlatform::settings()['root']);", "define('ROOT_DIR', '"+str(self.base/'opt')+"');")
         source = source.replace('/sys/module',str(self.module.parent)).replace('/proc/modules',str(self.modules))
         index.write_text(source)
+        platform = self.base/'platform.php'
+        source = platform.read_text()
+        self.assertIn("'service'=>'/opt/etc/init.d/S51nfqws2'", source)
+        platform.write_text(source.replace("'service'=>'/opt/etc/init.d/S51nfqws2'", "'service'=>'"+str(init)+"'"))
         env = patch.dict(os.environ, {'PATH':str(bindir)+':'+os.environ.get('PATH','')})
         env.start(); self.addCleanup(env.stop)
         self.fixture.login()

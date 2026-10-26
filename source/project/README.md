@@ -1,7 +1,8 @@
 # Исходники NFQWS2 ASUS
 
-Код адаптации соответствует Build 67.
+Код адаптации для ASUS/Entware и нативного OpenWrt.
 
+- `openwrt/` — нативные IPK/APK, procd, netifd, firewall4, установщик и каталог обновлений.
 - `asus/` — сборка IPK, службы, чекап, ARK, SmartDNS и модуль старого ядра.
 - `webui/web/` — интерфейс и PHP API.
 - `core/` — исходная упаковка NFQWS2, Lua и патчи поставщика.

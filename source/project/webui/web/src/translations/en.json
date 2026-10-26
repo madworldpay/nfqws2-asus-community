@@ -249,7 +249,7 @@
       "dns": "SmartDNS: choose DNS and sites → Check profile → Connect.",
       "verify": "Open the required services on a selected device and test new connections.",
       "recover": "For help: Share → Preview. To disconnect SmartDNS: Restore previous DNS.",
-      "ark": "Check whether ARK is loaded. Prepare ASUS only if needed, then reboot it.",
+      "ark": "Check the platform and packet capture. If ARK is loaded on ASUS, follow the preparation instructions.",
       "start": "Start or restart NFQWS2 after changing its strategy. Check that the queue is bound."
     },
     "details": "Details and limits",
@@ -265,7 +265,7 @@
         "unknown": "Not checked"
       },
       "steps": {
-        "install": "Package and Entware",
+        "install": "Package and platform",
         "ark": "ARK check",
         "configure": "Devices and strategy",
         "dns": "SmartDNS — DNS for sites",
@@ -317,7 +317,7 @@
     },
     "sections": {
       "platform": "Platform",
-      "package": "Package and Entware",
+      "package": "Package and platform",
       "engine": "Engine",
       "ark": "ARK",
       "process": "Process",

@@ -60,6 +60,7 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertEqual(profile,{'schema_version':1,'platform':'openwrt'})
             self.assertIn('usr/lib/nfqws2-web/nfqws2-native-web',files.keys())
             self.assertIn('usr/lib/nfqws2-web/php-cgi.sh',files.keys())
+            self.assertTrue('usr/share/licenses/nfqws2-native/frontend-notices.txt'in files,'Native panel must preserve bundled frontend copyright and license notices')
             self.assertNotIn('etc/config/uhttpd',files)
             self.assertNotIn('etc/init.d/uhttpd',files)
 

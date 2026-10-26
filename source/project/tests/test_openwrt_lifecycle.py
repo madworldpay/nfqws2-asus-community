@@ -29,6 +29,7 @@ NFQWS_CONTROL="$CONTROL"; NFQWS_RUN="$RUN"; action="$ACTION"
 procd_open_instance() { echo procd-open >> "$TEST_LOG"; }
 procd_set_param() { printf 'procd-%s\\n' "$*" >> "$TEST_LOG"; }
 procd_close_instance() { echo procd-close >> "$TEST_LOG"; }
+[ "$action" != restart ] || stop_service
 start_service
 service_started
 '''
@@ -56,6 +57,12 @@ service_started
         self.assertIn('procd-respawn 3600 5 5',calls)
         self.assertEqual(calls[-1],'check-started')
         self.assertFalse(any('--daemon' in c or '--pidfile' in c for c in calls))
+
+    def test_restart_recreates_capture_after_rc_common_stops_the_old_instance(self):
+        r,calls=self.run_init('restart')
+        self.assertEqual(r.returncode,0,r.stderr)
+        removed=calls.index('remove-firewall')
+        self.assertIn('firewall',calls[removed+1:],'rc.common restart removes the preflight table; the new instance must recreate it')
 
     def test_queue_facts_validate_rows_and_report_packet_sequence(self):
         for text,expected in [('', 'unbound null null'),

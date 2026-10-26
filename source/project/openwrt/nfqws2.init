@@ -18,6 +18,9 @@ case "$action" in start|restart|reload|boot)
 esac
 
 start_service() {
+    # rc.common restart invokes stop_service after the entry preflight. That
+    # stop removes the old capture table, so recreate it for every new instance.
+    "$NFQWS_CONTROL" firewall || return 1
     . "$NFQWS_RUN/launch.env" || return 1
     set -f
     # Arguments are data from the bounded parser. No eval or shell re-expansion.

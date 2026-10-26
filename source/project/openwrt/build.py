@@ -25,6 +25,7 @@ HERE=Path(__file__).resolve().parent
 ASSETS=json.loads((HERE/'assets.json').read_text())
 spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platform.py')
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
+PACKAGE_LICENSE='Multiple (MIT, GPL-2.0, GPL-3.0, LGPL-2.1, BSD-3-Clause and others); see THIRD-PARTY-NOTICES.txt'
 DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi',
               'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd','libopenssl3','libgcc']
 
@@ -172,6 +173,8 @@ def payload_files(target,engine,source=None):
     files['usr/share/nfqws2/support-relay-default.json']=((ROOT/'asus/support-relay.json').read_bytes(),0o644)
     for name in ['LICENSE','THIRD-PARTY-NOTICES.txt']:
         files['usr/share/licenses/nfqws2-native/'+name]=((ROOT/name).read_bytes(),0o644)
+    for name in ['nfqws-upstream-MIT.txt','zapret2-MIT.txt','smartdns-GPL3.txt']:
+        files['usr/share/licenses/nfqws2-native/'+name]=((ROOT/'licenses'/name).read_bytes(),0o644)
     return files
 
 
@@ -276,6 +279,12 @@ def web_payload(dist=None):
             raise RuntimeError('Rebuild the shared production frontend: native backend is stale')
     files={'usr/share/nfqws2-web/'+str(p.relative_to(dist)):(p.read_bytes(),0o644)
            for p in sorted(dist.rglob('*'))if p.is_file()and not p.name.endswith('.map')}
+    modules=ROOT/'webui/web/node_modules';notices=[]
+    for p in sorted(modules.rglob('*')):
+        if p.is_file()and p.name.lower().split('.')[0]in ['license','licence','notice','copying']:
+            notices.append(str(p.relative_to(modules))+'\n'+p.read_text(errors='replace'))
+    if not notices:raise RuntimeError('Frontend dependency license files are missing; install with the lockfile first')
+    files['usr/share/licenses/nfqws2-native/frontend-notices.txt']=('\n\n'.join(notices).encode(),0o644)
     files['usr/share/nfqws2-web/platform-profile.json']=(b'{"schema_version":1,"platform":"openwrt"}\n',0o644)
     for name,installed in [('web.sh','web.sh'),('php-cgi.sh','php-cgi.sh'),('nfqws2-web.init','nfqws2-native-web')]:
         files['usr/lib/nfqws2-web/'+installed]=((HERE/name).read_bytes(),0o644 if name=='web.sh'else 0o755)
@@ -298,7 +307,7 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
         stage=Path(td)/'payload';write_files(stage,payload_files(target,engine,source)|web_payload()|smartdns_payload(target,cache,offline))
         hooks={key:package_hook(target,action)for key,action in [('preinst','preinstall'),('postinst','postinstall'),('prerm','preremove'),('postrm','postremove')]}
         if target['format']=='ipk':
-            metadata='Package: nfqws2-native\nVersion: '+target['version']+'\nArchitecture: '+target['arch']+'\nDepends: '+', '.join(target['dependencies'])+'\nMaintainer: madworldpay\nSection: net\nLicense: MIT\nDescription: NFQWS2 community native OpenWrt service\n'
+            metadata='Package: nfqws2-native\nVersion: '+target['version']+'\nArchitecture: '+target['arch']+'\nDepends: '+', '.join(target['dependencies'])+'\nMaintainer: madworldpay\nSection: net\nLicense: '+PACKAGE_LICENSE+'\nDescription: NFQWS2 community native OpenWrt service\n'
             write_files(stage,{'CONTROL/control':(metadata.encode(),0o644),**{'CONTROL/'+k:(v,0o755)for k,v in hooks.items()}})
             tool=pinned_asset(ASSETS['ipkg_build'],cache,offline)
             subprocess.run(['fakeroot','sh',str(tool),str(stage),str(output)],check=True,
@@ -329,7 +338,7 @@ def build_apk(target,stage,hooks,cache,output,offline,sign_key=None):
         # sdk fakeroot uses its own matching preload library and loader.
         args=[str(tools/'bin/fakeroot'),str(tools/'bin/apk'),'mkpkg','--info','name:'+target['package'],
             '--info','version:'+target['version'],'--info','arch:'+target['arch'],
-            '--info','license:MIT','--info','description:NFQWS2 community native OpenWrt service',
+            '--info','license:'+PACKAGE_LICENSE,'--info','description:NFQWS2 community native OpenWrt service',
             '--info','origin:nfqws2-native','--info','url:https://github.com/madworldpay/nfqws2-asus-community',
             '--info','maintainer:madworldpay','--info','depends:'+' '.join(target['dependencies']),
             '--files',str(stage),'--output',str(package)]
