@@ -7,13 +7,13 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 7592,
-      "sha256": "773886fedd47b08df8836153be8359a596b04682c4bf85897fa50471a7410624"
+      "bytes": 8893,
+      "sha256": "6556ea788306f0a2bb80f2123dab77aa7f06a051e53041a6eeda732e34a7b8a7"
     },
     {
       "file": "COMPATIBILITY.md",
-      "bytes": 2868,
-      "sha256": "30139d9ef4fb35a3654f9098fe87b1889b13af3114cce5878cebab99982a7503"
+      "bytes": 3012,
+      "sha256": "6902e586392b945828d71d00a43659d8435475bf7013568970056dfa1c55d2ec"
     },
     {
       "file": "CONTRIBUTING.md",
@@ -32,8 +32,8 @@
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 1365,
-      "sha256": "bada441f67cb4813871f9b624e4d61ef826bfdc4430e499775d6d56d7e2dfb5e"
+      "bytes": 2693,
+      "sha256": "1998c113029cd6c6c8731a69a4b4df00b4d13bccafb129780141f1204ebd6ffb"
     },
     {
       "file": "DPI-DETECTOR.md",
@@ -47,8 +47,8 @@
     },
     {
       "file": "INSTALL.md",
-      "bytes": 4543,
-      "sha256": "09c923230faeb8f7de43084f49af5b345af027eac4296ffe99d5d06f365aa6c7"
+      "bytes": 4687,
+      "sha256": "8fe810d432ab4765ca61797e674c0e858abecf4ae6991db48b7d817ca1d0ca34"
     },
     {
       "file": "LICENSE",
@@ -57,13 +57,23 @@
     },
     {
       "file": "MANUAL-INSTALL.md",
-      "bytes": 2850,
-      "sha256": "4cdca06f8dac89a0ed1603c39ee0c54e205f3ef3677680f254da544a17168bc0"
+      "bytes": 2994,
+      "sha256": "66e2ca9fc975144fc3a9a55179d8c649b71b5836255b67eb629a1b42fdfd8428"
+    },
+    {
+      "file": "OPENWRT.en.md",
+      "bytes": 6937,
+      "sha256": "396330a4496d1899462c495055c508c2e6164f8fb292274ef4c45f822e67cd97"
+    },
+    {
+      "file": "OPENWRT.md",
+      "bytes": 10997,
+      "sha256": "70efdf1c9577a806fe2556c1f64e2959b1827dc0a165ff8cbc4b8e28ef327da7"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 4731,
-      "sha256": "cbb52c9b30d186fbb856577556e01617d1ad53660c0eca7b915f1da78994a2ff"
+      "bytes": 6083,
+      "sha256": "d3d5d1213b75c703cbff86a49d0f8cc448ea2c20a6eca2d1af29838c6eac2495"
     },
     {
       "file": "PRESETS.md",
@@ -72,13 +82,13 @@
     },
     {
       "file": "QUICKSTART.md",
-      "bytes": 3513,
-      "sha256": "e4a3b0d2ac69cda29ae546982e3009b6d7bfd5c1734708da76aa076561526608"
+      "bytes": 3657,
+      "sha256": "b332088243292f9d05f111b8165e1220a36c9f6f62b8ddbc6b1005c06c0f04e9"
     },
     {
       "file": "README.md",
-      "bytes": 9381,
-      "sha256": "47fbd06c7492fe6e1bf884f4b569c18e09dbac455fd7ba5301c20497ea9f139f"
+      "bytes": 9749,
+      "sha256": "ddaa16e45bfc95e0e2d9b29ae851f605b235ee2503430fc66662e3c99c786d6a"
     },
     {
       "file": "ROADMAP.md",
@@ -92,18 +102,18 @@
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
-      "bytes": 4151210,
-      "sha256": "05cbef1762140a78a8f3b80b67bd602e521eb2ef68e1c622ff23a9b7e01604c6"
+      "bytes": 4151238,
+      "sha256": "3054abaa4aaeb8d876012728a1a69ce1756bf07605d7093da7ac96ce894a84e5"
     },
     {
       "file": "UPSTREAM.md",
-      "bytes": 10212,
-      "sha256": "6d77d41dafa107944562876d9be666d93282975dcfef52224c6d188858282b10"
+      "bytes": 11194,
+      "sha256": "4e441674e842a874dad99a9ef35181145efad4657c8e47729f8b002ea39d8e1f"
     },
     {
       "file": "USAGE.md",
-      "bytes": 3913,
-      "sha256": "6723e6002c6c832844a3bc83aebe4d043ffb02584fa59dd6080f56ab45e58cc1"
+      "bytes": 4719,
+      "sha256": "b902f181070249da387784d4fcf772ed76696e8b7f969a5e51b7f808ef6df057"
     },
     {
       "file": "build.svg",
@@ -144,5 +154,5 @@
   "excluded": [
     "SHA256SUMS"
   ],
-  "checksum_note": "Documentation checksum snapshot covers release IPKs. Canonical complete SHA256SUMS is a release asset. Operational presets are served only by the cloud catalog."
+  "checksum_note": "Documentation checksum snapshot covers release IPK/APK packages. Canonical complete SHA256SUMS is a release asset. Operational presets are served only by the cloud catalog."
 }
