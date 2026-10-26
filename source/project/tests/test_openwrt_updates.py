@@ -2,7 +2,7 @@
 import json,os,shlex,subprocess,tempfile,unittest,uuid
 from pathlib import Path
 import test_openwrt_update_package as fixtures
-ROOT=fixtures.ROOT;CONTAINER=os.environ.get('NFQWS_TEST_DOCKER');CACHE=os.environ.get('NFQWS_TEST_SMARTDNS_CACHE')
+ROOT=fixtures.ROOT;CONTAINER=os.environ.get('NFQWS_TEST_DOCKER24')or(os.environ.get('NFQWS_TEST_DOCKER')if'24'in os.environ.get('NFQWS_TEST_DOCKER','')else None);CACHE=os.environ.get('NFQWS_TEST_SMARTDNS_CACHE')
 @unittest.skipUnless(CONTAINER and CACHE,'Requires isolated native24 rootfs and official ipkg tool')
 class NativePreparation(unittest.TestCase):
  def sh(self,code,input=None):

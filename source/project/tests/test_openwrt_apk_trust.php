@@ -16,6 +16,9 @@ try{
  check(file_get_contents($root.'/merged/linked.pem')===$own,'linked public key lost');
  check(count($result['files'])===4,'non-keys must not enter trusted keyring');
  foreach($result['files']as $name=>$sha){check(hash_file('sha256',$root.'/merged/'.$name)===$sha,'key fingerprint');check((fileperms($root.'/merged/'.$name)&0777)===0600,'private staged keyring permissions');}
+ check(is_file($root.'/merged/keys-index.json')&&!is_file($root.'/merged/staging.json'),'completed keyring must carry its bounded pruning index');
+ $index=json_decode(file_get_contents($root.'/merged/keys-index.json'),true);
+ foreach($result['files']as $name=>$sha)check($index['files'][$name]===['mode'=>0600,'size'=>filesize($root.'/merged/'.$name),'sha256'=>$sha],'exact key pruning identity');
  check((fileperms($root.'/merged')&0777)===0700,'private staged key directory');
  check(file_get_contents($root.'/etc/shared.pem')===$other&&file_get_contents($root.'/lib/shared.pem')===$own,'system keys changed');
  chmod($root.'/etc/shared.pem',0666);

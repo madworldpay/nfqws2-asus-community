@@ -2,7 +2,7 @@
 import json,os,shlex,subprocess,tempfile,unittest,uuid
 from pathlib import Path
 from test_openwrt_update_package import NativeApkPreflight,ROOT,builder,APK_CONTAINER,CACHE,APK_TOOL
-CONTAINER24=os.environ.get('NFQWS_TEST_DOCKER')
+CONTAINER24=os.environ.get('NFQWS_TEST_DOCKER24')or(os.environ.get('NFQWS_TEST_DOCKER')if'24'in os.environ.get('NFQWS_TEST_DOCKER','')else None)
 
 @unittest.skipUnless(APK_CONTAINER and CACHE and APK_TOOL,'Requires isolated signed native25 package fixture')
 class NativeApkTransaction(NativeApkPreflight):

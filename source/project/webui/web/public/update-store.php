@@ -97,16 +97,17 @@ final class AsusUpdateStore
         // Unknown operator files and links are deliberately left alone.
         $this->pruneTree('operations/'.$id.'/backup','snapshot.json');
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
-        $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial);
-        foreach(['package.ipk','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
+        $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
+        foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}
+        foreach(['package.ipk','package.apk','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
         @rmdir($dir);
     }
-    private function pruneTree(string $name,string $index,bool $incomplete=false): void
+    private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false): void
     {
         $dir=$this->path($name);if(!is_dir($dir))return;$this->directory($name);$raw=$this->readFile($name.'/'.$index);if($raw===null)return;
         try{$v=json_decode($raw,true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
         if(!is_array($v['files']??null)||count($v['files'])>512)throw new RuntimeException('invalid_state');$dirs=[$dir];
-        foreach($v['files'] as $file=>$meta){if(!is_string($file)||!preg_match('~^[a-zA-Z0-9_+.-]+(?:/[a-zA-Z0-9_+.-]+)*$~D',$file)||in_array('..',explode('/',$file),true)||in_array('.',explode('/',$file),true)||!is_array($meta)||!is_int($meta['mode']??null)||!is_int($meta['size']??null)||$meta['size']<0||!preg_match('/^[a-f0-9]{64}$/D',$meta['sha256']??''))throw new RuntimeException('invalid_state');
+        foreach($v['files'] as $file=>$meta){if(!is_string($file)||!preg_match('~^[a-zA-Z0-9_@+.-]+(?:/[a-zA-Z0-9_@+.-]+)*$~D',$file)||in_array('..',explode('/',$file),true)||in_array('.',explode('/',$file),true)||!is_array($meta)||!is_int($meta['mode']??null)||!is_int($meta['size']??null)||$meta['size']<0||!preg_match('/^[a-f0-9]{64}$/D',$meta['sha256']??''))throw new RuntimeException('invalid_state');
             $p=$dir.'/'.$file;$safe=true;for($parent=$p;$parent!==$dir;$parent=dirname($parent))if(is_link($parent)){$safe=false;break;}if(!$safe)continue;
             $s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1){
                 $complete=($s['mode']&0777)===$meta['mode']&&$s['size']===$meta['size']&&hash_file('sha256',$p)===$meta['sha256'];
@@ -115,7 +116,7 @@ final class AsusUpdateStore
             }
             for($parent=dirname($p);$parent!==$dir;$parent=dirname($parent))$dirs[]=$parent;
         }
-        @unlink($dir.'/'.$index);if($incomplete){$s=@lstat($dir.'/closure.json');if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1&&($s['mode']&0777)===0600&&$s['size']<=131072)@unlink($dir.'/closure.json');}
+        @unlink($dir.'/'.$index);if($incomplete&&$runtime){$s=@lstat($dir.'/closure.json');if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1&&($s['mode']&0777)===0600&&$s['size']<=131072)@unlink($dir.'/closure.json');}
         $dirs=array_values(array_unique($dirs));usort($dirs,fn($a,$b)=>strlen($b)<=>strlen($a));foreach($dirs as $p){$s=@lstat($p);if($s&&($s['mode']&0170000)===0040000&&$s['uid']===$this->owner)@rmdir($p);}
     }
     public function reserve(string $revision,string $requestId,array $candidate): array

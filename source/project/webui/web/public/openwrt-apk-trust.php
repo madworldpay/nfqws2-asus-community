@@ -41,10 +41,14 @@ final class NfqwsOpenWrtApkTrust
         ksort($keys);$files=[];$mask=umask(0077);
         try{
             if(!mkdir($destination,0700))throw new RuntimeException('storage_unavailable');
+            $index=[];foreach($keys as $name=>$raw)$index[$name]=['mode'=>0600,'size'=>strlen($raw),'sha256'=>hash('sha256',$raw)];
+            $rawIndex=json_encode(['files'=>$index],JSON_THROW_ON_ERROR);
+            if(strlen($rawIndex)>131072||file_put_contents($destination.'/staging.json',$rawIndex)!==strlen($rawIndex))throw new RuntimeException('storage_unavailable');
             foreach($keys as $name=>$raw){
                 if(file_put_contents($destination.'/'.$name,$raw)!==strlen($raw)||!chmod($destination.'/'.$name,0600))throw new RuntimeException('storage_unavailable');
                 $files[$name]=hash('sha256',$raw);
             }
+            if(!rename($destination.'/staging.json',$destination.'/keys-index.json'))throw new RuntimeException('storage_unavailable');
         }finally{umask($mask);}
         return ['files'=>$files,'digest'=>hash('sha256',json_encode($files,JSON_THROW_ON_ERROR))];
     }
