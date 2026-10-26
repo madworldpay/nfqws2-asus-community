@@ -1768,19 +1768,30 @@ const NFQWS_NATIVE_INSTALL_BRIDGE = '<?php
 if(isset($_SERVER[\'REQUEST_METHOD\'])||!preg_match(\'/^Uid:\\s+0\\s+0\\s+0\\s+0\\s*$/m\',(string)@file_get_contents(\'/proc/self/status\')))exit(2);
 $args=$argv??[];array_shift($args);if(($args[0]??null)===\'--\')array_shift($args);if(count($args)!==1)exit(2);
 umask(0077);require_once \'/usr/share/nfqws2-web/openwrt-update-worker.php\';require_once \'/usr/share/nfqws2-web/openwrt-update-launch.php\';require_once \'/usr/share/nfqws2-web/update-dispatch.php\';
+/** Local verified bootstrap archive, consumed once by the installed coordinator. */
+final class NfqwsOpenWrtInstallLocalSource implements AsusUpdateSource
+{
+    public function __construct(private array $plan){}
+    public function manifest():array{return [\'json\'=>$this->plan[\'manifest\'],\'signature\'=>$this->plan[\'signature\']];}
+    public function download(array $package,string $destination):void
+    {
+        if($package!==$this->plan[\'candidate\'][\'package\'])throw new RuntimeException(\'stale_revision\');$source=$this->plan[\'archive\'];
+        AsusUpdateStore::noLinks($source);AsusUpdateStore::noLinks($destination);clearstatcache(true,$source);$s=@lstat($source);$parent=@lstat(dirname($destination));
+        if(!$s||!is_file($source)||$s[\'uid\']!==0||$s[\'nlink\']!==1||($s[\'mode\']&0777)!==0600||file_exists($destination)||!$parent||!is_dir(dirname($destination))||$parent[\'uid\']!==0||($parent[\'mode\']&0777)!==0700)throw new RuntimeException(\'invalid_state\');
+        if($s[\'size\']!==$package[\'size\']||!hash_equals($package[\'sha256\'],hash_file(\'sha256\',$source)))throw new RuntimeException(\'download_hash\');
+        // Both directories belong to the root-private /tmp bootstrap/update
+        // stores. Rename retains ownership/mode and does not duplicate RAM.
+        if(!rename($source,$destination))throw new RuntimeException(\'download_failed\');
+    }
+}
+
 try{
     if(!NfqwsPlatform::native())throw new RuntimeException(\'unsupported_abi\');$local=new AsusUpdateStore($args[0]);
     $plan=json_decode($local->readFile(\'plan.json\',262144)??\'\',true,32,JSON_THROW_ON_ERROR);
     if(($plan[\'action\']??null)!==\'upgrade\'||($plan[\'installed\'][\'state\']??null)!==\'installed\')throw new RuntimeException(\'repair_required\');
     $path=$plan[\'archive\']??\'\';$expected=$args[0].\'/work/\'.($plan[\'candidate\'][\'package\'][\'filename\']??\'\');if($path!==$expected)throw new RuntimeException(\'invalid_state\');
     AsusUpdateStore::noLinks($path);$s=@lstat($path);if(!$s||!is_file($path)||$s[\'uid\']!==0||$s[\'nlink\']!==1||($s[\'mode\']&0777)!==0600)throw new RuntimeException(\'invalid_state\');
-    $source=new class($plan) implements AsusUpdateSource{
-        public function __construct(private array $plan){}
-        public function manifest():array{return [\'json\'=>$this->plan[\'manifest\'],\'signature\'=>$this->plan[\'signature\']];}
-        public function download(array $package,string $destination):void{
-            if($package!==$this->plan[\'candidate\'][\'package\']||!copy($this->plan[\'archive\'],$destination)||!chmod($destination,0600))throw new RuntimeException(\'download_failed\');
-        }
-    };
+    $source=new NfqwsOpenWrtInstallLocalSource($plan);
     $store=new AsusUpdateStore();$prepare=new NfqwsOpenWrtUpdatePrepare($store,$source);$fresh=$prepare->check(true);
     if($fresh[\'state\']!==\'available\'||$fresh[\'candidate\']!==$plan[\'candidate\'])throw new RuntimeException(\'stale_revision\');
     $lease=(new NfqwsOpenWrtUpdateGuard($store))->mutationLease();

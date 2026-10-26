@@ -10,13 +10,7 @@ try{
     if(($plan['action']??null)!=='upgrade'||($plan['installed']['state']??null)!=='installed')throw new RuntimeException('repair_required');
     $path=$plan['archive']??'';$expected=$args[0].'/work/'.($plan['candidate']['package']['filename']??'');if($path!==$expected)throw new RuntimeException('invalid_state');
     AsusUpdateStore::noLinks($path);$s=@lstat($path);if(!$s||!is_file($path)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0777)!==0600)throw new RuntimeException('invalid_state');
-    $source=new class($plan) implements AsusUpdateSource{
-        public function __construct(private array $plan){}
-        public function manifest():array{return ['json'=>$this->plan['manifest'],'signature'=>$this->plan['signature']];}
-        public function download(array $package,string $destination):void{
-            if($package!==$this->plan['candidate']['package']||!copy($this->plan['archive'],$destination)||!chmod($destination,0600))throw new RuntimeException('download_failed');
-        }
-    };
+    $source=new NfqwsOpenWrtInstallLocalSource($plan);
     $store=new AsusUpdateStore();$prepare=new NfqwsOpenWrtUpdatePrepare($store,$source);$fresh=$prepare->check(true);
     if($fresh['state']!=='available'||$fresh['candidate']!==$plan['candidate'])throw new RuntimeException('stale_revision');
     $lease=(new NfqwsOpenWrtUpdateGuard($store))->mutationLease();
