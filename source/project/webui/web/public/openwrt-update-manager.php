@@ -30,18 +30,34 @@ final class NfqwsOpenWrtUpdateManager
         }
         if(count($out)>4096||count($out)<1)throw new RuntimeException('pending_packages');ksort($out);return $out;
     }
-    public static function installed(array $environment,bool $ownTransition=false,bool $ownOnly=false):array
+    private static function raw(array $environment):string
     {
         $file=match($environment['format']??null){'ipk'=>'/usr/lib/opkg/status','apk'=>'/lib/apk/db/installed',default=>throw new RuntimeException('unsupported_abi')};
         $path=realpath($file);if($path===false)throw new RuntimeException('pending_packages');$s=@lstat($path);
         if(!$s||!is_file($path)||$s['uid']!==0||($s['mode']&0022)!==0||$s['size']>2097152)throw new RuntimeException('pending_packages');
-        $raw=file_get_contents($path);if(!is_string($raw))throw new RuntimeException('pending_packages');return self::database($raw,$environment['format'],$ownTransition,$ownOnly);
+        $raw=file_get_contents($path);if(!is_string($raw))throw new RuntimeException('pending_packages');return $raw;
+    }
+    public static function installed(array $environment,bool $ownTransition=false,bool $ownOnly=false):array
+    {return self::database(self::raw($environment),$environment['format'],$ownTransition,$ownOnly);}
+    /** Dependencies may name a native installed provider, such as libgcc1 -> libgcc. */
+    private static function provided(array $environment,array $installed):array
+    {
+        $raw=self::raw($environment);if(self::database($raw,$environment['format'])!==$installed)throw new RuntimeException('dependency_change');$out=[];
+        foreach(preg_split('/\n[ \t]*\n/',trim($raw))as $section){
+            if($environment['format']==='ipk'){$p=AsusUpdatePackage::fields($section);$name=$p['Package']??'';$offers=explode(',',$p['Provides']??'');}
+            else{preg_match('/^P:(.*)$/m',$section,$nameRow);$name=$nameRow[1]??'';if(preg_match_all('/^p:(.*)$/m',$section,$rows)>1)throw new RuntimeException('pending_packages');$offers=preg_split('/[ \t]+/',$rows[1][0]??'');}
+            if(!isset($installed[$name]))continue;
+            foreach($offers as $offer){$offer=trim($offer);
+                $pattern=$environment['format']==='ipk'?'/^([a-z0-9][a-z0-9+._-]{0,127})(?:[ \t]+\([<>=]+[ \t]*[A-Za-z0-9.+_:~\-]+\))?$/D':'/^([a-z0-9][a-z0-9+._-]{0,127})(?:=[A-Za-z0-9.+_:~\-]+)?$/D';
+                if(preg_match($pattern,$offer,$m))$out[$m[1]]=true;
+            }
+        }return $out;
     }
     public static function argv(string $path,array $environment,array $installed,array $record,?string $keys=null,bool $simulate=false):array
     {
         if(($record['name']??null)!=='nfqws2-native'||!is_array($record['depends']??null))throw new RuntimeException('invalid_package');
         if(!str_starts_with($path,'/')||strpbrk($path,"\0\r\n")!==false)throw new RuntimeException('invalid_state');
-        foreach($record['depends']as $name)if(!isset($installed[$name]))throw new RuntimeException('missing_dependencies');
+        $missing=array_values(array_diff($record['depends'],array_keys($installed)));if($missing){$provided=self::provided($environment,$installed);foreach($missing as $name)if(!isset($provided[$name]))throw new RuntimeException('missing_dependencies');}
         if(($environment['format']??null)==='ipk')return array_merge(['/bin/opkg','--nodeps'],$simulate?['--noaction']:[],['install',$path]);
         if(($environment['format']??null)!=='apk')throw new RuntimeException('unsupported_abi');
         if($keys===null)throw new RuntimeException('invalid_signature');$argv=['/usr/bin/apk','add','--network=no','--cache=no','--repositories-file','/dev/null','--keys-dir',$keys];

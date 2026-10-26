@@ -19,7 +19,7 @@ rejects(fn()=>NfqwsOpenWrtUpdateManager::database(str_replace('P:nfqws2-native',
 $record=['name'=>'nfqws2-native','version'=>'1.3.2-72','depends'=>['libc']];$env=['format'=>'ipk'];
 $args=NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.ipk',$env,$db,$record);
 check($args===['/bin/opkg','--nodeps','install','/tmp/private/package.ipk'],'opkg updates only application after dependency checks');
-rejects(fn()=>NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.ipk',$env,$db,array_replace($record,['depends'=>['missing']])),'missing_dependencies');
+// Missing and virtual dependencies require the real native provider database; exercised by NativeVirtualDependencies.
 $env=['format'=>'apk'];$record['version']='1.3.2-r72';
 $args=NfqwsOpenWrtUpdateManager::argv('/tmp/private/package.apk',$env,$db,$record,'/tmp/private/keys');
 check($args===['/usr/bin/apk','add','--network=no','--cache=no','--repositories-file','/dev/null','--keys-dir','/tmp/private/keys','/tmp/private/package.apk'],'apk reads only installed packages and signed application, without changing world constraints');

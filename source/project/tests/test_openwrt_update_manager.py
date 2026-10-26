@@ -10,6 +10,16 @@ class NativeManagerContracts(unittest.TestCase):
         p=subprocess.run([os.environ['PHP_TEST_BINARY'],'-n','-f',str(ROOT/'tests/test_openwrt_update_manager.php')],text=True,capture_output=True,timeout=10)
         self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');self.assertIn('PASS:',p.stdout)
 
+@unittest.skipUnless(os.environ.get('NFQWS_TEST_DOCKER'),'Requires isolated native package database')
+class NativeVirtualDependencies(unittest.TestCase):
+    def test_installed_native_provider_satisfies_virtual_dependency_without_installing_system_packages(self):
+        container=os.environ['NFQWS_TEST_DOCKER'];spec=json.loads(subprocess.check_output(['docker','inspect',container]))[0]
+        self.assertTrue(container.startswith('nfqws-openwrt'));self.assertNotEqual(spec['HostConfig']['NetworkMode'],'host')
+        fmt='apk'if'25'in container else'ipk'
+        code='require $argv[1];$e=["format"=>$argv[2]];$d=NfqwsOpenWrtUpdateManager::installed($e);if(!isset($d["libgcc1"])||isset($d["libgcc"]))throw new RuntimeException("fixture requires real libgcc1 virtual provider");$out=[];foreach(["libgcc","nfqws-missing-dependency-fixture"]as $name){try{$a=NfqwsOpenWrtUpdateManager::argv("/tmp/inert-package",$e,$d,["name"=>"nfqws2-native","depends"=>[$name]],"/tmp/inert-keys",true);$out[$name]="accepted";}catch(RuntimeException $ex){$out[$name]=$ex->getMessage();}}echo json_encode($out);'
+        r=subprocess.run(['docker','exec',container,'php-cli','-r',code,str(ROOT/'webui/web/public/openwrt-update-manager.php'),fmt],text=True,capture_output=True,timeout=10)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(json.loads(r.stdout),{'libgcc':'accepted','nfqws-missing-dependency-fixture':'missing_dependencies'})
+
 @unittest.skipUnless(APK_CONTAINER and CACHE and APK_TOOL,'Requires isolated signed native25 package fixture')
 class NativeApkTransaction(NativeApkPreflight):
     # Reuse fixture setup, not archive-reader test methods.
