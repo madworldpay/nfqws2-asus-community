@@ -23,19 +23,28 @@ final class NfqwsOpenWrtPackageManifest
         $v['revision']=hash('sha256',$json);return $v;
     }
 
-    public static function candidate(array $manifest,array $identity,string $installed,int $build):?array
+    private static function identity(array $identity):array
     {
-        $series=$identity['series']??null;$format=$series==='24.10'?'ipk':($series==='25.12'?'apk':null);
-        $arch=$identity['arch']??null;
+        $series=$identity['series']??null;$format=$series==='24.10'?'ipk':($series==='25.12'?'apk':null);$arch=$identity['arch']??null;
         if(($identity['platform']??null)!=='openwrt'||$format===null||($identity['format']??null)!==$format||!is_string($arch)||!preg_match('/^[a-z0-9][a-z0-9_+-]{0,99}$/D',$arch))throw new RuntimeException('unsupported_abi');
-        $suffix=$format==='apk'?'r':'';
-        if(!preg_match('/^((?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5}))-'.$suffix.'([1-9][0-9]{0,9})$/D',$installed,$m)||(float)$m[2]>2147483647||$build<1)throw new RuntimeException('unsupported_version');
-        if($manifest['build']<=$build||$manifest['build']<=(int)$m[2]||version_compare($manifest['core_version'],$m[1],'<'))return null;
+        return [$series,$format,$arch];
+    }
+    /** First install and updates share the same signed exact firmware target. */
+    public static function select(array $manifest,array $identity):array
+    {
+        [$series,$format,$arch]=self::identity($identity);
         foreach($manifest['packages']as $p)if($p['series']===$series&&$p['arch']===$arch&&$p['format']===$format)return [
             'revision'=>$manifest['revision'],'package_version'=>$p['version'],'core_version'=>$manifest['core_version'],
             'web_version'=>$manifest['web_version'],'build'=>$manifest['build'],'notes'=>$manifest['notes'],
             'package'=>$p+['family'=>$arch],
         ];
         throw new RuntimeException('unsupported_package');
+    }
+    public static function candidate(array $manifest,array $identity,string $installed,int $build):?array
+    {
+        [, $format]=self::identity($identity);$suffix=$format==='apk'?'r':'';
+        if(!preg_match('/^((?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5}))-'.$suffix.'([1-9][0-9]{0,9})$/D',$installed,$m)||(float)$m[2]>2147483647||$build<1)throw new RuntimeException('unsupported_version');
+        if($manifest['build']<=$build||$manifest['build']<=(int)$m[2]||version_compare($manifest['core_version'],$m[1],'<'))return null;
+        return self::select($manifest,$identity);
     }
 }

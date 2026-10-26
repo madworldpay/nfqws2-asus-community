@@ -27,6 +27,11 @@ class InterruptedNativeConfigure(unittest.TestCase):
    builder.write_files(stage,files);tool=builder.pinned_asset(builder.ASSETS['ipkg_build'],CACHE,True);subprocess.run(['fakeroot','sh',str(tool),str(stage),str(out)],check=True,capture_output=True);subprocess.run(['docker','cp',str(next(out.glob('*.ipk'))),CONTAINER+':'+base+'/package.ipk'],check=True,capture_output=True)
   first=self.sh('opkg --nodeps install '+base+'/package.ipk',check=False);self.assertNotEqual(first.returncode,0)
   self.assertIn('unpacked',self.sh('opkg status nfqws2-native').stdout);self.sh('test -f '+base+'/state/state; touch '+base+'/retry')
+  # The bootstrap may verify healthy system providers while repairing only
+  # our known unfinished row; the normal updater keeps its strict default.
+  code='require $argv[1];$e=["format"=>"ipk"];$db=NfqwsOpenWrtUpdateManager::installed($e,true);$a=NfqwsOpenWrtUpdateManager::argv($argv[2],$e,$db,["name"=>"nfqws2-native","depends"=>["libgcc"]],null,true,true);echo json_encode($a);'
+  checked=self.sh('php-cli -r '+shlex.quote(code)+' '+shlex.quote(str(ROOT/'webui/web/public/openwrt-update-manager.php'))+' '+base+'/package.ipk',check=False)
+  self.assertEqual(checked.returncode,0,checked.stdout+checked.stderr);self.assertEqual(json.loads(checked.stdout),['/bin/opkg','--nodeps','--noaction','install',base+'/package.ipk'])
   retry=self.sh('opkg configure nfqws2-native',check=False);self.assertEqual(retry.returncode,0,retry.stdout+retry.stderr)
   self.assertIn('install user installed',self.sh('opkg status nfqws2-native').stdout)
   self.assertIn('nfqws2-native:start',self.sh('cat '+base+'/calls').stdout);self.assertIn('nfqws2-native-web:start',self.sh('cat '+base+'/calls').stdout)

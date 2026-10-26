@@ -4,7 +4,7 @@ require_once __DIR__.'/update-prepare.php';
 /** Actual firmware metadata and the native manager must agree with our package. */
 final class NfqwsOpenWrtUpdateEnvironment
 {
-    public static function resolve(string $release,array $profile,array $record):array
+    public static function firmware(string $release):array
     {
         if(strlen($release)>16384||str_contains($release,"\0"))throw new RuntimeException('unsupported_abi');
         $fields=[];preg_match_all("/^DISTRIB_(RELEASE|ARCH|TARGET)='([^'\r\n]*)'$/m",$release,$matches,PREG_SET_ORDER);
@@ -13,11 +13,16 @@ final class NfqwsOpenWrtUpdateEnvironment
         if(count($fields)!==3||!preg_match('/^(24\.10|25\.12)(?:\.[0-9]+)?(?:[-+][A-Za-z0-9_.-]+)?$/D',$fields['RELEASE'],$m)||
             !preg_match('/^[a-z0-9][a-z0-9_+-]{0,99}$/D',$arch)||!preg_match('~^[a-z0-9_-]+/[a-z0-9_-]+$~D',$fields['TARGET']))throw new RuntimeException('unsupported_abi');
         $series=$m[1];$format=$series==='24.10'?'ipk':'apk';
+        return ['platform'=>'openwrt','series'=>$series,'arch'=>$arch,'format'=>$format,'target'=>$fields['TARGET'],'manager'=>$format==='ipk'?'/bin/opkg':'/usr/bin/apk'];
+    }
+    public static function resolve(string $release,array $profile,array $record):array
+    {
+        $firmware=self::firmware($release);['series'=>$series,'arch'=>$arch,'format'=>$format]=$firmware;
         if(($profile['platform']??null)!=='openwrt'||($profile['arch']??null)!==$arch||($profile['series']??null)!==$series||($profile['format']??null)!==$format)throw new RuntimeException('unsupported_abi');
         $version=$profile['version']??null;$build=$profile['application_build']??null;
         if(!is_string($version)||!preg_match('/^(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})-'.($format==='apk'?'r':'').'[1-9][0-9]{0,9}$/D',$version)||!is_int($build)||$build<1||$build>2147483647)throw new RuntimeException('unsupported_version');
         if(($record['name']??null)!=='nfqws2-native'||($record['version']??null)!==$version||($record['arch']??null)!==$arch)throw new RuntimeException('version_mismatch');
-        return ['platform'=>'openwrt','series'=>$series,'arch'=>$arch,'format'=>$format,'target'=>$fields['TARGET'],
+        return ['platform'=>'openwrt','series'=>$series,'arch'=>$arch,'format'=>$format,'target'=>$firmware['target'],
             'installed'=>$version,'build'=>$build,'manager'=>$format==='ipk'?'/bin/opkg':'/usr/bin/apk'];
     }
 

@@ -5,6 +5,8 @@ function rejects(callable $fn,string $code):void{try{$fn();}catch(RuntimeExcepti
 $release="DISTRIB_ID='OpenWrt'\nDISTRIB_RELEASE='24.10.8'\nDISTRIB_TARGET='bcm53xx/generic'\nDISTRIB_ARCH='arm_cortex-a9'\n";
 $profile=['platform'=>'openwrt','series'=>'24.10','arch'=>'arm_cortex-a9','format'=>'ipk','version'=>'1.3.2-23','application_build'=>71,'engine'=>'arm'];
 $record=['name'=>'nfqws2-native','version'=>'1.3.2-23','arch'=>'arm_cortex-a9'];
+check(method_exists(NfqwsOpenWrtUpdateEnvironment::class,'firmware'),'bootstrap must identify firmware without an installed package');
+check(NfqwsOpenWrtUpdateEnvironment::firmware($release)===['platform'=>'openwrt','series'=>'24.10','arch'=>'arm_cortex-a9','format'=>'ipk','target'=>'bcm53xx/generic','manager'=>'/bin/opkg'],'first-install firmware identity');
 $r=NfqwsOpenWrtUpdateEnvironment::resolve($release,$profile,$record);
 check($r['arch']==='arm_cortex-a9'&&$r['installed']==='1.3.2-23'&&$r['build']===71&&$r['manager']==='/bin/opkg','native IPK environment');
 $apk=$profile;$apk['series']='25.12';$apk['format']='apk';$apk['version']='1.3.2-r23';$apkRecord=$record;$apkRecord['version']=$apk['version'];

@@ -10,6 +10,8 @@ $m=['schema_version'=>1,'platform'=>'openwrt','package'=>'nfqws2-native','core_v
 foreach(['24.10'=>'ipk','25.12'=>'apk']as $series=>$format)foreach(['arm_cortex-a9','x86_64']as $arch){$v='1.3.2-'.($format==='apk'?'r':'').'72';$m['packages'][]=['series'=>$series,'arch'=>$arch,'format'=>$format,'version'=>$v,'filename'=>"nfqws2-native_{$v}_{$arch}.{$format}",'size'=>12345,'installed_size'=>65536,'sha256'=>str_repeat('a',64)];}
 $v=verify($m);check(count($v['packages'])===4,'complete matrix');
 $id=['platform'=>'openwrt','series'=>'24.10','arch'=>'arm_cortex-a9','format'=>'ipk'];
+check(method_exists(NfqwsOpenWrtPackageManifest::class,'select'),'first install selects a signed exact native target without inventing an installed version');
+$first=NfqwsOpenWrtPackageManifest::select($v,$id);check($first['package_version']==='1.3.2-72'&&$first['package']['arch']==='arm_cortex-a9','first installation target');
 $c=NfqwsOpenWrtPackageManifest::candidate($v,$id,'1.3.2-66',66);
 check($c['package_version']==='1.3.2-72'&&$c['package']['arch']==='arm_cortex-a9'&&$c['build']===72,'wrong native candidate');
 $apk=$id;$apk['series']='25.12';$apk['format']='apk';

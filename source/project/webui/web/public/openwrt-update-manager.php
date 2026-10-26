@@ -40,9 +40,9 @@ final class NfqwsOpenWrtUpdateManager
     public static function installed(array $environment,bool $ownTransition=false,bool $ownOnly=false):array
     {return self::database(self::raw($environment),$environment['format'],$ownTransition,$ownOnly);}
     /** Dependencies may name a native installed provider, such as libgcc1 -> libgcc. */
-    private static function provided(array $environment,array $installed):array
+    private static function provided(array $environment,array $installed,bool $ownTransition=false):array
     {
-        $raw=self::raw($environment);if(self::database($raw,$environment['format'])!==$installed)throw new RuntimeException('dependency_change');$out=[];
+        $raw=self::raw($environment);if(self::database($raw,$environment['format'],$ownTransition)!==$installed)throw new RuntimeException('dependency_change');$out=[];
         foreach(preg_split('/\n[ \t]*\n/',trim($raw))as $section){
             if($environment['format']==='ipk'){$p=AsusUpdatePackage::fields($section);$name=$p['Package']??'';$offers=explode(',',$p['Provides']??'');}
             else{preg_match('/^P:(.*)$/m',$section,$nameRow);$name=$nameRow[1]??'';if(preg_match_all('/^p:(.*)$/m',$section,$rows)>1)throw new RuntimeException('pending_packages');$offers=preg_split('/[ \t]+/',$rows[1][0]??'');}
@@ -53,11 +53,11 @@ final class NfqwsOpenWrtUpdateManager
             }
         }return $out;
     }
-    public static function argv(string $path,array $environment,array $installed,array $record,?string $keys=null,bool $simulate=false):array
+    public static function argv(string $path,array $environment,array $installed,array $record,?string $keys=null,bool $simulate=false,bool $ownTransition=false):array
     {
         if(($record['name']??null)!=='nfqws2-native'||!is_array($record['depends']??null))throw new RuntimeException('invalid_package');
         if(!str_starts_with($path,'/')||strpbrk($path,"\0\r\n")!==false)throw new RuntimeException('invalid_state');
-        $missing=array_values(array_diff($record['depends'],array_keys($installed)));if($missing){$provided=self::provided($environment,$installed);foreach($missing as $name)if(!isset($provided[$name]))throw new RuntimeException('missing_dependencies');}
+        $missing=array_values(array_diff($record['depends'],array_keys($installed)));if($missing){$provided=self::provided($environment,$installed,$ownTransition);foreach($missing as $name)if(!isset($provided[$name]))throw new RuntimeException('missing_dependencies');}
         if(($environment['format']??null)==='ipk')return array_merge(['/bin/opkg','--nodeps'],$simulate?['--noaction']:[],['install',$path]);
         if(($environment['format']??null)!=='apk')throw new RuntimeException('unsupported_abi');
         if($keys===null)throw new RuntimeException('invalid_signature');$argv=['/usr/bin/apk','add','--network=no','--cache=no','--repositories-file','/dev/null','--keys-dir',$keys];

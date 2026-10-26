@@ -3,6 +3,13 @@ import json,os,shlex,subprocess,tempfile,unittest,uuid
 from pathlib import Path
 import test_openwrt_update_package as fixtures
 ROOT=fixtures.ROOT;CONTAINER=os.environ.get('NFQWS_TEST_DOCKER24')or(os.environ.get('NFQWS_TEST_DOCKER')if'24'in os.environ.get('NFQWS_TEST_DOCKER','')else None);CACHE=os.environ.get('NFQWS_TEST_SMARTDNS_CACHE')
+@unittest.skipUnless(os.environ.get('PHP_TEST_BINARY'),'Requires matching PHP with OpenSSL')
+class NativeDiscoveryContracts(unittest.TestCase):
+ def test_first_install_and_signed_update_share_exact_native_target_and_downgrade_rules(self):
+  for filename in ['test_openwrt_update_environment.php','test_openwrt_updates.php']:
+   with self.subTest(filename=filename):
+    p=subprocess.run([os.environ['PHP_TEST_BINARY'],'-n','-f',str(ROOT/'tests'/filename)],capture_output=True,text=True,timeout=15)
+    self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');self.assertIn('passed',p.stdout)
 @unittest.skipUnless(CONTAINER and CACHE,'Requires isolated native24 rootfs and official ipkg tool')
 class NativePreparation(unittest.TestCase):
  def sh(self,code,input=None):
