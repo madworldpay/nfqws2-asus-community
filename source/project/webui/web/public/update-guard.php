@@ -38,6 +38,7 @@ final class AsusUpdateGuard
     }
     public function authorize(string $action): bool
     {
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-guard.php';return (new NfqwsOpenWrtUpdateGuard($this->store,$this->owner))->authorize($action);}
         if(!in_array($action,['core-start','core-stop','web-start','web-stop','hook-prerm','hook-postinst','dns-restore'],true))throw new RuntimeException('invalid_request');
         $t=$this->ticket();if($t===null||$t['boot_id']!==AsusUpdateStore::boot())return false;
         $worker=$this->worker($t)&&self::ancestor($t['worker']['pid']);$installer=$this->installer($t)&&self::ancestor($t['installer']['pid']);
@@ -53,11 +54,13 @@ final class AsusUpdateGuard
     /** Only the staged worker and its descendants may advance this ticket. */
     public function context(string $id): array
     {
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-guard.php';return (new NfqwsOpenWrtUpdateGuard($this->store,$this->owner))->context($id);}
         $t=$this->ticket();if($t===null||$t['id']!==$id||$t['boot_id']!==AsusUpdateStore::boot()||!$this->worker($t)||!self::ancestor($t['worker']['pid']))throw new RuntimeException('invalid_state');return $t;
     }
     /** Caller holds this shared lease for its entire ordinary mutation. */
     public function mutationLease()
     {
+        if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-guard.php';return (new NfqwsOpenWrtUpdateGuard($this->store,$this->owner))->mutationLease();}
         $f=$this->store->lease('apply.lock',true);
         try{$t=$this->ticket();if($t!==null&&$t['boot_id']===AsusUpdateStore::boot()&&($this->worker($t)||$this->installer($t)))throw new RuntimeException('busy');
             $this->store->reconcile(AsusUpdateStore::boot(),AsusUpdateStore::uptime());
