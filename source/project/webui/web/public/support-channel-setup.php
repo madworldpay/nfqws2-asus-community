@@ -4,7 +4,7 @@ require_once __DIR__.'/platform.php';
 /** One explicit local configuration action. No request supplies a URL or report. */
 final class AsusSupportChannelSetup
 {
-    private const TEMPLATE_SHA256='5df01a204190b91a63350702d115c43af4c449700821c93fd0fb4c70ab7a1692';
+    private const TEMPLATE_SHA256='df6c14b241c9d23355fc3acfbf209e97d18f288a80821b1d2298ba0c43214fda';
     public function __construct(private ?string $config=null,private ?string $template=null,private int $owner=0){}
     private function paths(): array
     {
