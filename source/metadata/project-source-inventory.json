@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "bd5fa6e75f0ddfcd9ff32e0a2297554cd81188f177f14d7ce416310efa0b5c77"
+    "sha256": "c6ebc76be5dc1f8b433f8d6fd9bd85cd9325086038442db8614bb799fec6fd85"
   },
   {
     "path": "LICENSE",
@@ -416,8 +416,8 @@
   },
   {
     "path": "asus/support-relay.json",
-    "bytes": 160,
-    "sha256": "5df01a204190b91a63350702d115c43af4c449700821c93fd0fb4c70ab7a1692"
+    "bytes": 176,
+    "sha256": "df6c14b241c9d23355fc3acfbf209e97d18f288a80821b1d2298ba0c43214fda"
   },
   {
     "path": "asus/update/README.md",
@@ -1086,8 +1086,8 @@
   },
   {
     "path": "support-relay/README.md",
-    "bytes": 12516,
-    "sha256": "b9d31d981069cd1561fc035d9d988f02b8df6c8e054e78b46c647797cadf12b6"
+    "bytes": 13683,
+    "sha256": "be1402b8ef919bd45afadc35f548655ae6c96049da16a00304c52eeec3c3110a"
   },
   {
     "path": "support-relay/deploy/credential-config.example.json",
@@ -1156,8 +1156,8 @@
   },
   {
     "path": "support-relay/src/nfqws_support/cleanup.py",
-    "bytes": 270,
-    "sha256": "c92436aeecc8024ebcaf09a5ac1a5c9f45f812ff3e80cbbe3a549b14dce763f6"
+    "bytes": 543,
+    "sha256": "5f57d79b531d84a591f6b66b79814662175dd14db5715488cf4432c133e8f64e"
   },
   {
     "path": "support-relay/src/nfqws_support/config.py",
@@ -1168,6 +1168,11 @@
     "path": "support-relay/src/nfqws_support/dpi_validation.py",
     "bytes": 1879,
     "sha256": "91efe3c292a392aeadec56ddb1a1778c26f65b86607983657e76474407fcd12a"
+  },
+  {
+    "path": "support-relay/src/nfqws_support/entware.py",
+    "bytes": 2471,
+    "sha256": "5609787693a205b453f75670695ed7bf6022645c9ca6afed0e16f8d1fda3b062"
   },
   {
     "path": "support-relay/src/nfqws_support/geo.py",
@@ -1921,8 +1926,8 @@
   },
   {
     "path": "tests/test_profile_catalog.py",
-    "bytes": 8826,
-    "sha256": "7490a6fa455f91e3a78bf5e1b389f6bbc323044236692b71cd6f82c8d6db2137"
+    "bytes": 8906,
+    "sha256": "f1064ace073cd3bcb7262184c10d919a6c04677c0d25d607e68c278acf1ef0e5"
   },
   {
     "path": "tests/test_profile_catalog_client.mjs",
@@ -2305,6 +2310,11 @@
     "sha256": "7a8005f7ac2b7a27042f54428fd1d4b7d53251fca518ef4988a61ffa009038ff"
   },
   {
+    "path": "tests/test_support_entware.py",
+    "bytes": 3919,
+    "sha256": "1a115923f5f75c1b6bfc4278266108460a7985a515d47329377966b950811f7e"
+  },
+  {
     "path": "tests/test_support_mail.php",
     "bytes": 2214,
     "sha256": "b68a66f63066dcf318a4d914f10203c460e93e88b8bdd143dff65a24db4d9a00"
@@ -2433,6 +2443,11 @@
     "path": "tests/test_support_report_values.php",
     "bytes": 2931,
     "sha256": "83b74b6739adca7412233f5902bac9bbc17285d5d77ee2b9c97d2f83eea0e2bd"
+  },
+  {
+    "path": "tests/test_support_source_migration.py",
+    "bytes": 1763,
+    "sha256": "3a61ee068aae3365f272382cdbe07e3794f6627b003bc69d3caa22fb79acc1ad"
   },
   {
     "path": "tests/test_web.php",
@@ -2951,8 +2966,8 @@
   },
   {
     "path": "webui/web/public/profile-catalog-transport.php",
-    "bytes": 8734,
-    "sha256": "9afb49040700e97af5808885c9496b7bfbe1ea47c14df918046c9e1578164f70"
+    "bytes": 8750,
+    "sha256": "9e9d9c1a522c896ee291a30cccf508635eb2605b6da35be09de05f054a933ed0"
   },
   {
     "path": "webui/web/public/profile-catalog.php",
@@ -3117,7 +3132,7 @@
   {
     "path": "webui/web/public/support-channel-setup.php",
     "bytes": 5527,
-    "sha256": "82f31a0b724d5b51e9c2864dea8b34c4fcb5be37aafcebb55fc48584d2bfe423"
+    "sha256": "804a7743caa42fa3ae239c80a58c6093b5541c5a98f55656feb79728047da930"
   },
   {
     "path": "webui/web/public/support-json-schema.php",
@@ -3131,8 +3146,8 @@
   },
   {
     "path": "webui/web/public/support-mail.php",
-    "bytes": 12826,
-    "sha256": "71108a1515139e1641b4a55f3f7345a465542b014967574429763da053f3b024"
+    "bytes": 13151,
+    "sha256": "48cdf4f3d45f1898a6e077eafb448826d93768f7f98a08e6dea7c77fa6b0be2f"
   },
   {
     "path": "webui/web/public/support-report-dns.php",

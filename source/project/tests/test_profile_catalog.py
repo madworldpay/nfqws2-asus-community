@@ -63,13 +63,13 @@ class ProfileCatalogTests(unittest.TestCase):
         # The imported document remains ordinary input to the existing parser.
         from test_import_document import STRATEGY
         raw=json.dumps(STRATEGY);v=self.manifest();v['profiles'][0].update(size=len(raw.encode()),sha256=hashlib.sha256(raw.encode()).hexdigest())
-        origin='https://mad13mans.mooo.com/nfqws-profiles/v1/'
+        origin='https://mad13mansprofy13.asuscomm.com:5443/nfqws-profiles/v1/'
         responses={origin+'catalog.json':self.signed(v),origin+'files/'+v['profiles'][0]['sha256']+'.json':raw}
         out=self.transport({'responses':responses},"$t->catalog();$raw=$t->document('example-profile','"+v['profiles'][0]['sha256']+"');echo json_encode(['document'=>$raw,'calls'=>$calls]);")
         self.assertEqual(out.get('document'),raw,out);self.assertEqual(out['calls'],list(responses))
 
     def test_unknown_selection_changed_hash_bad_profile_and_oversize_are_rejected(self):
-        origin='https://mad13mans.mooo.com/nfqws-profiles/v1/';v=self.manifest();digest=v['profiles'][0]['sha256']
+        origin='https://mad13mansprofy13.asuscomm.com:5443/nfqws-profiles/v1/';v=self.manifest();digest=v['profiles'][0]['sha256']
         for ident,sha in [('../escape',digest),('example-profile','a'*64),('unknown',digest)]:
             out=self.transport({'responses':{origin+'catalog.json':self.signed(v)}},"$t->document("+json.dumps(ident)+","+json.dumps(sha)+");echo '{}';")
             self.assertIn('error',out);self.assertFalse(any('/files/' in url for url in out.get('calls',[])))
@@ -78,19 +78,19 @@ class ProfileCatalogTests(unittest.TestCase):
             self.assertIn('error',out)
 
     def test_corrupted_regular_cache_is_refetched_without_trusting_its_contents(self):
-        origin='https://mad13mans.mooo.com/nfqws-profiles/v1/'
+        origin='https://mad13mansprofy13.asuscomm.com:5443/nfqws-profiles/v1/'
         out=self.transport({'responses':{origin+'catalog.json':self.signed()}},"$t->catalog();file_put_contents($argv[2].'/catalog.json','corrupt');$index=$t->catalog();echo json_encode(['revision'=>$index['revision'],'calls'=>$calls]);")
         self.assertEqual(out.get('revision'),1,out);self.assertEqual(len(out['calls']),2)
 
     def test_newer_minimum_build_and_cache_symlink_never_download_profile(self):
-        origin='https://mad13mans.mooo.com/nfqws-profiles/v1/';v=self.manifest();v['profiles'][0]['min_build']=69;sha=v['profiles'][0]['sha256']
+        origin='https://mad13mansprofy13.asuscomm.com:5443/nfqws-profiles/v1/';v=self.manifest();v['profiles'][0]['min_build']=69;sha=v['profiles'][0]['sha256']
         out=self.transport({'responses':{origin+'catalog.json':self.signed(v)}},"$t->document('example-profile','"+sha+"');echo '{}';")
         self.assertEqual(out['error'],'catalog_version');self.assertEqual(out['calls'],[origin+'catalog.json'])
         out=self.transport({'responses':{origin+'catalog.json':self.signed()}},"$t->catalog();unlink($argv[2].'/catalog.json');symlink(__FILE__,$argv[2].'/catalog.json');$t->catalog();echo '{}';")
         self.assertEqual(out['error'],'catalog_unavailable');self.assertEqual(len(out['calls']),1)
 
     def test_expired_index_rejects_stale_selection_and_signed_revision_rollback(self):
-        origin='https://mad13mans.mooo.com/nfqws-profiles/v1/';old=self.manifest();new=self.manifest();new['revision']=2;new['profiles'][0]['sha256']='a'*64
+        origin='https://mad13mansprofy13.asuscomm.com:5443/nfqws-profiles/v1/';old=self.manifest();new=self.manifest();new['revision']=2;new['profiles'][0]['sha256']='a'*64
         body="$t->catalog();$v['responses']['"+origin+"catalog.json']=$v['next'];touch($argv[2].'/catalog.json',0);"
         out=self.transport({'responses':{origin+'catalog.json':self.signed(old)},'next':self.signed(new)},body+"$t->document('example-profile','"+old['profiles'][0]['sha256']+"');echo '{}';")
         self.assertEqual(out['error'],'catalog_changed');self.assertFalse(any('/files/' in url for url in out['calls']))

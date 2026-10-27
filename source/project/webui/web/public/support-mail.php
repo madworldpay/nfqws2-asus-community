@@ -26,7 +26,12 @@ class AsusSupportMail
         $value=is_string($raw)?json_decode($raw,true):null;
         if(!is_array($value)||!in_array(count($value),[2,3,4,5],true)||array_diff(array_keys($value),['enabled','url','dpi_attachments_enabled','sharing_v3_enabled','sharing_v4_enabled'])!==[]||!is_bool($value['enabled']??null)||!is_string($value['url']??null)|| (isset($value['dpi_attachments_enabled'])&&!is_bool($value['dpi_attachments_enabled']))|| (array_key_exists('sharing_v3_enabled',$value)&&!is_bool($value['sharing_v3_enabled']))|| (array_key_exists('sharing_v4_enabled',$value)&&!is_bool($value['sharing_v4_enabled'])))return ['code'=>'invalid_config'];
         if(!$value['enabled'])return ['code'=>'not_configured'];
-        $url=$value['url'];$parts=parse_url($url);
+        // Keep package-managed factory settings compatible without rewriting
+        // an operator's conffile or changing their enabled/disabled choice.
+        $url=$value['url'];
+        if($url==='https://mad13mans.mooo.com/nfqws-support/v1/reports')
+            $url='https://mad13mansprofy13.asuscomm.com:5443/nfqws-support/v1/reports';
+        $parts=parse_url($url);
         if(strlen($url)>1024||preg_match('/[^\x21-\x7e]/',$url)||!$parts||($parts['scheme']??'')!=='https'||
            !isset($parts['host'])||($parts['path']??'')!=='/nfqws-support/v1/reports')return ['code'=>'invalid_config'];
         foreach(['user','pass','query','fragment'] as $key)if(isset($parts[$key]))return ['code'=>'invalid_config'];

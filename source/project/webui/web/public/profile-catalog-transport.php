@@ -4,7 +4,7 @@ require_once __DIR__.'/import-document.php';
 /** No origin, URL, redirect target, or local path comes from an HTTP request. */
 final class AsusProfileCatalogTransport
 {
-    private const ORIGIN='https://mad13mans.mooo.com/nfqws-profiles/v1/';
+    private const ORIGIN='https://mad13mansprofy13.asuscomm.com:5443/nfqws-profiles/v1/';
     private const TTL=600;
     private string $key;
     private string $cache;

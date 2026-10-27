@@ -173,3 +173,21 @@ DB-IP City Lite is provided under CC BY 4.0. Preserve attribution
 `/nfqws-support/v4/reports` accepts an ordered subset of report, DPI, strategy, resources and DNS attachments (at most five, envelope at most 4 MiB). Legacy v1–v3 routes and file schemas remain available. Strategy schema2 includes shared BASE/EXTRA/IPSET declarations for selected blocks. The resources attachment carries explicit copies, source and outgoing hashes, aliases and a bounded static dependency audit. DNS separates active, draft and legacy sources, including deliberate standalone nondefault cards. Neither validator executes submitted files. URL credentials and authentication query parameters are rejected.
 
 Deploy the compatible relay and 4 MiB in-memory nginx route before enabling `sharing_v4_enabled` in the router’s root-only operator config. Fresh installs receive the verified HTTPS channel with v4 enabled; upgrades preserve the active conffile, including disabled settings. This enables the manual Send action, never automatic submission. `sharestates` exposes local capability without contacting the relay. The flag is independent of `sharing_v3_enabled`. Local preparation/download remain available without mail. SMTP sends the exact reviewed JSON bytes; resources/DNS contributions use the existing strategies label and do not create extra mailbox folders. Per-source/global limits, receipt deduplication and retention are unchanged.
+
+## Entware operator entrypoint
+
+`nfqws_support.entware:load_app()` supports the project-operated router receiver.
+It preloads root-only `/jffs/nfqws-support/relay-config`, drops to UID/GID 65123
+with no supplementary groups, core dumps or privilege gains, then serves behind
+a local lighttpd proxy. Only the last proxy-appended X-Forwarded-For address is
+used for quotas; incoming X-Real-IP is ignored. Metadata belongs in the private
+`/opt/var/lib/nfqws-support` directory, outside the static catalog root. Optional
+DB-IP City Lite uses `/opt/var/lib/nfqws-support-geo/dbip-city-lite.mmdb` and retains
+the attribution above. This receiver is not installed by client IPK/APK packages.
+
+The public service must expose only signed catalog/hash-named JSON and the fixed
+report/health/location endpoints, with TLS verification, body/time/connection
+limits and no CGI, directory listing or arbitrary proxying. SMTP credentials and
+private signing keys must never be stored in the public root or client packages.
+An Internet connection or router outage can interrupt downloads; already imported
+strategies continue to run. Keep router, Entware and TLS renewal maintained.
