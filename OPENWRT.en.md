@@ -42,6 +42,32 @@ For 25.12, use the installer above: it prepares verification of our APK signatur
 separately from the system key store. ASUS/Entware and native OpenWrt packages
 have different names and architectures; use the matching variant.
 
+### Transfer a downloaded file
+
+For an IPK, use WinSCP: select **SCP**, the router address, user `root`
+and destination directory `/tmp`. Or run this **on your computer**:
+
+```sh
+scp -O "./package.ipk" root@192.168.1.1:/tmp/package.ipk
+```
+
+Replace the package name and IP with yours. Then install the OpenWrt 24.10 IPK
+**in the router's SSH session**: `opkg install /tmp/package.ipk`.
+For OpenWrt 25.12, retain the APK signature verification procedure described above.
+
+If Samba/ksmbd is already configured on OpenWrt, open the USB share in File Explorer,
+for example as `\\192.168.1.1\USB`, and copy the file normally.
+On Linux and macOS, use `smb://192.168.1.1/USB`. Find the router's local path in
+**LuCI → System → Mount Points** and the share settings.
+For example, if the USB drive is mounted at `/mnt/usb`, run this **in the router's SSH session**:
+
+```sh
+cp "/mnt/usb/package.ipk" /tmp/package.ipk
+```
+
+`USB`, `/mnt/usb` and the filename are examples; the share must point to
+the drive containing your copied package. A file transfer does not install anything.
+
 ## Set up the panel
 
 1. Open the address printed by the installer, `http://router-IP:90`. The default login uses the OpenWrt `root` account. A separate panel password can be set through **Change password**.

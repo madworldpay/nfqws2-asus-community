@@ -44,6 +44,9 @@ Working SSH and Entware in `/opt` are required. Connect to **the router** over S
 ( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
 ```
 
+**Manual installation:** download the IPK for your architecture and transfer it using WinSCP/SCP
+or the USB drive's Samba share. [Manual installation with File Explorer examples](MANUAL-INSTALL.en.md).
+
 ### OpenWrt
 
 Entware is not required. Connect to **the OpenWrt router** over SSH as `root` and run:
@@ -51,6 +54,8 @@ Entware is not required. Connect to **the OpenWrt router** over SSH as `root` an
 ```sh
 ( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
 ```
+
+**Choose a file manually:** [native OpenWrt packages and installation](OPENWRT.en.md#choose-a-package-manually).
 
 Both installers select and verify the package for their platform, preserving settings
 during updates. The installer prints the panel address when finished.

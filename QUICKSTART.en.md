@@ -18,6 +18,10 @@ processing stays off; updates retain the previous state. The panel address is pr
 
 You need `curl` or GNU `wget`. Install Entware beforehand.
 
+**Manual installation:** instead of the command above, download the IPK and transfer it
+using WinSCP/SCP or copy it into a USB network share through Samba.
+[Step-by-step transfer and installation, including Windows File Explorer](MANUAL-INSTALL.en.md).
+
 ### 2. Configure
 
 1. Open `http://ROUTER_IP:90` and sign in with your ASUS administrator credentials.
@@ -51,6 +55,8 @@ Connect to the router over SSH as `root` and run:
 
 The installer selects a native package for your OpenWrt version and architecture,
 verifies the signature and SHA256, then prints the panel address.
+
+For manual file selection, use the [OpenWrt procedure](OPENWRT.en.md#choose-a-package-manually).
 
 1. Open `http://ROUTER_IP:90`. The default login uses the OpenWrt `root` account; you can change the panel password separately.
 2. Keep automatic WAN selection. Select devices and a strategy, or import a cloud profile. Review the preview, save settings and start NFQWS2.

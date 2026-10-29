@@ -39,6 +39,10 @@ running the command again only prints the panel address.
 
 ### Install an IPK
 
+This is the manual installation method. Transfer the file using WinSCP/SCP
+or copy it to USB through Samba in your normal file manager.
+[File Explorer transfer and USB path mapping](MANUAL-INSTALL.en.md#2-transfer-it-to-the-router).
+
 Verify the downloaded file's SHA256 against the release's `SHA256SUMS`,
 copy the IPK to `/opt/tmp/nfqws2-asus.ipk` and run:
 

@@ -45,6 +45,9 @@ NFQWS2 помогает обходить DPI-блокировки провайд
 ( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
 ```
 
+**Вручную:** скачайте IPK своей архитектуры и перенесите его через WinSCP/SCP
+или сетевую папку флешки по Samba. [Ручная установка с примерами для Проводника](MANUAL-INSTALL.md).
+
 ### OpenWrt
 
 Entware не требуется. Войдите по SSH **в роутер с OpenWrt** от `root` и выполните:
@@ -52,6 +55,8 @@ Entware не требуется. Войдите по SSH **в роутер с Op
 ```sh
 ( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
 ```
+
+**Выбрать файл вручную:** [нативные пакеты OpenWrt и их установка](OPENWRT.md#установить-пакет-вручную).
 
 Оба установщика выбирают пакет для своей платформы, проверяют его и сохраняют
 настройки при обновлении. В конце появится адрес панели.
