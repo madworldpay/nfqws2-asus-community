@@ -70,24 +70,88 @@ Entware не требуется. Войдите по SSH **в роутер с Op
 
 ## Как выглядит панель
 
-**Каталог профилей — выберите готовую стратегию для своего подключения.**
+Настройки, стратегии и управление службой — в одной панели.
 
-[![Каталог профилей провайдеров и глобальных стратегий](images/cloud-catalog.jpg)](images/cloud-catalog.jpg)
-
-| Импорт: свой JSON или профиль из каталога | SmartDNS: отдельный DNS для нужных сайтов |
-| --- | --- |
-| [![Импорт своего JSON или профиля из каталога](images/import-cloud.png)](images/import-cloud.png) | [![SmartDNS: сайты для DNS и фиксированные ответы](images/smartdns.png)](images/smartdns.png) |
+<a href="images/screenshots/panel-overview-ru.jpg"><img src="images/screenshots/panel-overview-ru.jpg" alt="Главное окно NFQWS2" width="1200"></a>
 
 <details>
-<summary><strong>Ещё скриншот: редактор стратегий</strong></summary>
+<summary><strong>Больше скриншотов</strong></summary>
 
-Подсветка, проверка кавычек и различимые переносы строк помогают редактировать стратегию.
+На снимках — интерфейс с демонстрационными настройками. Нажмите на изображение, чтобы открыть его в полном размере.
 
-[![Редактор стратегии](images/strategy-editor.png)](images/strategy-editor.png)
+### С чего начать
+
+Чекап роутера и последовательность настройки с состоянием каждого этапа.
+
+<a href="images/screenshots/getting-started-ru.jpg"><img src="images/screenshots/getting-started-ru.jpg" alt="С чего начать" width="1200"></a>
+
+### Выбор устройств
+
+Обработка только указанных устройств, примеры IPv4 и напоминание о закреплении адресов в DHCP.
+
+<a href="images/screenshots/devices-ru.jpg"><img src="images/screenshots/devices-ru.jpg" alt="Выбор устройств" width="1200"></a>
+
+### Каталог стратегий
+
+Профили провайдеров и глобальные стратегии в одном окне импорта.
+
+<a href="images/screenshots/profile-catalog-ru.jpg"><img src="images/screenshots/profile-catalog-ru.jpg" alt="Каталог стратегий" width="1200"></a>
+
+### Предпросмотр импорта
+
+Сравнение «было / станет» до сохранения выбранных изменений.
+
+<a href="images/screenshots/import-preview-ru.jpg"><img src="images/screenshots/import-preview-ru.jpg" alt="Предпросмотр импорта" width="1200"></a>
+
+### Редактор стратегий
+
+Отдельные блоки TCP и QUIC, подсветка параметров и различимые переносы строк.
+
+<a href="images/screenshots/strategy-editor-ru.jpg"><img src="images/screenshots/strategy-editor-ru.jpg" alt="Редактор стратегий" width="1200"></a>
+
+### Списки доменов
+
+Редактирование своего списка и переключение между файлами.
+
+<a href="images/screenshots/domain-lists-ru.jpg"><img src="images/screenshots/domain-lists-ru.jpg" alt="Списки доменов" width="1200"></a>
+
+### SmartDNS: подключение и возврат
+
+Состояние DNS, чекап и кнопка возврата прежних настроек.
+
+<a href="images/screenshots/smartdns-ru.jpg"><img src="images/screenshots/smartdns-ru.jpg" alt="SmartDNS: подключение и возврат" width="1200"></a>
+
+### DNS для отдельных сайтов
+
+Пример назначения DNS доменам с учётом поддоменов.
+
+<a href="images/screenshots/dns-rules-ru.jpg"><img src="images/screenshots/dns-rules-ru.jpg" alt="DNS для отдельных сайтов" width="1200"></a>
+
+### Фиксированные ответы DNS
+
+Домен и заданный IP-адрес в отдельном правиле.
+
+<a href="images/screenshots/fixed-dns-ru.jpg"><img src="images/screenshots/fixed-dns-ru.jpg" alt="Фиксированные ответы DNS" width="1200"></a>
+
+### Диагностика и состав отправки
+
+Выбор диагностики, результата DPI и блоков стратегии.
+
+<a href="images/screenshots/diagnostics-ru.jpg"><img src="images/screenshots/diagnostics-ru.jpg" alt="Диагностика и состав отправки" width="1200"></a>
+
+### Поделиться рабочим профилем
+
+Провайдер, назначение и описание результата перед предпросмотром отправки.
+
+<a href="images/screenshots/profile-sharing-ru.jpg"><img src="images/screenshots/profile-sharing-ru.jpg" alt="Поделиться рабочим профилем" width="1200"></a>
+
+### Обновление из панели
+
+Изменения между установленной и новой версией перед подготовкой пакета.
+
+<a href="images/screenshots/updates-ru.jpg"><img src="images/screenshots/updates-ru.jpg" alt="Обновление из панели" width="1200"></a>
 
 </details>
-
-Нажмите на скриншот, чтобы открыть его в полном размере.
 
 ## Какие сайты и устройства обрабатывать
 
