@@ -35,9 +35,4 @@
 для ручного разбора. Они не попадают в каталог автоматически. Административные
 панели роутера не являются частью публичного источника стратегий.
 
-The catalog and profile files use HTTPS. The panel verifies the catalog signature,
-file size and SHA256 before showing the import preview. Shared profiles reach the
-project mailbox for manual review and are never published automatically. Router
-administration panels are separate from the public strategy source.
-
 [Документация проекта](README.md#документация).

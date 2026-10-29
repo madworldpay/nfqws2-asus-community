@@ -209,3 +209,5 @@ VPN настраивается отдельно средствами проши�
 | Разобраться с проблемой | [Диагностика](DIAGNOSTICS.md) · [DPI Detector](DPI-DETECTOR.md) |
 | Проверить совместимость | [ASUS / Entware](COMPATIBILITY.md) · [OpenWrt](OPENWRT.md) |
 | Поделиться результатом | [Помощь проекту](CONTRIBUTING.md) |
+
+[English](README.en.md)

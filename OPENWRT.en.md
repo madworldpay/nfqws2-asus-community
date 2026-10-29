@@ -1,7 +1,5 @@
 # OpenWrt: installation and compatibility
 
-[Русский](OPENWRT.md)
-
 The native `nfqws2-native` package uses OpenWrt's `procd`, `netifd` and
 `firewall4` / `nftables`. It does not require Entware. It includes our shared
 panel with strategies, device selection, local JSON and cloud presets,
@@ -48,7 +46,7 @@ have different names and architectures; use the matching variant.
 
 1. Open the address printed by the installer, `http://router-IP:90`. The default login uses the OpenWrt `root` account. A separate panel password can be set through **Change password**.
 2. Keep automatic WAN discovery or choose an OpenWrt logical interface such as `wan` or `wan6`. PPPoE devices are resolved through `netifd`.
-3. Select devices and a strategy. In **Only selected**, `192.168.1.20` and `192.168.1.30`, one per line, select two devices. `192.168.1.0/24` selects that entire subnet. Reserve individual device addresses in **LuCI → Network → DHCP and DNS → Static leases**.
+3. Select devices and a strategy. In **Only listed devices**, `192.168.1.20` and `192.168.1.30`, one per line, select two devices. `192.168.1.0/24` selects that entire subnet. Reserve individual device addresses in **LuCI → Network → DHCP and DNS → Static leases**.
 4. You can import your own JSON or a cloud preset. Everything selected by the profile author is initially selected; you can deselect unwanted parts. Review the preview and apply. Supported file paths are adapted to OpenWrt; your router's local WAN and client selection are retained instead of importing another network's addresses.
 5. For domain-specific DNS, open SmartDNS, prepare a profile, test the connection and confirm it. The original `dnsmasq` configuration is retained; without confirmation, the previous DNS is restored.
 6. Start NFQWS2. Check increasing packet counters, then test websites, video playback and voice from a selected client.
@@ -112,4 +110,4 @@ services and removes their rules while retaining user settings. It removes the
 application; the OpenWrt firmware remains installed.
 Native integration source: [source/project/openwrt](source/project/openwrt/).
 
-[Project documentation](README.md#документация).
+[Project documentation](README.en.md#documentation).
