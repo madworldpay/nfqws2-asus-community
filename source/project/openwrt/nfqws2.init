@@ -38,7 +38,19 @@ service_started() {
     "$NFQWS_CONTROL" check-started || { stop; return 1; }
 }
 
-stop_service() { "$NFQWS_CONTROL" remove-firewall; }
+stop_service() {
+    # rc.common ignores this hook's return value. Abort on a real cleanup
+    # failure; otherwise it could delete the process and still report success.
+    "$NFQWS_CONTROL" remove-firewall || exit 1
+    case "$action" in stop|shutdown)
+        # procd_lock is already held by rc.common. An absent registration is
+        # an ordinary repeated stop, but still needs the capture cleanup above.
+        local registration
+        registration=$(ubus -S call service list '{"name":"nfqws2-native"}') || exit 1
+        [ "$registration" != '{}' ] || exit 0
+        ;;
+    esac
+}
 reload_service() { start; }
 
 service_triggers() {

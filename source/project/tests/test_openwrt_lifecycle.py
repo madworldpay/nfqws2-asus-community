@@ -64,6 +64,44 @@ service_started
         removed=calls.index('remove-firewall')
         self.assertIn('firewall',calls[removed+1:],'rc.common restart removes the preflight table; the new instance must recreate it')
 
+    def run_stop(self, *, registered=False, bus_error=False, cleanup_error=False, action='stop'):
+        with tempfile.TemporaryDirectory() as td:
+            init=Path(td)/'init';init.write_text((ROOT/'openwrt/nfqws2.init').read_text())
+            control=Path(td)/'control'
+            control.write_text('#!/bin/sh\nprintf "cleanup\\n"\nexit '+('1' if cleanup_error else '0')+'\n');control.chmod(0o755)
+            # rc.common holds procd_lock while invoking this hook, and ignores
+            # its return value before asking procd to delete the registration.
+            body='''
+action=''; NFQWS_CONTROL="$CONTROL"
+. "$INIT"
+action="$TEST_ACTION"
+ubus() { printf '%s\\n' "$SERVICE_JSON"; return "$BUS_STATUS"; }
+stop_service
+printf 'procd-delete\\n'
+'''
+            return subprocess.run(['sh','-c',body],capture_output=True,text=True,env={**os.environ,
+                'INIT':str(init),'CONTROL':str(control),'TEST_ACTION':action,
+                'SERVICE_JSON':'{"nfqws2-native":{"instances":{}}}' if registered else '{}',
+                'BUS_STATUS':'1' if bus_error else '0'})
+
+    def test_stopping_absent_service_cleans_capture_without_asking_procd_to_delete_it(self):
+        for action in ['stop','shutdown']:
+            r=self.run_stop(action=action)
+            self.assertEqual(r.returncode,0,r.stderr)
+            self.assertEqual(r.stdout.splitlines(),['cleanup'])
+
+    def test_stop_preserves_real_bus_and_firewall_cleanup_failures(self):
+        for options in [{'bus_error':True},{'cleanup_error':True}]:
+            r=self.run_stop(**options)
+            self.assertNotEqual(r.returncode,0)
+            self.assertNotIn('procd-delete',r.stdout)
+
+    def test_registered_service_and_restart_continue_to_procd(self):
+        for options in [{'registered':True},{'action':'restart'}]:
+            r=self.run_stop(**options)
+            self.assertEqual(r.returncode,0,r.stderr)
+            self.assertEqual(r.stdout.splitlines(),['cleanup','procd-delete'])
+
     def test_queue_facts_validate_rows_and_report_packet_sequence(self):
         for text,expected in [('', 'unbound null null'),
             ('300 1234 0 2 65535 0 0 19 1\n','bound 19 1234'),

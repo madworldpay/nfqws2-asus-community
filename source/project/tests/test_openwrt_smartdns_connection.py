@@ -193,6 +193,7 @@ case "$action" in start) start_service;; stop)
         self.sh('kill "$(cat '+self.base+'/vpn.pid)"')
         applied=self.api('smartdnsapply',request_id='8'*32,preview_id=status['preview_id'],profile_hash=saved['profile_hash'],baseline_hash=preview['baseline_hash'])
         self.assertIn(applied.get('state'),['failed','rolled_back'],applied)
+        self.assertEqual(applied.get('code'),'dns_validation_failed',applied)
         self.assertEqual(self.sh('cat '+self.base+'/main.pid').stdout,main,'Do not switch clients to an engine whose upstream is not ready')
         self.assertEqual(self.query('example.com')['answers'],['8.8.8.8'])
 

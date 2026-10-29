@@ -135,11 +135,17 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
     {
         $s=$this->checked($job);if($s['phase']!=='prepared')throw new RuntimeException('invalid_state');
         $r=NfqwsPlatform::run(['/etc/init.d/nfqws2-native-dns','start'],5);if($r['status']!==0)throw new RuntimeException('guard_unavailable');
-        $end=self::now()+7;
+        $end=self::now()+7;$failure='guard_unavailable';
         do{$s=$this->checked($job);$guard=$this->identity($s,'guard');$runtime=$this->identity($s,'runtime');
-            if($guard!==null&&$runtime!==null&&AsusSmartDnsCandidate::ownsPorts($runtime['pid'],6054)&&$this->query(6054,'example.com'))return ['guard_identity'=>$guard,'identity'=>$runtime];usleep(20000);
+            $failure='guard_unavailable';
+            if($guard!==null&&$runtime!==null&&AsusSmartDnsCandidate::ownsPorts($runtime['pid'],6054)){
+                // A verified live owner with no usable DNS answer is an
+                // upstream validation failure, not a lost guardian.
+                $failure='dns_validation_failed';
+                if($this->query(6054,'example.com'))return ['guard_identity'=>$guard,'identity'=>$runtime];
+            }usleep(20000);
         }while(self::now()<$end);
-        try{if($this->restore($job,[])!==true||$this->stop($job)!==true)throw new RuntimeException('runtime_stop_failed');}catch(Throwable $e){throw new AsusSmartDnsUnresolvedGuard('guard_unavailable');}throw new RuntimeException('guard_unavailable');
+        try{if($this->restore($job,[])!==true||$this->stop($job)!==true)throw new RuntimeException('runtime_stop_failed');}catch(Throwable $e){throw new AsusSmartDnsUnresolvedGuard('guard_unavailable');}throw new RuntimeException($failure);
     }
     public function forward(array $job):array
     {
