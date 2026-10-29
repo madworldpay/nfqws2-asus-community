@@ -1,6 +1,6 @@
 # OpenWrt: installation and compatibility
 
-[Русский](OPENWRT.md) · [Panel features](README.md) · [Profile import](IMPORT.md) · [Diagnostics](DIAGNOSTICS.md)
+[Русский](OPENWRT.md)
 
 The native `nfqws2-native` package uses OpenWrt's `procd`, `netifd` and
 `firewall4` / `nftables`. It does not require Entware. It includes our shared
@@ -59,7 +59,7 @@ in place. NFQWS2 settings live in `/etc/nfqws2/`; panel settings live in
 software flow offloading can bypass NFQUEUE; the panel checks for this and
 explains the necessary action.
 
-[Export and sharing](IMPORT.md#экспорт-и-отправка) follow the same workflow:
+Export and sharing follow the same workflow:
 select the contents, review the preview, then download the JSON or send a report.
 Share working strategies with your model, firmware and test conditions to help
 other users on the same provider.
@@ -111,3 +111,5 @@ Official information: [OpenWrt device catalog](https://openwrt.org/toh/start),
 services and removes their rules while retaining user settings. It removes the
 application; the OpenWrt firmware remains installed.
 Native integration source: [source/project/openwrt](source/project/openwrt/).
+
+[Project documentation](README.md#документация).
