@@ -71,86 +71,9 @@ Updates preserve settings and the previous service state.
 
 Settings, strategies and service controls in one panel.
 
-<a href="images/screenshots/panel-overview-en.jpg"><img src="images/screenshots/panel-overview-en.jpg" alt="NFQWS2 main panel" width="1200"></a>
+[![NFQWS2 main panel](images/screenshots/panel-overview-en.jpg)](images/screenshots/panel-overview-en.jpg)
 
-<details>
-<summary><strong>More screenshots</strong></summary>
-
-The screenshots show the interface with demonstration settings. Click an image to open it at full size.
-
-### Getting started
-
-Router checkup and setup steps with their current status.
-
-<a href="images/screenshots/getting-started-en.jpg"><img src="images/screenshots/getting-started-en.jpg" alt="Getting started" width="1200"></a>
-
-### Device selection
-
-Processing for listed devices, IPv4 examples and a reminder to reserve addresses in DHCP.
-
-<a href="images/screenshots/devices-en.jpg"><img src="images/screenshots/devices-en.jpg" alt="Device selection" width="1200"></a>
-
-### Strategy catalog
-
-Provider profiles and global strategies in the import window.
-
-<a href="images/screenshots/profile-catalog-en.jpg"><img src="images/screenshots/profile-catalog-en.jpg" alt="Strategy catalog" width="1200"></a>
-
-### Import preview
-
-Compare before and after before saving the selected changes.
-
-<a href="images/screenshots/import-preview-en.jpg"><img src="images/screenshots/import-preview-en.jpg" alt="Import preview" width="1200"></a>
-
-### Strategy editor
-
-Separate TCP and QUIC blocks, parameter highlighting and visible line breaks.
-
-<a href="images/screenshots/strategy-editor-en.jpg"><img src="images/screenshots/strategy-editor-en.jpg" alt="Strategy editor" width="1200"></a>
-
-### Domain lists
-
-Edit your domain list and switch between files.
-
-<a href="images/screenshots/domain-lists-en.jpg"><img src="images/screenshots/domain-lists-en.jpg" alt="Domain lists" width="1200"></a>
-
-### SmartDNS: connection and restore
-
-DNS status, checkup and the control for restoring previous settings.
-
-<a href="images/screenshots/smartdns-en.jpg"><img src="images/screenshots/smartdns-en.jpg" alt="SmartDNS: connection and restore" width="1200"></a>
-
-### DNS for individual sites
-
-Assign a DNS server to domains, including their subdomains.
-
-<a href="images/screenshots/dns-rules-en.jpg"><img src="images/screenshots/dns-rules-en.jpg" alt="DNS for individual sites" width="1200"></a>
-
-### Fixed DNS answers
-
-A domain and a specified IP address in a separate rule.
-
-<a href="images/screenshots/fixed-dns-en.jpg"><img src="images/screenshots/fixed-dns-en.jpg" alt="Fixed DNS answers" width="1200"></a>
-
-### Diagnostics and submission contents
-
-Select router diagnostics, a DPI result and strategy blocks.
-
-<a href="images/screenshots/diagnostics-en.jpg"><img src="images/screenshots/diagnostics-en.jpg" alt="Diagnostics and submission contents" width="1200"></a>
-
-### Share a working profile
-
-Provider, purpose and test results before reviewing the submission.
-
-<a href="images/screenshots/profile-sharing-en.jpg"><img src="images/screenshots/profile-sharing-en.jpg" alt="Share a working profile" width="1200"></a>
-
-### Updates in the panel
-
-Changes between the installed and new versions before package preparation.
-
-<a href="images/screenshots/updates-en.jpg"><img src="images/screenshots/updates-en.jpg" alt="Updates in the panel" width="1200"></a>
-
-</details>
+[![More screenshots](images/more-screenshots-en.svg)](SCREENSHOTS.en.md#panel-screenshots)
 
 ## Which sites and devices to process
 
