@@ -41,8 +41,18 @@ final class AsusSupportReport
     public function __construct(private AsusReportIO $io,private AsusReportValues $values) {}
     public function queueSample(?int $queue,array $identity): array
     {
+        $first=$this->queueFacts($queue,$identity);
+        if($first['state']!=='bound') return $first;
+        $socket=$this->io->queueSocket($identity['pid']??0,$first['_binding']);
+        $second=$this->queueFacts($queue,$identity);
+        if($second['state']==='bound' && $first['_binding']===$second['_binding'] && $socket!==null &&
+            $socket===$this->io->queueSocket($identity['pid']??0,$second['_binding'])) $second['_socket']=$socket;
+        return $second;
+    }
+    private function queueFacts(?int $queue,array $identity): array
+    {
         $out=['queue_number'=>$queue,'state'=>'unknown','backlog'=>null,'copy_mode'=>null,'copy_range'=>null,'kernel_drops'=>null,'user_drops'=>null,'sequence'=>null,'reserved'=>null,
-            '_identity'=>$identity,'_binding'=>null,'_time'=>$this->io->now(),'source_state'=>'available'];
+            '_identity'=>$identity,'_binding'=>null,'_socket'=>null,'_time'=>$this->io->now(),'source_state'=>'available'];
         if($queue===null || $queue<0 || $queue>65535) {$out['source_state']='unsupported';return $out;}
         $read=$this->io->read('queue',262144);$out['source_state']=$read['state'];
         if($read['state']!=='available')return $out;
@@ -56,7 +66,7 @@ final class AsusSupportReport
         }
         if(count($found)>1) {$out['source_state']='unsupported';return $out;}
         if(!$found) {$out['state']='unbound';return $out;}
-        $row=$found[0];$out['state']='bound';$out['_binding']=(string)$row[1];
+        $row=$found[0];$out['state']='bound';$out['_binding']=sprintf('%.0f',$row[1]);
         foreach(['backlog'=>2,'copy_mode'=>3,'copy_range'=>4,'kernel_drops'=>5,'user_drops'=>6,'sequence'=>7,'reserved'=>8] as $key=>$index)$out[$key]=$row[$index];
         return $out;
     }
@@ -64,11 +74,12 @@ final class AsusSupportReport
     {
         $out=['result'=>'unavailable','delta'=>null,'interval_ms'=>max(0,(int)round(($second['_time']-$first['_time'])*1000))];
         $stableKeys=array_flip(['boot','pid','start_ticks','exe','uid','running']);
-        if($first['queue_number']!==$second['queue_number'] || array_intersect_key($first['_identity'],$stableKeys)!==array_intersect_key($second['_identity'],$stableKeys) || $first['_binding']!==$second['_binding']) {$out['result']='changed_during_collection';return $out;}
+        if($first['queue_number']!==$second['queue_number'] || array_intersect_key($first['_identity'],$stableKeys)!==array_intersect_key($second['_identity'],$stableKeys) || $first['_binding']!==$second['_binding'] || $first['_socket']!==$second['_socket']) {$out['result']='changed_during_collection';return $out;}
         if($first['state']==='unbound'&&$second['state']==='unbound') {$out['result']='unbound';return $out;}
         if($first['state']!=='bound'||$second['state']!=='bound')return $out;
         foreach(['boot','pid','start_ticks','exe'] as $key)if(($first['_identity'][$key]??null)===null)return $out;
-        if(($first['_identity']['running']??null)!==true)return $out;
+        if(($first['_identity']['running']??null)!==true || $first['_socket']===null || $second['_socket']===null)return $out;
+        if(!is_string($first['_identity']['boot']) || !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/D',$first['_identity']['boot']))return $out;
         if($second['sequence']<$first['sequence']) {$out['result']='counter_decreased';return $out;}
         $out['delta']=$second['sequence']-$first['sequence'];$out['result']=$out['delta']>0?'increased':'unchanged';return $out;
     }

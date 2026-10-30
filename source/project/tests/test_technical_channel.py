@@ -162,6 +162,120 @@ class TechnicalChannelTests(unittest.TestCase):
             finally:
                 if guard.poll() is None:guard.kill();guard.wait()
 
+    def test_stock_temporary_parent_is_journaled_and_restored_after_stop_and_reboot(self):
+        # Removing the permission lease breaks valid stock /tmp0777 starts;
+        # restoring by pathname alone would alter a replacement directory.
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); temporary=root/'temporary'; temporary.mkdir(); temporary.chmod(0o777)
+            cfg=dict(runtime=str(temporary/'run'),journal=str(root/'journal.json'),temporary_parent=str(temporary),owner=os.getuid())
+            result=self.php("$c=new AsusTechnicalChannel($v);$m=new ReflectionMethod($c,'lock');$h=$m->invoke($c);$s=['state'=>'connecting','session_id'=>str_repeat('a',32),'activation_id'=>str_repeat('a',32),'identity'=>AsusTechnicalProcess::identity(getmypid()),'expires_at'=>time()+30,'uptime_deadline'=>AsusTechnicalProcess::uptime()+30];AsusTechnicalFiles::write($v['runtime'].'/state.json',json_encode($s),0600,$v['owner']);$u=new ReflectionMethod($c,'unlock');$u->invoke($c,$h);return [file_exists($v['journal'].'.permissions'),fileperms($v['temporary_parent'])&07777];",cfg)
+            self.assertEqual(result,{'ok':[True,0o1777]})
+            self.assertEqual(self.php("$c=new AsusTechnicalChannel($v);return $c->stop()['state'];",cfg),{'ok':'failed'})
+            self.assertEqual(temporary.stat().st_mode&0o7777,0o777)
+            self.assertFalse((root/'journal.json.permissions').exists())
+            self.assertEqual(self.php("$p=new AsusTechnicalPermissions($v['journal'].'.permissions',$v['temporary_parent'],$v['owner']);$p->prepare();return true;",cfg),{'ok':True})
+            # Simulate /tmp recreation while its persistent lease survives.
+            temporary.rename(root/'old-temporary');temporary.mkdir(mode=0o755)
+            self.assertEqual(self.php("$p=new AsusTechnicalPermissions($v['journal'].'.permissions',$v['temporary_parent'],$v['owner']);$p->restore();return true;",cfg),{'ok':True})
+            self.assertEqual(temporary.stat().st_mode&0o7777,0o755)
+
+    def test_failed_start_restores_stock_permissions_without_status_poll(self):
+        # A failed credential/state write must roll back the newly admitted
+        # activation before returning; no guardian or later status call exists.
+        for failure in ['oversized_invitation','linked_invitation','oversized_state']:
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as d:
+                root=Path(d);temporary=root/'temporary';temporary.mkdir();temporary.chmod(0o777)
+                runtime=temporary/'run';runtime.mkdir(mode=0o700);library=root/'library';library.mkdir(mode=0o700)
+                for name in ['session.sh','guard.sh']:(library/name).write_text('fixture must not launch')
+                pem=root/'public.pem';pem.write_text(self.pem);pem.chmod(0o600)
+                target=root/'unrelated';target.write_text('owner data');target.chmod(0o600)
+                path=runtime/('state.json' if failure=='oversized_state' else 'invitation')
+                if failure=='linked_invitation':path.symlink_to(target)
+                else:path.write_text('x'*600000);path.chmod(0o600)
+                cfg=dict(runtime=str(runtime),journal=str(root/'journal.json'),temporary_parent=str(temporary),owner=os.getuid(),public_key=str(pem),library=str(library),php=PHP,busybox='/usr/bin/busybox',ssh='/bin/true')
+                result=self.php("$c=new AsusTechnicalChannel($v['config']);try{$c->start($v['link']);return 'accepted';}catch(Throwable $e){return $e->getMessage();}",dict(config=cfg,link=self.link()))
+                self.assertEqual(result,{'ok':'unsafe_key_file'})
+                self.assertEqual(temporary.stat().st_mode&0o7777,0o777,'failed start left the global permission repair active')
+                self.assertFalse((root/'journal.json.permissions').exists())
+                self.assertEqual(target.read_text(),'owner data')
+                if failure!='oversized_state' and (runtime/'state.json').exists():
+                    self.assertEqual(json.loads((runtime/'state.json').read_text())['state'],'failed')
+
+    def test_busy_start_keeps_existing_activation_and_permission_lease(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);temporary=root/'temporary';temporary.mkdir();temporary.chmod(0o777)
+            runtime=temporary/'run';runtime.mkdir(mode=0o700);pem=root/'public.pem';pem.write_text(self.pem);pem.chmod(0o600)
+            identity=self.php("return AsusTechnicalProcess::identity($v['pid']);",dict(pid=os.getpid()))['ok']
+            state=dict(state='connected',session_id='b'*32,activation_id='b'*32,identity=identity,expires_at=int(time.time())+60,uptime_deadline=1e12)
+            statefile=runtime/'state.json';statefile.write_text(json.dumps(state));statefile.chmod(0o600)
+            cfg=dict(runtime=str(runtime),journal=str(root/'journal.json'),temporary_parent=str(temporary),owner=os.getuid(),public_key=str(pem))
+            result=self.php("$c=new AsusTechnicalChannel($v['config']);try{$c->start($v['link']);return 'accepted';}catch(Throwable $e){return $e->getMessage();}",dict(config=cfg,link=self.link()))
+            self.assertEqual(result,{'ok':'busy'})
+            self.assertEqual(json.loads(statefile.read_text()),state)
+            self.assertEqual(temporary.stat().st_mode&0o7777,0o1777)
+            self.assertTrue((root/'journal.json.permissions').exists())
+            self.assertFalse((runtime/'invitation').exists())
+
+    def test_permission_repair_rejects_links_and_other_unsafe_modes(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); target=root/'target';target.mkdir();target.chmod(0o777)
+            alias=root/'link';alias.symlink_to(target)
+            script="$p=new AsusTechnicalPermissions($v['journal'],$v['temporary'],$v['owner']);$p->prepare();return true;"
+            for path in [alias,target]:
+                if path==target:target.chmod(0o775)
+                self.assertEqual(self.php(script,dict(journal=str(root/'lease'),temporary=str(path),owner=os.getuid())).get('error'),'unsafe_key_file')
+                self.assertFalse((root/'lease').exists())
+
+    def test_command_without_setsid_runs_and_revocation_kills_descendants_only(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);runtime=root/'run';runtime.mkdir(mode=0o700)
+            # This executable exposes only the measured packaged applets.
+            busy=root/'busybox';busy.write_text('#!/bin/sh\ncase "$1" in sh|start-stop-daemon|usleep) exec /usr/bin/busybox "$@";; *) exit 127;; esac\n');busy.chmod(0o700)
+            session='a'*32;identity=self.php("return AsusTechnicalProcess::identity($v['pid']);",dict(pid=os.getpid()))['ok']
+            state=dict(state='connected',session_id=session,activation_id=session,identity=identity,expires_at=int(time.time())+30,uptime_deadline=1e12)
+            statefile=runtime/'state.json';statefile.write_text(json.dumps(state));statefile.chmod(0o600)
+            code="require $argv[1].'/technical-channel.php';$c=new AsusTechnicalChannel(['runtime'=>$argv[2],'journal'=>$argv[3],'owner'=>(int)$argv[4],'busybox'=>$argv[5]]);exit($c->command($argv[6]));"
+            argv=[PHP,'-n','-r',code,str(PUBLIC),str(runtime),str(root/'journal.json'),str(os.getuid()),str(busy),session]
+            env=os.environ|{'SSH_CONNECTION':'127.0.0.1 40000 127.0.0.1 40001','SSH_ORIGINAL_COMMAND':"printf ready; exit 7"}
+            run=subprocess.run(argv,env=env,text=True,capture_output=True,timeout=10)
+            self.assertEqual((run.returncode,run.stdout,run.stderr),(7,'ready',''))
+            marker=root/'marker';started=root/'started'; unrelated=subprocess.Popen(['/bin/sleep','20'])
+            env['SSH_ORIGINAL_COMMAND']=f'touch {started}; (sleep 2; touch {marker}) & wait'
+            guard=subprocess.Popen(argv,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            try:
+                deadline=time.monotonic()+3
+                while not started.exists() and guard.poll() is None and time.monotonic()<deadline:time.sleep(.03)
+                self.assertTrue(started.exists(),'command must really start before revocation')
+                replacement=state|dict(activation_id='b'*32);tmp=runtime/'new';tmp.write_text(json.dumps(replacement));tmp.chmod(0o600);tmp.replace(statefile)
+                out,err=guard.communicate(timeout=4)
+                self.assertEqual((out,err),('',''));self.assertNotEqual(guard.returncode,0)
+                time.sleep(2.1);self.assertFalse(marker.exists(),'a nested descendant survived cancellation')
+                self.assertIsNone(unrelated.poll(),'unrelated process was killed')
+            finally:
+                if guard.poll() is None:guard.kill();guard.wait()
+                unrelated.terminate();unrelated.wait()
+
+    def test_cleanup_retains_only_bounded_stage_reason(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);runtime=root/'run';runtime.mkdir(mode=0o700)
+            state=dict(state='connecting',activation_id='a'*32,session_id='a'*32,stage='local_server')
+            (runtime/'state.json').write_text(json.dumps(state));(runtime/'state.json').chmod(0o600)
+            (runtime/'ssh.log').write_text('Multicall binary: /secret/path\npassword=secret invitation=private\n');(runtime/'ssh.log').chmod(0o600)
+            result=self.php("$c=new AsusTechnicalChannel(['runtime'=>$v['root'].'/run','journal'=>$v['root'].'/journal.json','owner'=>$v['owner']]);$m=new ReflectionMethod($c,'clean');$m->invoke($c,$v['state'],'failed','launch_failed');return $c->status();",dict(root=d,owner=os.getuid(),state=state))
+            self.assertEqual(result['ok']['diagnostic'],dict(stage='local_server',reason='multicall_usage'))
+            self.assertFalse((runtime/'ssh.log').exists())
+            self.assertNotIn('secret',json.dumps(result))
+
+    def test_oversized_transport_log_cannot_block_key_cleanup(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);runtime=root/'run';runtime.mkdir(mode=0o700)
+            state=dict(state='connecting',activation_id='a'*32,session_id='a'*32,stage='transport')
+            (runtime/'state.json').write_text(json.dumps(state));(runtime/'state.json').chmod(0o600)
+            (runtime/'ssh.log').write_text('Permission denied\n'+'x'*1100000);(runtime/'ssh.log').chmod(0o600)
+            result=self.php("$c=new AsusTechnicalChannel(['runtime'=>$v['root'].'/run','journal'=>$v['root'].'/journal.json','owner'=>$v['owner']]);$j=new AsusTechnicalJournal($v['root'].'/journal.json',$v['owner']);$j->apply([['path'=>$v['root'].'/keys','line'=>'owned']]);$m=new ReflectionMethod($c,'clean');$m->invoke($c,$v['state'],'failed','connection_failed');return $c->status();",dict(root=d,owner=os.getuid(),state=state))
+            self.assertEqual(result.get('ok',{}).get('diagnostic'),dict(stage='transport',reason='authentication_failed'))
+            self.assertFalse((root/'keys').exists());self.assertFalse((runtime/'ssh.log').exists())
+
     def test_guard_requires_live_matching_worker_tunnel_source_and_both_deadlines(self):
         data=self.php("return AsusTechnicalProcess::identity(getmypid());",{})['ok']
         # Previous PHP has exited, so a stale but correctly formatted identity fails closed.

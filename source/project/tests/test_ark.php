@@ -79,6 +79,15 @@ SH;
     foreach ([0,2147483648.0,4294967295.0] as $seq) { $valid['nfqueue']['sequence']=$seq; must(AsusArkPlatform::validateDiagnostics($valid)['nfqueue']['sequence'] == $seq, 'uint32 survives ARM32 float parsing'); }
     foreach ([-1,4294967296.0,1.5,INF,NAN,'1'] as $seq) { $valid['nfqueue']['sequence']=$seq; must(AsusArkPlatform::validateDiagnostics($valid)['nfqueue']['state'] === 'unknown', 'invalid sequence rejected'); }
 
+    $valid=$p->diagnostics();$valid['nfqueue']['sequence']=20;$valid['nfqueue']['lifetime']=str_repeat('a',64);
+    must(AsusArkPlatform::validateDiagnostics($valid)['nfqueue']['lifetime']===str_repeat('a',64),'validated lifetime reaches API');
+    foreach(['not-a-token',123,[],str_repeat('A',64)] as $bad) {
+        $valid['nfqueue']['lifetime']=$bad;
+        $view=AsusArkPlatform::validateDiagnostics($valid);
+        must($view['nfqueue']['state']==='bound' && $view['nfqueue']['lifetime']===null,'malformed identity cannot authenticate delivery or hide queue');
+    }
+    $valid['nfqueue']['lifetime']=str_repeat('a',64);$valid['process_running']=false;
+    must(AsusArkPlatform::validateDiagnostics($valid)['nfqueue']['lifetime']===null,'stopped daemon cannot authenticate counter proof');
     [$p, $s] = fixture('all');
     foreach (ASUS_ARK_KEYS as $k) $p->state['flags'][$k] = ['present' => true, 'value' => '1'];
     $original = $p->state;

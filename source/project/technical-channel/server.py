@@ -65,6 +65,8 @@ Match User {user}
     PasswordAuthentication no
     KbdInteractiveAuthentication no
     MaxSessions 0
+    ClientAliveInterval 15
+    ClientAliveCountMax 2
     AllowTcpForwarding remote
     PermitListen 127.0.0.1:{port}
     PermitOpen none
@@ -80,7 +82,7 @@ Match all
         write(Path('/etc/systemd/system/'+unit+'.timer'),f'[Unit]\nDescription=Expire temporary NFQWS2 channel {sid}\n[Timer]\nOnCalendar={stamp:%Y-%m-%d %H:%M:%S} UTC\nPersistent=true\n[Install]\nWantedBy=timers.target\n')
         run('/usr/sbin/sshd','-t')
         effective=run('/usr/sbin/sshd','-T','-C',f'user={user},host=localhost,addr=127.0.0.1')
-        required=['maxsessions 0','allowtcpforwarding remote',f'permitlisten 127.0.0.1:{port}','permitopen none','gatewayports no','allowstreamlocalforwarding no','passwordauthentication no','permittty no']
+        required=['clientaliveinterval 15','clientalivecountmax 2','maxsessions 0','allowtcpforwarding remote',f'permitlisten 127.0.0.1:{port}','permitopen none','gatewayports no','allowstreamlocalforwarding no','passwordauthentication no','permittty no']
         if not all(line in effective.splitlines() for line in required):raise ValueError('SSH restriction not applied')
         run('systemctl','reload','ssh');run('systemctl','daemon-reload');run('systemctl','enable','--now',unit+'.timer')
         host=Path('/etc/ssh/ssh_host_ed25519_key.pub').read_text().split()[:2]

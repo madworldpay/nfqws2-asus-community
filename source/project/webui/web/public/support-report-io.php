@@ -16,6 +16,7 @@ class AsusReportIO
         'kernel'=>['proc','sys/kernel/osrelease'], 'machine'=>['proc','sys/kernel/arch'],
         'boot'=>['proc','sys/kernel/random/boot_id'], 'uptime'=>['proc','uptime'],
         'memory'=>['proc','meminfo'], 'queue'=>['proc','net/netfilter/nfnetlink_queue'],
+        'netlink'=>['proc','net/netlink'],
         'tables4'=>['proc','net/ip_tables_names'], 'tables6'=>['proc','net/ip6_tables_names'],
         'conntrack'=>['proc','sys/net/netfilter/nf_conntrack_count'],
         'conntrack_max'=>['proc','sys/net/netfilter/nf_conntrack_max'],
@@ -111,6 +112,28 @@ class AsusReportIO
             return $exe === false ? $this->result('missing') : $this->result('available', $exe);
         }
         return $this->boundedFile($this->safePath($this->roots['proc'], "$pid/$field", true), $limit);
+    }
+    /** Read-only NETLINK_NETFILTER socket ownership; port ids alone can be reused. */
+    public function queueSocket(int $pid, string $port): ?string
+    {
+        if ($pid <= 1 || AsusReportValues::decimal($port,'4294967295') === null) return null;
+        $read=$this->read('netlink'); if($read['state']!=='available') return null;
+        $inodes=[];
+        foreach(explode("\n",trim($read['value'])) as $line) {
+            $row=preg_split('/\s+/',trim($line));
+            if(($row[1]??'')!=='12' || ($row[2]??'')!==$port) continue;
+            if(count($row)!==10 || AsusReportValues::decimal($row[9],'18446744073709551615')===null || $row[9]==='0') return null;
+            $inodes[]=$row[9];
+        }
+        if(count($inodes)!==1) return null;
+        $proc=realpath($this->roots['proc']);
+        if($proc===false || is_link($proc.'/'.$pid) || is_link($proc.'/'.$pid.'/fd')) return null;
+        $dir=$proc.'/'.$pid.'/fd'; $fds=@scandir($dir); if(!is_array($fds) || count($fds)>4098) return null;
+        foreach($fds as $fd) {
+            if($this->remaining()<=0) return null;
+            if(preg_match('/^[0-9]+$/D',$fd) && @readlink($dir.'/'.$fd)==='socket:['.$inodes[0].']') return $inodes[0];
+        }
+        return null;
     }
     public function engine(): array
     {

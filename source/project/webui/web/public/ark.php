@@ -44,8 +44,11 @@ class AsusArkPlatform
             $sequence < 0 || $sequence > 4294967295.0 || floor((float)$sequence) !== (float)$sequence)) return $unknown;
         if (($queue['state'] === 'bound' && ($number === null || $sequence === null)) ||
             ($queue['state'] !== 'bound' && $sequence !== null)) return $unknown;
+        $lifetime = $queue['lifetime'] ?? null;
+        if ($lifetime !== null && (!is_string($lifetime) || !preg_match('/^[0-9a-f]{64}$/D', $lifetime))) $lifetime = null;
         return ['ark' => ['present' => $ark['present'], 'loaded' => $ark['loaded']],
-            'nfqueue' => ['queue_number' => $number, 'state' => $queue['state'], 'sequence' => $sequence],
+            'nfqueue' => ['queue_number' => $number, 'state' => $queue['state'], 'sequence' => $sequence] +
+                (array_key_exists('lifetime', $queue) ? ['lifetime' => $queue['state'] === 'bound' && $value['process_running'] === true ? $lifetime : null] : []),
             'process_running' => $value['process_running']];
     }
 

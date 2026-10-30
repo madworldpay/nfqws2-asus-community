@@ -645,6 +645,7 @@ components:
             queue_number: { type: [integer, 'null'], minimum: 0, maximum: 65535 }
             state: { type: string, enum: [bound, unbound, unknown] }
             sequence: { type: [integer, 'null'], minimum: 0, maximum: 4294967295 }
+            lifetime: { type: [string, 'null'], pattern: '^[0-9a-f]{64}$' }
           additionalProperties: false
         process_running: { type: [boolean, 'null'] }
       additionalProperties: false

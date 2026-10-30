@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 11666,
-      "sha256": "2691dd71b266ed3e607d36295bd6f7713c059e2269fae46a8662480cad19681f"
+      "bytes": 12649,
+      "sha256": "dc72a4149c1b1a91a79644de60592f8e26100c23fa5c82348f0b00f5edbc9a9c"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -32,13 +32,13 @@
     },
     {
       "file": "DIAGNOSTICS.en.md",
-      "bytes": 3846,
-      "sha256": "ef0ad411723a7cff24809b9fc78aee2b5eb1d4a519bf249e93d282fda2593590"
+      "bytes": 4533,
+      "sha256": "263091e3b72c5358d42ed31df1cd8c65e53980f5153e3976fa9677a23a6310dd"
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 6443,
-      "sha256": "e19b89cf91b8a698917d5484a730f93feac61626ba26d25950d871b3210ea13f"
+      "bytes": 7752,
+      "sha256": "0c607a9eb5440d75eaa7c2dfc0f2b103f192e5a1f7e1425b9094ffa315ce6a9d"
     },
     {
       "file": "DOMRU.en.md",

@@ -21,7 +21,7 @@ final class AsusTechnicalFiles
         if(is_link($path))throw new RuntimeException('unsafe_key_file');
         $s=@lstat($path);
         if(!$s){self::directory(dirname($path),$owner);if(!@mkdir($path,0700))throw new RuntimeException('unsafe_key_file');$s=lstat($path);}
-        if(($s['mode']&0170000)!==0040000||($s['uid']!==$owner&&$s['uid']!==0)||(($s['mode']&0022)!==0&&!(($s['mode']&01000)!==0&&$s['uid']===0)))throw new RuntimeException('unsafe_key_file');
+        if(($s['mode']&0170000)!==0040000||($s['uid']!==$owner&&$s['uid']!==0)||(($s['mode']&0022)!==0&&!(($s['mode']&01000)!==0&&($s['uid']===0||$s['uid']===$owner))))throw new RuntimeException('unsafe_key_file');
         if($path!=='/')self::directory(dirname($path),$owner);
     }
     public static function read(string $path,int $owner=0,int $limit=65536): ?array
@@ -31,6 +31,15 @@ final class AsusTechnicalFiles
         if(is_link($path)||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0022)!==0||$s['size']>$limit)throw new RuntimeException('unsafe_key_file');
         $raw=@file_get_contents($path);if(!is_string($raw)||strlen($raw)>$limit)throw new RuntimeException('unsafe_key_file');
         return ['raw'=>$raw,'mode'=>$s['mode']&0777];
+    }
+    /** Logs are sampled, never loaded unboundedly or allowed to obstruct rollback. */
+    public static function sample(string $path,int $owner=0,int $limit=65536): ?array
+    {
+        self::directory(dirname($path),$owner);clearstatcache(true,$path);$s=@lstat($path);if(!$s)return null;
+        if(is_link($path)||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0022)!==0)throw new RuntimeException('unsafe_key_file');
+        $h=@fopen($path,'rb');if(!$h)throw new RuntimeException('unsafe_key_file');
+        try{$now=fstat($h);if($now['dev']!==$s['dev']||$now['ino']!==$s['ino'])throw new RuntimeException('unsafe_key_file');$raw=fread($h,$limit);if(!is_string($raw))throw new RuntimeException('unsafe_key_file');return ['raw'=>$raw,'truncated'=>$now['size']>$limit];}
+        finally{fclose($h);}
     }
     public static function write(string $path,string $raw,int $mode=0600,int $owner=0): void
     {
@@ -86,5 +95,44 @@ final class AsusTechnicalJournal
         }
         foreach(array_reverse($v['directories']??[]) as $dir){$st=@lstat($dir);if($st&&!is_link($dir)&&($st['mode']&0170000)===0040000&&$st['uid']===$this->owner)@rmdir($dir);}
         if(!unlink($this->path))throw new RuntimeException('unsafe_key_file');
+    }
+}
+
+/** One exact, persistent lease for stock firmware's root-owned /tmp0777. */
+final class AsusTechnicalPermissions
+{
+    public function __construct(private string $journal,private string $parent='/tmp',private int $owner=0){}
+    private function stat(): array
+    {
+        clearstatcache(true,$this->parent);$s=@lstat($this->parent);
+        if(!$s||is_link($this->parent)||($s['mode']&0170000)!==0040000||($s['uid']!==0&&$s['uid']!==$this->owner))throw new RuntimeException('unsafe_key_file');
+        return $s;
+    }
+    private function same(array $v,array $s): bool
+    {return ($v['path']??null)===$this->parent&&($v['boot_id']??null)===trim(file_get_contents('/proc/sys/kernel/random/boot_id'))&&($v['dev']??null)===$s['dev']&&($v['ino']??null)===$s['ino']&&($v['uid']??null)===$s['uid']&&($v['gid']??null)===$s['gid'];}
+    public function prepare(): void
+    {
+        $s=$this->stat();$v=AsusTechnicalFiles::json($this->journal,$this->owner);
+        if($v&&!$this->same($v,$s)){$this->restore();$v=null;}
+        $mode=$s['mode']&07777;
+        if($v){if(($v['version']??null)!==1||($v['mode']??null)!==0777||!in_array($mode,[0777,01777],true))throw new RuntimeException('unsafe_key_file');}
+        elseif(($mode&0022)===0||($mode&01000)!==0)return;
+        elseif($mode!==0777)throw new RuntimeException('unsafe_key_file');
+        else{
+            $v=['version'=>1,'path'=>$this->parent,'boot_id'=>trim(file_get_contents('/proc/sys/kernel/random/boot_id')),'mode'=>$mode];
+            foreach(['dev','ino','uid','gid'] as $key)$v[$key]=$s[$key];
+            AsusTechnicalFiles::write($this->journal,json_encode($v,JSON_THROW_ON_ERROR),0600,$this->owner);
+        }
+        // Journal is durable before the only global permission change.
+        if(!$this->same($v,$this->stat())||!chmod($this->parent,01777))throw new RuntimeException('unsafe_key_file');
+    }
+    public function restore(): void
+    {
+        $v=AsusTechnicalFiles::json($this->journal,$this->owner);if(!$v)return;
+        if(($v['version']??null)!==1||($v['mode']??null)!==0777||($v['path']??null)!==$this->parent)throw new RuntimeException('invalid_state');
+        clearstatcache(true,$this->parent);$s=@lstat($this->parent);
+        // Never chmod a symlink, a reboot replacement, or an owner's later edit.
+        if($s&&!is_link($this->parent)&&$this->same($v,$s)&&($s['mode']&07777)===01777&&!chmod($this->parent,$v['mode']))throw new RuntimeException('unsafe_key_file');
+        if(!unlink($this->journal))throw new RuntimeException('unsafe_key_file');
     }
 }

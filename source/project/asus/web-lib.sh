@@ -85,7 +85,7 @@ web_owned_running() {
 
 web_technical_channel() {
     local action=$1
-    [ -d /tmp/nfqws2-technical-channel ] || [ -f /opt/etc/nfqws-asus-web/technical-channel/journal.json ] || return 0
+    [ -d /tmp/nfqws2-technical-channel ] || [ -f /opt/etc/nfqws-asus-web/technical-channel/journal.json ] || [ -f /opt/etc/nfqws-asus-web/technical-channel/journal.json.permissions ] || return 0
     [ -f /opt/lib/nfqws2-asus/technical-channel/worker.php ] || return 1
     /opt/bin/php-cgi -d register_argc_argv=1 -q -f /opt/lib/nfqws2-asus/technical-channel/worker.php -- "$action" lifecycle 8>&- 9>&-
 }

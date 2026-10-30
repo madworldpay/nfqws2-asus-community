@@ -5,6 +5,10 @@ export type TechnicalState = {
   session_id: string | null;
   expires_at: number | null;
   code: string | null;
+  diagnostic?: {
+    stage: 'prepare' | 'local_server' | 'transport';
+    reason: string;
+  };
 };
 export async function technicalRequest(
   csrf: string,
@@ -69,10 +73,32 @@ export async function technicalRequest(
     v === null ||
     typeof v !== 'object' ||
     Array.isArray(v) ||
-    Object.keys(v).sort().join(',') !== 'code,expires_at,session_id,state'
+    ![
+      'code,expires_at,session_id,state',
+      'code,diagnostic,expires_at,session_id,state',
+    ].includes(Object.keys(v).sort().join(','))
   )
     throw new ShareError('invalid_response');
   const s = v as Record<string, unknown>;
+  if (s.diagnostic !== undefined) {
+    const d = s.diagnostic;
+    if (
+      d === null ||
+      typeof d !== 'object' ||
+      Array.isArray(d) ||
+      Object.keys(d).sort().join(',') !== 'reason,stage'
+    )
+      throw new ShareError('invalid_response');
+    const detail = d as Record<string, unknown>;
+    if (
+      !['prepare', 'local_server', 'transport'].includes(
+        String(detail.stage),
+      ) ||
+      typeof detail.reason !== 'string' ||
+      !/^[a-z_]{1,64}$/.test(detail.reason)
+    )
+      throw new ShareError('invalid_response');
+  }
   if (
     ![
       'idle',

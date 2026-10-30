@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 assert.ok(existsSync(new URL('../webui/web/src/utils/queueSamples.ts', import.meta.url)), 'queue comparison behavior is missing');
 const { compareQueueSamples } = await import('../webui/web/src/utils/queueSamples.ts');
-const sample = (queue_number, sequence, state='bound') => ({queue_number, sequence, state});
+const sample = (queue_number, sequence, state='bound', lifetime='a'.repeat(64)) => ({queue_number, sequence, state, lifetime});
 assert.deepEqual(compareQueueSamples(sample(300, 0), sample(300, 7)), {result:'increased', before:0, after:7, delta:7});
 assert.deepEqual(compareQueueSamples(sample(300, 0), sample(300, 0)), {result:'unchanged', before:0, after:0, delta:0});
 assert.deepEqual(compareQueueSamples(sample(300, 2147483648), sample(300, 4294967295)), {result:'increased', before:2147483648, after:4294967295, delta:2147483647});
@@ -11,4 +11,9 @@ assert.deepEqual(compareQueueSamples(sample(300, 1), sample(301, 2)), {result:'r
 assert.deepEqual(compareQueueSamples(sample(300, null, 'unknown'), sample(300, 1)), {result:'unavailable'});
 assert.deepEqual(compareQueueSamples(sample(300, null, 'unbound'), sample(300, 1)), {result:'unavailable'});
 assert.deepEqual(compareQueueSamples(undefined, undefined), {result:'unavailable'});
+assert.deepEqual(compareQueueSamples(sample(300, 1), sample(300, 200, 'bound', 'b'.repeat(64))), {result:'reset'}, 'socket rebind/reboot/restart invalidates old counter even if it grew');
+assert.deepEqual(compareQueueSamples(sample(300, 1, 'bound', null), sample(300, 20, 'bound', null)), {result:'unavailable'}, 'binding alone does not prove same lifetime');
+assert.deepEqual(compareQueueSamples(sample(300, 4294967294), sample(300, 3)), {result:'reset'}, 'uint32 wrap is indistinguishable from reset');
+assert.deepEqual(compareQueueSamples(sample(300, -1), sample(300, 1)), {result:'unavailable'});
+assert.deepEqual(compareQueueSamples(sample(65536, 1), sample(65536, 2)), {result:'unavailable'}, 'malformed queue number is not a delivery proof');
 console.log('PASS: queue reception comparison (zero/uint32/reset/unknown)');

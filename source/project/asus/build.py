@@ -351,7 +351,7 @@ def build_one(cache, output, offline, arch, build_number=None):
         core[shell_path[1:]] = busybox['opt/bin/busybox'], 0o755
     # Isolate applets from global Entware/POSIX symlinks. In particular, the
     # current Entware busybox preinst requires busybox before first installation.
-    for applet in 'awk cat chmod cmp cp cut date find grep head id ip kill mkdir mv readlink rm rmdir sed sh sleep stat sysctl touch tr uname wc'.split():
+    for applet in 'awk cat chmod cmp cp cut date find grep head id ip kill mkdir mv readlink rm rmdir sed sh sha256sum sleep stat sysctl touch tr uname wc'.split():
         core['opt/lib/nfqws2-asus/bin/'+applet] = (
             f'#!{shell_path} sh\nexec {shell_path} {applet} "$@"\n'.encode(), 0o755)
     licenses(core, 'nfqws2-asus')
