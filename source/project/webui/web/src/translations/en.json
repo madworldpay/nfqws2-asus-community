@@ -846,6 +846,7 @@
       "empty": "No presets yet.",
       "provider": "Provider presets",
       "global": "Global strategies",
+      "updated": "Updated",
       "update": "Update the package to use this preset."
     }
   },

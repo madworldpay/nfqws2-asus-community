@@ -29,7 +29,7 @@ export const ImportCatalog = ({
   disabled: boolean;
   onSelect: (profile: CatalogProfile) => void;
 }) => {
-  const { t } = useTranslation();
+  const { t, langcode } = useTranslation();
   const [catalog, setCatalog] = useState<ProfileCatalog>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -113,6 +113,23 @@ export const ImportCatalog = ({
                               variant="body2"
                             >
                               {profile.description}
+                            </Typography>
+                            <Typography
+                              component="time"
+                              dateTime={profile.updated_at}
+                              display="block"
+                              variant="caption"
+                            >
+                              {t('import.catalog.updated')}:{' '}
+                              {new Date(profile.updated_at).toLocaleDateString(
+                                langcode === 'en' ? 'en-GB' : 'ru-RU',
+                                {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  timeZone: 'UTC',
+                                },
+                              )}
                             </Typography>
                             {needsUpdate && (
                               <Typography
