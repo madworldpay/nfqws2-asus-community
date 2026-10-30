@@ -293,6 +293,24 @@ function main(): void
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+  if (in_array($_POST['cmd'], ['technicalstart','technicalstatus','technicalstop'], true)) {
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    if (!$authEnabled || !$sessionValid) {http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
+    require_once __DIR__.'/technical-channel.php';require_once __DIR__.'/support-report.php';
+    try {
+      AsusTechnicalApi::validate($_POST);
+      if (!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token']) || !asusReportSameOrigin()) {http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();
+      if ($_POST['cmd']==='technicalstart') {require_once __DIR__.'/update-guard.php';$technicalLease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();}
+      $channel=new AsusTechnicalChannel();
+      $value=$_POST['cmd']==='technicalstart'?$channel->start($_POST['invitation']):($_POST['cmd']==='technicalstop'?$channel->stop():$channel->status());
+      http_response_code(200);echo json_encode($value,JSON_THROW_ON_ERROR);
+    } catch(Throwable $e) {
+      $code=AsusTechnicalApi::error($e);http_response_code($code==='invalid_request'?400:($code==='busy'?409:503));echo json_encode(['error'=>$code]);
+    }
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['packageupdatecheck','packageupdateprepare','packageupdateapply','packageupdatestatus'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     if ($authEnabled && !$sessionValid) {http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
@@ -610,6 +628,7 @@ function main(): void
         http_response_code(400);
         exit();
       }
+      if ($_POST['password']==='' && is_dir('/tmp/nfqws2-technical-channel') && is_file(__DIR__.'/technical-channel.php')) {require_once __DIR__.'/technical-channel.php';(new AsusTechnicalChannel())->stop();}
       $username = $sessionValid ? $_SESSION['auth_username'] : $auth['username'];
       $saved = asusWebSavePassword($username, $_POST['password']);
       $newAuth = $saved ? asusWebReadAuth() : null;

@@ -170,6 +170,10 @@ def payload_files(target,engine,source=None):
     files['usr/lib/nfqws2/dpi/paths.sh']=((HERE/'dpi-paths.sh').read_bytes(),0o644)
     files['usr/bin/nfqws2-dpi']=((ROOT/'asus/dpi/cli.sh').read_bytes().replace(b'/opt/bin/php-cgi',b'/usr/bin/php-cgi').replace(b'/opt/lib/nfqws2-asus/dpi/cli.php',b'/usr/lib/nfqws2/dpi/cli.php'),0o755)
     files['usr/share/nfqws2/profile-catalog-public.pem']=((ROOT/'asus/profile-catalog-public.pem').read_bytes(),0o644)
+    files['usr/share/nfqws2/technical-channel-public.pem']=((ROOT/'technical-channel/technical-channel-public.pem').read_bytes(),0o644)
+    for name in ['worker.php','session.sh','guard.sh']:
+        data=(ROOT/'asus/technical-channel'/name).read_bytes().replace(b'/opt/share/nfqws-asus-web',b'/usr/share/nfqws2-web').replace(b'/opt/lib/nfqws2-asus',b'/usr/lib/nfqws2').replace(b'/opt/bin/php-cgi',b'/usr/bin/php-cgi')
+        files['usr/lib/nfqws2/technical-channel/'+name]=(data,0o755 if name.endswith('.sh')else 0o644)
     files['usr/share/nfqws2/support-relay-default.json']=((ROOT/'asus/support-relay.json').read_bytes(),0o644)
     for name in ['LICENSE','THIRD-PARTY-NOTICES.txt']:
         files['usr/share/licenses/nfqws2-native/'+name]=((ROOT/name).read_bytes(),0o644)

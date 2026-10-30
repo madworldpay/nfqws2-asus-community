@@ -20,7 +20,16 @@ nfqws_web_prepare() {
 # existing procd instance. A malformed administrator edit keeps the old panel.
 case "$action" in start|restart|reload|boot) nfqws_web_prepare || exit 1;; esac
 
+nfqws_web_technical_channel() {
+    [ -d /tmp/nfqws2-technical-channel ] || [ -f /etc/nfqws2-web/technical-channel/journal.json ] || return 0
+    [ -f /usr/lib/nfqws2/technical-channel/worker.php ] || return 1
+    /usr/bin/php-cgi -d register_argc_argv=1 -q -f /usr/lib/nfqws2/technical-channel/worker.php -- "$1" lifecycle
+}
+
+stop_service() { nfqws_web_technical_channel stop; }
+
 start_service() {
+    nfqws_web_technical_channel recover || return 1
     local address
     [ -n "$NFQWS_WEB_LISTENERS" ] || nfqws_web_prepare || return 1
     procd_open_instance main

@@ -186,6 +186,13 @@ Our ASUS adaptation is distributed under [MIT](LICENSE). Third-party components
 retain their licenses and attribution.
 [Component attribution and licenses](UPSTREAM.en.md) · [Full notices](THIRD-PARTY-NOTICES.txt).
 
+The **Technical channel** at the bottom of the panel provides temporary router
+access for diagnostics or configuration after prior arrangements with the
+Administrator. Paste the link they provide and connect. A panel password is
+required. You can disconnect at any time; access ends at expiry or reboot.
+This does not submit a request for permanent or 24/7 support.
+
+
 ## Documentation
 
 Start with your task; each guide contains its main steps on the page itself.

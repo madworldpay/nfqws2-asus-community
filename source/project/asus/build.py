@@ -310,6 +310,9 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/share/nfqws2-asus/package-manifest.schema.json'] = local('updates/package-manifest.schema.json')
     core['opt/share/nfqws2-asus/update-release-key.pem'] = local('updates/trusted-release-key.pem')
     core['opt/share/nfqws2-asus/profile-catalog-public.pem'] = local('asus/profile-catalog-public.pem')
+    core['opt/share/nfqws2-asus/technical-channel-public.pem'] = local('technical-channel/technical-channel-public.pem')
+    for name in ['worker.php','session.sh','guard.sh']:
+        core['opt/lib/nfqws2-asus/technical-channel/'+name] = local('asus/technical-channel/'+name,name.endswith('.sh'))
     core['opt/libexec/nfqws2-asus/update-launch'] = update_launcher(target)
     core['opt/libexec/nfqws2-asus/location-launch'] = update_launcher(target, ROOT/'asus/share', 'location-launch')
     for name in ['worker.php', 'worker.sh', 'check.sh', 'lifecycle.sh']:

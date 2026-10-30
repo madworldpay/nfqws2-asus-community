@@ -83,8 +83,16 @@ web_owned_running() {
         /opt/libexec/nfqws-asus-web/armv7-3.2/lighttpd
 }
 
+web_technical_channel() {
+    local action=$1
+    [ -d /tmp/nfqws2-technical-channel ] || [ -f /opt/etc/nfqws-asus-web/technical-channel/journal.json ] || return 0
+    [ -f /opt/lib/nfqws2-asus/technical-channel/worker.php ] || return 1
+    /opt/bin/php-cgi -d register_argc_argv=1 -q -f /opt/lib/nfqws2-asus/technical-channel/worker.php -- "$action" lifecycle 8>&- 9>&-
+}
+
 web_start() {
     local tries=0
+    web_technical_channel recover || return 1
     web_running && return 0
     web_kill || return 1
     asus_model >/dev/null || return 1
@@ -113,6 +121,7 @@ web_kill() {
 }
 
 web_stop() {
+    web_technical_channel stop || return 1
     cru d nfqws_web_asus 8>&- 9>&- >/dev/null 2>&1
     rm -f "$WEB_RUN/enabled"
     web_kill

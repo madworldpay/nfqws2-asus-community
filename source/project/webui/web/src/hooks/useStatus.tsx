@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { API } from '@/api/client';
 
+import { isAuthUnconfigured } from '@/utils/authError';
 import { parsePackageVersion, type Version } from '@/utils/packageVersion';
 
 export const useVersionCheck = (url: string, enabled = true) => {
@@ -88,11 +89,7 @@ export const useStatus = (): UseStatusResult => {
 
     return {
       platform: 'asus-entware',
-      authUnavailable:
-        isError &&
-        error !== null &&
-        'error' in error &&
-        error.error === 'auth_unconfigured',
+      authUnavailable: isError && isAuthUnconfigured(error),
       status: isError || isPending,
       nfqws2: true,
       service: false,
