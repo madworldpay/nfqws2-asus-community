@@ -2,16 +2,34 @@
 
 ## One-time signing-key transition
 
-Build 74 introduces a new release key because the previous signing server is no longer available.
-An older installed panel may not show the new release. Rerun the installer
-command for your platform below once. Subsequent updates are available through
-the panel again.
+**Updating an older build to Build 74 or later requires the installer once.**
+The previous private signing key was lost when the server was deleted, with no
+backup remaining. Older panels trust that key and cannot verify a release
+signed with the new one. The new release may therefore not appear in an older panel.
+
+This update restores the path for future fixes and features through the panel.
+Build 74 adds strategy dates and a temporary technical channel by prior arrangement
+with the Administrator, and fixes repeated service stops on OpenWrt and the
+explanation of SmartDNS validation failures. If you missed the catalog-source
+update, this transition also restores access to current strategies and submissions
+to the project.
+
+1. Connect to your router over SSH and run the command for your platform below once.
+2. When it finishes, open the panel and check the version, service state and DNS.
+3. Install subsequent updates using the panel's usual buttons.
+
+Settings, lists, login credentials and the chosen service state are preserved.
+Strategies already applied keep working before the transition too.
 
 Old metadata URLs retain the previous signed release; the new key is not substituted
 through the old channel. Obtain the new installer over GitHub HTTPS: the ASUS branch
 checks the package against the release's `SHA256SUMS`; the OpenWrt branch also
-verifies its signature with the new embedded key. Settings and service state are preserved.
+verifies its signature with the new embedded key.
 
+The strategy catalog and submission receiver run on ASUS, submissions are delivered
+to the project's Gmail inbox, and releases come from GitHub. Importing, submitting
+and updating do not require a VPS. The new signing key is stored separately from
+the delivery server and has a backup; moving services does not itself require a key change.
 
 ## Through the panel
 

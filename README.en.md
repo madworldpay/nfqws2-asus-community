@@ -60,8 +60,11 @@ Entware is not required. Connect to **the OpenWrt router** over SSH as `root` an
 Both installers select and verify the package for their platform, preserving settings
 during updates. The installer prints the panel address when finished.
 
-After a signing-key change, older panels need a one-time update: rerun the
-command for your platform above. Updates are then available in the panel again.
+**Older builds need a one-time update using the installer.** The previous signing
+key was lost when the server was deleted, so older panels cannot verify new
+releases. Rerun the command for your platform above once: settings, lists, login
+credentials and the chosen service state are preserved. Subsequent updates
+are available through the panel from GitHub again.
 
 ### After installation
 
@@ -152,7 +155,13 @@ The package includes NFQWS2, WebUI, embedded Lua and service utilities.
 
 ## Updates and profile catalog
 
-> **The strategy catalog has moved to a new source.** Use the current package to import and submit profiles. Strategies already applied keep working; you can also open your own JSON through “From computer (JSON)”.
+The strategy catalog is hosted on ASUS. User-submitted profiles and diagnostics
+are received on ASUS and delivered to the project's Gmail inbox; releases
+are downloaded from GitHub. These functions do not require a VPS.
+
+Use the current package to import and submit profiles. Strategies already
+applied keep working; you can also open your own JSON through
+**From computer (JSON)**.
 
 ## Share working strategies
 
