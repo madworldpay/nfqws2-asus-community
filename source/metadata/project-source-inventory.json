@@ -151,8 +151,8 @@
   },
   {
     "path": "asus/ipk/relay-config.php",
-    "bytes": 10055,
-    "sha256": "b6b0740c5520abf9c618c80f65c988feb29dadfb8eb0175bda92138dbd69ad08"
+    "bytes": 10074,
+    "sha256": "8031f7c584152de31aac06824341f0d759cf217e0b1f18a658a3c576179a260d"
   },
   {
     "path": "asus/ipk/unified-postinst",
@@ -706,8 +706,8 @@
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
-    "bytes": 5107,
-    "sha256": "0ba440872c7022d8e2fbbad4dbdf0db79a5d3404ddf256a5dd3ab964c1ca38ec"
+    "bytes": 6471,
+    "sha256": "616b34007afdf265e2fa009fbe6a42b9e90b436a9c74549cf38e7be247611725"
   },
   {
     "path": "docs/USAGE.md",
@@ -1916,8 +1916,8 @@
   },
   {
     "path": "tests/test_package_update_relay.py",
-    "bytes": 13147,
-    "sha256": "981e869ff2d2ea564b92b38e281debbf45bb45cc8c0673a84dbd494ce46c6cc9"
+    "bytes": 15286,
+    "sha256": "815b2c8bc0691e3b8a61a2084327943e1c455c487229ae56ddb86c3367074e20"
   },
   {
     "path": "tests/test_package_update_runtime.py",
@@ -2016,8 +2016,8 @@
   },
   {
     "path": "tests/test_relay_conffile.py",
-    "bytes": 11673,
-    "sha256": "eb1b8920a41a41f9415c9cb56df60c7c3f6c5665a807336e010fbf9113d305b3"
+    "bytes": 14869,
+    "sha256": "6cf970c5c7844bfc9a81924c7e674c360df7cd72fe31f7a731ff1cc378dca938"
   },
   {
     "path": "tests/test_release_trust_migration.py",

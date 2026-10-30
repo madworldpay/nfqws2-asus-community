@@ -1,17 +1,34 @@
 # Обновление
 
-## Разовый переход на новый ключ подписи
+## Переход с прежних сборок
 
-Начиная с Build 74 используется новый ключ: прежний сервер подписи больше недоступен.
-В уже установленной старой панели новый выпуск может не появиться. Один раз
-повторите команду установщика своей платформы, приведённую ниже. После этого
-следующие обновления снова устанавливаются через панель.
+**Для перехода с прежних сборок на Build 74 или новее один раз нужен установщик.**
+Актуальные выпуски подписываются новым ключом. Для перехода на него повторите
+обычную команду установки своей платформы. После этого обновления снова
+устанавливаются через панель с проверкой подписи и SHA256.
+
+Это обновление важно для дальнейшего получения исправлений и новых возможностей
+через панель. В Build 74 добавлены даты стратегий и временный технический канал
+по договоренности с Администратором; исправлены повторная остановка службы
+OpenWrt и объяснение отказа проверки SmartDNS. Если вы пропустили обновление
+источника каталога, переход также возвращает доступ к актуальным стратегиям
+и отправке материалов проекту.
+
+1. Войдите по SSH в роутер и один раз выполните команду своей платформы ниже.
+2. После завершения откройте панель и проверьте версию, состояние службы и DNS.
+3. Следующие обновления устанавливайте обычными кнопками панели.
+
+Настройки, списки, данные входа и выбранное состояние службы сохраняются.
+Уже применённые стратегии продолжают работать и до перехода.
 
 Старые адреса метаданных сохраняют прежний подписанный выпуск; новый ключ не
 подменяется через старый канал. Новый установщик получают по HTTPS с GitHub:
 ветка ASUS сверяет пакет с `SHA256SUMS` выпуска, ветка OpenWrt дополнительно
-проверяет подпись новым встроенным ключом. Настройки и состояние служб сохраняются.
+проверяет подпись новым встроенным ключом.
 
+Каталог стратегий и приём отправлений находятся на ASUS, материалы доставляются
+в Gmail проекта, а выпуски — с GitHub. Для импорта, отправки и обновлений VPS
+не требуется.
 
 ## Через панель
 
@@ -80,13 +97,29 @@ NFQWS_ASUS_NO_START=1 /opt/bin/opkg install /opt/tmp/nfqws2-asus.ipk
 ### ASUSWRT-Merlin / Entware
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 ### OpenWrt
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 Старые панели могли

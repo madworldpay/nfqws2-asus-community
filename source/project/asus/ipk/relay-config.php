@@ -49,9 +49,10 @@ final class AsusRelayConffile
     }
     private function installed(): bool
     {
-        $path=$this->opt.'/lib/opkg/status';$this->noLinks($path);$s=@lstat($path);if(!$s)return false;
-        if(($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||$s['nlink']!==1||($s['mode']&0022)!==0||$s['size']>2097152)throw new RuntimeException('relay_config_invalid');
-        $raw=file_get_contents($path,false,null,0,2097153);if(!is_string($raw)||strlen($raw)>2097152)throw new RuntimeException('relay_config_invalid');
+        $path=$this->opt.'/lib/opkg/status';$this->noLinks($path);clearstatcache(true,$path);$s=@lstat($path);if(!$s)return false;
+        // Entware owns this package database and may create it with mode 0666.
+        // Read its existing mode without changing it; private relay files still require 0600.
+        $status=$this->read($path,$s['mode']&07777,2097152);if($status===null)throw new RuntimeException('relay_config_changed');$raw=$status['raw'];
         foreach(preg_split('/\n[ \t]*\n/',trim($raw)) as $section)if(preg_match('/^Package: nfqws2-asus$/m',$section)&&preg_match('/^Status: \S+ \S+ (installed|unpacked|half-configured)$/m',$section))return true;
         return false;
     }

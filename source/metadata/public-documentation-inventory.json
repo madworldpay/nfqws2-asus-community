@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 11091,
-      "sha256": "c032ce4395e62ddbc3d79e4fb3da3b8d89edc135d745fcfeee2bbad36d3e8cc8"
+      "bytes": 11473,
+      "sha256": "6e50e248d785558b9b356b5a51728de3873358466278294e499d2fef02f53534"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -82,13 +82,13 @@
     },
     {
       "file": "INSTALL.en.md",
-      "bytes": 4133,
-      "sha256": "1fa4502e4c71a588ad4b634f9e5613b79e05cf328ae4da802ffae33fcdd32671"
+      "bytes": 4309,
+      "sha256": "d7d042e53dc47c04c4b481b323c449622926b1a514a2187a1ad3a04c87831b26"
     },
     {
       "file": "INSTALL.md",
-      "bytes": 6309,
-      "sha256": "e7e9e9cf3d842d9a0f8324b4e7c77d8cdc2a6561dcebaa59f296662aa2a6910c"
+      "bytes": 6485,
+      "sha256": "18a149866b06cf5515003fb4da342533efc8634f97ec46d07f0a089d75a6e0d3"
     },
     {
       "file": "LICENSE",
@@ -107,23 +107,23 @@
     },
     {
       "file": "OPENWRT.en.md",
-      "bytes": 7899,
-      "sha256": "ce19a0c1a0d9e241d24d4bc08ec410bf9606dcafcd4bd9d35b58d306fee2855a"
+      "bytes": 7987,
+      "sha256": "521d4bb20d4b5ee5b9b009b6f543a461cf05b48c27e0b8e7728f9094007ef056"
     },
     {
       "file": "OPENWRT.md",
-      "bytes": 12460,
-      "sha256": "427ef17dccc57f4c031944b00cd0f4cc85a8713afc926bffc8420f22974a943a"
+      "bytes": 12548,
+      "sha256": "30eb08fd3acaaeaf303741ec2e96f39087d1453f8d31016c4d10e55d2cae5307"
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 5097,
-      "sha256": "0636d294ec76df08bc42e406dee95fd0b926add377e1590363aef9df89a08a88"
+      "bytes": 6238,
+      "sha256": "f61d4b05270e6a04071c2e1d4ed187b63d88771d3c3959cbbe26aa2d966d5a33"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 8350,
-      "sha256": "43c9cc38e74fcd0868fffa285eafa5883585b331995b64f2804731ead6e599b6"
+      "bytes": 10111,
+      "sha256": "1e166dfafb98ae1fcf2f6a1389f8d3704dadb37b20d9981fbf11bfe289be0f36"
     },
     {
       "file": "PRESETS.en.md",
@@ -137,23 +137,23 @@
     },
     {
       "file": "QUICKSTART.en.md",
-      "bytes": 3817,
-      "sha256": "ad078518f7a600ecffbacb48effa6397ae662c3e9f5c661d842fc78431cc2bcb"
+      "bytes": 3993,
+      "sha256": "652e01d2176dc9e3cb222ac6472982519bbcef2a1d3bcacb953127c478a98182"
     },
     {
       "file": "QUICKSTART.md",
-      "bytes": 6018,
-      "sha256": "acd2deb63110d6cef773982f350de0646eb24876072a5c054e500392dd586fb7"
+      "bytes": 6194,
+      "sha256": "0f26a188d16b0bfbf5f3b72291e9a5f026054b0dbc600a18f4a0701bfc0096b8"
     },
     {
       "file": "README.en.md",
-      "bytes": 12397,
-      "sha256": "63d7cbbc257fcfe7dd455165e7810e90fb8cee4327bda53752e87c35811f06ac"
+      "bytes": 12893,
+      "sha256": "d0eef8438d331dd98c4fd1432d2b928b619ae3cc647028f162009b4ba54bb820"
     },
     {
       "file": "README.md",
-      "bytes": 19936,
-      "sha256": "1c1d37a4b524e6e8182623e9ddfc173c1eece8ecefaa45e626355205d7bb6814"
+      "bytes": 20651,
+      "sha256": "7333897895e50a5ce82af5967ab37046ede6ce930b81f75167caffa36c2b183f"
     },
     {
       "file": "ROADMAP.en.md",

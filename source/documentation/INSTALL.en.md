@@ -23,7 +23,15 @@ For RT-AC87U, use a reliable USB drive with working Entware autostart.
 Connect to the router over SSH with Entware ready and run:
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 The command is the same for supported ARMv7 and AArch64 packages.
@@ -93,7 +101,15 @@ If ASUS login credentials are unavailable to the panel, the fallback login is `r
 The native package installs without Entware. Connect to the router over SSH as `root` and run:
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 After installation, open the panel address, select devices and a strategy,

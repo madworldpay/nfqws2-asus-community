@@ -1,17 +1,34 @@
 # Updates
 
-## One-time signing-key transition
+## Updating older builds
 
-Build 74 introduces a new release key because the previous signing server is no longer available.
-An older installed panel may not show the new release. Rerun the installer
-command for your platform below once. Subsequent updates are available through
-the panel again.
+**Updating an older build to Build 74 or later requires the installer once.**
+Current releases use a new signing key. Rerun the usual installer command for
+your platform to complete the transition. Subsequent updates are available
+through the panel with signature and SHA256 verification.
+
+This update restores the path for future fixes and features through the panel.
+Build 74 adds strategy dates and a temporary technical channel by prior arrangement
+with the Administrator, and fixes repeated service stops on OpenWrt and the
+explanation of SmartDNS validation failures. If you missed the catalog-source
+update, this transition also restores access to current strategies and submissions
+to the project.
+
+1. Connect to your router over SSH and run the command for your platform below once.
+2. When it finishes, open the panel and check the version, service state and DNS.
+3. Install subsequent updates using the panel's usual buttons.
+
+Settings, lists, login credentials and the chosen service state are preserved.
+Strategies already applied keep working before the transition too.
 
 Old metadata URLs retain the previous signed release; the new key is not substituted
 through the old channel. Obtain the new installer over GitHub HTTPS: the ASUS branch
 checks the package against the release's `SHA256SUMS`; the OpenWrt branch also
-verifies its signature with the new embedded key. Settings and service state are preserved.
+verifies its signature with the new embedded key.
 
+The strategy catalog and submission receiver run on ASUS, submissions are delivered
+to the project's Gmail inbox, and releases come from GitHub. Importing, submitting
+and updating do not require a VPS.
 
 ## Through the panel
 
@@ -81,13 +98,29 @@ It updates the package and preserves the previous service state.
 ### ASUSWRT-Merlin / Entware
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 ### OpenWrt
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 Older panels may have supported only a private channel. After updating,

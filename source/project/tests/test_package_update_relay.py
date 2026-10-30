@@ -93,6 +93,30 @@ class LegacyRelayUpdateTests(unittest.TestCase):
         for name,raw in self.legacy[build].items():self.assertEqual((f.application/name).read_bytes(),raw)
         return {'runtime':build,'state':result['state'],'settings_verified':result['settings_verified'],'core_state':result['core_state'],'commands':f.commands(),'config_sha256':hashlib.sha256(expected).hexdigest(),'mode':after.st_mode&0o777,'uid':after.st_uid,'gid':after.st_gid,'frozen_php_files':len(self.legacy[build]),'stage_cleaned':True}
     def test_old64_failure_is_reproduced_without_preserver(self):self.run_case(64,OLD,None,preserve=False)
+    def test_real_opkg_installs_and_upgrades_with_stock_entware_status_mode(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            base=Path(td);opt=base/'opt';opt.mkdir();(opt/'tmp').mkdir();tmp=base/'tmp';tmp.mkdir()
+            cfg=base/'opkg.conf';cfg.write_text('dest root /\narch aarch64-3.10 160\n')
+            args=[str(OPKG),'-f',str(cfg),'-o',str(base),'--tmp-dir',str(tmp),'--force-postinstall','install']
+            for name in ['iptables','libc']:
+                r=subprocess.run(args+[str(self.package(base/(name+'.ipk'),name,'1'))],capture_output=True,timeout=10);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+            for d in [opt,*opt.rglob('*')]:
+                if d.is_dir():d.chmod(0o755)
+            self.factory=(ROOT/'asus/support-relay.json').read_bytes();status=opt/'lib/opkg/status';active=base/ACTIVE
+            for build,choice in [(11,self.factory),(12,None),(13,OLD)]:
+                if build>11:
+                    if choice is None:active.unlink()
+                    else:active.write_bytes(choice);active.chmod(0o600)
+                status.chmod(0o666);version='1.3.1-asus6+b'+str(build);hooks={}
+                for script,action in [('preinst','prepare'),('postinst','finish')]:
+                    hooks[script]=b'#!/bin/sh\n'+builder.relay_preserver(action,version,opt=str(opt),php=str(NATIVE),owner=os.getuid(),busybox='/bin/busybox',script_parent=str(opt/'tmp'))
+                hooks['preinst']=b'#!/bin/sh\n'+('test "$(stat -c %a '+shlex.quote(str(status))+')" = 666 || exit 9\n').encode()+hooks['preinst']
+                candidate=self.package(base/('new-'+str(build)+'.ipk'),'nfqws2-asus',version,self.factory,hooks,template=True)
+                r=subprocess.run(args+[str(candidate)],capture_output=True,timeout=10);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                self.assertEqual(active.read_bytes() if active.exists() else None,choice)
+                if active.exists():self.assertEqual(active.stat().st_mode&0o777,0o600)
+                self.assertFalse((opt/'var/lib/nfqws2-asus/relay-config-preserve').exists())
     def test_real_opkg_retries_after_successful_prepare_then_preinstall_abort(self):
         import tempfile
         with tempfile.TemporaryDirectory() as td:

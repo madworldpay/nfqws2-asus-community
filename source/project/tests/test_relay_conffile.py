@@ -38,6 +38,17 @@ class RelayConffileTests(unittest.TestCase):
     def test_fresh_install_keeps_ready_factory_but_upgrade_preserves_absence(self):
         self.status.unlink();self.assertEqual(self.call('prepare'),{'ok':True});self.write(self.factory);self.assertEqual(self.call('finish'),{'ok':True});self.assertEqual(self.active.read_bytes(),self.factory)
         self.active.unlink();self.status.write_text('Package: nfqws2-asus\nVersion: 1\nStatus: install ok installed\n\n');self.status.chmod(0o600);self.assertEqual(self.call('prepare'),{'ok':True});self.write(self.factory);self.assertEqual(self.call('finish'),{'ok':True});self.assertFalse(self.active.exists())
+    def test_stock_entware_status_permissions_allow_fresh_install_without_chmod(self):
+        self.status.write_text('Package: php8-cgi\nVersion: 8.4.16\nStatus: install ok installed\n\n');self.status.chmod(0o666)
+        before=self.status.stat();raw=self.status.read_bytes()
+        self.assertEqual(self.call('prepare'),{'ok':True});self.write(self.factory);self.assertEqual(self.call('finish'),{'ok':True})
+        self.assertEqual(self.active.read_bytes(),self.factory);self.assertEqual(self.active.stat().st_mode&0o777,0o600)
+        after=self.status.stat();self.assertEqual(self.status.read_bytes(),raw)
+        self.assertEqual((after.st_ino,after.st_mode,after.st_mtime_ns),(before.st_ino,before.st_mode,before.st_mtime_ns))
+    def test_stock_entware_status_permissions_preserve_removed_config_on_upgrade(self):
+        self.status.chmod(0o666)
+        self.assertEqual(self.call('prepare'),{'ok':True});self.write(self.factory);self.assertEqual(self.call('finish'),{'ok':True})
+        self.assertFalse(self.active.exists());self.assertEqual(self.status.stat().st_mode&0o777,0o666)
     def test_embedded_hooks_run_with_all_three_matching_cgi_runtimes(self):
         import importlib.util
         spec=importlib.util.spec_from_file_location('relay_hook_builder',ROOT/'asus/build.py');builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
@@ -52,6 +63,29 @@ class RelayConffileTests(unittest.TestCase):
                     p=subprocess.run(['/bin/sh'],input=script,capture_output=True,timeout=10)
                     self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stdout,b'');self.assertEqual(p.stderr,b'')
                 self.assertEqual(self.active.read_bytes(),old)
+
+    def test_fresh_entware_embedded_hooks_run_with_all_three_matching_cgi_runtimes(self):
+        import importlib.util
+        spec=importlib.util.spec_from_file_location('fresh_relay_hook_builder',ROOT/'asus/build.py');builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+        self.status.write_text('Package: php8-cgi\nVersion: 8.4.16\nStatus: install ok installed\n\n');self.status.chmod(0o666)
+        for abi in ['aarch64','armv7','armv7-legacy']:
+            with self.subTest(abi=abi):
+                self.active.unlink(missing_ok=True);php=ROOT/'.work/packaging-audit-20261012'/(abi+'-cgi-wrapper');self.assertTrue(php.is_file())
+                for action in ['prepare','finish']:
+                    if action=='finish':self.write(self.factory)
+                    script=builder.relay_preserver(action,'1.3.1-asus6+b66',opt=str(self.opt),php=str(php),owner=os.getuid(),busybox='/bin/busybox',script_parent=str(self.opt/'tmp'))
+                    p=subprocess.run(['/bin/sh'],input=script,capture_output=True,timeout=10)
+                    self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stdout,b'');self.assertEqual(p.stderr,b'')
+                self.assertEqual(self.active.read_bytes(),self.factory);self.assertEqual(self.status.stat().st_mode&0o777,0o666)
+
+    def test_status_database_still_rejects_links_oversize_and_writable_parent(self):
+        raw=self.status.read_bytes();self.status.chmod(0o666)
+        outside=self.base/'outside';outside.write_bytes(raw);outside.chmod(0o666)
+        self.status.unlink();self.status.symlink_to(outside);self.assertIn('error',self.call('prepare'));self.status.unlink()
+        os.link(outside,self.status);self.assertIn('error',self.call('prepare'));self.status.unlink()
+        self.status.write_bytes(b'x'*2097153);self.status.chmod(0o666);self.assertIn('error',self.call('prepare'))
+        self.status.write_bytes(raw);self.status.parent.chmod(0o777);self.assertIn('error',self.call('prepare'))
+        self.assertEqual(outside.read_bytes(),raw);self.assertFalse(self.stage.exists())
 
     def test_unexpected_edit_is_not_overwritten_or_cleaned(self):
         self.write(b'{"enabled":false,"url":""}\n');self.assertEqual(self.call('prepare'),{'ok':True});self.write(b'OWNER NEW EDIT')
