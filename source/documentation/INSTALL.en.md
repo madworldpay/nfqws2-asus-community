@@ -1,0 +1,104 @@
+# Installation and removal
+
+## ASUSWRT-Merlin / Entware
+
+### Before installation
+
+Back up your ASUS settings. SSH and working Entware in `/opt` are required.
+Check the Entware package architecture with:
+
+```sh
+/opt/bin/opkg print-architecture
+```
+
+| Entware architecture | IPK |
+|---|---|
+| `armv7-2.6` / `armv7-3.2` | ARMv7 |
+| `aarch64-3.10` | AArch64 |
+
+For RT-AC87U, use a reliable USB drive with working Entware autostart.
+
+### Install with one command
+
+Connect to the router over SSH with Entware ready and run:
+
+```sh
+( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+```
+
+The command is the same for supported ARMv7 and AArch64 packages.
+
+The installer downloads the current IPK over HTTPS and verifies SHA256.
+Installation requires `curl` or GNU `wget`, at least 128 MB of free Entware storage
+and 32 MB of available RAM. Temporary files are placed in `/opt/tmp` and removed
+when finished. The installer does not delete files belonging to other applications.
+
+Start processing in the panel after initial setup. Updates preserve settings
+and the chosen on/off service state. If the current version is already installed,
+running the command again only prints the panel address.
+
+### Install an IPK
+
+This is the manual installation method. Transfer the file using WinSCP/SCP
+or copy it to USB through Samba in your normal file manager.
+[File Explorer transfer and USB path mapping](MANUAL-INSTALL.en.md#2-transfer-it-to-the-router).
+
+Verify the downloaded file's SHA256 against the release's `SHA256SUMS`,
+copy the IPK to `/opt/tmp/nfqws2-asus.ipk` and run:
+
+```sh
+NFQWS_ASUS_NO_START=1 /opt/bin/opkg install /opt/tmp/nfqws2-asus.ipk
+```
+
+Processing stays off until setup. Dependencies are installed from Entware.
+
+### First run
+
+Open `http://ROUTER_IP:90`. By default, the panel uses your ASUS administrator credentials.
+**ARK check** offers preparation with a backup only when needed.
+Reboot manually to apply it.
+
+Select WAN, clients and a strategy, then save settings. If needed,
+open SmartDNS and follow **Check profile → Connect → confirm**.
+Then start NFQWS2 and test the service from a client.
+IPv6 processing is off by default; this does not disable IPv6 in the firmware.
+
+### Stop or remove
+
+To stop temporarily:
+
+```sh
+/opt/etc/init.d/S51nfqws2 stop
+```
+
+Save your profile before removal. If SmartDNS is connected, click
+**Restore previous DNS** first. To restore the original ARK configuration,
+restore its backup before removing the panel. Then run:
+
+```sh
+/opt/bin/opkg remove nfqws2-asus
+```
+
+The package removes its rules and services. Settings, lists and logs are retained
+for reinstallation; Entware and its shared dependencies remain.
+If a required configuration file is missing, the package restores the current template
+and only the missing default lists needed by that template. Existing files are retained.
+If stopping fails, save diagnostics and investigate the cause; do not use force.
+
+If ASUS login credentials are unavailable to the panel, the fallback login is `root` / `asus`.
+**Change password** sets a separate panel password.
+
+## OpenWrt
+
+The native package installs without Entware. Connect to the router over SSH as `root` and run:
+
+```sh
+( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+```
+
+After installation, open the panel address, select devices and a strategy,
+save settings and start NFQWS2. To stop: `/etc/init.d/nfqws2-native stop`.
+Before removal, save your profile and restore the previous DNS through SmartDNS.
+Remove with `opkg remove nfqws2-native` on 24.10 or `apk del nfqws2-native` on 25.12.
+
+[Project documentation](README.en.md#documentation).
