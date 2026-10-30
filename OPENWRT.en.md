@@ -1,7 +1,5 @@
 # OpenWrt: installation and compatibility
 
-[Русский](OPENWRT.md) · [Panel features](README.md) · [Profile import](IMPORT.md) · [Diagnostics](DIAGNOSTICS.md)
-
 The native `nfqws2-native` package uses OpenWrt's `procd`, `netifd` and
 `firewall4` / `nftables`. It does not require Entware. It includes our shared
 panel with strategies, device selection, local JSON and cloud presets,
@@ -44,11 +42,37 @@ For 25.12, use the installer above: it prepares verification of our APK signatur
 separately from the system key store. ASUS/Entware and native OpenWrt packages
 have different names and architectures; use the matching variant.
 
+### Transfer a downloaded file
+
+For an IPK, use WinSCP: select **SCP**, the router address, user `root`
+and destination directory `/tmp`. Or run this **on your computer**:
+
+```sh
+scp -O "./package.ipk" root@192.168.1.1:/tmp/package.ipk
+```
+
+Replace the package name and IP with yours. Then install the OpenWrt 24.10 IPK
+**in the router's SSH session**: `opkg install /tmp/package.ipk`.
+For OpenWrt 25.12, retain the APK signature verification procedure described above.
+
+If Samba/ksmbd is already configured on OpenWrt, open the USB share in File Explorer,
+for example as `\\192.168.1.1\USB`, and copy the file normally.
+On Linux and macOS, use `smb://192.168.1.1/USB`. Find the router's local path in
+**LuCI → System → Mount Points** and the share settings.
+For example, if the USB drive is mounted at `/mnt/usb`, run this **in the router's SSH session**:
+
+```sh
+cp "/mnt/usb/package.ipk" /tmp/package.ipk
+```
+
+`USB`, `/mnt/usb` and the filename are examples; the share must point to
+the drive containing your copied package. A file transfer does not install anything.
+
 ## Set up the panel
 
 1. Open the address printed by the installer, `http://router-IP:90`. The default login uses the OpenWrt `root` account. A separate panel password can be set through **Change password**.
 2. Keep automatic WAN discovery or choose an OpenWrt logical interface such as `wan` or `wan6`. PPPoE devices are resolved through `netifd`.
-3. Select devices and a strategy. In **Only selected**, `192.168.1.20` and `192.168.1.30`, one per line, select two devices. `192.168.1.0/24` selects that entire subnet. Reserve individual device addresses in **LuCI → Network → DHCP and DNS → Static leases**.
+3. Select devices and a strategy. In **Only listed devices**, `192.168.1.20` and `192.168.1.30`, one per line, select two devices. `192.168.1.0/24` selects that entire subnet. Reserve individual device addresses in **LuCI → Network → DHCP and DNS → Static leases**.
 4. You can import your own JSON or a cloud preset. Everything selected by the profile author is initially selected; you can deselect unwanted parts. Review the preview and apply. Supported file paths are adapted to OpenWrt; your router's local WAN and client selection are retained instead of importing another network's addresses.
 5. For domain-specific DNS, open SmartDNS, prepare a profile, test the connection and confirm it. The original `dnsmasq` configuration is retained; without confirmation, the previous DNS is restored.
 6. Start NFQWS2. Check increasing packet counters, then test websites, video playback and voice from a selected client.
@@ -59,7 +83,7 @@ in place. NFQWS2 settings live in `/etc/nfqws2/`; panel settings live in
 software flow offloading can bypass NFQUEUE; the panel checks for this and
 explains the necessary action.
 
-[Export and sharing](IMPORT.md#экспорт-и-отправка) follow the same workflow:
+Export and sharing follow the same workflow:
 select the contents, review the preview, then download the JSON or send a report.
 Share working strategies with your model, firmware and test conditions to help
 other users on the same provider.
@@ -111,3 +135,5 @@ Official information: [OpenWrt device catalog](https://openwrt.org/toh/start),
 services and removes their rules while retaining user settings. It removes the
 application; the OpenWrt firmware remains installed.
 Native integration source: [source/project/openwrt](source/project/openwrt/).
+
+[Project documentation](README.en.md#documentation).
