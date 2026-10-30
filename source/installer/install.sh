@@ -111,7 +111,13 @@ main() {
         HASH=/bin/busybox HASH_BUSYBOX=1
     fi
     mkdir -p /opt/tmp || fail 'Entware недоступна для записи.'
-    WORK=$(mktemp -d /opt/tmp/nfqws2-asus-install.XXXXXX) || fail 'Не удалось создать временный каталог в Entware.'
+    work_attempt=0
+    while [ "$work_attempt" -lt 32 ]; do
+        work_candidate=/opt/tmp/nfqws2-asus-install.$$.$work_attempt
+        if mkdir "$work_candidate" 2>/dev/null; then WORK=$work_candidate; break; fi
+        work_attempt=$((work_attempt + 1))
+    done
+    [ -n "$WORK" ] || fail 'Не удалось создать временный каталог в Entware.'
     trap cleanup 0
     trap 'exit 130' INT
     trap 'exit 143' TERM HUP

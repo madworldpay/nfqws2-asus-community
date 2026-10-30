@@ -23,7 +23,15 @@
 В SSH роутера с готовой Entware выполните:
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || wget --https-only -T 20 -t 2 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 Команда одинаковая для поддерживаемых ARMv7 и AArch64.
@@ -92,7 +100,15 @@ IPv6-обработка по умолчанию выключена; это не 
 Нативный пакет устанавливается без Entware. В SSH роутера от `root` выполните:
 
 ```sh
-( nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh; nfqws_file=$(mktemp) && trap 'rm -f "$nfqws_file"' 0 && { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_file" || uclient-fetch -T 20 -O "$nfqws_file" "$nfqws_url"; } && sh "$nfqws_file" )
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
 ```
 
 После установки откройте адрес панели, выберите устройства и стратегию, сохраните

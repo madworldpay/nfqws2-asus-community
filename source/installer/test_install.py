@@ -124,6 +124,12 @@ else:raise AssertionError(args)
         self.assertEqual(self.installs(), [{'kind':'install','asset':f'nfqws2-asus_{VERSION}_aarch64-3.10.ipk','no_start':'1'}])
         self.assertIn('http://192.168.50.1:90', r.stdout)
 
+    def test_first_install_without_mktemp(self):
+        self.tool('mktemp', 'sys.exit(127)')
+        r = self.execute()
+        self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
+        self.assertEqual(self.installs()[0]['no_start'], '1')
+
     def test_both_arm_abis_select_the_same_arm_package(self):
         for abi in ['armv7-2.6', 'armv7-3.2']:
             with self.subTest(abi=abi):
