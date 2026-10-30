@@ -1,11 +1,11 @@
 # Updates
 
-## One-time signing-key transition
+## Updating older builds
 
 **Updating an older build to Build 74 or later requires the installer once.**
-The previous private signing key was lost when the server was deleted, with no
-backup remaining. Older panels trust that key and cannot verify a release
-signed with the new one. The new release may therefore not appear in an older panel.
+Current releases use a new signing key. Rerun the usual installer command for
+your platform to complete the transition. Subsequent updates are available
+through the panel with signature and SHA256 verification.
 
 This update restores the path for future fixes and features through the panel.
 Build 74 adds strategy dates and a temporary technical channel by prior arrangement
@@ -28,8 +28,7 @@ verifies its signature with the new embedded key.
 
 The strategy catalog and submission receiver run on ASUS, submissions are delivered
 to the project's Gmail inbox, and releases come from GitHub. Importing, submitting
-and updating do not require a VPS. The new signing key is stored separately from
-the delivery server and has a backup; moving services does not itself require a key change.
+and updating do not require a VPS.
 
 ## Through the panel
 

@@ -60,11 +60,10 @@ Entware is not required. Connect to **the OpenWrt router** over SSH as `root` an
 Both installers select and verify the package for their platform, preserving settings
 during updates. The installer prints the panel address when finished.
 
-**Older builds need a one-time update using the installer.** The previous signing
-key was lost when the server was deleted, so older panels cannot verify new
-releases. Rerun the command for your platform above once: settings, lists, login
-credentials and the chosen service state are preserved. Subsequent updates
-are available through the panel from GitHub again.
+**One-time transition for older builds.** To install the current release and
+receive subsequent updates through the panel, rerun the command for your
+platform above once. Settings, lists, login credentials and the chosen service
+state are preserved. After the transition, use the panel's usual update buttons.
 
 ### After installation
 
