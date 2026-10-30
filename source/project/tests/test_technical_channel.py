@@ -118,6 +118,50 @@ class TechnicalChannelTests(unittest.TestCase):
             self.assertEqual(f.read_bytes(),b'x'*65536)
             self.assertFalse((root/'journal.json').exists())
 
+    def test_only_trusted_entware_alias_is_accepted_and_pinned(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); target=root/'entware'; target.mkdir(mode=0o700)
+            alias=root/'opt'; alias.symlink_to(target, target_is_directory=True)
+            module=root/'files.php'
+            module.write_text((PUBLIC/'technical-channel-files.php').read_text().replace("'/opt'",repr(str(alias))))
+            code="require $argv[1]; try { AsusTechnicalFiles::write($argv[2].'/etc/keys','original',0600,(int)$argv[3]); echo AsusTechnicalFiles::read($argv[2].'/etc/keys',(int)$argv[3])['raw']; } catch(Throwable $e){echo $e->getMessage();}"
+            run=lambda script:subprocess.run([PHP,'-n','-r',script,str(module),str(alias),str(os.getuid())],text=True,capture_output=True,timeout=10)
+            self.assertEqual(run(code).stdout,'original')
+            (target/'child').symlink_to(target/'etc',target_is_directory=True)
+            self.assertEqual(run(code.replace('/etc/keys','/child/keys')).stdout,'unsafe_key_file')
+            # Pin the same boundary for the lifetime of the request/worker.
+            other=root/'other'; other.mkdir(mode=0o700)
+            change="require $argv[1]; AsusTechnicalFiles::directory($argv[2],(int)$argv[3]);unlink($argv[2]);symlink("+repr(str(other))+",$argv[2]);try{AsusTechnicalFiles::directory($argv[2],(int)$argv[3]);echo 'accepted';}catch(Throwable $e){echo $e->getMessage();}"
+            self.assertEqual(run(change).stdout,'unsafe_key_file')
+
+    def test_old_activation_cannot_cleanup_replacement_or_adopt_new_worker(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); runtime=root/'run'; runtime.mkdir(mode=0o700)
+            session='a'*32
+            identity=self.php("return AsusTechnicalProcess::identity($v['pid']);",dict(pid=os.getpid()))['ok']
+            state=dict(state='connected',session_id=session,activation_id=session,identity=identity,expires_at=int(time.time())+30,uptime_deadline=1e12)
+            statefile=runtime/'state.json'
+            def save(v):
+                tmp=runtime/'new';tmp.write_text(json.dumps(v));tmp.chmod(0o600);tmp.replace(statefile)
+            save(state)
+            marker=root/'marker'
+            code="require $argv[1].'/technical-channel.php';$c=new AsusTechnicalChannel(['runtime'=>$argv[2],'journal'=>$argv[3],'owner'=>(int)$argv[4],'busybox'=>'/usr/bin/busybox']);exit($c->command($argv[5]));"
+            env=os.environ|{'SSH_CONNECTION':'127.0.0.1 40000 127.0.0.1 40001','SSH_ORIGINAL_COMMAND':'sleep 2; touch '+str(marker)}
+            guard=subprocess.Popen([PHP,'-n','-r',code,str(PUBLIC),str(runtime),str(root/'journal.json'),str(os.getuid()),session],env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            try:
+                time.sleep(.4)
+                replacement=state|dict(activation_id='b'*32)
+                save(replacement)
+                out,err=guard.communicate(timeout=5)
+                self.assertEqual(err,'');self.assertNotEqual(guard.returncode,0,out)
+                time.sleep(2)
+                self.assertFalse(marker.exists(),'old command survived invitation reuse')
+                result=self.php("$c=new AsusTechnicalChannel(['runtime'=>$v['runtime'],'journal'=>$v['journal'],'owner'=>$v['owner']]);$m=new ReflectionMethod($c,'clean');return $m->invoke($c,$v['old'],'failed','interrupted');",dict(runtime=str(runtime),journal=str(root/'journal.json'),owner=os.getuid(),old=state))
+                self.assertEqual(result['ok']['activation_id'],'b'*32)
+                self.assertEqual(json.loads(statefile.read_text()),replacement)
+            finally:
+                if guard.poll() is None:guard.kill();guard.wait()
+
     def test_guard_requires_live_matching_worker_tunnel_source_and_both_deadlines(self):
         data=self.php("return AsusTechnicalProcess::identity(getmypid());",{})['ok']
         # Previous PHP has exited, so a stale but correctly formatted identity fails closed.

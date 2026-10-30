@@ -38,11 +38,16 @@ def render(public_key=None,entry=False):
     parts+=['const NFQWS_NATIVE_INSTALL_KEY = '+literal(key)+';\n',
             'const NFQWS_NATIVE_INSTALL_SCHEMA = '+literal(schema)+';\n']
     if entry:
-        parts+=['const NFQWS_NATIVE_INSTALL_BRIDGE = '+literal(bridge())+';\n', (ROOT/'openwrt/install-main.php').read_text()[6:]]
+        parts+=['const NFQWS_NATIVE_INSTALL_BRIDGE = '+literal(bridge(key.encode()))+';\n', (ROOT/'openwrt/install-main.php').read_text()[6:]]
     return ''.join(parts).encode('utf-8')
 
-def bridge():
-    return (ROOT/'openwrt/install-update.php').read_text().replace('try{', (ROOT/'openwrt/install-local-source.php').read_text()[6:]+'\ntry{',1)
+def bridge(public_key=None):
+    key=(ROOT/'updates/trusted-release-key.pem').read_bytes()if public_key is None else public_key
+    trusted='const NFQWS_NATIVE_INSTALL_KEY = '+literal(key.decode())+';\n'
+    trusted+='const NFQWS_NATIVE_INSTALL_SCHEMA = '+literal((ROOT/'updates/openwrt-package-manifest.schema.json').read_text())+';\n'
+    trusted+='const NFQWS_NATIVE_INSTALL_DISCOVERY = '+literal((PUBLIC/'update-github.php').read_text())+';\n'
+    modules=''.join((ROOT/'openwrt'/name).read_text()[6:]+'\n'for name in ['install-local-source.php','install-trust.php'])
+    return (ROOT/'openwrt/install-update.php').read_text().replace('try{', trusted+modules+'\ntry{',1)
 
 def shell(public_key=None):
     code=render(public_key,entry=True).decode()

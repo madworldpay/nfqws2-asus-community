@@ -60,6 +60,9 @@ Entware is not required. Connect to **the OpenWrt router** over SSH as `root` an
 Both installers select and verify the package for their platform, preserving settings
 during updates. The installer prints the panel address when finished.
 
+After a signing-key change, older panels need a one-time update: rerun the
+command for your platform above. Updates are then available in the panel again.
+
 ### After installation
 
 1. Open `http://ROUTER_IP:90`. On ASUS, follow the panel's ARK check. If ARK is absent, no preparation is needed.

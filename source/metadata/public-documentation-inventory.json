@@ -7,48 +7,88 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 9740,
-      "sha256": "ab9f1fa53b29d23940bb4562d7a9edae8d041c26439318ddec1232fe62c70adf"
+      "bytes": 11091,
+      "sha256": "c032ce4395e62ddbc3d79e4fb3da3b8d89edc135d745fcfeee2bbad36d3e8cc8"
+    },
+    {
+      "file": "COMPATIBILITY.en.md",
+      "bytes": 2184,
+      "sha256": "45467353feda0f4b0b73f7a45372943dbeedc2477459b91abcf055357fc87f26"
     },
     {
       "file": "COMPATIBILITY.md",
-      "bytes": 3012,
-      "sha256": "6902e586392b945828d71d00a43659d8435475bf7013568970056dfa1c55d2ec"
+      "bytes": 3367,
+      "sha256": "d9ae2f3235f71eef5377d93cede3ee6ca1da0f7214ee598a9528233873b95acd"
+    },
+    {
+      "file": "CONTRIBUTING.en.md",
+      "bytes": 2866,
+      "sha256": "4f2a8f549704f9c7537d57aad7981f3b29fbef83c08299db9a26bd6d723d6649"
     },
     {
       "file": "CONTRIBUTING.md",
-      "bytes": 4514,
-      "sha256": "15b0c933d829f5e74a5791f4f95ca29a1bfb9041e17025a2a43159999d24866f"
+      "bytes": 4808,
+      "sha256": "6cb6e6cb1510a64d057e5ab67f16a7926ce9e4deb0e2d97d25ac45e508b801fd"
+    },
+    {
+      "file": "DIAGNOSTICS.en.md",
+      "bytes": 3846,
+      "sha256": "ef0ad411723a7cff24809b9fc78aee2b5eb1d4a519bf249e93d282fda2593590"
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 6342,
-      "sha256": "f54144108ff6a4d0011be1ac2271464b5e938449e1268f74c99a47817c9934f9"
+      "bytes": 6443,
+      "sha256": "e19b89cf91b8a698917d5484a730f93feac61626ba26d25950d871b3210ea13f"
+    },
+    {
+      "file": "DOMRU.en.md",
+      "bytes": 318,
+      "sha256": "2458b4c0d50519431168c2906e3988242cb1dfbfeaf214521b9e27012830dcc7"
     },
     {
       "file": "DOMRU.md",
-      "bytes": 220,
-      "sha256": "ff4e7c910c758dbc2203e541fd92b4468e0374924c42184a9357c453fd942997"
+      "bytes": 517,
+      "sha256": "a89d4e10c94c6ea4348f24c1fe90b4c38317d5639fb167363b45db13cb58e140"
+    },
+    {
+      "file": "DOWNLOADS.en.md",
+      "bytes": 1842,
+      "sha256": "84afb36d7170982b897beb19b2402b4ba046f3092b1be728ffa69d3638c810ab"
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 2693,
-      "sha256": "1998c113029cd6c6c8731a69a4b4df00b4d13bccafb129780141f1204ebd6ffb"
+      "bytes": 2434,
+      "sha256": "49518497df0ef3c2c3cbb196a8bc8d3f62dc0074aac22302e42a08ea994e811a"
+    },
+    {
+      "file": "DPI-DETECTOR.en.md",
+      "bytes": 2247,
+      "sha256": "3c049d133305e8b9b25824c780df82ddbd38d30fd1790b609405b90ef9d551f2"
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 3706,
-      "sha256": "09094165a50aec30eecd6068c1032ac25fc67a33b1425627c956e4b4b12c99ba"
+      "bytes": 3695,
+      "sha256": "f6d4588c78e19b7d3359fd79793b6ecbcf7f352e90cae22d36dc4e1993a760f1"
+    },
+    {
+      "file": "IMPORT.en.md",
+      "bytes": 5015,
+      "sha256": "0fb08cdcfa095673eb7cd3024ca759eb9cc62a9e221471a71f77bfd711339291"
     },
     {
       "file": "IMPORT.md",
-      "bytes": 8343,
-      "sha256": "6de947f837b87a0f8ddf32c84a70936fcf54c858124e3377811290232d15ad59"
+      "bytes": 8624,
+      "sha256": "3c5d2671059e35b356a4f3eee05fd96e429571fc6fab0e0b86b71a70fcc0deb9"
+    },
+    {
+      "file": "INSTALL.en.md",
+      "bytes": 4133,
+      "sha256": "1fa4502e4c71a588ad4b634f9e5613b79e05cf328ae4da802ffae33fcdd32671"
     },
     {
       "file": "INSTALL.md",
-      "bytes": 4687,
-      "sha256": "8fe810d432ab4765ca61797e674c0e858abecf4ae6991db48b7d817ca1d0ca34"
+      "bytes": 6309,
+      "sha256": "e7e9e9cf3d842d9a0f8324b4e7c77d8cdc2a6561dcebaa59f296662aa2a6910c"
     },
     {
       "file": "LICENSE",
@@ -56,49 +96,94 @@
       "sha256": "077c2cacdefd020395543f9892d8d126d6647306d3bf6ab0aece40df3b4a8778"
     },
     {
+      "file": "MANUAL-INSTALL.en.md",
+      "bytes": 5669,
+      "sha256": "81caf8048273c5b5b1de118622c399d2c66f8e00c65d7aae724c4a1a2dba265b"
+    },
+    {
       "file": "MANUAL-INSTALL.md",
-      "bytes": 2994,
-      "sha256": "66e2ca9fc975144fc3a9a55179d8c649b71b5836255b67eb629a1b42fdfd8428"
+      "bytes": 8535,
+      "sha256": "4cdbac8e56b45debfb1ec7d6f454e4a85dcb2c317b5bb81b0b9d22f690c6cb05"
     },
     {
       "file": "OPENWRT.en.md",
-      "bytes": 6937,
-      "sha256": "396330a4496d1899462c495055c508c2e6164f8fb292274ef4c45f822e67cd97"
+      "bytes": 7899,
+      "sha256": "ce19a0c1a0d9e241d24d4bc08ec410bf9606dcafcd4bd9d35b58d306fee2855a"
     },
     {
       "file": "OPENWRT.md",
-      "bytes": 10997,
-      "sha256": "70efdf1c9577a806fe2556c1f64e2959b1827dc0a165ff8cbc4b8e28ef327da7"
+      "bytes": 12460,
+      "sha256": "427ef17dccc57f4c031944b00cd0f4cc85a8713afc926bffc8420f22974a943a"
+    },
+    {
+      "file": "PACKAGE-UPDATES.en.md",
+      "bytes": 5097,
+      "sha256": "0636d294ec76df08bc42e406dee95fd0b926add377e1590363aef9df89a08a88"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 6083,
-      "sha256": "d3d5d1213b75c703cbff86a49d0f8cc448ea2c20a6eca2d1af29838c6eac2495"
+      "bytes": 8350,
+      "sha256": "43c9cc38e74fcd0868fffa285eafa5883585b331995b64f2804731ead6e599b6"
+    },
+    {
+      "file": "PRESETS.en.md",
+      "bytes": 2153,
+      "sha256": "cebbecbfc497c2a48bd80de03bd8245bf4e8ecef4b2b4237b7b1003e8ccf44d8"
     },
     {
       "file": "PRESETS.md",
-      "bytes": 3887,
-      "sha256": "799d7dde1aba8ce1c362add8ab4b1e81f445f78544a91a45e4bf6c93adf4daf2"
+      "bytes": 3665,
+      "sha256": "e0e9bd78bd1bdb5ee2dc0022a18375f9027eaec2ca3db623be754241ddce7832"
+    },
+    {
+      "file": "QUICKSTART.en.md",
+      "bytes": 3817,
+      "sha256": "ad078518f7a600ecffbacb48effa6397ae662c3e9f5c661d842fc78431cc2bcb"
     },
     {
       "file": "QUICKSTART.md",
-      "bytes": 3657,
-      "sha256": "b332088243292f9d05f111b8165e1220a36c9f6f62b8ddbc6b1005c06c0f04e9"
+      "bytes": 6018,
+      "sha256": "acd2deb63110d6cef773982f350de0646eb24876072a5c054e500392dd586fb7"
+    },
+    {
+      "file": "README.en.md",
+      "bytes": 12397,
+      "sha256": "63d7cbbc257fcfe7dd455165e7810e90fb8cee4327bda53752e87c35811f06ac"
     },
     {
       "file": "README.md",
-      "bytes": 10144,
-      "sha256": "2f8745177207d8d7d8e4a29c57243cfb54de5d5b118278c5cf48b8def98ff480"
+      "bytes": 19936,
+      "sha256": "1c1d37a4b524e6e8182623e9ddfc173c1eece8ecefaa45e626355205d7bb6814"
+    },
+    {
+      "file": "ROADMAP.en.md",
+      "bytes": 653,
+      "sha256": "6abb7145f0b4033f83d1c59d2cf8f7705087385133438050336029655514d47c"
     },
     {
       "file": "ROADMAP.md",
-      "bytes": 1114,
-      "sha256": "e25a8f5559846cac0d698bf19f7a38400a61922cac85233648fe25f9c123b6fb"
+      "bytes": 1152,
+      "sha256": "e76ed8a6082e7559e5477851df991f57e0b71fb5aa6e1175453b26218c6a6b6b"
+    },
+    {
+      "file": "SCREENSHOTS.en.md",
+      "bytes": 2659,
+      "sha256": "9d44b69e1113f26633f2efc52eb61c07f64953d3cf51857d22331deb7d3fbb20"
+    },
+    {
+      "file": "SCREENSHOTS.md",
+      "bytes": 3916,
+      "sha256": "9aa97f7f5422d74e6354d3fa11bb89ed0c3c0c35d624aa9022b16b3d431396e2"
+    },
+    {
+      "file": "SMARTDNS.en.md",
+      "bytes": 4689,
+      "sha256": "9256f14bf556b9759b63ea25f23561470aadc87e9dc939c08b4853b4b20c56de"
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 7934,
-      "sha256": "ae9e195bc06220c931be828b218526babb50d5cab4c18976ae601ab1e88f4750"
+      "bytes": 7790,
+      "sha256": "dce70d0749b35250eb734e27a381be55b9a6595b98be8c957855c006f3023822"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
@@ -106,14 +191,24 @@
       "sha256": "3054abaa4aaeb8d876012728a1a69ce1756bf07605d7093da7ac96ce894a84e5"
     },
     {
+      "file": "UPSTREAM.en.md",
+      "bytes": 8302,
+      "sha256": "e9cca102518b4589500e8fefe4dc5fa40474259f19d21cf644c8086c44ebab27"
+    },
+    {
       "file": "UPSTREAM.md",
       "bytes": 11194,
       "sha256": "4e441674e842a874dad99a9ef35181145efad4657c8e47729f8b002ea39d8e1f"
     },
     {
+      "file": "USAGE.en.md",
+      "bytes": 4854,
+      "sha256": "d248203450ac3e0277d5252e503fd7c1960dfebee3e630fecba38efc78af5563"
+    },
+    {
       "file": "USAGE.md",
-      "bytes": 5029,
-      "sha256": "1de8a9631da5de159a1c9974d70fcbb1d3b9eb80ecad9fa3c7c8af05fc901a3d"
+      "bytes": 8159,
+      "sha256": "93f3f658142dea71758990b224f6588bf338bbcda929503bcd2f9e2fae4991d9"
     },
     {
       "file": "build.svg",

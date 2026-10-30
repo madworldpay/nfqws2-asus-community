@@ -15,8 +15,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PHP = os.environ.get('PHP_TLS_TEST_BINARY')
 EXTENSION = os.environ.get('PHP_OPENSSL_TEST_EXTENSION')
-METADATA = 'https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/public.json'
-NATIVE_METADATA = 'https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/openwrt/public.json'
+METADATA = 'https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/v2/public.json'
+NATIVE_METADATA = 'https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/v2/openwrt/public.json'
 RELEASES = 'https://github.com/madworldpay/nfqws2-asus-community/releases/download/'
 ASSET_HOST = 'release-assets.githubusercontent.com'
 

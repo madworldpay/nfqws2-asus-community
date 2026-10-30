@@ -19,5 +19,24 @@ try {
  }
  globalThis.fetch=async()=>Response.json({error:'auth_required'},{status:403});
  await assert.rejects(api.technicalRequest('csrf','technicalstatus'),e=>e.code==='auth_required');
+ assert.equal(typeof api.TechnicalChannelSession,'function','UI must reconcile a lost start response and ignore stale status replies');
+ const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
+ const late=deferred();let accepted=false;let pending=0;
+ const session=new api.TechnicalChannelSession(async(cmd)=>{
+   if(cmd==='technicalstart'){accepted=true;throw Error('response lost');}
+   if(cmd==='technicalstop'){accepted=false;return {...state,state:'stopped'};}
+   if(++pending===1)return late.promise;
+   return accepted?state:{...state,state:'stopped'};
+ });
+ const stale=session.refresh();
+ await session.action('technicalstart','signed-link');
+ assert.equal(session.snapshot().state.state,'connecting','accepted start must be rediscovered automatically');
+ assert.equal(session.snapshot().unresolved,false);
+ late.resolve({...state,state:'idle'});await stale;
+ assert.equal(session.snapshot().state.state,'connecting','older status must not hide an active channel');
+ await session.action('technicalstop');assert.equal(session.snapshot().state.state,'stopped');
+ const unreachable=new api.TechnicalChannelSession(async()=>{throw Error('offline');});
+ await unreachable.action('technicalstart','signed-link');
+ assert.equal(unreachable.snapshot().unresolved,true,'polling and Disconnect must remain available until status is known');
  console.log('PASS temporary channel exact commands, consent, bounded state, no secrets in status');
 } finally {await rm(dir,{recursive:true,force:true});}

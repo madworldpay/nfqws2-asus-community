@@ -1,7 +1,9 @@
 """Pinned native upstream with synthetic targets in a network namespace without uplinks."""
-import hashlib,json,os,subprocess,tempfile,unittest
+import hashlib,json,os,shutil,subprocess,tempfile,unittest
 from pathlib import Path
 from test_dpi_normalize import PHP,PUBLIC,ROOT
+# Native host PHP and emulated upstream binaries have independent test runtimes.
+PHP=os.environ.get('DPI_UPSTREAM_TEST_PHP',PHP)
 
 class DpiUpstreamContractTests(unittest.TestCase):
     def test_pinned_cli_json_with_only_synthetic_network(self):
@@ -25,13 +27,14 @@ stop=True;s.close();sys.stdout.buffer.write(r.stdout);sys.stderr.buffer.write(r.
 '''
         with tempfile.TemporaryDirectory() as directory:
             p=Path(directory)
+            executable=p/'dpi-detector';shutil.copyfile(binary,executable);executable.chmod(0o700)
             code="require $argv[1].'/dpi-options.php';echo json_encode(AsusDpiOptions::compile(['config'=>['TIMEOUT'=>0.1,'FAT_CONNECT_TIMEOUT'=>0.1,'FAT_READ_TIMEOUT'=>0.1,'STUB_IPS_TIMEOUT'=>0.1,'IP4_LOOKUP_URLS'=>[],'IP6_LOOKUP_URLS'=>[],'CYMRU_DOH_SERVERS'=>[]],'targets'=>['tcp'=>[['id'=>'HE-01','ip'=>'127.0.0.1','port'=>443]]]],3,'/native'));"
             compiled=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],capture_output=True,text=True);self.assertEqual(compiled.returncode,0,compiled.stderr)
             compiled=json.loads(compiled.stdout)
             for name,content in compiled['files'].items():(p/name).write_text(content)
             (p/'native-args.json').write_text(json.dumps(compiled['argv'][1:]))
-            run=subprocess.run(['unshare','-Urn','python3','-c',script,str(qemu),'-L',str(sysroot),str(binary)],cwd=p,capture_output=True,timeout=20)
-            self.assertEqual(run.returncode,0,run.stderr.decode());self.assertEqual(run.stderr,b'', 'compiled settings produced native warnings');raw=p/'raw';raw.write_bytes(run.stdout)
+            run=subprocess.run(['unshare','-Urn','python3','-c',script,str(qemu),'-L',str(sysroot),str(executable)],cwd=p,capture_output=True,timeout=20)
+            self.assertEqual(run.returncode,0,(run.stderr+run.stdout).decode());self.assertEqual(run.stderr,b'', 'compiled settings produced native warnings');raw=p/'raw';raw.write_bytes(run.stdout)
             value=json.loads(run.stdout);self.assertEqual(value['schema_version'],1);self.assertEqual(list(value['results']),['tcp16'])
             code="require $argv[1].'/dpi-normalize.php';echo json_encode(AsusDpiNormalizer::group(file_get_contents($argv[2]),3,AsusDpiCatalog::load()));"
             r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(raw)],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertNotIn('PRIVATE_CANARY',r.stdout);self.assertEqual(json.loads(r.stdout)['rows'][0]['target'],'HE-01')

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   Alert,
   Box,
@@ -12,10 +12,9 @@ import {
   Typography,
 } from '@mui/material';
 
-import { ShareError } from '@/api/shareClient';
 import {
+  TechnicalChannelSession,
   technicalRequest,
-  type TechnicalState,
 } from '@/api/technicalChannelClient';
 
 import { InlineHelp } from '@/components/InlineHelp';
@@ -23,40 +22,35 @@ import { InlineHelp } from '@/components/InlineHelp';
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
-const idle: TechnicalState = {
-  state: 'idle',
-  session_id: null,
-  expires_at: null,
-  code: null,
-};
 export const TechnicalChannel = () => {
   const { t, langcode } = useTranslation();
   const { csrfToken, anonym } = useStatus();
   const [open, setOpen] = useState(false);
   const [invitation, setInvitation] = useState('');
-  const [state, setState] = useState<TechnicalState>(idle);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const active = state.state === 'connecting' || state.state === 'connected';
-  const refresh = useCallback(async () => {
-    if (!csrfToken || anonym) return;
-    try {
-      setState(await technicalRequest(csrfToken, 'technicalstatus'));
-      setError(null);
-    } catch (e) {
-      setError(e instanceof ShareError ? e.code : 'connection_failed');
-    }
-  }, [csrfToken, anonym]);
+  const session = useMemo(
+    () =>
+      new TechnicalChannelSession((cmd, link) =>
+        technicalRequest(csrfToken ?? '', cmd, link),
+      ),
+    [csrfToken],
+  );
+  const { state, error, busy, unresolved } = useSyncExternalStore(
+    session.subscribe,
+    session.snapshot,
+  );
+  const active =
+    state.state === 'connecting' || state.state === 'connected' || unresolved;
+  const refresh = session.refresh;
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (csrfToken && !anonym) void refresh();
+  }, [refresh, csrfToken, anonym]);
   useEffect(() => {
-    if (!active) return;
+    if (!active || !csrfToken || anonym) return;
     const timer = window.setInterval(() => {
       void refresh();
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [active, refresh]);
+  }, [active, refresh, csrfToken, anonym]);
   const close = () => {
     setOpen(false);
     setInvitation('');
@@ -65,15 +59,7 @@ export const TechnicalChannel = () => {
     if (!csrfToken || busy) return;
     const link = invitation;
     setInvitation('');
-    setBusy(true);
-    setError(null);
-    try {
-      setState(await technicalRequest(csrfToken, cmd, link));
-    } catch (e) {
-      setError(e instanceof ShareError ? e.code : 'connection_failed');
-    } finally {
-      setBusy(false);
-    }
+    await session.action(cmd, link);
   };
   const labels = {
     idle: t('technical.idle'),
@@ -113,7 +99,7 @@ export const TechnicalChannel = () => {
           sx={{ color: 'text.secondary', textTransform: 'none', fontSize: 12 }}
           onClick={() => {
             setOpen(true);
-            void refresh();
+            if (csrfToken && !anonym) void refresh();
           }}
         >
           {t('technical.title')}

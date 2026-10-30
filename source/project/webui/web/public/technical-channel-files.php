@@ -2,10 +2,22 @@
 /** Private recovery journal stores only public key files, never tunnel credentials. */
 final class AsusTechnicalFiles
 {
+    private const OPT_ALIAS = '/opt';
+    private static array $anchors=[];
+    /** Firmware owns this one alias; pin its safe Entware root, never child links. */
+    private static function entware(int $owner): void
+    {
+        $alias=self::OPT_ALIAS;clearstatcache(true);$a=@lstat($alias);$root=realpath($alias);$s=$root===false?false:@lstat($root);
+        if(!$a||$a['uid']!==$owner||!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$owner||($s['mode']&0022)!==0)throw new RuntimeException('unsafe_key_file');
+        $pin=[$root];foreach(['dev','ino','mode','uid','gid'] as $key)$pin[]=$s[$key];
+        if(isset(self::$anchors[$owner])&&self::$anchors[$owner]!==$pin)throw new RuntimeException('unsafe_key_file');
+        self::$anchors[$owner]=$pin;
+    }
     public static function directory(string $path,int $owner=0): void
     {
         if($path===''||$path[0]!=='/'||str_contains($path,'/../')||str_contains($path,"\0"))throw new RuntimeException('unsafe_key_file');
         clearstatcache(true,$path);
+        if($path===self::OPT_ALIAS&&is_link($path)){self::entware($owner);return;}
         if(is_link($path))throw new RuntimeException('unsafe_key_file');
         $s=@lstat($path);
         if(!$s){self::directory(dirname($path),$owner);if(!@mkdir($path,0700))throw new RuntimeException('unsafe_key_file');$s=lstat($path);}

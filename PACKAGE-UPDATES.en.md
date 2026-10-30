@@ -1,5 +1,18 @@
 # Updates
 
+## One-time signing-key transition
+
+Build 74 introduces a new release key because the previous signing server is no longer available.
+An older installed panel may not show the new release. Rerun the installer
+command for your platform below once. Subsequent updates are available through
+the panel again.
+
+Old metadata URLs retain the previous signed release; the new key is not substituted
+through the old channel. Obtain the new installer over GitHub HTTPS: the ASUS branch
+checks the package against the release's `SHA256SUMS`; the OpenWrt branch also
+verifies its signature with the new embedded key. Settings and service state are preserved.
+
+
 ## Through the panel
 
 The panel automatically checks current public GitHub releases.

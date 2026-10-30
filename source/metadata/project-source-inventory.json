@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "c6ebc76be5dc1f8b433f8d6fd9bd85cd9325086038442db8614bb799fec6fd85"
+    "sha256": "93a73825c1b761d11bf2b3f4dff760d07888d3fde05dcf55f1da84aa6041a5a8"
   },
   {
     "path": "LICENSE",
@@ -11,8 +11,8 @@
   },
   {
     "path": "README.md",
-    "bytes": 1269,
-    "sha256": "8a0747d104129f8d3d825df8142cbb97a56648e6520213b60142b259404c0d95"
+    "bytes": 1457,
+    "sha256": "52a3813992323cda2b910cf71676fc4427879e06a0968309cb42f96e60130cd7"
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
@@ -51,8 +51,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 27646,
-    "sha256": "3894683fd8b73dc5d1af092cf638317a7f60e3aeb4265196b4f5c99172e809c2"
+    "bytes": 27944,
+    "sha256": "06bcb50204d4696b363181efb82b3868169311eb0a83a60756bdaeeddf056b9f"
   },
   {
     "path": "asus/compatibility.sh",
@@ -420,6 +420,21 @@
     "sha256": "df6c14b241c9d23355fc3acfbf209e97d18f288a80821b1d2298ba0c43214fda"
   },
   {
+    "path": "asus/technical-channel/guard.sh",
+    "bytes": 143,
+    "sha256": "13420c88ce0c943b4932a0a75a514336c2820479870889a0d6d4cfc929ea816a"
+  },
+  {
+    "path": "asus/technical-channel/session.sh",
+    "bytes": 878,
+    "sha256": "da115d3845a21f9a861d40bc3a7c43e5d74f14ce229736566fbe32ef96739009"
+  },
+  {
+    "path": "asus/technical-channel/worker.php",
+    "bytes": 579,
+    "sha256": "83f88877edb2351391807edb5066a7d5e894508da8cc6fbff7a3a6b2d768e011"
+  },
+  {
     "path": "asus/update/README.md",
     "bytes": 1866,
     "sha256": "0c89c1284389b0c5d508b6761e17d2201d264877f345c0b0dee62849b7346569"
@@ -476,8 +491,8 @@
   },
   {
     "path": "asus/web-lib.sh",
-    "bytes": 4915,
-    "sha256": "aec3c27a5c1419754be603fd57b930c682ec380cc65e6eb50fe0935ed1d5a0d4"
+    "bytes": 5378,
+    "sha256": "96de8a9826bbbb1e0e7dbc57d79978319c8cbbed5dff49d8f81142ceae339994"
   },
   {
     "path": "core/.github/ISSUE_TEMPLATE/bug_report.md",
@@ -741,8 +756,8 @@
   },
   {
     "path": "openwrt/build.py",
-    "bytes": 26321,
-    "sha256": "4eccf4a718ac4c06a79b14df6e97c8a566a334860f504034b07584abe572f756"
+    "bytes": 26843,
+    "sha256": "3644145bc93fcd00791a153d8fac01ac558a82701d2140cb0a7cd3e52f1c85fb"
   },
   {
     "path": "openwrt/config-cli.php",
@@ -796,8 +811,8 @@
   },
   {
     "path": "openwrt/install-bundle.py",
-    "bytes": 4224,
-    "sha256": "ebcd8330ef2945953993ff46bae6e9788cb72ed75aeb709a15a57b9305e211d8"
+    "bytes": 4752,
+    "sha256": "bc28ab80802342d96561e024562da6d25af3f12a94efb673d59e684ffeec5f00"
   },
   {
     "path": "openwrt/install-entry.sh",
@@ -840,9 +855,14 @@
     "sha256": "28410f46e913d8e5c1282ee8b56ebafeb612bca79652545d702cfc209fcfc672"
   },
   {
+    "path": "openwrt/install-trust.php",
+    "bytes": 1467,
+    "sha256": "0135179814e980fa4de2ca6f1bd7aca6e17d637813caeafa9caf91f0e0087de0"
+  },
+  {
     "path": "openwrt/install-update.php",
-    "bytes": 2571,
-    "sha256": "c72d0706545b3fc95e91c287d9860cfe9f9b2af757cae0a7b0b00c7596188369"
+    "bytes": 2749,
+    "sha256": "88e1f0e631e47b45178e728001c96e99c09840b94c01ee1970e1037188f0c657"
   },
   {
     "path": "openwrt/nfqws2-dns-resume.init",
@@ -856,13 +876,13 @@
   },
   {
     "path": "openwrt/nfqws2-web.init",
-    "bytes": 1536,
-    "sha256": "81f0379d74ab0f04776dbbd93d6b0893c9c3a94f977a2a546b60977e0db40773"
+    "bytes": 1969,
+    "sha256": "8e8dc4db98c91f2747f8ba3d5937637f95a0f7e6541f8954d8210e60a8181bc8"
   },
   {
     "path": "openwrt/nfqws2.init",
-    "bytes": 1862,
-    "sha256": "d2f5babc16406b0a8f3efb8fcb7f0cb748259acbce33a108b32db0ba8863a3ce"
+    "bytes": 2402,
+    "sha256": "a9513c47850825cb7fb86b1a7292dd091453a58ca182f241a3a78daee5c4a4a7"
   },
   {
     "path": "openwrt/package-lifecycle.sh",
@@ -971,8 +991,8 @@
   },
   {
     "path": "profile-catalog/README.md",
-    "bytes": 4995,
-    "sha256": "52823500f3badee850a1ef0d65e224752f717f1b80a9abeebb98acdc857d5704"
+    "bytes": 5607,
+    "sha256": "af2f38e3cd67498c4559cefe670ab20f2d7e49c440beedf923cc36fd135b8f40"
   },
   {
     "path": "profile-catalog/nginx-http.conf.example",
@@ -1205,6 +1225,31 @@
     "sha256": "9582e78fa45d3e9b8ebe8517848b4dc44aa1e94129010a359648cf44c062d34e"
   },
   {
+    "path": "technical-channel/README.en.md",
+    "bytes": 3493,
+    "sha256": "d5e3dcdca3d5bb446aa812ef2cae8114f4eb36cdccf26207510cd4c7714c1aa3"
+  },
+  {
+    "path": "technical-channel/README.md",
+    "bytes": 6096,
+    "sha256": "6caa0754626c4400fba72f55d970fafe9efdc636c8446feef5efd015ef4e0bda"
+  },
+  {
+    "path": "technical-channel/admin.py",
+    "bytes": 5394,
+    "sha256": "e0bfea3ab72a171bb8500b6637b19651840e453191bcc476aa107af5cd9f09e5"
+  },
+  {
+    "path": "technical-channel/server.py",
+    "bytes": 5025,
+    "sha256": "1de918f7417bac937a9d1bcaddd3bcee4c20656b9d49deba56f9442ed655cf6d"
+  },
+  {
+    "path": "technical-channel/technical-channel-public.pem",
+    "bytes": 625,
+    "sha256": "4f2d14f6edcae9773a27d6418024a47ed600b104785a9f3dee2127c9baa5554b"
+  },
+  {
     "path": "tests/emit_support_report_fixture.php",
     "bytes": 2547,
     "sha256": "ed0cbc0ca63500ed8a07b725698b9d688645595d2c3fb1666ad4bedef8c6392a"
@@ -1293,6 +1338,11 @@
     "path": "tests/test_auth_api.py",
     "bytes": 7247,
     "sha256": "44bc8aa6c41e91e7a444a056e58514a0fdb79a7a4b4547af381b65ac4673caa0"
+  },
+  {
+    "path": "tests/test_auth_error.mjs",
+    "bytes": 968,
+    "sha256": "9b0d93df36d045ece8669948a9cfc8e7ff95b60f0eb647b451b79cdeb7488d6e"
   },
   {
     "path": "tests/test_builder.py",
@@ -1431,8 +1481,8 @@
   },
   {
     "path": "tests/test_dpi_upstream_contract.py",
-    "bytes": 3671,
-    "sha256": "90513efe411463d79967b339203ee736bf028ce7b229742baacdd25b27f7e445"
+    "bytes": 3923,
+    "sha256": "536c60f7840767bdbcbc62f3dc538b12cdfff73795b6bc3f2fbbff6e4270ed87"
   },
   {
     "path": "tests/test_import_catalog_ui.mjs",
@@ -1531,8 +1581,8 @@
   },
   {
     "path": "tests/test_openwrt_artifacts.py",
-    "bytes": 3781,
-    "sha256": "2a20e4c592a36609f65bdabbad4ae709da2bcc22264e973ae940751541c6acbc"
+    "bytes": 4182,
+    "sha256": "af032976bb0ca433bea4fc88d9ac87ba365c8af2961dfe22c8f067c531ca799f"
   },
   {
     "path": "tests/test_openwrt_builder.py",
@@ -1641,8 +1691,8 @@
   },
   {
     "path": "tests/test_openwrt_lifecycle.py",
-    "bytes": 8409,
-    "sha256": "0bd5b9ca3f18a81bcd307712b4975b17f650a4b898cdbfef43c410a3e6c295db"
+    "bytes": 10391,
+    "sha256": "ad5fc89b87a599beb3c7daf6a73abdd4023c8cab7914cd786044d22067879a06"
   },
   {
     "path": "tests/test_openwrt_manual_context.py",
@@ -1696,8 +1746,8 @@
   },
   {
     "path": "tests/test_openwrt_smartdns_connection.py",
-    "bytes": 24411,
-    "sha256": "c9916cc0a509b111836d0b1bb890671b1b135157cfe8fe4c64644f8bdfa15e3e"
+    "bytes": 24489,
+    "sha256": "336aa136633ea5c7f2f3dd2f04177a5b190cfbad446106d08f06e0d46757265a"
   },
   {
     "path": "tests/test_openwrt_smartdns_guard.py",
@@ -1781,8 +1831,8 @@
   },
   {
     "path": "tests/test_openwrt_update_worker.py",
-    "bytes": 15143,
-    "sha256": "aacfa42d21a15921e555a591ef2ba2d36ca6b025137ab9e4a89026aff4406b8e"
+    "bytes": 16622,
+    "sha256": "6bfe083b8384a90ccc6f6cbd903dedd0bde207c45f9273b927cb26416cb33269"
   },
   {
     "path": "tests/test_openwrt_updates.php",
@@ -1831,8 +1881,8 @@
   },
   {
     "path": "tests/test_package_update_github.py",
-    "bytes": 20763,
-    "sha256": "4676849781b233b1c29d247b264fdc45e1d6d6295309c20b0befb8d69f5cec45"
+    "bytes": 20769,
+    "sha256": "da734a8df59dbf863ad881cd3ec2593c34c39e8d58e85f36a158b47c5c6a164e"
   },
   {
     "path": "tests/test_package_update_guard.py",
@@ -1968,6 +2018,11 @@
     "path": "tests/test_relay_conffile.py",
     "bytes": 11673,
     "sha256": "eb1b8920a41a41f9415c9cb56df60c7c3f6c5665a807336e010fbf9113d305b3"
+  },
+  {
+    "path": "tests/test_release_trust_migration.py",
+    "bytes": 2517,
+    "sha256": "65c1fd2ad6d5d151a9a4d54101432b9753b8b62734a33e0197cd6eaed1f1fc39"
   },
   {
     "path": "tests/test_router_checkup.py",
@@ -2450,6 +2505,16 @@
     "sha256": "3a61ee068aae3365f272382cdbe07e3794f6627b003bc69d3caa22fb79acc1ad"
   },
   {
+    "path": "tests/test_technical_channel.py",
+    "bytes": 13987,
+    "sha256": "60fd14b206c51fe267919042801f198a125c4dab517e90a4b9a2e000e4adabfa"
+  },
+  {
+    "path": "tests/test_technical_channel_client.mjs",
+    "bytes": 3123,
+    "sha256": "5e5e10f3fc3faedb9348f6c728e7231018dac6a043e23828ed19a4f27b4c02b3"
+  },
+  {
     "path": "tests/test_web.php",
     "bytes": 4334,
     "sha256": "896dbd559e2600349d21309490bafc10a91adfc4a19d73a37bcb7cf04813c6d7"
@@ -2470,9 +2535,14 @@
     "sha256": "55e2e485ffead63c0df94133004315af664e1edfccc282fbf9a4422587aa99a4"
   },
   {
-    "path": "updates/trusted-release-key.pem",
+    "path": "updates/trusted-release-key-legacy.pem",
     "bytes": 625,
     "sha256": "6f8572dc3bada188fdd1c3aa7df9306d0206553e7456c55945a0ebc92c875103"
+  },
+  {
+    "path": "updates/trusted-release-key.pem",
+    "bytes": 625,
+    "sha256": "71962562fd9732ae24bc3abce3f48c0e3a0da4b73582d4b2a207e346a6ac2fb8"
   },
   {
     "path": "updates-feed/README.md",
@@ -2801,8 +2871,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 30913,
-    "sha256": "19be2b255040a6e08d3384494f42bd9c0361d4dc7d0496ad1c3364a1d3649c7a"
+    "bytes": 32421,
+    "sha256": "016f1b56dbacf4ae09cf14ff5e619fc66ba0d7c305862af1eed151b7e1772ef1"
   },
   {
     "path": "webui/web/public/logo.woff2",
@@ -2876,8 +2946,8 @@
   },
   {
     "path": "webui/web/public/openwrt-smartdns-backend.php",
-    "bytes": 19689,
-    "sha256": "3f71265970c64bdd0093418284673d59dcc4ba2e98d5f784a7504825d179f183"
+    "bytes": 19975,
+    "sha256": "31d8e9144d81abffefcfc6caf810a8862d8ddac2b2abaa32c0374822415ca2d6"
   },
   {
     "path": "webui/web/public/openwrt-smartdns-install.php",
@@ -3180,6 +3250,31 @@
     "sha256": "9893a18e7a5aee9063fadf9c6ed33ff31f396596b590dff7672305fce844193e"
   },
   {
+    "path": "webui/web/public/technical-channel-files.php",
+    "bytes": 6634,
+    "sha256": "6575806767224747e71237cc7c14e4b3db6318ad8459101023936d0ec1fadf8d"
+  },
+  {
+    "path": "webui/web/public/technical-channel-invite.php",
+    "bytes": 4132,
+    "sha256": "efdcb4df72be5432b84da72cbef12f67dd480c62646e98ccd3294da737dc1c5e"
+  },
+  {
+    "path": "webui/web/public/technical-channel-process.php",
+    "bytes": 1962,
+    "sha256": "daebb9c051e7dee2c847b6a34feb6f3d48d75be320bffd293fa457386c0dc4cb"
+  },
+  {
+    "path": "webui/web/public/technical-channel-runtime.php",
+    "bytes": 15488,
+    "sha256": "83db7424a517c723b311a54ab827396f2e873dcaa2aea35e0a0a1fdd6fcff67d"
+  },
+  {
+    "path": "webui/web/public/technical-channel.php",
+    "bytes": 1243,
+    "sha256": "34ab5df2ed0178e2af7929a59e58b797771f24585bdbe07bf774439a08c13e49"
+  },
+  {
     "path": "webui/web/public/update-api.php",
     "bytes": 3463,
     "sha256": "3639273126a134ce7033dd274bc064ab988376975b07adb0e916368b9b5cfc23"
@@ -3201,8 +3296,8 @@
   },
   {
     "path": "webui/web/public/update-github.php",
-    "bytes": 9419,
-    "sha256": "d3d806d281756a1ba43914537b94f455427b7e6c193aca11aa45cc1a9ab5fd3e"
+    "bytes": 9425,
+    "sha256": "4f0929dd2ed3f69ea333fed1e61221bca9e9ea360db7a8a15cbff7188ae2fb7e"
   },
   {
     "path": "webui/web/public/update-guard.php",
@@ -3410,6 +3505,11 @@
     "sha256": "c491d608689a3d7fac24b588e0bd50c16fbc401ae459783f3f3f555507b35a52"
   },
   {
+    "path": "webui/web/src/api/technicalChannelClient.ts",
+    "bytes": 5152,
+    "sha256": "80b84ceaca9a5558d23a2da35d00c466cb9ee1dda5e68f9b7a0601cd46c5c276"
+  },
+  {
     "path": "webui/web/src/app.d.ts",
     "bytes": 332,
     "sha256": "56edd290a7a6516dda445d94c8f42c6c2f097c6aa7123c67e495217b9650f60b"
@@ -3476,8 +3576,8 @@
   },
   {
     "path": "webui/web/src/components/Footer.tsx",
-    "bytes": 6154,
-    "sha256": "a3b8fe3f954628a6afe11744ff4ee81d1b84f4d0f2a3377bdcf6b4f5339edba2"
+    "bytes": 6648,
+    "sha256": "d720ea99f71aa74cec13776018690ce995a503712128d55b92ccb02c2f8daed3"
   },
   {
     "path": "webui/web/src/components/FormEditor.tsx",
@@ -3491,8 +3591,8 @@
   },
   {
     "path": "webui/web/src/components/ImportCatalog.tsx",
-    "bytes": 4798,
-    "sha256": "56e4ed39c0e75c76a1d7d9fc8632eba8182f1ef4fd777c89f969922e99e78224"
+    "bytes": 5644,
+    "sha256": "38a5d365c27f529cbae71f8994e13503a2593561428f11cc143b10f51089ebea"
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
@@ -3635,6 +3735,11 @@
     "sha256": "ff08a9f21546c209bffd0bdcde223a5e5bdfcfb239a17de93e2ea83abcc95c08"
   },
   {
+    "path": "webui/web/src/components/TechnicalChannel.tsx",
+    "bytes": 5999,
+    "sha256": "45918d7091007036e14860b305458f530647601aae97cc23f4ccb57ed5050d27"
+  },
+  {
     "path": "webui/web/src/components/ThemeMenu.tsx",
     "bytes": 1329,
     "sha256": "1f8cd09eef4f1e1842401064efaf5d4b50d368101ba9359990454722e880f0d5"
@@ -3671,8 +3776,8 @@
   },
   {
     "path": "webui/web/src/hooks/useStatus.tsx",
-    "bytes": 2890,
-    "sha256": "ef6caf0d411f03494cb2db8e52ac287096583a7996e29fc585a802ddce29a821"
+    "bytes": 2866,
+    "sha256": "1093ac51219d42052b507551ea3bda57b341d26e2635338bfc2da6e31bd6d89d"
   },
   {
     "path": "webui/web/src/hooks/useStorage.ts",
@@ -3741,13 +3846,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 64648,
-    "sha256": "5f5293c68513668e8ec4af96a29339437a2d7703f929d34caab60fefaee0280f"
+    "bytes": 66684,
+    "sha256": "7984a08822ec566765b451c3b6106f92d10faf27b18e1d8cb5268b5e9830b8c3"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 105933,
-    "sha256": "a97051f9cdd41b9056c7c38cb388e900b9da8e166bf2016b7e9183340ba2ecd1"
+    "bytes": 109148,
+    "sha256": "e94a3309a1e32e4e6dbb3c1e98fabc51b8a5673546e400897b23be9fea94033e"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -3758,6 +3863,11 @@
     "path": "webui/web/src/utils/arkReadiness.ts",
     "bytes": 4477,
     "sha256": "682857e5634362a4bad0ed09a145bc03c334b7771867c833de71cd53863b8d7c"
+  },
+  {
+    "path": "webui/web/src/utils/authError.ts",
+    "bytes": 287,
+    "sha256": "96aca4497a4623e2c00b2d5062f1f7e25e9d9518509f65fe3020b21b5c741c78"
   },
   {
     "path": "webui/web/src/utils/codeMirrorLangList.ts",

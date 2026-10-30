@@ -11,11 +11,12 @@ try{
     $path=$plan['archive']??'';$expected=$args[0].'/work/'.($plan['candidate']['package']['filename']??'');if($path!==$expected)throw new RuntimeException('invalid_state');
     AsusUpdateStore::noLinks($path);$s=@lstat($path);if(!$s||!is_file($path)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0777)!==0600)throw new RuntimeException('invalid_state');
     $source=new NfqwsOpenWrtInstallLocalSource($plan);
-    $store=new AsusUpdateStore();$prepare=new NfqwsOpenWrtUpdatePrepare($store,$source);$fresh=$prepare->check(true);
+    $trust=NfqwsOpenWrtInstallTrust::stage($local,NFQWS_NATIVE_INSTALL_KEY,NFQWS_NATIVE_INSTALL_SCHEMA,NFQWS_NATIVE_INSTALL_DISCOVERY);
+    $store=new AsusUpdateStore();$prepare=new NfqwsOpenWrtUpdatePrepare($store,$source,['resources'=>$trust['resources']]);$fresh=$prepare->check(true);
     if($fresh['state']!=='available'||$fresh['candidate']!==$plan['candidate'])throw new RuntimeException('stale_revision');
     $lease=(new NfqwsOpenWrtUpdateGuard($store))->mutationLease();
     try{$job=$prepare->reserveCached($fresh['candidate']['revision'],bin2hex(random_bytes(16)));$store->claimPrepare($job['id']);}finally{flock($lease,LOCK_UN);fclose($lease);}
-    $job=$prepare->completePrepare($job['id'],fn($id)=>NfqwsOpenWrtUpdateRuntime::stage($store->path('operations/'.$id.'/runtime')));
+    $job=$prepare->completePrepare($job['id'],fn($id)=>NfqwsOpenWrtUpdateRuntime::stage($store->path('operations/'.$id.'/runtime'),$trust));
     if($job['state']!=='prepared')throw new RuntimeException($job['code']??'install_failed');
     $job=(new AsusUpdateDispatch($store,$prepare))->apply($job['id'],$job['revision'],bin2hex(random_bytes(16)));
     if(!in_array($job['state'],['applying','succeeded'],true))throw new RuntimeException($job['code']??'launch_failed');

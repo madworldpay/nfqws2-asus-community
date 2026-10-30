@@ -2,8 +2,8 @@
 /** Fixed public discovery and release locations. Signed metadata remains the trust gate. */
 final class AsusGithubUpdateSource implements AsusUpdateSource
 {
-    private const METADATA='https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/public.json';
-    private const NATIVE_METADATA='https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/openwrt/public.json';
+    private const METADATA='https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/v2/public.json';
+    private const NATIVE_METADATA='https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/updates/v2/openwrt/public.json';
     private const RELEASES='https://github.com/madworldpay/nfqws2-asus-community/releases/download/';
     private const ASSET_HOST='release-assets.githubusercontent.com';
     private const HTTPS_PORT=443;

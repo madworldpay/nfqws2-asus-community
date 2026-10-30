@@ -27,6 +27,8 @@ final class AsusTechnicalChannel
     {return ['state'=>$s['state']??'idle','session_id'=>$s['session_id']??null,'expires_at'=>$s['expires_at']??null,'code'=>$s['code']??null];}
     private function clean(array $s,string $state,?string $code=null): array
     {
+        $current=$this->read('state.json');
+        if(($current['activation_id']??null)!==($s['activation_id']??null))return $current??$s;
         // Invalidate the command guard before closing the owned transport.
         $s['state']=$state;$s['code']=$code;$this->save('state.json',$s);
         AsusTechnicalProcess::kill($s['transport']??null);AsusTechnicalProcess::kill($s['server_process']??null);
@@ -68,10 +70,10 @@ final class AsusTechnicalChannel
             if($old&&in_array($old['state'],['connecting','connected'],true))throw new RuntimeException('busy');
             foreach(['php','busybox','ssh'] as $k)if(!is_executable($this->c[$k]))throw new RuntimeException('unsupported_runtime');
             if(!is_file($this->c['library'].'/session.sh')||!is_file($this->c['library'].'/guard.sh'))throw new RuntimeException('unsupported_runtime');
-            $s=['state'=>'connecting','code'=>null,'session_id'=>$v['session_id'],'expires_at'=>$v['expires_at'],
+            $s=['state'=>'connecting','code'=>null,'session_id'=>$v['session_id'],'activation_id'=>bin2hex(random_bytes(16)),'expires_at'=>$v['expires_at'],
                 'uptime_deadline'=>AsusTechnicalProcess::uptime()+$v['expires_at']-time(),'started_at'=>time(),'identity'=>null,'transport'=>null];
             $this->save('state.json',$s);AsusTechnicalFiles::write($this->path('invitation'),$link,0600,$this->c['owner']);
-            $p=@proc_open([$this->c['busybox'],'start-stop-daemon','-S','-b','-p',$this->path('unused-launch.pid'),'-x',$this->c['busybox'],'--','sh',$this->c['library'].'/session.sh',$v['session_id']],
+            $p=@proc_open([$this->c['busybox'],'start-stop-daemon','-S','-b','-p',$this->path('unused-launch.pid'),'-x',$this->c['busybox'],'--','sh',$this->c['library'].'/session.sh',$s['activation_id']],
                 [0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file','/dev/null','w']],$pipes,'/',['PATH'=>NfqwsPlatform::native()?'/usr/sbin:/usr/bin:/sbin:/bin':'/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin','LANG'=>'C']);
             if(!is_resource($p)||proc_close($p)!==0){$this->clean($s,'failed','launch_failed');throw new RuntimeException('launch_failed');}
         }finally{flock($lock,LOCK_UN);fclose($lock);}
@@ -83,10 +85,10 @@ final class AsusTechnicalChannel
         if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('invalid_state');
         $p=null;$server=null;$lock=$this->lock();
         try{
-            $s=$this->read('state.json');if(($s['session_id']??null)!==$id||$s['state']!=='connecting'||($s['identity']??null)!==null)throw new RuntimeException('interrupted');
+            $s=$this->read('state.json');if(($s['activation_id']??null)!==$id||$s['state']!=='connecting'||($s['identity']??null)!==null)throw new RuntimeException('interrupted');
             $link=AsusTechnicalFiles::read($this->path('invitation'),$this->c['owner']);$key=AsusTechnicalFiles::read($this->c['public_key'],$this->c['owner']);
             $v=AsusTechnicalInvite::verify($link['raw']??'',$key['raw']??'',time());
-            if($v['session_id']!==$id)throw new RuntimeException('invalid_invitation');
+            if($v['session_id']!==$s['session_id'])throw new RuntimeException('invalid_invitation');
             $s['identity']=AsusTechnicalProcess::identity(getmypid());$this->save('state.json',$s);
             [$login,$home]=$this->rootAccount();$known=$home.'/.ssh/known_hosts';
             $authorized=NfqwsPlatform::native()?'/etc/dropbear/authorized_keys':$home.'/.ssh/authorized_keys';
@@ -111,14 +113,14 @@ final class AsusTechnicalChannel
             if(!is_resource($p))throw new RuntimeException('launch_failed');$ps=proc_get_status($p);
             $s['transport']=AsusTechnicalProcess::identity($ps['pid']);$s['login']=$login;$this->save('state.json',$s);
         }catch(Throwable $e){
-            if(isset($s)&&($s['session_id']??null)===$id)$this->clean($s,'failed',AsusTechnicalApi::error($e));
+            if(isset($s)&&($s['activation_id']??null)===$id)$this->clean($s,'failed',AsusTechnicalApi::error($e));
             if(is_resource($p)){proc_terminate($p,9);proc_close($p);}if(is_resource($server)){proc_terminate($server,9);proc_close($server);}throw $e;
         }finally{flock($lock,LOCK_UN);fclose($lock);}
         $begin=AsusTechnicalProcess::uptime();
         try{
             while(true){
                 usleep(200000);$lock=$this->lock();try{
-                    $current=$this->read('state.json');if(($current['session_id']??null)!==$id||!in_array($current['state']??null,['connecting','connected'],true))break;
+                    $current=$this->read('state.json');if(($current['activation_id']??null)!==$id||!in_array($current['state']??null,['connecting','connected'],true))break;
                     $s=$current;
                     if(!AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime())){$this->clean($s,'expired','expired');break;}
                     $ps=proc_get_status($p);if(!$ps['running']){$this->clean($s,'failed','connection_failed');break;}
@@ -129,7 +131,7 @@ final class AsusTechnicalChannel
             }
         }finally{
             if(is_resource($p)){proc_terminate($p,9);proc_close($p);}if(is_resource($server)){proc_terminate($server,9);proc_close($server);}
-            $lock=$this->lock();try{$s=$this->read('state.json');if(($s['session_id']??null)===$id&&in_array($s['state'],['connecting','connected'],true))$this->clean($s,'failed','interrupted');}finally{flock($lock,LOCK_UN);fclose($lock);}
+            $lock=$this->lock();try{$s=$this->read('state.json');if(($s['activation_id']??null)===$id&&in_array($s['state'],['connecting','connected'],true))$this->clean($s,'failed','interrupted');}finally{flock($lock,LOCK_UN);fclose($lock);}
         }
     }
     private function rootAccount(): array
@@ -168,13 +170,13 @@ final class AsusTechnicalChannel
     {
         if(!preg_match('/^[a-f0-9]{32}$/D',$id)||!preg_match('/^127\.0\.0\.1 [0-9]+ 127\.0\.0\.1 [0-9]+$/D',getenv('SSH_CONNECTION')?:''))return 126;
         $cmd=getenv('SSH_ORIGINAL_COMMAND');if(!is_string($cmd)||$cmd===''||strlen($cmd)>16384||str_contains($cmd,"\0"))return 126;
-        $lock=$this->lock();try{$s=$this->read('state.json');if(($s['session_id']??null)!==$id||!AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime()))return 126;
-            $s['state']='connected';$this->save('state.json',$s);
+        $lock=$this->lock();try{$s=$this->read('state.json');if(($s['activation_id']??null)!==$id||!AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime()))return 126;
+            $admitted=$s['identity'];$s['state']='connected';$this->save('state.json',$s);
         }finally{flock($lock,LOCK_UN);fclose($lock);}
         $p=@proc_open([$this->c['busybox'],'setsid','/bin/sh','-c',$cmd],[0=>['file','php://stdin','r'],1=>['file','php://stdout','w'],2=>['file','php://stderr','w']],$pipes,'/',['PATH'=>NfqwsPlatform::native()?'/usr/sbin:/usr/bin:/sbin:/bin':'/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin','LANG'=>'C']);
         if(!is_resource($p))return 126;$ps=proc_get_status($p);$child=AsusTechnicalProcess::identity($ps['pid']);$exit=126;
         try{while(true){$ps=proc_get_status($p);if(!$ps['running']){$exit=$ps['exitcode'];break;}
-            $s=$this->read('state.json');if(($s['session_id']??null)!==$id||!AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime())){AsusTechnicalProcess::killGroup($child);break;}usleep(200000);
+            $s=$this->read('state.json');if(($s['activation_id']??null)!==$id||($s['identity']??null)!==$admitted||!AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime())){AsusTechnicalProcess::killGroup($child);break;}usleep(200000);
         }}finally{proc_terminate($p,9);$closed=proc_close($p);if($exit<0&&$closed>=0)$exit=$closed;}
         return $exit<0?126:$exit;
     }

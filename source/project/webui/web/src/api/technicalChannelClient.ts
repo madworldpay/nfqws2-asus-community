@@ -98,3 +98,73 @@ export async function technicalRequest(
     throw new ShareError('invalid_response');
   return s as TechnicalState;
 }
+
+/** Mutation replies can be lost after the router has already opened access. */
+export class TechnicalChannelSession {
+  private revision = 0;
+  private readSequence = 0;
+  private listeners = new Set<() => void>();
+  private value = {
+    state: {
+      state: 'idle',
+      session_id: null,
+      expires_at: null,
+      code: null,
+    } as TechnicalState,
+    error: null as string | null,
+    busy: false,
+    unresolved: false,
+  };
+  private request: (
+    cmd: 'technicalstart' | 'technicalstatus' | 'technicalstop',
+    invitation?: string,
+  ) => Promise<TechnicalState>;
+  constructor(request: TechnicalChannelSession['request']) {
+    this.request = request;
+  }
+  snapshot = () => this.value;
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  };
+  private patch(value: Partial<typeof this.value>) {
+    this.value = { ...this.value, ...value };
+    this.listeners.forEach((listener) => listener());
+  }
+  refresh = async () => {
+    if (this.value.busy) return;
+    const revision = this.revision,
+      sequence = ++this.readSequence;
+    try {
+      const state = await this.request('technicalstatus');
+      if (revision === this.revision && sequence === this.readSequence)
+        this.patch({ state, error: null, unresolved: false });
+    } catch (e) {
+      if (revision === this.revision && sequence === this.readSequence)
+        this.patch({
+          error: e instanceof ShareError ? e.code : 'connection_failed',
+        });
+    }
+  };
+  action = async (
+    cmd: 'technicalstart' | 'technicalstop',
+    invitation?: string,
+  ) => {
+    if (this.value.busy) return;
+    ++this.revision;
+    this.patch({ busy: true, error: null, unresolved: true });
+    try {
+      const state = await this.request(cmd, invitation);
+      this.patch({ state, error: null, unresolved: false });
+    } catch (e) {
+      this.patch({
+        error: e instanceof ShareError ? e.code : 'connection_failed',
+      });
+    } finally {
+      this.patch({ busy: false });
+    }
+    if (this.value.unresolved) await this.refresh();
+  };
+}
