@@ -130,7 +130,14 @@ Dependencies are downloaded from Entware. If an error occurs, save the installat
 
 ## 4. Open the panel
 
-Open `http://ROUTER_IP:90` and sign in with your ASUS administrator credentials.
+Open `http://ROUTER_IP:90`.
+
+**ASUS panel login:** use your router administrator username and password.
+If the panel cannot read the ASUS system credentials, it automatically enables the
+fallback login: **username `root`, password `asus`**.
+A separate panel password set earlier is preserved during updates; use that password.
+Use **Change password** to set your own panel password.
+
 Follow the ARK check prompts, select devices and a strategy, save the settings,
 and start NFQWS2. If you need SmartDNS, connect it using the separate wizard and confirm DNS.
 

@@ -98,12 +98,14 @@ NFQWS_ASUS_NO_START=1 /opt/bin/opkg install /opt/tmp/nfqws2-asus.ipk
 
 ```sh
 (
+  set -e
   umask 077
   nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
+  mkdir "$nfqws_dir"
   trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  curl -fL --connect-timeout 10 --max-time 60 \
+    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
+    -o "$nfqws_dir/install.sh"
   sh "$nfqws_dir/install.sh"
 )
 ```
@@ -130,7 +132,6 @@ NFQWS_ASUS_NO_START=1 /opt/bin/opkg install /opt/tmp/nfqws2-asus.ipk
 При ошибке проверки установка не начинается. Существующий частный канал, если
 он задан оператором, продолжает использоваться.
 
-Опубликованный номер Build не переиспользуется для другого содержимого.
 Автоматического отката версии пакета нет.
 
 После обрыва подготовки можно повторить установку. Собственные настройки канала отправки сохраняются.

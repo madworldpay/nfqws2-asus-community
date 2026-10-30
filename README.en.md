@@ -38,16 +38,26 @@ A ready-made profile is a starting point: results depend on your provider and ch
 
 ### ASUSWRT-Merlin / Entware
 
-Working SSH and Entware in `/opt` are required. Connect to **the router** over SSH and run:
+**If Entware is already working in `/opt`, continue with the installation command.**
+On a fresh ASUSWRT-Merlin installation, prepare Entware first:
+
+1. Connect a USB drive with a Linux filesystem — normally ext4; ext2/ext3 also work. Save any files you need before formatting the drive.
+2. Enable SSH for the local network under **Administration → System**, then connect to the router using your ASUS administrator account.
+3. Run `amtm` over SSH, choose `ep` and wait for Entware installation to finish.
+4. Press `e`, then Enter, to leave `amtm` and return to the same SSH shell. Check Entware with `/opt/bin/opkg print-architecture`.
+
+Paste the complete command into that same SSH shell:
 
 ```sh
 (
+  set -e
   umask 077
   nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
+  mkdir "$nfqws_dir"
   trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  curl -fL --connect-timeout 10 --max-time 60 \
+    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
+    -o "$nfqws_dir/install.sh"
   sh "$nfqws_dir/install.sh"
 )
 ```
@@ -82,6 +92,12 @@ platform above once. Settings, lists, login credentials and the chosen service
 state are preserved. After the transition, use the panel's usual update buttons.
 
 ### After installation
+
+**ASUS panel login:** use your router administrator username and password.
+If the panel cannot read the ASUS system credentials, it automatically enables the
+fallback login: **username `root`, password `asus`**.
+A separate panel password set earlier is preserved during updates; use that password.
+Use **Change password** to set your own panel password.
 
 1. Open `http://ROUTER_IP:90`. On ASUS, follow the panel's ARK check. If ARK is absent, no preparation is needed.
 2. Select devices. Import a cloud profile or your own JSON, review the preview and save the selected contents.
@@ -218,7 +234,6 @@ access for diagnostics or configuration after prior arrangements with the
 Administrator. Paste the link they provide and connect. A panel password is
 required. You can disconnect at any time; access ends at expiry or reboot.
 This does not submit a request for permanent or 24/7 support.
-
 
 ## Documentation
 

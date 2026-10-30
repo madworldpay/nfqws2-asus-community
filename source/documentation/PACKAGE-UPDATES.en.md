@@ -99,12 +99,14 @@ It updates the package and preserves the previous service state.
 
 ```sh
 (
+  set -e
   umask 077
   nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
+  mkdir "$nfqws_dir"
   trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  curl -fL --connect-timeout 10 --max-time 60 \
+    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
+    -o "$nfqws_dir/install.sh"
   sh "$nfqws_dir/install.sh"
 )
 ```
@@ -130,7 +132,6 @@ The panel verifies the release signature with a pinned key, then the package siz
 and SHA256. Installation does not start if verification fails.
 An existing private channel configured by the operator remains in use.
 
-A published Build number is not reused for different contents.
 There is no automatic package version rollback.
 
 If package preparation is interrupted, you can retry installation.

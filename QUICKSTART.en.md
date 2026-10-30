@@ -2,20 +2,30 @@
 
 ## ASUSWRT-Merlin / Entware
 
-For a router with ASUSWRT-Merlin, SSH and working Entware in `/opt`.
+For a router running ASUSWRT-Merlin.
 
 ### 1. Install
 
-Connect to **the router** over SSH and paste this command:
+**If Entware is already working in `/opt`, continue with the installation command.**
+On a fresh ASUSWRT-Merlin installation, prepare Entware first:
+
+1. Connect a USB drive with a Linux filesystem — normally ext4; ext2/ext3 also work. Save any files you need before formatting the drive.
+2. Enable SSH for the local network under **Administration → System**, then connect to the router using your ASUS administrator account.
+3. Run `amtm` over SSH, choose `ep` and wait for Entware installation to finish.
+4. Press `e`, then Enter, to leave `amtm` and return to the same SSH shell. Check Entware with `/opt/bin/opkg print-architecture`.
+
+Paste the complete command into that same SSH shell:
 
 ```sh
 (
+  set -e
   umask 077
   nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
+  mkdir "$nfqws_dir"
   trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  curl -fL --connect-timeout 10 --max-time 60 \
+    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
+    -o "$nfqws_dir/install.sh"
   sh "$nfqws_dir/install.sh"
 )
 ```
@@ -24,7 +34,7 @@ It selects the current IPK for your Entware architecture, verifies SHA256
 and installs the package while preserving settings. After a first install,
 processing stays off; updates retain the previous state. The panel address is printed at the end.
 
-You need `curl` or GNU `wget`. Install Entware beforehand.
+The command uses `curl` supplied with Merlin.
 
 **Manual installation:** instead of the command above, download the IPK and transfer it
 using WinSCP/SCP or copy it into a USB network share through Samba.
@@ -32,9 +42,13 @@ using WinSCP/SCP or copy it into a USB network share through Samba.
 
 ### 2. Configure
 
-1. Open `http://ROUTER_IP:90` and sign in with your ASUS administrator credentials.
-   If the panel could not read them, the fallback login is `root` / `asus`.
-   Use **Change password** to set a separate panel password.
+**ASUS panel login:** use your router administrator username and password.
+If the panel cannot read the ASUS system credentials, it automatically enables the
+fallback login: **username `root`, password `asus`**.
+A separate panel password set earlier is preserved during updates; use that password.
+Use **Change password** to set your own panel password.
+
+1. Open `http://ROUTER_IP:90`.
 2. **ARK check**: if ARK is absent, no preparation is needed — continue. If the module is loaded, follow the preparation steps with a backup and manual reboot. If the module is not loaded, skip this step.
 3. Keep automatic WAN selection or choose an interface, select devices and a strategy, or import JSON or a cloud preset. Click **Save**. The default configuration uses AUTO.
 4. For site → DNS rules, install the separate utility: **SmartDNS → Install → choose DNS servers and sites → Check profile → Connect → confirm**.

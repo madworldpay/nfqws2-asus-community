@@ -38,7 +38,10 @@ class BootstrapTests(unittest.TestCase):
             return result
 
     def commands(self):
-        return re.findall(r'```sh\n(.*?)\n```', (ROOT/'README.md').read_text(), re.S)[:2]
+        commands = [command for command in re.findall(r'```sh\n(.*?)\n```', (ROOT/'README.md').read_text(), re.S)
+                    if 'nfqws_dir=/tmp/nfqws2-install.' in command]
+        self.assertEqual(len(commands), 2)
+        return commands
 
     def test_stock_shell_downloads_and_runs_without_mktemp(self):
         for command in self.commands():
@@ -50,8 +53,12 @@ class BootstrapTests(unittest.TestCase):
     def test_fallback_download_and_failure_do_not_run_partial_script(self):
         for command in self.commands():
             r = self.run_command(command, curl_ok=False)
-            self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
-            self.assertIn('bootstrap-ran', r.stdout)
+            if 'uclient-fetch' in command:
+                self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
+                self.assertIn('bootstrap-ran', r.stdout)
+            else:
+                self.assertNotEqual(r.returncode, 0)
+                self.assertNotIn('bootstrap-ran', r.stdout)
             r = self.run_command(command, curl_ok=False, wget_ok=False)
             self.assertNotEqual(r.returncode, 0)
             self.assertNotIn('bootstrap-ran', r.stdout)

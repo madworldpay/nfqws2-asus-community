@@ -4,19 +4,22 @@
 
 ### Before installation
 
-Back up your ASUS settings. SSH and working Entware in `/opt` are required.
-Check the Entware package architecture with:
+Back up your ASUS settings.
 
-```sh
-/opt/bin/opkg print-architecture
-```
+**If Entware is already working in `/opt`, continue with the installation command.**
+On a fresh ASUSWRT-Merlin installation, prepare Entware first:
+
+1. Connect a USB drive with a Linux filesystem — normally ext4; ext2/ext3 also work. Save any files you need before formatting the drive.
+2. Enable SSH for the local network under **Administration → System**, then connect to the router using your ASUS administrator account.
+3. Run `amtm` over SSH, choose `ep` and wait for Entware installation to finish.
+4. Press `e`, then Enter, to leave `amtm` and return to the same SSH shell. Check Entware with `/opt/bin/opkg print-architecture`.
 
 | Entware architecture | IPK |
 |---|---|
 | `armv7-2.6` / `armv7-3.2` | ARMv7 |
 | `aarch64-3.10` | AArch64 |
 
-For RT-AC87U, use a reliable USB drive with working Entware autostart.
+[Official Entware setup guide](https://github.com/RMerl/asuswrt-merlin.ng/wiki/Entware).
 
 ### Install with one command
 
@@ -24,12 +27,14 @@ Connect to the router over SSH with Entware ready and run:
 
 ```sh
 (
+  set -e
   umask 077
   nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
+  mkdir "$nfqws_dir"
   trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || wget --https-only -T 20 -t 2 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  curl -fL --connect-timeout 10 --max-time 60 \
+    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
+    -o "$nfqws_dir/install.sh"
   sh "$nfqws_dir/install.sh"
 )
 ```
@@ -37,7 +42,7 @@ Connect to the router over SSH with Entware ready and run:
 The command is the same for supported ARMv7 and AArch64 packages.
 
 The installer downloads the current IPK over HTTPS and verifies SHA256.
-Installation requires `curl` or GNU `wget`, at least 128 MB of free Entware storage
+The command above uses `curl` supplied with Merlin; the installer also supports GNU `wget`. Installation requires at least 128 MB of free Entware storage
 and 32 MB of available RAM. Temporary files are placed in `/opt/tmp` and removed
 when finished. The installer does not delete files belonging to other applications.
 
@@ -62,7 +67,14 @@ Processing stays off until setup. Dependencies are installed from Entware.
 
 ### First run
 
-Open `http://ROUTER_IP:90`. By default, the panel uses your ASUS administrator credentials.
+Open `http://ROUTER_IP:90`.
+
+**ASUS panel login:** use your router administrator username and password.
+If the panel cannot read the ASUS system credentials, it automatically enables the
+fallback login: **username `root`, password `asus`**.
+A separate panel password set earlier is preserved during updates; use that password.
+Use **Change password** to set your own panel password.
+
 **ARK check** offers preparation with a backup only when needed.
 Reboot manually to apply it.
 
@@ -92,9 +104,6 @@ for reinstallation; Entware and its shared dependencies remain.
 If a required configuration file is missing, the package restores the current template
 and only the missing default lists needed by that template. Existing files are retained.
 If stopping fails, save diagnostics and investigate the cause; do not use force.
-
-If ASUS login credentials are unavailable to the panel, the fallback login is `root` / `asus`.
-**Change password** sets a separate panel password.
 
 ## OpenWrt
 
