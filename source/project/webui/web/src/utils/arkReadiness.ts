@@ -85,6 +85,17 @@ export const normalizeArkDiagnostics = (
           ? queue.state
           : 'unknown',
       sequence: boundedInteger(queue?.sequence, 4294967295),
+      ...(queue && 'lifetime' in queue
+        ? {
+            lifetime:
+              queue.state === 'bound' &&
+              diagnostics.process_running === true &&
+              typeof queue.lifetime === 'string' &&
+              /^[0-9a-f]{64}$/.test(queue.lifetime)
+                ? queue.lifetime
+                : null,
+          }
+        : {}),
     },
     process_running:
       typeof diagnostics.process_running === 'boolean'

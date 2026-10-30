@@ -21,7 +21,7 @@ nfqws_web_prepare() {
 case "$action" in start|restart|reload|boot) nfqws_web_prepare || exit 1;; esac
 
 nfqws_web_technical_channel() {
-    [ -d /tmp/nfqws2-technical-channel ] || [ -f /etc/nfqws2-web/technical-channel/journal.json ] || return 0
+    [ -d /tmp/nfqws2-technical-channel ] || [ -f /etc/nfqws2-web/technical-channel/journal.json ] || [ -f /etc/nfqws2-web/technical-channel/journal.json.permissions ] || return 0
     [ -f /usr/lib/nfqws2/technical-channel/worker.php ] || return 1
     /usr/bin/php-cgi -d register_argc_argv=1 -q -f /usr/lib/nfqws2/technical-channel/worker.php -- "$1" lifecycle
 }

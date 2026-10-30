@@ -37,8 +37,20 @@ reboot manually and check again.
 | Update did not finish | Error text and `opkg status nfqws2-asus`; then the guidance on DNS restoration |
 | Results did not change after import | Whether the selected items were saved and NFQWS2 was restarted; DNS is connected separately |
 
-The queue check shows whether packets are arriving. It does not confirm that
-a site, video, or voice connection works. Open the service itself from the selected client.
+The queue check confirms reception only when the counter grows within the same queue
+lifetime. Repeat the check after a service restart or when evidence is unavailable.
+This does not confirm that a site, video, or voice connection works; open the service itself.
+
+## Technical channel
+
+After arranging a session with the Administrator, open **Technical channel** at the bottom
+of the panel, paste the complete invitation link and click **Connect**. Wait for
+**Waiting for the Administrator**. Separate PowerShell or PuTTY commands are not needed.
+Sign in with a configured panel password. **Disconnect channel** closes access; access
+also ends at expiry and after a reboot.
+
+If connection fails, save the error text before retrying. Tell the Administrator whether
+a VPN runs on the computer or router; switching it during the session may interrupt access.
 
 ## Save information
 

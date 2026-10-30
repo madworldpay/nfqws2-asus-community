@@ -14,6 +14,12 @@ try {
  globalThis.fetch=async(url,opts)=>{calls.push([url,Object.fromEntries(opts.body)]);return Response.json(state);};
  assert.deepEqual(await api.technicalRequest('csrf','technicalstart','  secret-link\n'),state);
  assert.deepEqual(calls, [['/index.php',{cmd:'technicalstart',csrf_token:'csrf',invitation:'secret-link',consent:'temporary_root_access'}]]);
+ const diagnosed={...state,state:'failed',code:'connection_failed',diagnostic:{stage:'transport',reason:'host_key_mismatch'}};
+ globalThis.fetch=async()=>Response.json(diagnosed);
+ assert.deepEqual(await api.technicalRequest('csrf','technicalstatus'),diagnosed,'safe stage diagnostics must survive status parsing');
+ for(const diagnostic of [{stage:'transport',reason:'host_key_mismatch',stderr:'secret'},{stage:'unknown',reason:'connection_timeout'},{stage:'prepare',reason:'raw private key\n'}]){
+  globalThis.fetch=async()=>Response.json({...state,diagnostic});await assert.rejects(api.technicalRequest('csrf','technicalstatus'));
+ }
  for(const v of [{...state,tunnel_key:'secret'},{...state,state:'running'}, {...state,expires_at:'1800000000'}, {...state,session_id:'../escape'}]){
   globalThis.fetch=async()=>Response.json(v);await assert.rejects(api.technicalRequest('csrf','technicalstatus'));
  }

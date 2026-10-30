@@ -79,8 +79,21 @@ export const TechnicalChannel = () => {
     busy: t('technical.busy'),
     expired: t('technical.expired'),
     interrupted: t('technical.interrupted'),
+    multicall_usage: t('technical.local_server_failed'),
+    unsupported_option: t('technical.unsupported_runtime'),
+    host_key_mismatch: t('technical.server_identity_failed'),
+    authentication_failed: t('technical.server_auth_failed'),
+    connection_refused: t('technical.server_refused'),
+    connection_timeout: t('technical.server_timeout'),
   };
   const problem = error ?? state.code;
+  const diagnosticMessage =
+    !error && state.state === 'failed' && state.diagnostic
+      ? (messages[state.diagnostic.reason] ??
+        (state.diagnostic.stage === 'local_server'
+          ? t('technical.local_server_failed')
+          : undefined))
+      : undefined;
   return (
     <>
       <Box
@@ -147,7 +160,8 @@ export const TechnicalChannel = () => {
               <Alert severity="warning">
                 {anonym
                   ? messages.auth_required
-                  : (messages[problem ?? ''] ??
+                  : (diagnosticMessage ??
+                    messages[problem ?? ''] ??
                     t('technical.connection_failed'))}
               </Alert>
             )}

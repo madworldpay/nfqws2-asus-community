@@ -3,8 +3,8 @@ require __DIR__.'/support_report_fixture.php';
 require __DIR__.'/../webui/web/public/support-report.php';
 $cases=[];
 $cases['process scheduling is not a restart']=function(){
- $io=new ReportFixtureIO();$r=new AsusSupportReport($io,new AsusReportValues());
- $id=['boot'=>'boot','pid'=>345,'start_ticks'=>'999','exe'=>'/opt/usr/bin/nfqws2','running'=>true,'uid'=>65534,'process_state'=>'S'];
+ $io=new ReportFixtureIO();$io->sockets[345]['345']='9001';$r=new AsusSupportReport($io,new AsusReportValues());
+ $id=['boot'=>'11111111-2222-3333-4444-555555555555','pid'=>345,'start_ticks'=>'999','exe'=>'/opt/usr/bin/nfqws2','running'=>true,'uid'=>65534,'process_state'=>'S'];
  $io->files['queue']="300 345 0 2 65535 0 0 10 1\n";$a=$r->queueSample(300,$id);
  $id['process_state']='R';$io->files['queue']="300 345 0 2 65535 0 0 15 1\n";$b=$r->queueSample(300,$id);
  reportCheck($r->compareQueue($a,$b)['result']==='increased','S to R keeps stable identity');

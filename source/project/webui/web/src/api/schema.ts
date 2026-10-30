@@ -465,6 +465,7 @@ export interface components {
         /** @enum {string} */
         state: 'bound' | 'unbound' | 'unknown';
         sequence: number | null;
+        lifetime?: string | null;
       };
       process_running: boolean | null;
     };

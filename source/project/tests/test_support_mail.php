@@ -18,7 +18,7 @@ $dir=sys_get_temp_dir().'/mail-test-'.bin2hex(random_bytes(8));mkdir($dir,0700);
 $config=$dir.'/support-relay.json';
 try {
  $mail=new AsusSupportMail($config,$dir.'/ca.pem',fileowner(__FILE__));
- mailCheck($mail->availability()===['configured'=>false,'code'=>'not_configured'],'missing config');
+ mailCheck($mail->availability()===['configured'=>false,'code'=>'not_configured','dpi_attachments'=>false],'missing config');
  file_put_contents($config,'{"enabled":false,"url":""}');chmod($config,0600);
  mailCheck($mail->availability()['code']==='not_configured','disabled config');
  chmod($config,0644);mailCheck($mail->availability()['code']==='invalid_config','unsafe mode');chmod($config,0600);

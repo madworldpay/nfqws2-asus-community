@@ -222,6 +222,13 @@ assert.deepEqual(
   },
 );
 assert.equal(normalizeArkDiagnostics(undefined), undefined);
+const stableDiagnostics = { ...snapshot().diagnostics, nfqueue: { ...snapshot().diagnostics.nfqueue, lifetime: 'a'.repeat(64) } };
+assert.equal(normalizeArkDiagnostics(stableDiagnostics).nfqueue.lifetime, 'a'.repeat(64));
+for (const lifetime of ['invalid', 23, {}, 'A'.repeat(64)]) {
+  assert.equal(normalizeArkDiagnostics({ ...stableDiagnostics, nfqueue: { ...stableDiagnostics.nfqueue, lifetime } }).nfqueue.lifetime, null);
+}
+assert.equal(normalizeArkDiagnostics({ ...stableDiagnostics, process_running: false }).nfqueue.lifetime, null);
+
 
 // Render the actual summary shown at the top of ArkDialog in each locale.
 const temporary = await mkdtemp(join(tmpdir(), "nfqws-ark-readiness-"));
@@ -300,7 +307,7 @@ try {
     "ru",
   );
   assert.match(rebootMarkup, /MuiAlert-standardError/);
-  assert.match(visible(rebootMarkup), /Подготовка выполнена\. Перезагрузите ASUS вручную/);
+  assert.match(visible(rebootMarkup), /Подготовка выполнена\. Перезагрузите роутер вручную через панель ASUS/);
   assert.match(visible(rebootMarkup), /ARK загружен/);
   assert.match(visible(rebootMarkup), /Проверить ARK/);
   assert.match(

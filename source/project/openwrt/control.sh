@@ -71,11 +71,20 @@ nfqws_check() {
 }
 
 nfqws_diagnostics() {
-    local pid=null queue=null facts state seq port running=false uplinks='' separator='' iface capture=unknown acceleration=unknown
+    local pid=null queue=null facts state seq port lifetime=null first second evidence=false running=false uplinks='' separator='' iface capture=unknown acceleration=unknown
     pid=$(nfqws_process_pid) && running=true || pid=null
     queue=$(sed -n "s/^NFQUEUE_NUM='\([0-9]*\)'$/\1/p" "$NFQWS_RUN/config.env" 2>/dev/null)
     case "$queue" in ''|*[!0-9]*) queue=null;; esac
+    if [ -r "$NFQWS_LIB/diagnostics.sh" ]; then
+        . "$NFQWS_LIB/diagnostics.sh" && evidence=true
+    fi
     facts=$(nfqws_queue_facts "$queue"); set -- $facts; state=$1; seq=$2; port=$3
+    if [ "$running" = true ] && [ "$state" = bound ] && [ "$evidence" = true ]; then
+        first=$(nfqws_diagnostic_lifetime "$port" "$pid" "$NFQWS_BIN")
+        facts=$(nfqws_queue_facts "$queue"); set -- $facts; state=$1; seq=$2; port=$3
+        second=$(nfqws_diagnostic_lifetime "$port" "$pid" "$NFQWS_BIN")
+        [ -z "$first" ] || [ "$first" != "$second" ] || lifetime="\"$first\""
+    fi
     if [ -f "$NFQWS_RUN/capture.state" ] && [ ! -L "$NFQWS_RUN/capture.state" ]; then
         capture=$(cat "$NFQWS_RUN/capture.state")
         case "$capture" in ready|waiting_uplink) ;; *) capture=unknown;; esac
@@ -84,7 +93,7 @@ nfqws_diagnostics() {
         uplinks="$uplinks$separator\"$iface\""; separator=,
     done
     if nfqws_flow_probe >/dev/null 2>&1; then acceleration=$NFQWS_FLOW_STATE; fi
-    printf '{"platform":"openwrt","process_running":%s,"pid":%s,"nfqueue":{"queue_number":%s,"state":"%s","sequence":%s,"port_id":%s},"capture":"%s","uplinks":[%s],"acceleration":"%s"}\n' "$running" "$pid" "$queue" "$state" "$seq" "$port" "$capture" "$uplinks" "$acceleration"
+    printf '{"platform":"openwrt","process_running":%s,"pid":%s,"nfqueue":{"queue_number":%s,"state":"%s","sequence":%s,"port_id":%s,"lifetime":%s},"capture":"%s","uplinks":[%s],"acceleration":"%s"}\n' "$running" "$pid" "$queue" "$state" "$seq" "$port" "$lifetime" "$capture" "$uplinks" "$acceleration"
 }
 
 [ "$(id -u)" = 0 ] || { echo root_required >&2; exit 1; }
