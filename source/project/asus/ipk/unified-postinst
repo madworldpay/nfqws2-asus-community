@@ -2,6 +2,7 @@
 set -e
 asus_migration_restore || exit $?
 asus_install_defaults || exit $?
+asus_install_blob_defaults || exit $?
 mkdir -p /opt/var/log /opt/var/run
 /opt/etc/init.d/S81nfqws-asus-web start || exit $?
 if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then

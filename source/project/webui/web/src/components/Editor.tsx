@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { history, undo } from '@codemirror/commands';
 import { StreamLanguage } from '@codemirror/language';
 import { lua } from '@codemirror/legacy-modes/mode/lua';
@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { type SxProps } from '@mui/system/styleFunctionSx';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import ReactCodeMirror from '@uiw/react-codemirror';
+import ReactCodeMirror, { ExternalChange } from '@uiw/react-codemirror';
 
 import type { FilenamesRequest } from '@/api/schema';
 
@@ -67,6 +67,9 @@ export const Editor = ({
   const { t } = useTranslation();
 
   const [editorView, setEditorView] = useState<EditorView | null>(null);
+  const historyView = useRef<EditorView | null>(null);
+  const localChange = useRef<string | null>(null);
+  const [externalRevision, setExternalRevision] = useState(0);
   const [changed, setChanged] = useState(false);
   const [wrap, setWrap] = useState(true);
   const [input, setInput] = useState({ source: value, text: value });
@@ -189,13 +192,19 @@ export const Editor = ({
   }, [editorView]);
 
   useEffect(() => {
-    editorView?.dispatch({
+    if (!editorView) return;
+    const localEcho =
+      historyView.current === editorView && localChange.current === value;
+    historyView.current = editorView;
+    localChange.current = null;
+    if (localEcho) return;
+    editorView.dispatch({
       effects: historyCompartment.reconfigure([]),
     });
-    editorView?.dispatch({
+    editorView.dispatch({
       effects: historyCompartment.reconfigure([history()]),
     });
-  }, [value, editorView]);
+  }, [value, editorView, externalRevision]);
 
   return (
     <Stack spacing={0.5} sx={{ minWidth: 0, minHeight: 0, flex: 1, ...sx }}>
@@ -261,7 +270,17 @@ export const Editor = ({
           readOnly={readonly}
           editable={!readonly}
           onCreateEditor={(view) => setEditorView(view)}
+          onUpdate={(update) => {
+            if (
+              update.docChanged &&
+              update.transactions.some((transaction) =>
+                transaction.annotation(ExternalChange),
+              )
+            )
+              setExternalRevision((revision) => revision + 1);
+          }}
           onChange={(newValue) => {
+            localChange.current = newValue;
             setInput({ source: value, text: newValue });
             setChanged(value !== newValue);
             onChange?.(newValue, value !== newValue);

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "name": "tls_clienthello.bin",
+      "sha256": "936c2bee4cfb80aa3c426b2dcbcc834b3fbcd1adb17172959dc569c73a14275c",
+      "byte_length": 681,
+      "format": "tls",
+      "label": {
+        "ru": "TLS · Google — стандартный",
+        "en": "TLS · Google — standard"
+      }
+    },
+    {
+      "name": "tls_clienthello_iana_org.bin",
+      "sha256": "9db8772636bb332f1970e8767bc7d628bfa640714bd0b7e699fbe92d559e666e",
+      "byte_length": 517,
+      "format": "tls",
+      "label": {
+        "ru": "TLS · IANA",
+        "en": "TLS · IANA"
+      }
+    },
+    {
+      "name": "tls_clienthello_gosuslugi_ru.bin",
+      "sha256": "ec581c9877ebc4b69e6cdab48f46e0f7b0eeb67c5fefe849f21525faa1ff4f74",
+      "byte_length": 517,
+      "format": "tls",
+      "label": {
+        "ru": "TLS · Госуслуги",
+        "en": "TLS · Gosuslugi"
+      }
+    },
+    {
+      "name": "tls_clienthello_sberbank_ru.bin",
+      "sha256": "d10110e695ec16cdbed292cfbba3e779b8f08acb92bfa1023ad56a8cccd3aae6",
+      "byte_length": 517,
+      "format": "tls",
+      "label": {
+        "ru": "TLS · Сбербанк",
+        "en": "TLS · Sberbank"
+      }
+    },
+    {
+      "name": "tls_clienthello_vk_com.bin",
+      "sha256": "d6d63c53bc0e1d97e913a43fc4db34f6558bb807228bf6100e3b6863f0720404",
+      "byte_length": 517,
+      "format": "tls",
+      "label": {
+        "ru": "TLS · VK",
+        "en": "TLS · VK"
+      }
+    },
+    {
+      "name": "tls_clienthello_vk_com_kyber.bin",
+      "sha256": "b930e34be4a0f7fe388d4cb9886838f9a7b68fd62d3461629885e4cefcfe3805",
+      "byte_length": 1812,
+      "format": "tls",
+      "label": {
+        "ru": "TLS · VK — Kyber",
+        "en": "TLS · VK — Kyber"
+      }
+    },
+    {
+      "name": "quic_initial.bin",
+      "sha256": "f4589c57749f956bb30538197a521d7005f8b0a8723b4707e72405e51ddac50a",
+      "byte_length": 1200,
+      "format": "quic",
+      "label": {
+        "ru": "QUIC · Google — стандартный",
+        "en": "QUIC · Google — standard"
+      }
+    },
+    {
+      "name": "quic_initial_vk_com.bin",
+      "sha256": "f86d488593a65132c10e7e5b5e02f32ff8e0862988b30bebc6a671c5380f3976",
+      "byte_length": 1357,
+      "format": "quic",
+      "label": {
+        "ru": "QUIC · VK",
+        "en": "QUIC · VK"
+      }
+    },
+    {
+      "name": "quic_initial_facebook_com.bin",
+      "sha256": "d6504305e15e6f63930d24ced9045001e345d3c1aeb56b1b4c329d51c7dea274",
+      "byte_length": 1200,
+      "format": "quic",
+      "label": {
+        "ru": "QUIC · Facebook",
+        "en": "QUIC · Facebook"
+      }
+    },
+    {
+      "name": "quic_initial_rutracker_org.bin",
+      "sha256": "d5d77f90ff45489d246bd447c3e9f28e98891e206dc17c79d4de1da6bd0f18e8",
+      "byte_length": 1200,
+      "format": "quic",
+      "label": {
+        "ru": "QUIC · Rutracker",
+        "en": "QUIC · Rutracker"
+      }
+    },
+    {
+      "name": "stun.bin",
+      "sha256": "9cd5469309780ca56c0bd97266524a48c7ee529d02c3179cfecb20b260a59641",
+      "byte_length": 100,
+      "format": "stun",
+      "label": {
+        "ru": "STUN · Binding Request",
+        "en": "STUN · Binding Request"
+      }
+    },
+    {
+      "name": "quic_initial_googlevideo.bin",
+      "sha256": "71143c03968bd7b8b6959d05910b2937d5ed1681ab50e2fe84cfacaa17384bf7",
+      "byte_length": 1200,
+      "format": "quic",
+      "label": {
+        "ru": "QUIC · Googlevideo",
+        "en": "QUIC · Googlevideo"
+      }
+    }
+  ]
+}

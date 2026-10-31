@@ -7,6 +7,7 @@ download and uses only already verified files from --cache.
 import argparse
 import gzip
 import hashlib
+import importlib.util
 import io
 import json
 from pathlib import Path, PurePosixPath
@@ -20,6 +21,9 @@ import tarfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+_blob_spec = importlib.util.spec_from_file_location('nfqws_blob_bundle', ROOT/'asus/blob_bundle.py')
+blob_bundle = importlib.util.module_from_spec(_blob_spec)
+_blob_spec.loader.exec_module(blob_bundle)
 TARGETS = {
     'armv7-3.2': {'opkg_arch': 'all', 'filename_arch': 'armv7', 'family': 'armv7', 'elf_class': 1, 'elf_machine': 40,
                  'engine_asset': 'nfqws2-keenetic_1.3.2_all_entware.ipk',
@@ -250,11 +254,14 @@ def build_one(cache, output, offline, arch, build_number=None):
                 name, content = name[:-3], gzip.decompress(content)
             if name.startswith('opt/etc/nfqws2/lists/'):
                 name += '.notactive'
+            if name.startswith('opt/etc/nfqws2/blobs/'):
+                name = name.replace('opt/etc/nfqws2/blobs/', 'opt/share/nfqws2-asus/defaults/blobs/', 1)
             core[name] = content, 0o755 if '/bin/' in name else 0o644
     engine = prepare_engine(nfq[target['engine_member']], target)
     validate_elf(engine, target, 'engine')
     core['opt/usr/bin/nfqws2'] = engine, 0o755
     core['opt/etc/nfqws2/lua/local-guarded-ts.lua'] = local('asus/lua/local-guarded-ts.lua')
+    blob_bundle.add_bundle(core, 'opt/share/nfqws2-asus', 'opt/share/nfqws2-asus/defaults')
     baseline = {'schema_version': 1, 'package_version': package_version(build_number), 'web_version': WEB_VERSION,
                 'engine': {'version': '1.0.6', 'provider': 'nfqws2-keenetic',
                            'sha256': hashlib.sha256(engine).hexdigest(),
@@ -262,7 +269,7 @@ def build_one(cache, output, offline, arch, build_number=None):
                 'resources': {}}
     for resource_name, (resource_data, _) in core.items():
         for kind, directory in [('lua', 'lua'), ('blob', 'blobs')]:
-            prefix = f'opt/etc/nfqws2/{directory}/'
+            prefix = ('opt/share/nfqws2-asus/defaults/blobs/' if kind == 'blob' else f'opt/etc/nfqws2/{directory}/')
             if resource_name.startswith(prefix):
                 baseline['resources'][kind + '/' + resource_name[len(prefix):]] = {
                     'sha256': hashlib.sha256(resource_data).hexdigest(), 'bytes': len(resource_data)}
@@ -365,7 +372,7 @@ def build_one(cache, output, offline, arch, build_number=None):
                  'share-api.php', 'share-bundle.php', 'share-source.php', 'share-strategy.php',
                  'share-location-worker.php', 'dpi-saved-store.php', 'dpi-saved-projector.php',
                  'import-api.php', 'import-config.php', 'import-document.php',
-                 'import-plan.php', 'import-store.php', 'import-transaction.php']:
+                 'import-plan.php', 'import-store.php', 'import-transaction.php', 'import-keenetic.php', 'blob-api.php', 'blob-store.php']:
         if not (dist/name).is_file():
             raise RuntimeError('Build frontend first: cd webui/web && corepack yarn openapi && corepack yarn build')
     web = {'opt/share/nfqws-asus-web/'+str(p.relative_to(dist)): (p.read_bytes(), 0o644)

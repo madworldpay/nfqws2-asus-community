@@ -82,3 +82,25 @@ asus_install_defaults() {
     asus_migration_cmd mv "$ASUS_MIGRATION_DIR/defaults-initialized.new" "$ASUS_MIGRATION_DIR/defaults-initialized" || return 1
     asus_migration_cmd sync
 }
+
+# Blob samples are inert seed resources. Run on every install, independently of
+# config/list initialization, and publish only names the owner does not have.
+asus_install_blob_defaults() {
+    local source=/opt/share/nfqws2-asus/defaults/blobs destination=/opt/etc/nfqws2/blobs sample active
+    [ -e "$source" ] || [ -L "$source" ] || return 0
+    asus_migration_blob_tree_safe "$source" && asus_migration_blob_parent_safe "$destination" || return 1
+    if [ -e "$destination" ]; then asus_migration_blob_reclaim_stages "$destination" && asus_migration_blob_tree_safe "$destination" || return 1
+    else (umask 0022; asus_migration_cmd mkdir -p "$destination") && asus_migration_blob_parent_safe "$destination" || return 1
+    fi
+    for sample in "$source"/*.bin; do
+        [ -e "$sample" ] || [ -L "$sample" ] || continue
+        asus_migration_blob_file_safe "$sample" || return 1
+        [ "$(asus_migration_cmd stat -t "$sample" | asus_migration_cmd awk '{print $(NF-10)}')" = "$ASUS_MIGRATION_OWNER" ] || return 1
+        active=$destination/${sample##*/}
+        if [ -e "$active" ] || [ -L "$active" ]; then
+            asus_migration_blob_file_safe "$active" || return 1
+            continue
+        fi
+        asus_install_default "$sample" "$active" && asus_migration_blob_file_safe "$active" || return 1
+    done
+}

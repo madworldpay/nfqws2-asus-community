@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/import-transaction.php';
+require_once __DIR__.'/import-keenetic.php';
 require_once __DIR__.'/update-guard.php';
 /** Session proof contains hashes only; input documents never reach disk. */
 final class AsusImportProof
@@ -18,14 +19,14 @@ final class AsusImportProof
 }
 final class AsusImportApi
 {
-    private const FIELDS=['importinspect'=>['documents'],'importprepare'=>['documents','selection'],'importapply'=>['documents','selection','proof','request_id'],'importstatus'=>[],'importundo'=>['id','proof']];
+    private const FIELDS=['importconvert'=>['text'],'importinspect'=>['documents'],'importprepare'=>['documents','selection'],'importapply'=>['documents','selection','proof','request_id'],'importstatus'=>[],'importundo'=>['id','proof']];
     private AsusImportTransaction $tx;
     public function __construct(?AsusImportTransaction $tx=null,private mixed $lease=null,private ?AsusSmartDnsStore $dns=null)
     {$this->tx=$tx??new AsusImportTransaction();$this->dns??=new AsusSmartDnsStore();}
     public static function validate(array $post): void
     {
         $cmd=$post['cmd']??null;if(!is_string($cmd)||!isset(self::FIELDS[$cmd]))throw new RuntimeException('invalid_request');$keys=array_keys($post);sort($keys);$want=array_merge(['cmd','csrf_token'],self::FIELDS[$cmd]);sort($want);if($keys!==$want)throw new RuntimeException('invalid_request');
-        foreach($post as $key=>$value)if(!is_string($value)||strlen($value)>(in_array($key,['documents','selection'],true)?8388608:512))throw new RuntimeException('invalid_request');
+        foreach($post as $key=>$value)if(!is_string($value)||strlen($value)>($key==='text'?65536:(in_array($key,['documents','selection'],true)?8388608:512)))throw new RuntimeException('invalid_request');
         foreach(['id','request_id']as $k)if(isset($post[$k])&&!preg_match('/^[a-f0-9]{32}$/D',$post[$k]))throw new RuntimeException('invalid_request');
     }
     private static function decoded(string $raw,bool $list): array
@@ -44,6 +45,7 @@ final class AsusImportApi
     public function handle(array $post,string $key,int $now): array
     {
         self::validate($post);$cmd=$post['cmd'];
+        if($cmd==='importconvert')return ['document'=>AsusImportKeenetic::convert($post['text'])];
         if($cmd==='importstatus'){$s=$this->tx->status();$s['undo_proof']=$s['can_undo']?AsusImportProof::issue('undo',$this->tx->undoDigest(),hash('sha256',$s['id']),$key,$now):null;return $s;}
         if($cmd==='importundo'){
             $digest=AsusImportProof::verify($post['proof'],'undo',hash('sha256',$post['id']),$key,$now);if($digest===null)throw new RuntimeException('invalid_proof');
@@ -60,7 +62,7 @@ final class AsusImportApi
     }
     public static function error(Throwable $e): string
     {
-        $codes=['invalid_request','invalid_proof','invalid_import','invalid_import_selection','invalid_import_ports','unsupported_import_version','unsupported_import_config','unsupported_import_argument','duplicate_import_category','no_importable_data','import_limit','import_not_ready','invalid_strategy','unsafe_strategy','unsupported_config','strategy_unavailable','invalid_share','unsupported_report','source_changed','invalid_state','output_limit','insufficient_space','invalid_resource','invalid_dns_resource','private_dns_url','file_too_large','resource_unavailable','busy','request_conflict','stale_preview','stale_state','stale_draft','restore_required','storage_unavailable'];
+        $codes=['unsupported_keenetic_strategy','invalid_request','invalid_proof','invalid_import','invalid_import_selection','invalid_import_ports','unsupported_import_version','unsupported_import_config','unsupported_import_argument','duplicate_import_category','no_importable_data','import_limit','import_not_ready','invalid_strategy','unsafe_strategy','unsupported_config','strategy_unavailable','invalid_share','unsupported_report','source_changed','invalid_state','output_limit','insufficient_space','invalid_resource','invalid_dns_resource','private_dns_url','file_too_large','resource_unavailable','busy','request_conflict','stale_preview','stale_state','stale_draft','restore_required','storage_unavailable'];
         return in_array($e->getMessage(),$codes,true)?$e->getMessage():'invalid_import';
     }
 }

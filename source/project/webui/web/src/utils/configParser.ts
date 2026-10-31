@@ -44,6 +44,7 @@ type LineBlock = {
   indent: string;
   quote: '"' | "'" | '';
   hadMultiline: boolean;
+  lineBackslashes: number[];
 };
 
 export const parseConfig = (config: string) => {
@@ -95,7 +96,14 @@ export const parseConfig = (config: string) => {
       let isMultiline = false;
 
       while (true) {
-        const quoteIndex = value.indexOf(quote);
+        let quoteIndex = -1;
+        for (let at = 0; at < value.length; at++) {
+          if (quote === '"' && value[at] === '\\') at++;
+          else if (value[at] === quote) {
+            quoteIndex = at;
+            break;
+          }
+        }
         if (quoteIndex !== -1) {
           const before = value.slice(0, quoteIndex);
           const after = value.slice(quoteIndex + 1).trim();
@@ -119,7 +127,7 @@ export const parseConfig = (config: string) => {
       }
 
       if (quote === '"') {
-        value = value.replace(/\\\\/g, '\\').replace(/\\"/g, '"');
+        value = value.replace(/\\(["\\])/g, '$1');
       } else {
         value = value.replace(/\\'/g, "'");
       }
@@ -222,12 +230,30 @@ const stringifyValue = (
     return raw;
   }
 
-  if (!raw.includes('\n')) {
-    return `${quoteChar}${raw}${quoteChar}`;
+  const encoded = raw
+    .split('\n')
+    .map((line, index) => {
+      if (quoteChar !== '"') return line;
+      let text = line.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      const originalSlashes = block?.lineBackslashes[index] ?? 0;
+      const currentSlashes = line.match(/(\\+)$/)?.[0].length ?? 0;
+      // parseConfig retains continuation layout. Preserve the source's odd/even
+      // escape parity when a different part of the same line is edited.
+      if (
+        originalSlashes % 2 === 1 &&
+        currentSlashes === Math.ceil(originalSlashes / 2)
+      )
+        text =
+          text.slice(0, -currentSlashes * 2) + '\\'.repeat(originalSlashes);
+      return text;
+    })
+    .join('\n');
+  if (!encoded.includes('\n')) {
+    return `${quoteChar}${encoded}${quoteChar}`;
   }
 
   const indent = block?.indent ?? '  ';
-  const lines = raw.split('\n');
+  const lines = encoded.split('\n');
   const rendered = lines
     .map((line, idx) => (idx === 0 ? line : `${indent}${line}`))
     .join('\n');
@@ -247,7 +273,9 @@ const readBlock = (lines: string[], startIndex: number): LineBlock => {
   let indent = '';
   let hadMultiline = false;
   let openQuote = '';
+  const lineBackslashes: number[] = [];
   for (let i = startIndex; i < lines.length; i++) {
+    lineBackslashes.push(lines[i].match(/(\\+)$/)?.[0].length ?? 0);
     if (i > startIndex) {
       hadMultiline = true;
       if (!indent) indent = lines[i].match(/^[ \t]*/)?.[0] ?? '';
@@ -264,6 +292,7 @@ const readBlock = (lines: string[], startIndex: number): LineBlock => {
     indent,
     quote,
     hadMultiline,
+    lineBackslashes,
   };
 };
 

@@ -165,7 +165,7 @@ class PackageTests(unittest.TestCase):
                      'opt/lib/nfqws2-asus/args.sh', 'opt/etc/nfqws2/nfqws2.conf.notactive',
                      'opt/etc/nfqws2/lua/zapret-lib.lua', 'opt/etc/nfqws2/lua/zapret-antidpi.lua',
                      'opt/etc/nfqws2/lua/zapret-auto.lua',
-                     'opt/etc/nfqws2/blobs/quic_initial.bin']:
+                     'opt/share/nfqws2-asus/defaults/blobs/quic_initial.bin']:
             self.assertIn(path, list(data))
         binary = data['opt/usr/bin/nfqws2'][1]
         self.assertEqual(binary[:5], b'\x7fELF\x02')
@@ -182,6 +182,26 @@ class PackageTests(unittest.TestCase):
         self.assertIn('opt/etc/nfqws2/lists/auto.list.notactive', data)
         self.assertNotIn('opt/etc/nfqws2/nfqws2.conf', data)
         self.assertNotIn('opt/etc/nfqws2/lists/auto.list', data)
+
+    def test_blob_bundle_is_seed_only_complete_and_matches_catalog_in_both_packages(self):
+        catalog=json.loads((ROOT/'asus/blobs/catalog.json').read_text())
+        self.assertEqual(len(catalog['files']),12)
+        for package in self.packages().values():
+            data=package['data'];prefix='opt/share/nfqws2-asus/'
+            self.assertEqual(json.loads(data[prefix+'blob-catalog.json'][1]),catalog)
+            self.assertEqual(json.loads(data[prefix+'blob-sources.json'][1]),json.loads((ROOT/'asus/blobs/sources.json').read_text()))
+            baseline=json.loads(data[prefix+'report-baseline.json'][1])
+            self.assertFalse(any(path.startswith('opt/etc/nfqws2/blobs/')for path in data),'Owner blobs must not be overwritten by package unpacking')
+            for row in catalog['files']:
+                meta,raw=data[prefix+'defaults/blobs/'+row['name']]
+                self.assertEqual(meta.mode,0o644)
+                self.assertEqual(len(raw),row['byte_length'])
+                self.assertEqual(hashlib.sha256(raw).hexdigest(),row['sha256'])
+                self.assertEqual(baseline['resources']['blob/'+row['name']],{'bytes':len(raw),'sha256':row['sha256']})
+            for name in ['blob-api.php','blob-store.php','import-keenetic.php']:
+                self.assertEqual(data['opt/share/nfqws-asus-web/'+name][1],(ROOT/'webui/web/public'/name).read_bytes())
+            postinst=package['control']['postinst'][1]
+            self.assertIn(b'asus_install_blob_defaults || exit $?',postinst)
 
     def test_web_is_complete_and_does_not_install_global_server(self):
         self.assertIn('armv7', list(self.packages()), 'one ARMv7 package must serve both Entware ABIs')

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { TranslationSchema } from '@/context/TranslationProvider';
 import en from '@/translations/en.json';
 import {
@@ -18,6 +18,7 @@ import { selectAllImport } from '@/api/bulkSelection';
 import { API } from '@/api/client';
 import {
   applyImport,
+  convertKeeneticImport,
   emptyImportSelection,
   importOutcomeUnknown,
   importStatus,
@@ -35,6 +36,7 @@ import {
 import { loadCatalogDocument } from '@/api/profileCatalogClient';
 import { ShareError } from '@/api/shareClient';
 
+import { Editor } from '@/components/Editor';
 import { ImportCatalog } from '@/components/ImportCatalog';
 import { ImportPreview } from '@/components/ImportPreview';
 import { ImportSelectionView } from '@/components/ImportSelection';
@@ -62,6 +64,10 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const [saved, setSaved] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
+  const [showKeenetic, setShowKeenetic] = useState(false);
+  const [keeneticText, setKeeneticText] = useState('');
+  const keeneticId = useId();
+  const source = useRef<'keenetic' | 'other' | null>(null);
   const mounted = useRef(false);
   const pending = useRef(false);
   const requestId = useRef('');
@@ -115,8 +121,13 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       if (mounted.current) setBusy(false);
     }
   };
-  const loadDocuments = (read: () => Promise<string[]>, files: File[] = []) => {
+  const loadDocuments = (
+    read: () => Promise<string[]>,
+    files: File[] = [],
+    autoPreview = false,
+  ) => {
     if (pending.current) return;
+    source.current = autoPreview ? 'keenetic' : 'other';
     chosenFiles.current = files;
     revision.current++;
     setDoc(undefined);
@@ -132,21 +143,43 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
     requestId.current = '';
     setSaved(false);
     setUncertain(false);
+    const rev = revision.current;
     void run(async () => {
       const raw = await read();
       const parsed = await inspectImport(csrfToken!, raw);
-      if (mounted.current) {
+      const selected = selectAllImport(parsed, {
+        ...emptyImportSelection(),
+        allow_shared_impact: true,
+        allow_incomplete: true,
+      });
+      if (mounted.current && rev === revision.current) {
         setDocuments(raw);
         setDoc(parsed);
-        setSelection(
-          selectAllImport(parsed, {
-            ...emptyImportSelection(),
-            allow_shared_impact: true,
-            allow_incomplete: true,
-          }),
-        );
+        setSelection(selected);
+      }
+      if (autoPreview && mounted.current && rev === revision.current) {
+        const prepared = await prepareImport(csrfToken!, raw, selected);
+        if (mounted.current && rev === revision.current) {
+          setPlan(prepared);
+          requestId.current = newImportRequestId();
+        }
       }
     });
+  };
+  const editKeenetic = (value: string) => {
+    if (pending.current || uncertain || needSave) return;
+    setKeeneticText(value);
+    setError('');
+    if (source.current === 'keenetic') {
+      revision.current++;
+      source.current = null;
+      setDocuments([]);
+      setDoc(undefined);
+      setPlan(undefined);
+      setSelection(emptyImportSelection());
+      requestId.current = '';
+      setSaved(false);
+    }
   };
   const load = (files: File[]) =>
     loadDocuments(() => readImportFiles(files), files);
@@ -279,6 +312,15 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
             >
               {t('import.catalog.choose')}
             </Button>
+            <Button
+              variant={showKeenetic ? 'contained' : 'outlined'}
+              disabled={!csrfToken || disabled || needSave}
+              aria-expanded={showKeenetic}
+              aria-controls={keeneticId}
+              onClick={() => setShowKeenetic((value) => !value)}
+            >
+              {t('import.keenetic.choose')}
+            </Button>
             {!!chosenFiles.current.length && !doc && (
               <Button
                 disabled={busy || !csrfToken}
@@ -300,6 +342,43 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
               </Button>
             )}
           </Stack>
+          {showKeenetic && (
+            <Stack
+              component="section"
+              id={keeneticId}
+              aria-label={t('import.keenetic.choose')}
+              spacing={1}
+            >
+              <Typography variant="body2">
+                {t('import.keenetic.hint')}
+              </Typography>
+              <Editor
+                type="arg"
+                value={keeneticText}
+                onChange={editKeenetic}
+                readonly={disabled || needSave}
+                minHeight="9em"
+                maxHeight="24em"
+              />
+              <Button
+                variant="outlined"
+                disabled={
+                  !csrfToken || disabled || needSave || !keeneticText.trim()
+                }
+                onClick={() =>
+                  loadDocuments(
+                    async () => [
+                      await convertKeeneticImport(csrfToken!, keeneticText),
+                    ],
+                    [],
+                    true,
+                  )
+                }
+              >
+                {t('import.keenetic.convert')}
+              </Button>
+            </Stack>
+          )}
           {showCatalog && csrfToken && (
             <ImportCatalog
               key={csrfToken}

@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "84b9bb077be0d8a29d0d01ef350d718b77c2ec5f40c3ab90502b1b4b5016c550"
+    "sha256": "461144ccfd56ee3cf0f9a9d80e520c5b872166b23092d5fd838ecbdb46d64dab"
   },
   {
     "path": "LICENSE",
@@ -16,8 +16,8 @@
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
-    "bytes": 4151238,
-    "sha256": "3054abaa4aaeb8d876012728a1a69ce1756bf07605d7093da7ac96ce894a84e5"
+    "bytes": 4151578,
+    "sha256": "c3efefceb5050a2034a5284d75cea863e34ba741f452e72b3c8773df84791243"
   },
   {
     "path": "UPSTREAM.md",
@@ -50,9 +50,84 @@
     "sha256": "d23c66d61b5d095b815f08731f564882beaaae16442701a26df44dd4c4e67118"
   },
   {
+    "path": "asus/blob_bundle.py",
+    "bytes": 2899,
+    "sha256": "6dc527f732dad467bb32726465c2478ec085eb42072bd7dd754bb4b7f77c5e30"
+  },
+  {
+    "path": "asus/blobs/catalog.json",
+    "bytes": 3506,
+    "sha256": "145d2ae4265f2d1d0bb2d57033819a23c84c219136c1e9f4a73517891bebf4d5"
+  },
+  {
+    "path": "asus/blobs/files/quic_initial.bin",
+    "bytes": 1200,
+    "sha256": "f4589c57749f956bb30538197a521d7005f8b0a8723b4707e72405e51ddac50a"
+  },
+  {
+    "path": "asus/blobs/files/quic_initial_facebook_com.bin",
+    "bytes": 1200,
+    "sha256": "d6504305e15e6f63930d24ced9045001e345d3c1aeb56b1b4c329d51c7dea274"
+  },
+  {
+    "path": "asus/blobs/files/quic_initial_googlevideo.bin",
+    "bytes": 1200,
+    "sha256": "71143c03968bd7b8b6959d05910b2937d5ed1681ab50e2fe84cfacaa17384bf7"
+  },
+  {
+    "path": "asus/blobs/files/quic_initial_rutracker_org.bin",
+    "bytes": 1200,
+    "sha256": "d5d77f90ff45489d246bd447c3e9f28e98891e206dc17c79d4de1da6bd0f18e8"
+  },
+  {
+    "path": "asus/blobs/files/quic_initial_vk_com.bin",
+    "bytes": 1357,
+    "sha256": "f86d488593a65132c10e7e5b5e02f32ff8e0862988b30bebc6a671c5380f3976"
+  },
+  {
+    "path": "asus/blobs/files/stun.bin",
+    "bytes": 100,
+    "sha256": "9cd5469309780ca56c0bd97266524a48c7ee529d02c3179cfecb20b260a59641"
+  },
+  {
+    "path": "asus/blobs/files/tls_clienthello.bin",
+    "bytes": 681,
+    "sha256": "936c2bee4cfb80aa3c426b2dcbcc834b3fbcd1adb17172959dc569c73a14275c"
+  },
+  {
+    "path": "asus/blobs/files/tls_clienthello_gosuslugi_ru.bin",
+    "bytes": 517,
+    "sha256": "ec581c9877ebc4b69e6cdab48f46e0f7b0eeb67c5fefe849f21525faa1ff4f74"
+  },
+  {
+    "path": "asus/blobs/files/tls_clienthello_iana_org.bin",
+    "bytes": 517,
+    "sha256": "9db8772636bb332f1970e8767bc7d628bfa640714bd0b7e699fbe92d559e666e"
+  },
+  {
+    "path": "asus/blobs/files/tls_clienthello_sberbank_ru.bin",
+    "bytes": 517,
+    "sha256": "d10110e695ec16cdbed292cfbba3e779b8f08acb92bfa1023ad56a8cccd3aae6"
+  },
+  {
+    "path": "asus/blobs/files/tls_clienthello_vk_com.bin",
+    "bytes": 517,
+    "sha256": "d6d63c53bc0e1d97e913a43fc4db34f6558bb807228bf6100e3b6863f0720404"
+  },
+  {
+    "path": "asus/blobs/files/tls_clienthello_vk_com_kyber.bin",
+    "bytes": 1812,
+    "sha256": "b930e34be4a0f7fe388d4cb9886838f9a7b68fd62d3461629885e4cefcfe3805"
+  },
+  {
+    "path": "asus/blobs/sources.json",
+    "bytes": 17314,
+    "sha256": "0b711344ab98eae95b34e01f0b2d1729917f17e8979067e660f20036d6a888df"
+  },
+  {
     "path": "asus/build.py",
-    "bytes": 27954,
-    "sha256": "d6527bd6ee8163158bb8382f31dadb2196b564206d33a9185dd98bac6bfaeac7"
+    "bytes": 28554,
+    "sha256": "a818feefc22f0bce559d7b738dcbc3f3ceb15a1aa108dcc624a28001e4df66aa"
   },
   {
     "path": "asus/compatibility.sh",
@@ -131,13 +206,13 @@
   },
   {
     "path": "asus/ipk/defaults.sh",
-    "bytes": 4845,
-    "sha256": "7834061cadbb0ffc12c7963f05157908af726c4070ac872a494a96a1b582ea0a"
+    "bytes": 6175,
+    "sha256": "0bb191ec18bb2e94963eb30e62dc8785d81dd9f918ead1d1fe3ede4bc2998eef"
   },
   {
     "path": "asus/ipk/migration.sh",
-    "bytes": 9321,
-    "sha256": "27505d446db89e2cd2286a5d8a42ed8957da3403076a39ec0fbf6fafa1ea9fe0"
+    "bytes": 16797,
+    "sha256": "e0d4ed725a51a72e600209705bce80e7f0958a0b03ca2973cba0c3ad17deee3a"
   },
   {
     "path": "asus/ipk/postrm",
@@ -156,8 +231,8 @@
   },
   {
     "path": "asus/ipk/unified-postinst",
-    "bytes": 1122,
-    "sha256": "b4742c968e71c2c987bc4e362e5814f2bcefc7ee1b5cc6a314fb6c184d6345c8"
+    "bytes": 1160,
+    "sha256": "4a1eb718b8fd2a5567f24c1cb121f62875462898ce71f1fa4ae73fd3724b07af"
   },
   {
     "path": "asus/ipk/unified-prerm",
@@ -701,8 +776,8 @@
   },
   {
     "path": "docs/IMPORT.md",
-    "bytes": 7668,
-    "sha256": "855e3c3798f2a0e5af890f88e7cd37df4dd68d910f901a4c158cf17212d7bcdc"
+    "bytes": 8600,
+    "sha256": "bdc19a5d46f27af75bb6c0b0444352908b60b0be31da03eaddfd30f2e42a0084"
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
@@ -711,8 +786,8 @@
   },
   {
     "path": "docs/USAGE.md",
-    "bytes": 6369,
-    "sha256": "367513946f5c9a7260006f2ea973be910aa27079dea56e26d2856dd5653dea6a"
+    "bytes": 7454,
+    "sha256": "a90a14fd3c25309bb287540d4cc6a8030584015c71fdfd9c0d52b9b0cf61e801"
   },
   {
     "path": "licenses/busybox-GPL2.txt",
@@ -756,8 +831,8 @@
   },
   {
     "path": "openwrt/build.py",
-    "bytes": 26936,
-    "sha256": "eb58b5774098e71d4f7d8f8578881400a8bb330691c8c218369274431f780d83"
+    "bytes": 27211,
+    "sha256": "fafd4316982b3246fbf2cf8cd926a1af3913b8110568955a24e6d90747ed55df"
   },
   {
     "path": "openwrt/config-cli.php",
@@ -886,8 +961,8 @@
   },
   {
     "path": "openwrt/package-lifecycle.sh",
-    "bytes": 22866,
-    "sha256": "d4f695605c57669d3d3f439727496ee3cbf7cd205b8807cecf5be758fbcf0b0c"
+    "bytes": 26943,
+    "sha256": "ad5531508819c3091c4edc4d681786a715a1c61b9bcbfcdd722c2846f0ba7a88"
   },
   {
     "path": "openwrt/php-cgi.sh",
@@ -1350,6 +1425,56 @@
     "sha256": "9b0d93df36d045ece8669948a9cfc8e7ff95b60f0eb647b451b79cdeb7488d6e"
   },
   {
+    "path": "tests/test_blob_api.py",
+    "bytes": 5514,
+    "sha256": "d37e4c2d357092f1f0bf095ea1938e5a9fb1042633950c1d42423a16772a38af"
+  },
+  {
+    "path": "tests/test_blob_bindings.mjs",
+    "bytes": 3232,
+    "sha256": "1b3fc0993f147525085bc60b352317133ac419b074c3aa50fa72bfdf818b693d"
+  },
+  {
+    "path": "tests/test_blob_bundle.py",
+    "bytes": 3992,
+    "sha256": "c4a2aa4900e41073064d3728025051230f36014559ab212c04a126e533e6da39"
+  },
+  {
+    "path": "tests/test_blob_client.mjs",
+    "bytes": 4454,
+    "sha256": "855174bd311e6d11b7615f056c4f8808d3bdd2922dadc947cff2f558fa7ded72"
+  },
+  {
+    "path": "tests/test_blob_defaults.py",
+    "bytes": 11155,
+    "sha256": "4fe1d9353f28063fe06f7185f72f02d177396a0ad1a4cbb844993bd08e76bca0"
+  },
+  {
+    "path": "tests/test_blob_editor_ui.mjs",
+    "bytes": 4899,
+    "sha256": "e80e2a1123750137b7765e0ea8328610098552dfcfe98e99e6830fc40271ee7d"
+  },
+  {
+    "path": "tests/test_blob_http.py",
+    "bytes": 6331,
+    "sha256": "1f54451dd6c4efd8d5a19ec8c312c3fa01999e91dc2d7cac7fc92ef243f96609"
+  },
+  {
+    "path": "tests/test_blob_opkg_upgrade.py",
+    "bytes": 5176,
+    "sha256": "eadcfb6e027812914c8166cf5693a602604dbafeb635bee5c3613c6c2ae7ab01"
+  },
+  {
+    "path": "tests/test_blob_picker_ui.mjs",
+    "bytes": 9165,
+    "sha256": "36412eea7cdc6723a62ba4687a22c61e66463d3f917e771dce351c0086ec7f7a"
+  },
+  {
+    "path": "tests/test_blob_store.py",
+    "bytes": 11842,
+    "sha256": "0d606c4429f1bacb638810746f934e1a069802de220961ca05a227e28b2fe999"
+  },
+  {
     "path": "tests/test_builder.py",
     "bytes": 4238,
     "sha256": "1edaa6276886a7dd0e364c87daeff78db4f4458e96752f0dd9b92348e451da00"
@@ -1371,8 +1496,8 @@
   },
   {
     "path": "tests/test_config.mjs",
-    "bytes": 1712,
-    "sha256": "d14071bbd8e7f96ef018d8497d78d6db68488ee5a34c1ee8c02ede00c110b384"
+    "bytes": 4756,
+    "sha256": "a1881c5e9f318ec984fee39bb5fac8a256b36a862a9bfb1d318420bb6f200fce"
   },
   {
     "path": "tests/test_config_settings.mjs",
@@ -1500,6 +1625,11 @@
     "sha256": "7acd59ae5cac7a318b51a3d2cf121fad01c3428db7f476b5c3a7038a1083bf88"
   },
   {
+    "path": "tests/test_import_convert_http.py",
+    "bytes": 3129,
+    "sha256": "0953238e20d6b62957fe61363a6c0d0265be3c3be90faeb013120099f100c391"
+  },
+  {
     "path": "tests/test_import_document.py",
     "bytes": 4992,
     "sha256": "233cb24a600d52027e208771aca774dc4e44a9eade72f7f3ec2e1e100909ab59"
@@ -1508,6 +1638,11 @@
     "path": "tests/test_import_http.py",
     "bytes": 6108,
     "sha256": "f8f2b591a289f62d1b687a5992f18d414bf01c252dece3d8e6e649b6894faefb"
+  },
+  {
+    "path": "tests/test_import_keenetic.py",
+    "bytes": 13536,
+    "sha256": "3ab12728688a479d75653de1ee293b8cc7e5800b8ac3781ece4d554be423410e"
   },
   {
     "path": "tests/test_import_paths.mjs",
@@ -1538,6 +1673,16 @@
     "path": "tests/test_install.py",
     "bytes": 3809,
     "sha256": "ce60a0fadbe64cdfd6598444ddc620b63ca6599c290ef04039d003af9e0fb2a8"
+  },
+  {
+    "path": "tests/test_keenetic_import_client.mjs",
+    "bytes": 2468,
+    "sha256": "391440e79487271b63832c7cbdb16aaa567eb1c46454e42a079579c0dc477675"
+  },
+  {
+    "path": "tests/test_keenetic_import_ui.mjs",
+    "bytes": 6825,
+    "sha256": "624ac41feb85287fece35efbbf552a20cdfd58faff9912198674a492f70537d4"
   },
   {
     "path": "tests/test_legacy_compatibility.py",
@@ -1588,6 +1733,11 @@
     "path": "tests/test_openwrt_artifacts.py",
     "bytes": 4182,
     "sha256": "af032976bb0ca433bea4fc88d9ac87ba365c8af2961dfe22c8f067c531ca799f"
+  },
+  {
+    "path": "tests/test_openwrt_atomic_defaults.py",
+    "bytes": 9324,
+    "sha256": "753ae40129b72de2dde9250a1ab77d50228e547a9fb95796585a6ebd3a05d7e7"
   },
   {
     "path": "tests/test_openwrt_builder.py",
@@ -1966,8 +2116,8 @@
   },
   {
     "path": "tests/test_packages.py",
-    "bytes": 20392,
-    "sha256": "daa783ba54b105b74f5ff31763e1de5b70815061ebed7e95ce130203ee02ca2f"
+    "bytes": 21935,
+    "sha256": "690a3a9546b01521e9a275e62bb2d2c4b7182b809c61a7b5dd987e8ea144a327"
   },
   {
     "path": "tests/test_platform.py",
@@ -2775,6 +2925,16 @@
     "sha256": "8cf1515950867e7117e355b0a1d88961752093c00a03ad7df7a8e8f3fdcb596a"
   },
   {
+    "path": "webui/web/public/blob-api.php",
+    "bytes": 2264,
+    "sha256": "47d24b34834bc3ba0d2b9b8f7c63e6c5194c51894c2fafb5ea9ab58c8fcb91c5"
+  },
+  {
+    "path": "webui/web/public/blob-store.php",
+    "bytes": 12142,
+    "sha256": "2d9cbaf50a35fa3de484885b14c5d7b52ca094b6edd5331ae2d17b7028a01b02"
+  },
+  {
     "path": "webui/web/public/community/export-e9a226cd.png",
     "bytes": 2140746,
     "sha256": "57fe7e7696ee3638b487a11168a88ea05b0d4c2596ca0afce551a41014e9d9a4"
@@ -2851,8 +3011,8 @@
   },
   {
     "path": "webui/web/public/import-api.php",
-    "bytes": 5879,
-    "sha256": "a52fd3f1dec0499b1d61d4637727b708bc45dafe8158a7a28e20a58c7c7ca7c2"
+    "bytes": 6103,
+    "sha256": "cc38046300b8d9359db6976b2c2defc6f03d58e2d880d5f35932c064ba42b24c"
   },
   {
     "path": "webui/web/public/import-config.php",
@@ -2863,6 +3023,11 @@
     "path": "webui/web/public/import-document.php",
     "bytes": 4009,
     "sha256": "1d52e794700acddf845750adc6d1cf67fbdf0a8c391ef4ade7d5cec189f46ee4"
+  },
+  {
+    "path": "webui/web/public/import-keenetic.php",
+    "bytes": 9801,
+    "sha256": "2d6e96ba828c2a68be82f711d4346bcec1f9a2ee139f5fde6900ec2b87972665"
   },
   {
     "path": "webui/web/public/import-plan.php",
@@ -2881,8 +3046,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 32421,
-    "sha256": "016f1b56dbacf4ae09cf14ff5e619fc66ba0d7c305862af1eed151b7e1772ef1"
+    "bytes": 33451,
+    "sha256": "9c04f0c951661c9c2ef4c071e3369c983db98adb1a1dc4ca101d878b358a2c87"
   },
   {
     "path": "webui/web/public/logo.woff2",
@@ -3370,6 +3535,11 @@
     "sha256": "cd0b5b83d60533eaa18ad1b6c6dd93698d5305c946ce0485a7356618a12615c0"
   },
   {
+    "path": "webui/web/src/api/blobClient.ts",
+    "bytes": 4457,
+    "sha256": "86c4740229ce9c91c23ba83d01f2c02dbcc72baea2467e9878e8a548d674f294"
+  },
+  {
     "path": "webui/web/src/api/bulkSelection.ts",
     "bytes": 3036,
     "sha256": "e367edc597d0059a02a65c8a0d7b8214caecd45d4f91b176d2214a9675ee7a11"
@@ -3411,8 +3581,8 @@
   },
   {
     "path": "webui/web/src/api/importClient.ts",
-    "bytes": 9213,
-    "sha256": "795e3f17ccf81fc9b910b6d769dc10e912448d97efcb39db808f3225a9a77e02"
+    "bytes": 9843,
+    "sha256": "5f25b8c6bdbe765114b065025a080851782e5d095d662820896a091a3cadd2eb"
   },
   {
     "path": "webui/web/src/api/importPaths.ts",
@@ -3540,6 +3710,11 @@
     "sha256": "aaae1b4cd5169fa36f6d572dc6a77b19cf5ed4cfc769c666a45ea903e1e9963f"
   },
   {
+    "path": "webui/web/src/components/BlobPicker.tsx",
+    "bytes": 9800,
+    "sha256": "c4d36d13473b094158f129c6a8cce589b9a2ae827e987ef5bd8f2a3c3855ab5f"
+  },
+  {
     "path": "webui/web/src/components/ClientIpv4Help.tsx",
     "bytes": 796,
     "sha256": "44db3e84f8de2d86c6585f5723fbed4c3b710eaa670d393bffec4701a9b03a0a"
@@ -3566,8 +3741,8 @@
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
-    "bytes": 10248,
-    "sha256": "85e0df5df808aebf320ff2c528813196db092d4a8fc8ff2581ae4a32f4af14fc"
+    "bytes": 11032,
+    "sha256": "202227db4605b7987eaa868d3ce2e5445b6ad3e86025b12c415bd8f979cb3200"
   },
   {
     "path": "webui/web/src/components/Error404.tsx",
@@ -3606,13 +3781,13 @@
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
-    "bytes": 12086,
-    "sha256": "fb36e17ed04f56ae3256b8f08d0bc71a92ecee0a989388e1db295bcb608833cd"
+    "bytes": 14789,
+    "sha256": "b7f09b2ca93189eab73f6640da2cad5d70b04ebe1e8105a79900fec747432f0e"
   },
   {
     "path": "webui/web/src/components/ImportPreview.tsx",
-    "bytes": 4021,
-    "sha256": "0079395936b6d8939a0724d4a53c1c8d2bcda5285fe2ef5e5af0cd6278eec481"
+    "bytes": 4130,
+    "sha256": "c0906bf6e60222217227db36786a54c61a5c5808576a41d4d86d3baaba2616ed"
   },
   {
     "path": "webui/web/src/components/ImportSelection.tsx",
@@ -3836,8 +4011,8 @@
   },
   {
     "path": "webui/web/src/routes/index.tsx",
-    "bytes": 13337,
-    "sha256": "c71f6d9dc163c3a0d7fcd35b81d842c2bacc52e06b1341d2e0b9e734aaa60977"
+    "bytes": 13917,
+    "sha256": "2248efaf4350312e3a05ebd022d4d1a5888b95dca67b946f93fc814b05c49f07"
   },
   {
     "path": "webui/web/src/routes/smartdns.tsx",
@@ -3856,13 +4031,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 67324,
-    "sha256": "baefb35a51ac729203c17ee2878510343ef58285cb6e09191d4abfca724eac9c"
+    "bytes": 69697,
+    "sha256": "e881d50ceb494792faceede1d9c24d707cc9ab112e146aed14020f4477415d56"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 110065,
-    "sha256": "9618c27b0fe03e6c598dc17925c96042e26369f371712af070134c3a1e625243"
+    "bytes": 113719,
+    "sha256": "74c98347cbe28aab61b60d6db9d7a29cbb1f7ec33c4af3d7dcba6043ce45f833"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -3878,6 +4053,11 @@
     "path": "webui/web/src/utils/authError.ts",
     "bytes": 287,
     "sha256": "96aca4497a4623e2c00b2d5062f1f7e25e9d9518509f65fe3020b21b5c741c78"
+  },
+  {
+    "path": "webui/web/src/utils/blobBindings.ts",
+    "bytes": 5017,
+    "sha256": "d6014a1343a7a85f64862c5c19c598d4676f6ddd7881efbb1c785d37f18b2ed3"
   },
   {
     "path": "webui/web/src/utils/codeMirrorLangList.ts",
@@ -3896,8 +4076,8 @@
   },
   {
     "path": "webui/web/src/utils/configParser.ts",
-    "bytes": 11544,
-    "sha256": "40c0f399e7b722461e5f808c2da2b75705bb09823c118889d1e374ddbd92593b"
+    "bytes": 12613,
+    "sha256": "313670a4369c2de053720859e3aee194ab56c80293c249a91e1a16eb1a817303"
   },
   {
     "path": "webui/web/src/utils/configSectionSpacing.ts",
