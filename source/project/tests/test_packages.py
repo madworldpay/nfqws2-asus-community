@@ -105,7 +105,7 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(manifest['engine']['sha256'], hashlib.sha256(data['opt/usr/bin/nfqws2'][1]).hexdigest())
             for name, meta in manifest['resources'].items():
                 kind, name = name.split('/', 1)
-                path = 'opt/etc/nfqws2/' + ('blobs' if kind == 'blob' else 'lua') + '/' + name
+                path = ('opt/share/nfqws2-asus/defaults/blobs/' if kind == 'blob' else 'opt/etc/nfqws2/lua/') + name
                 actual = data[path][1]
                 self.assertEqual(meta['bytes'], len(actual))
                 self.assertEqual(meta['sha256'], hashlib.sha256(actual).hexdigest())

@@ -2026,8 +2026,8 @@
   },
   {
     "path": "tests/test_package_update_apply.py",
-    "bytes": 23346,
-    "sha256": "18695fa92f8c59d352e9ebea62045bd01a4f1f15d0583cd132ef1b0d60994a5a"
+    "bytes": 23382,
+    "sha256": "e807b55b93cad9211f6917d89934feddde370ca389b5627cb7cd8edf28a0b186"
   },
   {
     "path": "tests/test_package_update_feed.py",
@@ -2116,8 +2116,8 @@
   },
   {
     "path": "tests/test_packages.py",
-    "bytes": 21935,
-    "sha256": "690a3a9546b01521e9a275e62bb2d2c4b7182b809c61a7b5dd987e8ea144a327"
+    "bytes": 21957,
+    "sha256": "357c8825181c07e57edb34902c79b8eb07fe8c7210eb4cadb1c414238a83d1e8"
   },
   {
     "path": "tests/test_platform.py",
