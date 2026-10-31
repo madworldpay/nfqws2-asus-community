@@ -1471,8 +1471,8 @@
   },
   {
     "path": "tests/test_blob_store.py",
-    "bytes": 11842,
-    "sha256": "0d606c4429f1bacb638810746f934e1a069802de220961ca05a227e28b2fe999"
+    "bytes": 12086,
+    "sha256": "1f191d824d44d2fa5c6da3ef68b8757b7397484b460916131af172b921b7cd44"
   },
   {
     "path": "tests/test_builder.py",

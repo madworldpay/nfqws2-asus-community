@@ -66,10 +66,14 @@ class BlobStoreTests(unittest.TestCase):
   v=self.call();self.assertNotIn('error',v);self.assertTrue(v['scan_truncated']);self.assertTrue(any(x['state']=='unavailable' and x['sha256'] is None for x in v['files']))
  def test_inventory_racing_file_has_a_consistent_size_hash_and_read_budget(self):
   path=self.root/'blobs/changing.bin';small=b'A';large=b'B'*262144;path.write_bytes(small)
+  stage=Path(self.temp.name)/'writer.tmp'
   stopped=threading.Event()
   def mutate():
    while not stopped.is_set():
-    path.write_bytes(large);path.write_bytes(small)
+    # Publish complete files as the uploader does; in-place writes can expose
+    # valid partial snapshots, which are not an inventory size/hash mismatch.
+    stage.write_bytes(large);stage.replace(path)
+    stage.write_bytes(small);stage.replace(path)
   worker=threading.Thread(target=mutate);worker.start()
   code="require $argv[1].'/blob-store.php';$s=new AsusBlobStore($argv[2],(int)$argv[3],$argv[4]);$out=[];for($i=0;$i<1500;$i++)$out[]=$s->inventory();echo json_encode($out,JSON_THROW_ON_ERROR);"
   try:
