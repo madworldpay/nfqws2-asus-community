@@ -90,3 +90,15 @@ The project is free, and reports are voluntary. Save working profiles through
 **Export / share** so you can restore them yourself or share them with others.
 
 [Project documentation](README.en.md#documentation).
+
+## Packet templates (blobs)
+
+A blob is a ready-made data template a strategy uses to bypass a block. If a
+website, video or call fails, you can try another template without replacing the
+whole strategy. Results depend on your ISP.
+
+“Packet templates” shows the current file and available alternatives. Select a
+file and save settings as usual. “Upload from device” adds your own `.bin` file
+(up to 256 KiB); uploading alone does not change the strategy. The package
+includes 12 official zapret2 templates: 6 TLS, 5 QUIC and 1 STUN. Their names
+describe the template contents, not a list of websites they unblock.

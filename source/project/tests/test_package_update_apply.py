@@ -161,7 +161,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         for name in ['prerm','postinst']:
             text=(ROOT/('asus/ipk/unified-'+name)).read_text()
             text=text.replace('/opt/etc/init.d/S51nfqws2',str(self.service.core)).replace('/opt/etc/init.d/S81nfqws-asus-web',str(self.service.web)).replace('/opt/',str(self.opt)+'/')
-            text='asus_migration_restore(){ :; }; asus_install_defaults(){ :; }; asus_migration_complete(){ :; };\n'+text
+            text='asus_migration_restore(){ :; }; asus_install_defaults(){ :; }; asus_install_blob_defaults(){ :; }; asus_migration_complete(){ :; };\n'+text
             (self.base/name).write_text(text)
         original=self.body.read_text();original=original.replace('printf opkg','sh '+shlex.quote(str(self.base/'prerm'))+' || exit $?\nprintf opkg')
         original+='\nsh '+shlex.quote(str(self.base/'postinst'))+'\n'

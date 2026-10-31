@@ -81,3 +81,12 @@ To share a successful profile, use **Export / share**: specify
 the provider and result, check the preview, and click **Send**.
 
 [Project documentation](README.en.md#documentation).
+
+## A strategy from Keenetic
+
+In Import, select “Paste a Keenetic strategy”, paste the complete NFQWS2 strategy
+or configuration and choose “Convert for ASUS”. The panel adapts resource paths
+and previews changes before saving. The other router’s interface, account, queue
+and policy are not transferred. If a required list, Lua file or blob is missing,
+the panel names it. Add the file or correct its reference, then preview again.
+Referenced files are not downloaded automatically.

@@ -25,6 +25,8 @@ HERE=Path(__file__).resolve().parent
 ASSETS=json.loads((HERE/'assets.json').read_text())
 spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platform.py')
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
+blob_spec=importlib.util.spec_from_file_location('nfqws_blob_bundle',ROOT/'asus/blob_bundle.py')
+blob_bundle=importlib.util.module_from_spec(blob_spec);blob_spec.loader.exec_module(blob_bundle)
 PACKAGE_LICENSE='Multiple (MIT, GPL-2.0, GPL-3.0, LGPL-2.1, BSD-3-Clause and others); see THIRD-PARTY-NOTICES.txt'
 DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi',
               'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd','libopenssl3','libgcc']
@@ -141,6 +143,7 @@ def payload_files(target,engine,source=None):
             if not re.fullmatch(r'(?:lua/[a-zA-Z0-9_-]+\.lua\.gz|blobs/[a-zA-Z0-9_-]+\.bin)',rel):continue
             if rel.endswith('.gz'):data=gzip.decompress(data);rel=rel[:-3]
             files['usr/share/nfqws2/defaults/'+rel]=(data,0o644)
+    blob_bundle.add_bundle(files,'usr/share/nfqws2','usr/share/nfqws2/defaults')
     baseline={'schema_version':1,'package_version':target['version'],'web_version':(ROOT/'VERSION').read_text().strip(),
         'build_number':target['application_build'], 'engine':{'version':'1.0.6','provider':'nfqws2-keenetic',
             'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':{}}

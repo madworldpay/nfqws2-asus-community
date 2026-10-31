@@ -84093,3 +84093,8 @@ The availability of this Exception does not imply any general
 presumption that third-party software is unaffected by the copyleft
 requirements of the license of GCC.
 
+Bundled packet templates (blobs): bol-van/zapret2 v1.0.6, commit
+221d7dff24bfec0cd5ac0a5070b8acef2008af3d, MIT (c) 2016-2026 bol-van.
+Exact file provenance and hashes: asus/blobs/sources.json.
+License: licenses/zapret2-MIT.txt. Template names describe payload contents;
+network effectiveness is not certified by the structural/load checks.

@@ -125,6 +125,30 @@ export async function readImportFiles(files: File[]): Promise<string[]> {
     }),
   );
 }
+export async function convertKeeneticImport(
+  csrf: string,
+  text: string,
+): Promise<string> {
+  if (!text.trim()) throw new ShareError('unsupported_keenetic_strategy');
+  if (new TextEncoder().encode(text).length > 65536)
+    throw new ShareError('keenetic_limit');
+  const value = await shareRequest(
+    csrf,
+    'importconvert',
+    { text },
+    524288,
+    30000,
+  );
+  if (
+    !obj(value) ||
+    Object.keys(value).length !== 1 ||
+    typeof value.document !== 'string' ||
+    !value.document.length ||
+    new TextEncoder().encode(value.document).length > 262144
+  )
+    return invalid();
+  return value.document;
+}
 export async function inspectImport(
   csrf: string,
   documents: string[],

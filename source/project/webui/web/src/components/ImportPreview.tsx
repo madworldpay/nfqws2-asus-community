@@ -40,7 +40,9 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
           {Object.prototype.hasOwnProperty.call(en.import.problems, p.code)
             ? t(`import.problems.${p.code}` as TranslationKey)
             : t('import.error')}{' '}
-          {p.key || p.name || p.field || p.alias || p.id || ''}
+          {p.code === 'unresolved_file'
+            ? p.name || p.alias || p.field || p.key || p.id || ''
+            : p.key || p.name || p.field || p.alias || p.id || ''}
         </Alert>
       ))}
       {!!plan.affected_blocks.length && (

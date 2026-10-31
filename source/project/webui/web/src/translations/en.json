@@ -758,7 +758,7 @@
     "error": "Unable to read or prepare the data. Check the chosen JSON and retry.",
     "problems": {
       "unresolved_identity": "The selected block contains a hidden address or variable. Restore its value in the copy before importing.",
-      "unresolved_file": "A required file is missing or its path is not allowed. Add its resources JSON attachment.",
+      "unresolved_file": "Required file is missing on the router:",
       "empty_dns_selection": "Select at least one DNS server or record.",
       "file_conflict": "The JSON contains different files with the same name. Select the one you need.",
       "missing_shared": "Select the indicated shared strategy definition.",
@@ -815,7 +815,9 @@
       "catalog_timeout": "The server did not respond in time. Retry the download.",
       "catalog_limit": "The preset exceeds the size limit. Choose another one.",
       "catalog_changed": "The catalog has changed. Refresh the list and select the preset again.",
-      "catalog_version": "Update the package to use this preset."
+      "catalog_version": "Update the package to use this preset.",
+      "unsupported_keenetic_strategy": "Could not convert this format. Paste an NFQWS2 text strategy without shell commands.",
+      "keenetic_limit": "The strategy text exceeds 64 KiB. Paste only the required strategy arguments."
     },
     "from_json": "From JSON: ",
     "dns_default_hint": "A complete DNS draft needs at least one default server. Supply bootstrap addresses for DNS hostnames. Nothing is added automatically.",
@@ -848,6 +850,11 @@
       "global": "Global strategies",
       "updated": "Updated",
       "update": "Update the package to use this preset."
+    },
+    "keenetic": {
+      "choose": "Paste a Keenetic strategy",
+      "hint": "Paste the NFQWS2 strategy text from Keenetic. File paths will be adapted for ASUS. Check the result before saving.",
+      "convert": "Convert for ASUS"
     }
   },
   "openwrt": {
@@ -892,5 +899,35 @@
     "server_auth_failed": "The server rejected access. Ask the Administrator for a new link.",
     "server_refused": "The server is not accepting connections. Contact the Administrator.",
     "server_timeout": "The server did not respond in time. Check your connection and contact the Administrator."
+  },
+  "blobs": {
+    "title": "Packet templates (blobs)",
+    "help": "A blob is a ready-made data template for bypassing blocks. If a site, video or call does not work, you can try another template while keeping the strategy.",
+    "count": "Files on router: {{count}}",
+    "current": "Current:",
+    "choice": "Selected template",
+    "slot": "Name in strategy",
+    "format_other": "format unknown",
+    "not_listed": "not in file list",
+    "too_large": "too large",
+    "unavailable": "unavailable",
+    "loading": "Reading files…",
+    "retry": "Read files again",
+    "upload": "Upload from device",
+    "upload_hint": ".bin, 1 byte to 256 KiB",
+    "uploaded": "{{name}} added. Select it in the field you want to change.",
+    "save_hint": "Selection changes the draft only. Apply it with Save. A different template may not suit your strategy.",
+    "no_binding": "Startup arguments do not declare a separate blob file to select. Edit built-in templates in the strategy editor.",
+    "unsupported": "Some blob declarations are ambiguous or use complex syntax. Edit them manually in the startup arguments.",
+    "partial": "Only part of the files is shown: some are unavailable or the list limit was reached.",
+    "error_busy": "The panel is busy with another operation. Try the upload again after it finishes.",
+    "error_large": "The file is larger than 256 KiB. Choose a smaller file.",
+    "error_empty": "The file is empty. Choose a nonempty .bin file.",
+    "error_file": "Choose a .bin file with a regular filename and no paths.",
+    "error_auth": "Refresh the page and sign in to the panel, then try again.",
+    "error_space": "There is not enough space on the router for this file.",
+    "error_request": "Could not read or upload the file. Try again. Your draft has been kept.",
+    "error_changed": "Startup arguments have already changed. Check the current file and select again.",
+    "shown_count": "Files shown: {{count}}"
   }
 }

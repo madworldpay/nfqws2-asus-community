@@ -27,6 +27,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { API } from '@/api/client';
 
 import { App } from '@/components/App';
+import { BlobPicker } from '@/components/BlobPicker';
 import { ClientIpv4Help } from '@/components/ClientIpv4Help';
 import { Error404 } from '@/components/Error404';
 import { FormEditor } from '@/components/FormEditor';
@@ -71,6 +72,7 @@ function RouteComponent() {
     null,
   );
   const [strategyRevision, setStrategyRevision] = useState(0);
+  const [startupRevision, setStartupRevision] = useState(0);
   const [resetError, setResetError] = useState(false);
 
   const originalConfigRef = useRef<string | null>(null);
@@ -116,6 +118,7 @@ function RouteComponent() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOriginalConfigParsed(parsed);
       setForm(parsed);
+      setStartupRevision((revision) => revision + 1);
       formRef.current = parsed;
       setStrategyBaseline(null);
       setResetError(false);
@@ -244,9 +247,19 @@ function RouteComponent() {
                 {t('form.section_startup')}
               </Typography>
               <FormEditor
+                key={`startup-${startupRevision}`}
                 label={t('form.NFQWS_BASE_ARGS')}
-                value={originalConfigParsed.NFQWS_BASE_ARGS}
+                value={form.NFQWS_BASE_ARGS}
                 onChange={changeHandler('NFQWS_BASE_ARGS')}
+              />
+              <BlobPicker
+                value={form.NFQWS_BASE_ARGS}
+                getValue={() => formRef.current?.NFQWS_BASE_ARGS ?? ''}
+                onChange={(value) => {
+                  changeHandler('NFQWS_BASE_ARGS')(value);
+                  setStartupRevision((revision) => revision + 1);
+                }}
+                disabled={!auth}
               />
             </>
           )}

@@ -200,29 +200,113 @@ nfqws_package_preinstall() {
     nfqws_package_snapshot && nfqws_package_prepare_upgrade
 }
 
+# Package defaults are trusted, flat resources. All publication stays below the
+# package root and uses an exclusive hard link so an owner's file always wins.
+nfqws_package_default_parent() {
+    local path=$1 boundary=${IPKG_INSTROOT%/} metadata mode
+    [ -n "$boundary" ] || boundary=/
+    case "$path" in /*) ;; *) return 1;; esac
+    if [ "$boundary" != / ]; then case "$path" in "$boundary"|"$boundary"/*) ;; *) return 1;; esac; fi
+    while :; do
+        [ -d "$path" ] && [ ! -L "$path" ] || return 1
+        metadata=$(stat -c '%a %u' "$path") || return 1
+        mode=${metadata% *}
+        case "$mode" in ''|*[!0-7]*) return 1;; esac
+        [ "${metadata##* }" = 0 ] && [ "$((0$mode & 0022))" = 0 ] || return 1
+        [ "$path" != "$boundary" ] || return 0
+        path=${path%/*}; [ -n "$path" ] || path=/
+    done
+}
+
+nfqws_package_default_source() {
+    local metadata mode
+    [ -f "$1" ] && [ ! -L "$1" ] || return 1
+    metadata=$(stat -c '%u %h %a' "$1") || return 1
+    case "$metadata" in '0 1 '*) ;; *) return 1;; esac
+    mode=${metadata##* }
+    case "$mode" in ''|*[!0-7]*) return 1;; esac
+    [ "$((0$mode & 0022))" = 0 ]
+}
+
+# After power loss only a private stage can remain, optionally linked to its
+# complete active file. Remove that private name without touching the active one.
+nfqws_package_default_reclaim() {
+    local directory=$1 stage name suffix leaf metadata links unsafe
+    nfqws_package_default_parent "$directory" || return 1
+    for stage in "$directory"/.nfqws2-seed.*.??????; do
+        [ -e "$stage" ] || [ -L "$stage" ] || continue
+        name=${stage##*/}; suffix=${name##*.}
+        case "$suffix" in [A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]) ;; *) continue;; esac
+        name=${name#.nfqws2-seed.}; name=${name%.*}
+        case "$name" in ''|[!A-Za-z0-9]*|*[!A-Za-z0-9_.-]*) return 1;; esac
+        [ -d "$stage" ] && [ ! -L "$stage" ] && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || return 1
+        unsafe=$(find "$stage" -mindepth 1 ! -path "$stage/file") || return 1
+        [ -z "$unsafe" ] || return 1
+        if [ -e "$stage/file" ] || [ -L "$stage/file" ]; then
+            [ -f "$stage/file" ] && [ ! -L "$stage/file" ] || return 1
+            metadata=$(stat -c '%u:%a' "$stage/file") || return 1
+            case "$metadata" in 0:600|0:644) ;; *) return 1;; esac
+            links=$(stat -c '%h' "$stage/file") || return 1
+            case "$links" in
+                1) ;;
+                2) leaf=$directory/$name
+                    [ -f "$leaf" ] && [ ! -L "$leaf" ] && [ "$(stat -c '%d:%i' "$stage/file")" = "$(stat -c '%d:%i' "$leaf")" ] || return 1;;
+                *) return 1;;
+            esac
+            rm "$stage/file" || return 1
+        fi
+        rmdir "$stage" || return 1
+    done
+}
+
+nfqws_package_default_publish() {
+    local source=$1 destination=$2 mode=$3 parent=${2%/*} name=${2##*/} stage result=1
+    case "$name" in ''|[!A-Za-z0-9]*|*[!A-Za-z0-9_.-]*) return 1;; esac
+    nfqws_package_default_parent "${source%/*}" && nfqws_package_default_source "$source" && nfqws_package_default_reclaim "$parent" || return 1
+    [ ! -L "$destination" ] || return 1
+    if [ -e "$destination" ]; then [ -f "$destination" ]; return $?; fi
+    stage=$(umask 0077; mktemp -d "$parent/.nfqws2-seed.$name.XXXXXX") || return 1
+    if (umask 0077; cp "$source" "$stage/file") &&
+        cmp -s "$source" "$stage/file" && chmod "$mode" "$stage/file" &&
+        nfqws_package_default_parent "$parent" && sync; then
+        if ln -T "$stage/file" "$destination" 2>/dev/null; then
+            sync && result=0
+        elif [ ! -L "$destination" ] && [ -f "$destination" ]; then
+            result=0
+        fi
+    fi
+    rm -f "$stage/file" || result=1
+    rmdir "$stage" || result=1
+    return "$result"
+}
+
 nfqws_package_defaults() {
     local root=${IPKG_INSTROOT} src dst name file leaf
     [ ! -L "$root/etc/nfqws2" ] || { echo native_config_owner_conflict >&2; return 1; }
-    mkdir -p "$root/etc/nfqws2" "$root/etc/init.d" || return 1
-    chmod 755 "$root/etc/nfqws2"
+    if [ ! -e "$root/etc" ] && [ ! -L "$root/etc" ]; then
+        nfqws_package_default_parent "${root:-/}" && (umask 0022; mkdir "$root/etc") || return 1
+    fi
+    nfqws_package_default_parent "$root/etc" || return 1
+    (umask 0022; mkdir -p "$root/etc/nfqws2" "$root/etc/init.d") || return 1
+    nfqws_package_default_parent "$root/etc/nfqws2" || return 1
     src="$root/usr/share/nfqws2/defaults"
     for name in nfqws2.conf lists lua blobs; do
         dst="$root/etc/nfqws2/$name"
         [ ! -L "$dst" ] || { echo native_config_owner_conflict >&2; return 1; }
-        if [ ! -e "$dst" ]; then
-            cp -R "$src/$name" "$dst" || return 1
-            if [ -d "$dst" ]; then
-                find "$dst" -type d -exec chmod 755 '{}' ';' || return 1
-                find "$dst" -type f -exec chmod 644 '{}' ';' || return 1
-            fi
+        if [ "$name" = nfqws2.conf ]; then
+            nfqws_package_default_publish "$src/$name" "$dst" 600 || return 1
+            continue
         fi
+        nfqws_package_default_parent "$src/$name" || return 1
+        if [ ! -e "$dst" ]; then (umask 0022; mkdir "$dst") || return 1; fi
+        nfqws_package_default_reclaim "$dst" || return 1
         # Add newly supplied resources on upgrade without replacing a user's
         # existing files. Package defaults are flat, regular-file directories.
         if [ -d "$dst" ]; then
             for file in "$src/$name"/*; do
-                [ -f "$file" ] && [ ! -L "$file" ] || continue
+                [ -e "$file" ] || [ -L "$file" ] || continue
                 leaf="$dst/${file##*/}"
-                if [ ! -e "$leaf" ] && [ ! -L "$leaf" ]; then cp "$file" "$leaf" && chmod 644 "$leaf" || return 1; fi
+                nfqws_package_default_publish "$file" "$leaf" 644 || return 1
             done
         fi
     done
@@ -247,9 +331,9 @@ nfqws_package_defaults() {
     fi
     if [ -f "$root/usr/lib/nfqws2-web/nfqws2-native-web" ]; then
         [ ! -L "$root/etc/nfqws2-web" ] && [ ! -L "$root/etc/config/nfqws2-web" ] || return 1
-        mkdir -p "$root/etc/config" "$root/etc/nfqws2-web" || return 1
+        (umask 0022; mkdir -p "$root/etc/config" "$root/etc/nfqws2-web") || return 1
         chmod 700 "$root/etc/nfqws2-web" || return 1
-        if [ ! -e "$root/etc/config/nfqws2-web" ]; then cp "$src/web-config" "$root/etc/config/nfqws2-web" || return 1; fi
+        nfqws_package_default_publish "$src/web-config" "$root/etc/config/nfqws2-web" 600 || return 1
         dst="$root/etc/nfqws2-web/auth.json"
         [ ! -L "$dst" ] || return 1
         if [ ! -e "$dst" ]; then

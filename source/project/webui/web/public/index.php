@@ -355,6 +355,18 @@ function main(): void
     }
   }
 
+  if (in_array($_POST['cmd'], ['blobinventory','blobupload'], true)) {
+    require_once __DIR__.'/support-report.php';require_once __DIR__.'/blob-api.php';
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    try {
+      AsusBlobApi::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();$result=(new AsusBlobApi())->handle($_POST);
+      $raw=json_encode($result,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);if(strlen($raw)>262144)throw new RuntimeException('output_limit');http_response_code(200);echo $raw;
+    }catch(Throwable $e){$code=AsusBlobApi::error($e);http_response_code(in_array($code,['busy','source_changed','restore_required'],true)?409:(in_array($code,['invalid_request','invalid_blob','file_too_large','hash_mismatch'],true)?400:503));echo json_encode(['error'=>$code]);}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['importcatalog','importcatalogload'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/profile-catalog-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
@@ -369,7 +381,7 @@ function main(): void
     exit();
   }
 
-  if (in_array($_POST['cmd'], ['importinspect','importprepare','importapply','importstatus','importundo'], true)) {
+  if (in_array($_POST['cmd'], ['importconvert','importinspect','importprepare','importapply','importstatus','importundo'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/import-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     try {

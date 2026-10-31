@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 12649,
-      "sha256": "dc72a4149c1b1a91a79644de60592f8e26100c23fa5c82348f0b00f5edbc9a9c"
+      "bytes": 13905,
+      "sha256": "0fbef1939e1379808b32edb88ef19d79127486c3b1a1aa634e2969aa39ca5b64"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -72,13 +72,13 @@
     },
     {
       "file": "IMPORT.en.md",
-      "bytes": 5015,
-      "sha256": "0fb08cdcfa095673eb7cd3024ca759eb9cc62a9e221471a71f77bfd711339291"
+      "bytes": 5509,
+      "sha256": "5fc98a6a5444af2c59a42fb5ad1dcbf4be39f7bc8e739fcdda65aaf4c0738950"
     },
     {
       "file": "IMPORT.md",
-      "bytes": 8624,
-      "sha256": "3c5d2671059e35b356a4f3eee05fd96e429571fc6fab0e0b86b71a70fcc0deb9"
+      "bytes": 9556,
+      "sha256": "0f2c78bdfc13fc941788d1518fe2948b6e08b66c3361f067bfc397f43a349c99"
     },
     {
       "file": "INSTALL.en.md",
@@ -187,8 +187,8 @@
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
-      "bytes": 4151238,
-      "sha256": "3054abaa4aaeb8d876012728a1a69ce1756bf07605d7093da7ac96ce894a84e5"
+      "bytes": 4151578,
+      "sha256": "c3efefceb5050a2034a5284d75cea863e34ba741f452e72b3c8773df84791243"
     },
     {
       "file": "UPSTREAM.en.md",
@@ -202,13 +202,13 @@
     },
     {
       "file": "USAGE.en.md",
-      "bytes": 4854,
-      "sha256": "d248203450ac3e0277d5252e503fd7c1960dfebee3e630fecba38efc78af5563"
+      "bytes": 5476,
+      "sha256": "91495c031ae4064da7191fce21b038f818c5a2e1a85ffcf6fea84578cd9cf97e"
     },
     {
       "file": "USAGE.md",
-      "bytes": 8159,
-      "sha256": "93f3f658142dea71758990b224f6588bf338bbcda929503bcd2f9e2fae4991d9"
+      "bytes": 9244,
+      "sha256": "6726c189f638aa5b5c3bb61da0a0c44469b4b5fef8bdcc6741c81c2638946a29"
     },
     {
       "file": "build.svg",
