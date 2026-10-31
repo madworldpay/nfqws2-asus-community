@@ -46,28 +46,9 @@ On a fresh ASUSWRT-Merlin installation, prepare Entware first:
 3. Run `amtm` over SSH, choose `ep` and wait for Entware installation to finish.
 4. Press `e`, then Enter, to leave `amtm` and return to the same SSH shell. Check Entware with `/opt/bin/opkg print-architecture`.
 
-Paste the complete command into that same SSH shell:
+### Install with one command
 
-```sh
-(
-  set -e
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir"
-  trap 'rm -rf "$nfqws_dir"' 0
-  curl -fL --connect-timeout 10 --max-time 60 \
-    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
-    -o "$nfqws_dir/install.sh"
-  sh "$nfqws_dir/install.sh"
-)
-```
-
-**Manual installation:** download the IPK for your architecture and transfer it using WinSCP/SCP
-or the USB drive's Samba share. [Manual installation with File Explorer examples](MANUAL-INSTALL.en.md).
-
-### OpenWrt
-
-Entware is not required. Connect to **the OpenWrt router** over SSH as `root` and run:
+The command is shared by ASUS/Entware and OpenWrt. Paste it into the router’s SSH shell:
 
 ```sh
 (
@@ -81,9 +62,16 @@ Entware is not required. Connect to **the OpenWrt router** over SSH as `root` an
 )
 ```
 
+**Manual ASUS installation:** download the IPK for your architecture and transfer it using WinSCP/SCP
+or the USB drive's Samba share. [Manual installation with File Explorer examples](MANUAL-INSTALL.en.md).
+
+### OpenWrt
+
+**OpenWrt uses the same command above.** Connect over SSH as `root`; Entware is not required.
+
 **Choose a file manually:** [native OpenWrt packages and installation](OPENWRT.en.md#choose-a-package-manually).
 
-Both installers select and verify the package for their platform, preserving settings
+The installer detects the platform, selects and verifies its package, preserving settings
 during updates. The installer prints the panel address when finished.
 
 **One-time transition for older builds.** To install the current release and

@@ -7,19 +7,7 @@ import preview and undo, SmartDNS, diagnostics and updates.
 
 ## Install
 
-Connect to **the OpenWrt router** over SSH as `root` and run:
-
-```sh
-(
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
-  trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
-  sh "$nfqws_dir/install.sh"
-)
-```
+**Use the same installation command as ASUS/Entware:** [shared command](README.en.md#install-with-one-command). Connect over SSH as `root`; Entware is not required.
 
 The installer detects the OpenWrt release series and exact package architecture,
 selects an IPK for OpenWrt 24.10 or APK for OpenWrt 25.12, and verifies the release
