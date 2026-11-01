@@ -466,7 +466,7 @@
   },
   "share": {
     "title": "Share",
-    "intro": "Choose how you want to help the project. You can review the exact files and save a local copy before sending.",
+    "intro": "The project developer will receive the selected materials and router information shown in Preview. Sending starts only when you click Send to developer. Router settings will not change.",
     "kinds": {
       "report": "Router diagnostics",
       "dpi": "DPI results",
@@ -477,8 +477,8 @@
     "link_installation": "Link to previous submissions",
     "link_help": "Includes a random code for this installation to connect repeat reports. It is not derived from an IP, MAC or serial number. Unchecked means no code is sent. Model and firmware help compare results; a submitted strategy is not yet verified.",
     "preview": "Preview",
-    "preview_steps": "First click Preview and review the files. Sending requires a preview and a configured channel with format v4 support. Preview again after changing your selection or text.",
-    "preview_hint": "These are the materials sent only after you click Send. Review text and comments: free text may contain personal information you entered.",
+    "preview_steps": "Before sending to the developer, review the files and router information in Preview. Remove personal information.",
+    "preview_hint": "The developer will receive the files and router information shown here. Check the contents and comments: selected files and free-text fields may contain personal information. Nothing is sent until you click Send to developer.",
     "source": "Model, firmware and submission details",
     "partial": "These are the available results. A partial report does not mean other tests failed.",
     "working": "Please wait…",
@@ -583,18 +583,22 @@
     "clear_selection": "Clear selection",
     "select_blobs": "Select all blobs",
     "clear_blobs": "Clear blobs",
-    "preview_help": "Select at least one item. For strategies, files or DNS, enter the purpose and provider. Preview shows only your selection and lets you save JSON. Sending also requires a configured channel with v4 support. Preview again after editing.",
+    "preview_help": "Select at least one item. For strategies, files or DNS, enter the service or purpose and provider. In Preview, check the files and router information and remove personal information. This is the exact set the developer receives after you click Send. The router needs internet access. If sending is unavailable, save the JSON and give it to the developer. Preview again after editing.",
     "resources_help": "Lists contain domains or IPs. Blobs are packet templates used by certain strategy methods. You can select just one file; other files are not attached automatically. Bundled Lua is already part of the package.",
     "connect_channel": "Connect sending",
     "mail_availability": {
-      "not_configured": "Sending channel is not configured. Preview and JSON saving remain available; sending requires channel configuration on the router.",
-      "v4_unsupported": "The channel is configured, but format v4 is not enabled. Preview and JSON saving remain available; update the channel settings to send.",
-      "https_unavailable": "Sending is unavailable: HTTPS (TLS) or trusted certificates are unavailable on the router. Preview and JSON saving remain available.",
-      "invalid_config": "Invalid sending configuration. Check it on the router. Preview and JSON saving remain available.",
+      "not_configured": "Sending to the developer is not connected. If Connect sending is shown below, click it. You can also download the JSON and give it to the developer.",
+      "v4_unsupported": "The sending settings do not support the selected materials. Download the JSON and give it to the developer, or ask for help setting up panel sending.",
+      "https_unavailable": "The router cannot use a secure connection to send. Download the JSON and give it to the developer.",
+      "invalid_config": "The sending settings are damaged. Download the JSON and give it to the developer, mentioning this error.",
       "unavailable": "Sending is currently unavailable. Preview and JSON saving remain available. Refresh the panel status."
     },
     "native_hint_openwrt": "Run the original DPI Detector over SSH on OpenWrt using the command below. Choose tests, press S to save, then refresh this list. You can view the original; sharing creates a sanitized JSON without rerunning tests.",
-    "dpi_help_command_openwrt": "Run the command above over SSH on OpenWrt. The address after src is the source IPv4 for this route; add it to the list, with /32 if needed. Check the entry again if the WAN address changes."
+    "dpi_help_command_openwrt": "Run the command above over SSH on OpenWrt. The address after src is the source IPv4 for this route; add it to the list, with /32 if needed. Check the entry again if the WAN address changes.",
+    "send": "Send to developer",
+    "send_again": "Retry sending to developer",
+    "delivery_unknown": "No confirmation was received. Prepare another attempt through Preview, or download the JSON for the developer. Sending again may create a duplicate.",
+    "submission_reference": "Submission reference:"
   },
   "smartdns": {
     "intro": "SmartDNS is a separate utility installed and configured by this panel. Assign DNS to specific sites and pin IP addresses: up to 32 DNS servers, 256 domain-to-DNS assignments and 64 fixed replies.",
