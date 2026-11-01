@@ -17,6 +17,7 @@ import {
 
 import { API } from '@/api/client';
 
+import { CommunityChatLink } from '@/components/CommunityChatLink';
 import { MtprotoInstallDialog } from '@/components/MtprotoInstallDialog';
 import { TechnicalChannel } from '@/components/TechnicalChannel';
 import { ThemeMenu } from '@/components/ThemeMenu';
@@ -82,6 +83,7 @@ export const Footer = () => {
             },
           }}
         >
+          <CommunityChatLink />
           <Typography component="span" variant="body2" color="text.secondary">
             {t('system.thanks_projects')}
           </Typography>

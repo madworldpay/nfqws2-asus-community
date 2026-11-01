@@ -14,6 +14,8 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 **Free · RU / EN · ASUS/Entware · OpenWrt**
 
+💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
+
 ## What you get
 
 | Benefit | How it helps at home |
