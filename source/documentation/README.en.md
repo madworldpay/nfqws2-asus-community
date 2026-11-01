@@ -167,12 +167,17 @@ VPN capabilities depend on your firmware and chosen client.
 | Diagnostics and DPI Detector | Checkup, packet delivery checks, logs and separate network tests from the router |
 | Profile sharing | Export individual blocks, lists, blobs and DNS; review and edit the copy to be sent |
 | Updates | Install from the panel with signature and SHA256 verification while preserving settings |
+| Restart and recovery | A ↻ button, a 4/12/24-hour or custom timer, and optional recovery after a crash |
 
 The package includes NFQWS2, WebUI, embedded Lua and service utilities.
 **SmartDNS and DPI Detector are installed separately using panel buttons**, when needed.
 **Getting started** guides you through setup, and **?** explains fields and actions.
 
 </details>
+
+### Service restart
+
+Use **↻** to restart NFQWS2 or **⏱** to choose 4, 12, 24 hours or a custom interval from 1 to 168 hours. This can help devices with limited RAM. The timer restarts only a running service. **Recover the service** permits up to three recovery attempts after a crash, with 1, 5 and 15-minute delays; a manual start is then required. Both features default to off, and a manually stopped service stays stopped. OpenWrt requires a running system cron service.
 
 ### Telegram proxy
 
