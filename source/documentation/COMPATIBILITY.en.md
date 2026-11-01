@@ -6,12 +6,17 @@
 |---|---|---|---|
 | GT-BE19000AI | Merlin 3006.102.9_0 | `aarch64-3.10` | ARK check and preparation with a backup |
 | RT-AC87U | Merlin 384.13_10 | `armv7-2.6` | Working USB drive; additional module for this exact combination |
+| RT-AC68U | Asuswrt-Merlin 386.14.2 | Not stated in the report | NFQWS operation confirmed by a community user |
 
-Installation and updates, the WebUI, importing with restoration of the original profile,
+On the GT-BE19000AI and RT-AC87U, installation and updates, the WebUI, importing with restoration of the original profile,
 IPv4 traffic processing, and restoration of confirmed SmartDNS settings have been tested.
 DPI Detector network checks have been run. On the GT-BE19000AI, switching
 Amnezia on and off alongside SmartDNS was also tested. Results for a particular service and speed
 depend on the connection, DNS, strategy, and traffic path; check them from your own device.
+
+RT-AC68U / Merlin 386.14.2 was added from a user report dated 2026-11-01.
+The report confirms NFQWS operation on this combination; it does not describe
+separate update, SmartDNS, ARK, IPv6, or technical-channel checks.
 
 ## Other devices and firmware
 

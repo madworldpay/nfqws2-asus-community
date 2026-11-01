@@ -147,7 +147,7 @@ VPN capabilities depend on your firmware and chosen client.
 - **There is no single strategy for every provider and service.** You may need another profile, domain list or DNS; opening a website does not confirm that video playback, seeking or voice works.
 - **On some ASUS models, the ARK module interferes with traffic processing.** NFQWS2 may be running while no packets reach the queue. The panel provides a check and preparation with a backup; you may need to disable related ASUS functions and reboot manually.
 - **OpenWrt traffic acceleration can bypass NFQUEUE.** Follow the panel's guidance on hardware/software flow offloading.
-- **A verified model and a matching architecture are different things.** ASUS/Entware has been tested on GT-BE19000AI and RT-AC87U with the stated firmware; native OpenWrt on RT-AC87U with OpenWrt 24.10. Other combinations depend on package architecture, kernel capabilities and hardware verification status.
+- **A verified model and a matching architecture are different things.** ASUS/Entware has been tested on GT-BE19000AI and RT-AC87U with the stated firmware; a community user also confirmed NFQWS operation on RT-AC68U / Merlin 386.14.2. Native OpenWrt has been tested on RT-AC87U with OpenWrt 24.10. Other combinations depend on package architecture, kernel capabilities and hardware verification status.
 - **IPv4/IPv6, HTTPS, QUIC, video and voice need separate checks.** An increasing queue counter confirms packet delivery; test the actual service and speed from your device.
 
 <a id="panel-capabilities"></a>

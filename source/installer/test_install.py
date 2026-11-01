@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -16,6 +17,7 @@ VERSION = '1.3.2-asus6+b67'
 class InstallerTests(unittest.TestCase):
     def setUp(self):
         self.installer=INSTALLER
+        self.isolated_checksum_tools=False
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.work = Path(self.tmp.name)
@@ -62,16 +64,30 @@ pathlib.Path(out).write_bytes(src.read_bytes())
 ''')
         self.tool('opkg', r'''
 args=sys.argv[1:]
-if args[:1]==['--tmp-dir']:args=args[2:]
+tmp_dir=None
+if args[:1]==['--tmp-dir']:tmp_dir=pathlib.Path(args[1]);args=args[2:]
 action=args[0]
+if action in ['update','install']:
+    assert tmp_dir is not None and tmp_dir.is_dir(), args
+    assert tmp_dir.name=='opkg' and tmp_dir.parent.name.startswith('nfqws2-asus-install.'), tmp_dir
+    assert tmp_dir.parent.parent==work/'router/opt/tmp', tmp_dir
 if action=='print-architecture':print(state['arches'],end='')
 elif action=='status':
     if state['version']:print('Package: nfqws2-asus\nVersion: '+state['version']+'\nStatus: '+state.get('package_status','install ok installed')+'\n')
 elif action=='compare-versions':
     def number(v):return int(v.rsplit('+b',1)[1])
     sys.exit(0 if number(args[1])>number(args[3]) else 1)
-elif action=='update':emit({'kind':'update'})
+elif action=='update':
+    emit({'kind':'update'})
+    if state.get('update_error'):sys.exit(1)
 elif action=='install':
+    if args[1]=='coreutils-sha256sum':
+        emit({'kind':'dependency','package':args[1]})
+        if state.get('dependency_error'):sys.exit(1)
+        if state.get('installed_hash_mode')!='missing':
+            import shutil
+            shutil.copy2(work/'dependency-sha256sum',work/'router/opt/bin/sha256sum')
+        sys.exit()
     emit({'kind':'install','asset':pathlib.Path(args[1]).name,'no_start':os.environ.get('NFQWS_ASUS_NO_START')})
     if state['install_error']:
         import subprocess
@@ -93,6 +109,7 @@ else:raise AssertionError(args)
         self.tool('nvram', "assert sys.argv[1]=='get'; print({'productid':'GT-BE19000AI','odmpid':'','lan_ipaddr':'192.168.50.1','sw_mode':'1'}.get(sys.argv[2],''))")
         self.tool('uname', "print(state['cpu'])")
         self.tool('df', "print('Filesystem 1024-blocks Used Available Capacity Mounted on\\nusb 2097152 10 '+str(state['free_kb'])+' 1% /opt')")
+        self.checksum_command(self.work/'dependency-sha256sum', installed=True)
 
         self.recovery_fixture()
         self.state.update(version='', install_error=False, stop_before_failure=False)
@@ -171,6 +188,39 @@ state_path.write_text(json.dumps(state))
                      'def emit(value):\n with (work/"events.jsonl").open("a") as f:f.write(json.dumps(value)+"\\n")\n' + body + '\n')
         p.chmod(0o755)
 
+    def checksum_command(self, path, mode='working', *, busybox=False, installed=False):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.tool(path.name, r'''
+import hashlib
+args=sys.argv[1:]
+if BUSYBOX:
+    applet=args.pop(0)
+    if applet!='sha256sum':os.execv('/bin/busybox',['/bin/busybox',applet]+args)
+mode=state.get('installed_hash_mode','working') if INSTALLED else MODE
+if mode=='missing':sys.exit(127)
+if mode=='broken':sys.exit(1)
+if mode=='empty':sys.exit()
+name=args[0] if args else '-'
+data=sys.stdin.buffer.read() if name=='-' else pathlib.Path(name).read_bytes()
+digest=hashlib.sha256(data).hexdigest() if mode=='working' else '0'*64
+print(digest+'  '+name)
+'''.replace('BUSYBOX',repr(busybox)).replace('INSTALLED',repr(installed)).replace('MODE',repr(mode)),path)
+
+    def without_checksum_tools(self):
+        # Only native utility dependencies remain on PATH; no host sha256sum
+        # or absolute BusyBox can accidentally satisfy this router fixture.
+        self.isolated_checksum_tools=True
+        for name in ['tr','awk','grep','mkdir','rm','wc']:
+            if not (self.bin/name).exists():(self.bin/name).symlink_to(shutil.which(name))
+        for path in [self.bin/'sha256sum',self.router/'opt/bin/sha256sum']:
+            path.unlink(missing_ok=True)
+        for path in self.busybox_paths():
+            self.checksum_command(path,'missing',busybox=True)
+
+    def busybox_paths(self):
+        return [self.router/'opt/bin/busybox',self.router/'bin/busybox',
+                self.router/'opt/libexec/nfqws2-asus/busybox']
+
     def execute(self, *args):
         self.assertTrue(self.installer.is_file(), 'The one-command installer has not been implemented')
         self.state_path.write_text(json.dumps(self.state))
@@ -178,7 +228,11 @@ state_path.write_text(json.dumps(state))
         enabled.parent.mkdir(parents=True, exist_ok=True)
         if self.state['enabled']:enabled.touch()
         else:enabled.unlink(missing_ok=True)
-        text = self.installer.read_text().replace('/opt/', str(self.router) + '/opt/').replace(
+        text = self.installer.read_text()
+        if self.isolated_checksum_tools:
+            text=text.replace('PATH=/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin',f'PATH={self.bin}:/opt/bin')
+            text=re.sub(r'(?<![\w/])/bin/busybox\b',str(self.router/'bin/busybox'),text)
+        text = text.replace('/opt/', str(self.router) + '/opt/').replace(
             '/proc/', str(self.router) + '/proc/').replace('/tmp/nfqws2-asus/', str(self.router) + '/tmp/nfqws2-asus/')
         text = text.replace('PATH=', 'PATH=' + str(self.bin) + ':', 1)
         # Standalone BusyBox ash prefers its built-in uname/df applets to PATH.
@@ -198,6 +252,104 @@ state_path.write_text(json.dumps(state))
 
     def installs(self):
         return [x for x in self.events if x['kind']=='install']
+
+    def package_changes(self):
+        return [x for x in self.events if x['kind'] in ['update','dependency','install']]
+
+    def test_missing_checksum_tool_is_provisioned_before_verified_install(self):
+        for mode in [None,'broken','empty','wrong']:
+            with self.subTest(sha256sum=mode):
+                self.without_checksum_tools()
+                if mode:self.checksum_command(self.bin/'sha256sum',mode)
+                self.log.unlink(missing_ok=True)
+                r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                self.assertEqual(self.package_changes(),[
+                    {'kind':'update'},{'kind':'dependency','package':'coreutils-sha256sum'},
+                    {'kind':'install','asset':f'nfqws2-asus_{VERSION}_aarch64-3.10.ipk','no_start':'1'}])
+                self.assertEqual(json.loads(self.state_path.read_text())['version'],VERSION)
+
+    def test_working_sha256sum_needs_no_checksum_dependency(self):
+        self.without_checksum_tools()
+        self.checksum_command(self.bin/'sha256sum')
+        r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertEqual([x['kind'] for x in self.package_changes()],['update','install'])
+
+    def test_each_working_busybox_falls_back_from_unusable_sha256sum(self):
+        for path in self.busybox_paths():
+            for mode in ['broken','empty','wrong']:
+                with self.subTest(path=path,sha256sum=mode):
+                    self.without_checksum_tools()
+                    self.checksum_command(self.bin/'sha256sum',mode)
+                    self.checksum_command(path,busybox=True)
+                    self.log.unlink(missing_ok=True)
+                    r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                    self.assertEqual([x['kind'] for x in self.package_changes()],['update','install'])
+
+    def test_unusable_busybox_does_not_hide_working_later_candidate(self):
+        for mode in ['broken','empty','wrong']:
+            with self.subTest(busybox=mode):
+                self.without_checksum_tools()
+                for path in self.busybox_paths()[:2]:self.checksum_command(path,mode,busybox=True)
+                self.checksum_command(self.busybox_paths()[2],busybox=True)
+                self.log.unlink(missing_ok=True)
+                r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                self.assertEqual([x['kind'] for x in self.package_changes()],['update','install'])
+
+    def test_checksum_dependency_failures_never_install_nfqws_or_change_services(self):
+        for failure in [{'update_error':True},{'dependency_error':True},
+                        {'installed_hash_mode':'missing'},{'installed_hash_mode':'broken'},
+                        {'installed_hash_mode':'empty'},{'installed_hash_mode':'wrong'}]:
+            with self.subTest(failure=failure):
+                self.without_checksum_tools()
+                self.state.update(update_error=False,dependency_error=False,installed_hash_mode='working',
+                                  version='1.3.1-asus6+b66',enabled=True,core_running=True,web_running=True)
+                self.state.update(failure)
+                self.log.unlink(missing_ok=True)
+                r=self.execute();self.assertNotEqual(r.returncode,0,r.stdout+r.stderr)
+                self.assertEqual(self.installs(),[])
+                self.assertFalse(any(x['kind']=='service' for x in self.events))
+                self.assertNotIn('Готово',r.stdout)
+                final=json.loads(self.state_path.read_text())
+                self.assertTrue(final['core_running']);self.assertTrue(final['web_running'])
+                if failure.get('update_error'):
+                    self.assertEqual(self.package_changes(),[{'kind':'update'}])
+                else:
+                    self.assertEqual(self.package_changes(),[
+                        {'kind':'update'},{'kind':'dependency','package':'coreutils-sha256sum'}])
+
+    def test_check_without_checksum_tool_reports_dependency_without_package_changes(self):
+        self.without_checksum_tools()
+        r=self.execute('--check');self.assertNotEqual(r.returncode,0)
+        self.assertIn('coreutils-sha256sum',r.stdout+r.stderr)
+        self.assertIn('--check',r.stdout+r.stderr)
+        self.assertEqual(self.package_changes(),[])
+        self.assertFalse(any(x['kind']=='service' for x in self.events))
+
+    def test_ineligible_installs_do_not_provision_checksum_dependency(self):
+        for condition in ['invalid_abi','current_version','low_storage','low_ram']:
+            with self.subTest(condition=condition):
+                self.without_checksum_tools()
+                self.state.update(arches='arch all 100\narch aarch64-3.10 160\n',version='',free_kb=1048576)
+                (self.router/'proc/meminfo').write_text('MemAvailable: 131072 kB\n')
+                if condition=='invalid_abi':self.state['arches']='arch mipsel-3.4 160\n'
+                elif condition=='current_version':self.state['version']=VERSION
+                elif condition=='low_storage':self.state['free_kb']=1
+                else:(self.router/'proc/meminfo').write_text('MemAvailable: 1024 kB\n')
+                self.log.unlink(missing_ok=True)
+                r=self.execute()
+                self.assertEqual(r.returncode,0 if condition=='current_version' else 1,r.stdout+r.stderr)
+                self.assertEqual(self.package_changes(),[])
+                self.assertFalse(any(x['kind']=='service' for x in self.events))
+
+    def test_corruption_after_checksum_provisioning_never_reaches_nfqws_install(self):
+        self.without_checksum_tools()
+        (self.http/f'nfqws2-asus_{VERSION}_aarch64-3.10.ipk').write_bytes(b'corrupt')
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        self.assertIn('Контрольная сумма',r.stdout+r.stderr)
+        self.assertEqual(self.package_changes(),[
+            {'kind':'update'},{'kind':'dependency','package':'coreutils-sha256sum'}])
+        self.assertEqual(self.installs(),[])
+        self.assertFalse(any(x['kind']=='service' for x in self.events))
 
     def test_first_install_selects_aarch64_and_keeps_processing_off(self):
         r = self.execute()
