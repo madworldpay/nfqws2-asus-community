@@ -66,6 +66,23 @@ package_healthy() {
 recovery_hash() {
     if [ "$HASH_BUSYBOX" = 1 ]; then "$HASH" sha256sum "$1"; else "$HASH" "$1"; fi
 }
+hash_works() {
+    hash_probe=$(recovery_hash /dev/null 2>/dev/null) || return 1
+    [ "${hash_probe%% *}" = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ]
+}
+select_hash() {
+    HASH_BUSYBOX=0
+    for hash_directory in $(printf '%s' "$PATH" | tr ':' ' '); do
+        HASH=$hash_directory/sha256sum
+        if [ -f "$HASH" ] && [ -x "$HASH" ] && hash_works; then return 0; fi
+    done
+    HASH_BUSYBOX=1
+    for HASH in /opt/bin/busybox /bin/busybox /opt/libexec/nfqws2-asus/busybox; do
+        if [ -x "$HASH" ] && hash_works; then return 0; fi
+    done
+    HASH='' HASH_BUSYBOX=0
+    return 1
+}
 recovery_entry() {
     recovery_path=$1
     case "$recovery_path" in /opt/*) ;; *) return 1;; esac
@@ -145,8 +162,16 @@ restore_previous_services() {
     fi
 }
 
+prepare_opkg() {
+    [ "$OPKG_UPDATED" = 0 ] || return 0
+    mkdir "$WORK/opkg" || fail 'Не удалось подготовить временный каталог opkg.'
+    say 'Обновление списка пакетов Entware…'
+    "$OPKG" --tmp-dir "$WORK/opkg" update || fail 'Не удалось обновить список пакетов Entware. Установка не выполнялась.'
+    OPKG_UPDATED=1
+}
+
 main() {
-    WORK='' CHECK_ONLY=0
+    WORK='' CHECK_ONLY=0 OPKG_UPDATED=0
     case "${1-}" in
         '') ;;
         --check) CHECK_ONLY=1 ;;
@@ -187,12 +212,6 @@ main() {
     if [ -z "$CURL" ]; then
         WGET=$(tool wget) || fail 'Для скачивания нужен curl или GNU wget: установите один из них через opkg.'
         "$WGET" --version 2>/dev/null | grep -q 'GNU Wget' || fail 'Для HTTPS нужен curl или GNU wget из Entware.'
-    fi
-    HASH=$(tool sha256sum) || HASH=''
-    HASH_BUSYBOX=0
-    if [ -z "$HASH" ]; then
-        /bin/busybox sha256sum /dev/null >/dev/null 2>&1 || fail 'Не найден sha256sum. Установите coreutils-sha256sum через opkg.'
-        HASH=/bin/busybox HASH_BUSYBOX=1
     fi
     mkdir -p /opt/tmp || fail 'Entware недоступна для записи.'
     work_attempt=0
@@ -253,6 +272,13 @@ EOF
         END{if(have)print available;else print free+buffers+cached}
     ' /proc/meminfo)
     [ "$memory_kb" -ge 32768 ] || fail 'Недостаточно свободной оперативной памяти: нужно не менее 32 МБ. Освободите память и повторите команду.'
+    if ! select_hash; then
+        [ "$CHECK_ONLY" = 0 ] || fail 'Для проверки нужен рабочий sha256sum (coreutils-sha256sum). Режим --check ничего не устанавливает.'
+        prepare_opkg
+        say 'Установка coreutils-sha256sum для проверки пакета…'
+        "$OPKG" --tmp-dir "$WORK/opkg" install coreutils-sha256sum || fail 'Не удалось установить coreutils-sha256sum. NFQWS2 ASUS не устанавливался; повторите команду.'
+        select_hash || fail 'После установки coreutils-sha256sum не найден рабочий SHA256. NFQWS2 ASUS не устанавливался; сохраните вывод установки.'
+    fi
     say "Скачивание Build $build…"
     package=$WORK/$asset_name
     download "https://github.com/madworldpay/nfqws2-asus-community/releases/download/build$build/$asset_name" "$package" 33554432
@@ -284,9 +310,7 @@ EOF
     if [ -n "$previous_version" ] && { [ "$previous_core" = 1 ] || [ "$previous_web" = 1 ]; } && [ "$recovery_ready" != 1 ]; then
         fail 'Не удалось подготовить безопасное восстановление прежних служб. Установка не выполнялась, работающие службы не останавливались. Проверьте файлы NFQWS2 и сохраните вывод.'
     fi
-    mkdir "$WORK/opkg" || fail 'Не удалось подготовить временный каталог opkg.'
-    say 'Обновление списка пакетов Entware…'
-    "$OPKG" --tmp-dir "$WORK/opkg" update || fail 'Не удалось обновить список пакетов Entware. Установка не выполнялась.'
+    prepare_opkg
     say 'Установка NFQWS2 ASUS с сохранением настроек…'
     if ! NFQWS_ASUS_NO_START=$no_start "$OPKG" --tmp-dir "$WORK/opkg" install "$package"; then
         restore_previous_services || :
