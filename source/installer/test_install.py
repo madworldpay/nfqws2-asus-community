@@ -19,6 +19,7 @@ VERSION = '1.3.2-asus6+b67'
 class InstallerTests(unittest.TestCase):
     def setUp(self):
         self.installer=INSTALLER
+        self.stock_busybox=None
         self.isolated_checksum_tools=False
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -270,6 +271,8 @@ print(digest+'  '+name)
         if self.state['enabled']:enabled.touch()
         else:enabled.unlink(missing_ok=True)
         text = self.installer.read_text()
+        if self.stock_busybox is not None:
+            text=re.sub(r'(?<![\w/])/bin/busybox\b',str(self.stock_busybox),text)
         if self.isolated_checksum_tools:
             text=text.replace('PATH=/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin',f'PATH={self.bin}:/opt/bin')
             text=re.sub(r'(?<![\w/])/bin/busybox\b',str(self.router/'bin/busybox'),text)
@@ -307,6 +310,22 @@ print(digest+'  '+name)
 
     def installs(self):
         return [x for x in self.events if x['kind']=='install']
+
+    def test_fresh_stock_firmware_without_daemon_applet_installs_without_starting_core(self):
+        self.stock_busybox=self.work/'stock-busybox'
+        self.tool('stock-busybox',r'''
+import subprocess
+if sys.argv[1:]==['--list']:
+    print('\n'.join(x for x in subprocess.check_output(['/bin/busybox','--list'],text=True).splitlines() if x!='start-stop-daemon'))
+elif sys.argv[1:2]==['start-stop-daemon']:
+    print('start-stop-daemon: applet not found',file=sys.stderr);sys.exit(127)
+else:os.execv('/bin/busybox',['/bin/busybox']+sys.argv[1:])
+''',self.stock_busybox)
+        result=self.execute()
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(self.installs(),[{'kind':'install','asset':f'nfqws2-asus_{VERSION}_aarch64-3.10.ipk','no_start':'1'}])
+        self.assertEqual(json.loads(self.state_path.read_text())['version'],VERSION)
+        self.assertFalse(any(e.get('kind')=='service' and e.get('action')=='start' for e in self.events))
 
     def package_changes(self):
         return [x for x in self.events if x['kind'] in ['update','dependency','install']]

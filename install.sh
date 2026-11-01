@@ -37,7 +37,29 @@ job_result=$?
 printf '%s\n' "$job_result" > "$job_dir/job.status.new" && mv "$job_dir/job.status.new" "$job_dir/job.status"
 exit "$job_result"
 NFQWS_ASUS_JOB
-    /bin/busybox start-stop-daemon -S -b -p "$WORK/unused-job.pid" -x /bin/sh -- "$WORK/job.sh" "$WORK" "$@" || return 1
+    background_applets=$(/bin/busybox --list 2>/dev/null) || background_applets=''
+    case "
+$background_applets
+" in *"
+start-stop-daemon
+"*)
+        /bin/busybox start-stop-daemon -S -b -p "$WORK/unused-job.pid" -x /bin/sh -- "$WORK/job.sh" "$WORK" "$@" || return 1
+        ;;
+    *)
+        background_setsid=$(tool setsid) || background_setsid=''
+        # Stock ASUS BusyBox may omit daemon applets. Ignore HUP before forking
+        # so the child inherits that disposition even before job.sh starts.
+        # Redirect all terminal descriptors; retain the transaction leases.
+        trap '' HUP
+        (
+            if [ -n "$background_setsid" ]; then
+                exec "$background_setsid" /bin/sh "$WORK/job.sh" "$WORK" "$@"
+            fi
+            exec /bin/sh "$WORK/job.sh" "$WORK" "$@"
+        ) </dev/null >/dev/null 2>&1 &
+        trap 'exit 143' HUP
+        ;;
+    esac
     job_attempt=0
     while [ ! -f "$WORK/job.pid" ]; do
         job_attempt=$((job_attempt+1)); [ "$job_attempt" -lt 5 ] || return 1
@@ -515,7 +537,29 @@ job_result=$?
 printf '%s\n' "$job_result" > "$job_dir/job.status.new" && mv "$job_dir/job.status.new" "$job_dir/job.status"
 exit "$job_result"
 NFQWS_ASUS_JOB
-    /bin/busybox start-stop-daemon -S -b -p "$WORK/unused-job.pid" -x /bin/sh -- "$WORK/job.sh" "$WORK" "$@" || return 1
+    background_applets=$(/bin/busybox --list 2>/dev/null) || background_applets=''
+    case "
+$background_applets
+" in *"
+start-stop-daemon
+"*)
+        /bin/busybox start-stop-daemon -S -b -p "$WORK/unused-job.pid" -x /bin/sh -- "$WORK/job.sh" "$WORK" "$@" || return 1
+        ;;
+    *)
+        background_setsid=$(tool setsid) || background_setsid=''
+        # Stock ASUS BusyBox may omit daemon applets. Ignore HUP before forking
+        # so the child inherits that disposition even before job.sh starts.
+        # Redirect all terminal descriptors; retain the transaction leases.
+        trap '' HUP
+        (
+            if [ -n "$background_setsid" ]; then
+                exec "$background_setsid" /bin/sh "$WORK/job.sh" "$WORK" "$@"
+            fi
+            exec /bin/sh "$WORK/job.sh" "$WORK" "$@"
+        ) </dev/null >/dev/null 2>&1 &
+        trap 'exit 143' HUP
+        ;;
+    esac
     job_attempt=0
     while [ ! -f "$WORK/job.pid" ]; do
         job_attempt=$((job_attempt+1)); [ "$job_attempt" -lt 5 ] || return 1
