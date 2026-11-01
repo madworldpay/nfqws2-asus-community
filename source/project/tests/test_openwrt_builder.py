@@ -71,6 +71,32 @@ class NativeBuilderTests(unittest.TestCase):
             (dist/'openwrt-package-quiesce.php').write_text('<?php /* older backend */')
             with self.assertRaises(RuntimeError):builder.web_payload(dist)
 
+    def test_native_dns_control_resumes_native_intent_after_acquiring_lease(self):
+        php=os.environ.get('PHP_TEST_BINARY')
+        if not php:self.skipTest('PHP interpreter not selected')
+        # Execute the emitted controller; only the native OS/classes boundary is
+        # a fixture. An unchanged ASUS intent path would silently exit early.
+        files=builder.smartdns_runtime_files()
+        with tempfile.TemporaryDirectory()as folder:
+            root=Path(folder);share=root/'share';share.mkdir();state=root/'state';state.mkdir()
+            (state/'resume-intent.json').write_text('{}')
+            (root/'status').write_text('Uid:\t0\t0\t0\t0\n')
+            (share/'update-guard.php').write_text('''<?php
+class AsusUpdateStore {} class AsusUpdateGuard {function __construct($s){} function authorize($a){return false;} function mutationLease(){file_put_contents(__DIR__.'/lease','held');return null;}}
+''')
+            (share/'smartdns-lifecycle.php').write_text('''<?php
+if(!is_file(__DIR__.'/lease'))throw new RuntimeException('lease_missing');
+class AsusSmartDnsStore {function intent(){return ['saved'=>true];} function directory($c){return dirname(__DIR__).'/state';}}
+class AsusSmartDnsInstaller {} class AsusSmartDnsNativeBackend {static function create($s,$i){return new self;}}
+class AsusSmartDnsConfigJobs {function __construct($s,$b){}}
+class AsusSmartDnsLifecycle {function __construct($s,$b){} function resume(){file_put_contents(__DIR__.'/resumed','yes');return ['state'=>'idle'];}}
+''')
+            code=files['usr/lib/nfqws2/smartdns/control.php'][0].decode().replace('/proc/self/status',str(root/'status')).replace('/usr/share/nfqws2-web/',str(share)+'/').replace('/etc/nfqws2-web/smartdns/',str(state)+'/')
+            entry=root/'control.php';entry.write_text(code)
+            result=subprocess.run([php,'-n',str(entry),'resume'],capture_output=True,text=True,timeout=3)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr);self.assertEqual(result.stderr,'')
+            self.assertEqual(json.loads(result.stdout),{'state':'idle'});self.assertTrue((share/'resumed').exists())
+
     def test_staging_never_inherits_group_writable_developer_directories(self):
         with tempfile.TemporaryDirectory()as td:
             root=Path(td)/'payload';old=os.umask(0o002)
@@ -145,11 +171,12 @@ class NativeBuilderTests(unittest.TestCase):
             root=Path(td)/'root';builder.write_files(root,files)
             web=root/'usr/lib/nfqws2-web/nfqws2-native-web';web.parent.mkdir(parents=True);web.write_text('fixture')
             builder.write_files(root,{'usr/share/nfqws2/defaults/web-config':((ROOT/'openwrt/web-config').read_bytes(),0o600)})
-            active=root/'etc/nfqws2/nfqws2.conf';active.parent.mkdir(parents=True);active.write_text('# preserve my config\n')
+            active=root/'etc/nfqws2/nfqws2.conf';active.parent.mkdir(parents=True);(root/'etc').chmod(0o755);active.parent.chmod(0o755);active.write_text('# preserve my config\n')
             schedule=active.parent/'restart-schedule.conf';schedule.write_text('periodic and watchdog settings\n');schedule.chmod(0o600)
             custom=active.parent/'lua/manual.lua';custom.parent.mkdir(mode=0o755);custom.write_text('my Lua\n')
             hook=Path(td)/'postinst';hook.write_bytes(builder.package_hook(target,'postinstall'))
-            subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},check=True,capture_output=True)
+            result=subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},text=True,capture_output=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
             self.assertEqual(active.read_text(),'# preserve my config\n')
             self.assertEqual(schedule.read_text(),'periodic and watchdog settings\n')
             self.assertEqual(custom.read_text(),'my Lua\n')

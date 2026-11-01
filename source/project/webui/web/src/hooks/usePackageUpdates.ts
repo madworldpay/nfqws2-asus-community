@@ -27,9 +27,16 @@ export function usePackageUpdates(
     source: 'check' | 'operation';
     snapshot?: number;
   }>();
+  const [applyingGrace, setApplyingGrace] = useState<{
+    csrf: string | undefined;
+    id: string;
+    expires: number;
+  }>();
+  const applyingWindow = useRef<typeof applyingGrace>(undefined);
   const generation = useRef(0);
   const refreshRequest = useRef<Promise<void> | null>(null);
   const mutating = useRef(false);
+  const explicitRefresh = useRef(false);
   const checked = useRef(false);
   const prepareRequest = useRef<{
     revision: string;
@@ -89,7 +96,9 @@ export function usePackageUpdates(
           client.getQueryData<PackageOverview>(key)?.operation?.state ?? '',
         );
       if (!enabled || mutating.current || active()) return Promise.resolve();
+      if (force) explicitRefresh.current = true;
       if (refreshRequest.current) return refreshRequest.current;
+      explicitRefresh.current = force;
       checked.current = true;
       const epoch = generation.current;
       const snapshot = client.getQueryState(key)?.dataUpdateCount;
@@ -122,6 +131,14 @@ export function usePackageUpdates(
                 await new Promise((resolve) => setTimeout(resolve, 250));
                 continue;
               }
+              // Background lock contention is not an installation failure.
+              // A manual check joining this request must still get its result.
+              if (
+                code === 'busy' &&
+                !explicitRefresh.current &&
+                client.getQueryData(key)
+              )
+                return;
               setError((old) =>
                 old?.source === 'operation'
                   ? old
@@ -164,6 +181,48 @@ export function usePackageUpdates(
       setError(undefined);
   }, [error, query.isSuccess, query.data, query.dataUpdatedAt, client, csrf]);
   const op = query.data?.operation;
+  const operationId = op?.id;
+  const operationState = op?.state;
+  useEffect(() => {
+    if (
+      !enabled ||
+      !operationId ||
+      applyingWindow.current?.csrf !== csrf ||
+      applyingWindow.current?.id !== operationId
+    )
+      applyingWindow.current = undefined;
+    if (!enabled || !operationId || operationState !== 'applying') {
+      setApplyingGrace(undefined);
+      return;
+    }
+    // The package worker stops this panel during replacement. Only a known
+    // operation gets one bounded window; polling never extends the deadline.
+    const window = applyingWindow.current ?? {
+      csrf,
+      id: operationId,
+      expires: Date.now() + 120000,
+    };
+    applyingWindow.current = window;
+    setApplyingGrace(window);
+    const timer = setTimeout(
+      () =>
+        setApplyingGrace((current) =>
+          current === window ? undefined : current,
+        ),
+      Math.max(0, window.expires - Date.now()),
+    );
+    return () => clearTimeout(timer);
+  }, [enabled, csrf, operationId, operationState]);
+  const overviewError =
+    query.error instanceof PackageUpdateError ? query.error.code : undefined;
+  const restartingPanel =
+    enabled &&
+    op?.state === 'applying' &&
+    applyingGrace?.id === op.id &&
+    applyingGrace.csrf === csrf &&
+    Date.now() < applyingGrace.expires &&
+    (overviewError === 'request_failed' ||
+      overviewError === 'invalid_response');
   useEffect(() => {
     if (
       op &&
@@ -218,8 +277,10 @@ export function usePackageUpdates(
     notesLoading: notesEnabled && notesQuery.isFetching,
     error:
       error?.code ??
-      (query.error instanceof PackageUpdateError
-        ? query.error.code
+      (overviewError &&
+      !(overviewError === 'busy' && query.data) &&
+      !restartingPanel
+        ? overviewError
         : undefined),
     refresh,
     prepare: async (revision: string) => {

@@ -78,6 +78,31 @@ class PackageUpdateStoreTests(unittest.TestCase):
         for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
         self.assertFalse(own.exists());self.assertEqual(unknown.read_text(),'KEEP')
 
+    def test_rotation_reclaims_only_predeclared_partial_rollback_snapshot(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        rollback=folder/'rollback';rollback.mkdir(mode=0o700)
+        partial=rollback/'package.ipk';partial.write_bytes(b'partial');partial.chmod(0o600)
+        note=rollback/'operator-note';note.write_text('KEEP')
+        index=rollback/'staging.json';index.write_text(json.dumps({'files':{'package.ipk':{'mode':0o600,'size':100,'sha256':hashlib.sha256(b'complete').hexdigest()}}}));index.chmod(0o600)
+        self.call([['update',[job,{'state':'interrupted','code':'interrupted'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertFalse(partial.exists());self.assertFalse(index.exists());self.assertEqual(note.read_text(),'KEEP')
+
+    def test_rotation_prunes_only_indexed_rollback_bytes_and_keeps_operator_note(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        rollback=folder/'rollback';rollback.mkdir(mode=0o700)
+        own=rollback/'package.ipk';own.write_bytes(b'old sealed payload');own.chmod(0o600)
+        note=rollback/'operator-note';note.write_text('KEEP')
+        index=rollback/'cleanup-index.json';index.write_text(json.dumps({'files':{'package.ipk':{'mode':0o600,'size':18,'sha256':hashlib.sha256(b'old sealed payload').hexdigest()}}}));index.chmod(0o600)
+        names=['rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','rollback-finalize-error.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json']
+        for name in names:p=folder/name;p.write_text('{}');p.chmod(0o600)
+        self.call([['update',[job,{'state':'failed','code':'update_rolled_back'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertFalse(own.exists());self.assertFalse(index.exists());self.assertEqual(note.read_text(),'KEEP')
+        for name in names:self.assertFalse((folder/name).exists(),name)
+
     def test_rotation_reclaims_killed_recovery_spool_and_retained_opkg_log(self):
         job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
         for name in ['recovery-data.gz','opkg.log']:

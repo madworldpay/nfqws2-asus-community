@@ -119,6 +119,7 @@ def payload_files(target,engine,source=None):
     for name in ['control.sh','platform.sh','firewall.sh','firewall-hook.sh','config.php','config-cli.php','flow.php','flow-cli.php','resource-upgrade.php','nfqws2.init']:
         installed='nfqws2-native'if name=='nfqws2.init'else name
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
+    files.update(ip_health_payload())
     files['usr/lib/nfqws2/diagnostics.sh']=((ROOT/'asus/diagnostics.sh').read_bytes(),0o644)
     files['usr/lib/nfqws2/restart-schedule.sh']=((ROOT/'asus/restart-schedule.sh').read_bytes(),0o644)
     files['usr/lib/nfqws2/restart-schedule-worker.php']=((HERE/'restart-schedule-worker.php').read_bytes(),0o644)
@@ -188,6 +189,23 @@ def payload_files(target,engine,source=None):
     return files
 
 
+def ip_health_payload():
+    worker=(ROOT/'ip-health/worker.php').read_text()
+    replacements=[('/opt/share/nfqws-asus-web/ip-health-runtime.php','/usr/share/nfqws2-web/ip-health-runtime.php'),
+        ("$private='/tmp/nfqws2-asus/ip-health-private';$public='/tmp/nfqws2-asus-ip-health';", "$root=realpath('/var/run/nfqws2-native');if($root===false)exit(1);$private=$root.'/ip-health-private';$public='/tmp/nfqws2-native-ip-health';"),
+        ('new NfqwsIpHealthStore()','new NfqwsIpHealthStore(null,$public)'),
+        ('new NfqwsIpHealthRuntime($store,$private,$public)',"new NfqwsIpHealthRuntime($store,$private,$public,'/proc','/usr/bin/nfqws2')")]
+    for before,after in replacements:
+        if worker.count(before)!=1:raise RuntimeError('IP Health native worker contract changed')
+        worker=worker.replace(before,after)
+    files={'usr/lib/nfqws2/ip-health/worker.php':(worker.encode(),0o644)}
+    for source,name in [('ip-health-runtime.sh','runtime.sh'),('ip-health-service.sh','service.sh')]:
+        files['usr/lib/nfqws2/ip-health/'+name]=((HERE/source).read_bytes(),0o755 if name=='service.sh'else 0o644)
+    for name in ['dns.lua','monitor.lua']:
+        files['usr/lib/nfqws2/ip-health/'+name]=((ROOT/'ip-health'/name).read_bytes(),0o644)
+    return files
+
+
 def smartdns_runtime_files():
     # Keep the tested common owner algorithms. Every fixed replacement is
     # counted, so changes to their source contract fail the native build.
@@ -203,7 +221,9 @@ def smartdns_runtime_files():
         data=adapt(name,[('/opt/share/nfqws-asus-web/','/usr/share/nfqws2-web/')])
         files['usr/lib/nfqws2/smartdns/'+name]=(data,0o644)
     files['usr/lib/nfqws2/smartdns/control.php']=(adapt('control.php',[
-        ('/opt/share/nfqws-asus-web/','/usr/share/nfqws2-web/'),
+        ('/opt/share/nfqws-asus-web/update-guard.php','/usr/share/nfqws2-web/update-guard.php'),
+        ('/opt/share/nfqws-asus-web/smartdns-lifecycle.php','/usr/share/nfqws2-web/smartdns-lifecycle.php'),
+        ('/opt/etc/nfqws-asus-web/smartdns/resume-intent.json','/etc/nfqws2-web/smartdns/resume-intent.json'),
         ('new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller())','AsusSmartDnsNativeBackend::create($store,new AsusSmartDnsInstaller())')]),0o644)
     files['usr/lib/nfqws2/smartdns/config-worker.sh']=(adapt('config-worker.sh',[
         ('root=/opt/etc/nfqws-asus-web/smartdns','root=/etc/nfqws2-web/smartdns'),

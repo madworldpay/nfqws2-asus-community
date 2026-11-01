@@ -2,6 +2,8 @@
 require_once __DIR__.'/update-prepare.php';
 require_once __DIR__.'/update-runtime.php';
 require_once __DIR__.'/update-guard.php';
+require_once __DIR__.'/update-rollback.php';
+require_once __DIR__.'/update-smartdns-resume.php';
 require_once __DIR__.'/smartdns-lifecycle.php';
 
 /** Root-only staged implementation. There is no HTTP entry or command input. */
@@ -41,21 +43,74 @@ final class AsusUpdateWorker
         AsusUpdateSnapshot::verify($env['opt'],$this->store->path($base.'/backup'),$this->owner());
         AsusUpdatePackage::space($env['free'],0,0,0);return [$env,$candidate];
     }
+    private function runtime(string $id):array
+    {
+        $job=$this->store->readOperation($id);$runtime=AsusUpdateRuntime::load($this->store->path('operations/'.$id.'/runtime'),$this->owner());
+        if(!is_string($job['runtime_digest']??null)||!hash_equals($job['runtime_digest'],$runtime['digest']))throw new RuntimeException('runtime_changed');return $runtime;
+    }
+    private function installer(string $id):array
+    {
+        $status=@file_get_contents('/proc/self/status');if(!is_string($status)||!preg_match('/^PPid:\s+([0-9]+)/m',$status,$m))throw new RuntimeException('invalid_state');
+        $installer=AsusUpdateLifecycle::identity((int)$m[1]);$expected=$this->store->path('operations/'.$id.'/runtime/update-launch');
+        if($installer===null||$installer['exe']!==$expected||$installer['uid']!==$this->owner())throw new RuntimeException('invalid_state');return $installer;
+    }
+    private function rollbackEnvironment(string $id):array
+    {$env=$this->prepare->rollbackEnvironment();$env['candidate_version']=$this->store->readOperation($id)['package_version'];return $env;}
+    private function rollbackPreflight(string $id,string $action,array $t):void
+    {
+        $this->runtime($id);if(!in_array($t['phase'],['stopping','installing','starting'],true)||$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null)throw new RuntimeException('rollback_failed');
+        $env=$this->rollbackEnvironment($id);$directory=$this->store->path('operations/'.$id.'/rollback');$settings=$this->store->path('operations/'.$id.'/backup');
+        $m=AsusUpdateRollback::load($directory,$this->owner());AsusUpdateRollback::assertForeign($env,$m);$installer=$this->installer($id);
+        if($action==='rollback-verify'){
+            if($this->store->readFile('operations/'.$id.'/rollback-finalized.json',1024)===null)throw new RuntimeException('rollback_failed');
+            $verified=AsusUpdateRollback::verifyInstalled($env,$directory,$settings);$this->quiesceDns($id,'after');
+            $this->ticket($id,'starting',['installer'=>$installer]);$this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');
+            // A completed stop and a fresh start are required. Never accept the
+            // old daemon's already-running shortcut after detached firewall.
+            if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('rollback_failed');
+            $core=$this->lifecycle->restore($t['intent']);$this->store->writeFile('operations/'.$id.'/rollback-result.json',json_encode(['version'=>$verified['version'],'core_state'=>$core,'settings_verified'=>true],JSON_THROW_ON_ERROR));return;
+        }
+        $this->ticket($id,'stopping',['installer'=>$installer]);$this->store->update($id,['phase'=>'stopping']);
+        if($this->store->readFile('operations/'.$id.'/services-stopped.json',1024)===null)throw new RuntimeException('rollback_failed');
+        $this->lifecycle->stop();if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('rollback_failed');
+        $this->ticket($id,'installing');if($this->store->readFile('operations/'.$id.'/web-started.json',1024)!==null)$this->lifecycle->webStop();$this->store->update($id,['phase'=>'installing']);
+    }
+    /** Fixed snapshot postinst, under the real opkg process and its POSIX mutex. */
+    public function rollbackFinalize(string $id):void
+    {
+        $stage='runtime';
+        try{
+            $this->runtime($id);$stage='context';$t=$this->guard()->context($id);$stage='authorization';
+            if($t['phase']!=='installing'||!$this->guard()->authorize('hook-postinst'))throw new RuntimeException('rollback_failed');
+            $stage='environment';$env=$this->rollbackEnvironment($id);
+            $stage='restore';AsusUpdateRollback::finalize($env,$this->store->path('operations/'.$id.'/rollback'),$this->store->path('operations/'.$id.'/backup'));
+            $stage='receipt';$this->store->writeFile('operations/'.$id.'/rollback-finalized.json',json_encode(['restored'=>true],JSON_THROW_ON_ERROR));
+        }catch(Throwable $e){
+            try{$this->store->writeFile('operations/'.$id.'/rollback-finalize-error.json',json_encode(['schema'=>1,'stage'=>$stage,'code'=>AsusUpdatePrepare::code($e),'guard'=>$this->guard()->diagnostic($id)],JSON_THROW_ON_ERROR));}catch(Throwable $ignored){}
+            throw $e;
+        }
+    }
     /** Native launcher owns the opkg POSIX mutex throughout this child check. */
     public function preflight(string $id,string $action='install'): void
     {
         $f=$this->store->lease('operations/'.$id.'/critical.lock');
         try{
-            $t=$this->guard()->context($id);if($t['phase']!=='validating'||$t['installer']!==null)throw new RuntimeException('invalid_state');
+            $t=$this->guard()->context($id);if(in_array($action,['rollback','rollback-verify'],true)){$this->rollbackPreflight($id,$action,$t);return;}
+            if($t['phase']!=='validating'||$t['installer']!==null)throw new RuntimeException('invalid_state');
             if($this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             $raw=$this->store->readFile('operations/'.$id.'/guard.json',4096);$guard=$raw===null?null:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
             if(!is_array($guard)||($guard['child']??null)!==$t['worker']||!is_numeric($guard['deadline']??null)||AsusUpdateStore::uptime()>=$guard['deadline'])throw new RuntimeException('timed_out');
             [$env,$candidate]=$this->validate($id,false);
             if(!in_array($action,['install','configure'],true)||$action!==($candidate['action']??'install'))throw new RuntimeException('invalid_state');
-            $status=@file_get_contents('/proc/self/status');if(!is_string($status)||!preg_match('/^PPid:\s+([0-9]+)/m',$status,$m))throw new RuntimeException('invalid_state');
-            $installer=AsusUpdateLifecycle::identity((int)$m[1]);$expected=$this->store->path('operations/'.$id.'/runtime/update-launch');
-            if($installer===null||$installer['exe']!==$expected||$installer['uid']!==$this->owner())throw new RuntimeException('invalid_state');
-            $intent=$this->lifecycle->intent();
+            $installer=$this->installer($id);$intent=$this->lifecycle->intent();
+            if($action==='install'){
+                $argv=array_merge($this->runtime($id)['argv'],['--','rollback-finalize',$id]);
+                $postinst="#!/bin/sh\nexec ".implode(' ',array_map('escapeshellarg',$argv))."\n";
+                $env['defaults']=AsusUpdatePackage::stockDefaults($this->store->path('operations/'.$id.'/package.ipk'),$env['opt'],$this->owner());
+                AsusUpdateRollback::capture($env,$this->store->path('operations/'.$id.'/rollback'),$this->store->path('operations/'.$id.'/backup'),$postinst);
+            }
+            $this->quiesceDns($id,'before');
+            if(AsusUpdateStore::uptime()>=$guard['deadline']||$this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             // Sticky boundary is serialized with guardian cancellation. From
             // here neither the worker nor opkg may be killed by that deadline.
             $this->store->writeFile('operations/'.$id.'/boundary.json',json_encode(['phase'=>'installing'],JSON_THROW_ON_ERROR));
@@ -63,21 +118,24 @@ final class AsusUpdateWorker
             $this->store->update($id,['intent'=>$intent,'phase'=>'stopping']);
             $this->assertDnsUpdateReady();
             (new AsusSmartDnsLifecycle(new AsusSmartDnsStore()))->stop('upgrade');
-            $this->lifecycle->stop();
+            $this->lifecycle->stop();$this->ticket($id,'installing');$this->lifecycle->webStop();
+            $this->store->writeFile('operations/'.$id.'/services-stopped.json',json_encode(['stopped'=>true],JSON_THROW_ON_ERROR));
             $this->ticket($id,'installing');$this->store->update($id,['phase'=>'installing']);
         }finally{flock($f,LOCK_UN);fclose($f);}
     }
     private function install(string $id,array $candidate): void
     {
-        $argv=[$this->store->path('operations/'.$id.'/runtime/update-launch'),$id];if(($candidate['action']??null)==='configure')$argv[]='configure';
-        $this->store->writeFile('operations/'.$id.'/opkg.log','');
-        $p=@proc_open($argv,
-            [0=>['file','/dev/null','r'],1=>['file',$this->store->path('operations/'.$id.'/opkg.log'),'a'],2=>['file',$this->store->path('operations/'.$id.'/opkg.log'),'a']],$pipes,'/',
-            ['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','LC_ALL'=>'C']);
+        $action=$candidate['action']??'install';$argv=[$this->store->path('operations/'.$id.'/runtime/update-launch'),$id];if($action!=='install')$argv[]=$action;
+        $log=$action==='rollback'?'rollback-opkg.log':($action==='rollback-verify'?'rollback-verify.log':'opkg.log');
+        $this->store->writeFile('operations/'.$id.'/'.$log,'');
+        $mask=umask(0077);try{$p=@proc_open($argv,
+            [0=>['file','/dev/null','r'],1=>['file',$this->store->path('operations/'.$id.'/'.$log),'a'],2=>['file',$this->store->path('operations/'.$id.'/'.$log),'a']],$pipes,'/',
+            ['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','LC_ALL'=>'C']);}finally{umask($mask);}
         if(!is_resource($p))throw new RuntimeException('launch_failed');$exit=null;
         try{do{$status=proc_get_status($p);if(!$status['running']){$exit=$status['exitcode'];break;}usleep(25000);}while(true);}
         finally{$closed=proc_close($p);if($exit===null||$exit<0)$exit=$closed;}
         if($exit!==0){
+            if(in_array($action,['rollback','rollback-verify'],true))throw new RuntimeException('rollback_failed');
             $raw=$this->store->readFile('operations/'.$id.'/preflight-error.json',1024);
             if($raw!==null){$value=json_decode($raw,true,4,JSON_THROW_ON_ERROR);throw new RuntimeException($value['code']??'install_failed');}
             if($exit===73&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null)throw new RuntimeException('opkg_busy');
@@ -101,6 +159,29 @@ final class AsusUpdateWorker
             usleep(100000);
         }while(AsusUpdateStore::uptime()<$end);return false;
     }
+    private function quiesceDns(string $id,string $phase):void
+    {
+        $result=(new AsusUpdateSmartDnsResume($this->options['dns_resume_options']??[]))->quiesce();
+        $this->store->writeFile('operations/'.$id.'/dns-resume-quiesced-'.$phase.'.json',json_encode($result,JSON_THROW_ON_ERROR));
+    }
+    private function resumeDns(string $id):void
+    {
+        // This subprocess loads freshly installed code only after our updater
+        // lease is released. A failed queue keeps the consent-bound intent.
+        $result=['state'=>'skipped'];$process=null;
+        try{
+            $env=$this->prepare->rollbackEnvironment();$path=$env['opt'].'/lib/nfqws2-asus/smartdns/control.sh';AsusUpdateStore::noLinks($path);$s=@lstat($path);
+            if($s){
+                if(($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner()||$s['nlink']!==1||($s['mode']&0022)!==0||$s['size']>16384)throw new RuntimeException('invalid_state');
+                $process=@proc_open(['/bin/sh',$path,'queue-resume'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','LC_ALL'=>'C']);
+                if(!is_resource($process))throw new RuntimeException('launch_failed');$end=AsusUpdateStore::uptime()+5;$exit=null;
+                do{$status=proc_get_status($process);if(!$status['running']){$exit=$status['exitcode'];break;}if(AsusUpdateStore::uptime()>=$end){proc_terminate($process,15);usleep(100000);$status=proc_get_status($process);if($status['running'])proc_terminate($process,9);throw new RuntimeException('timed_out');}usleep(20000);}while(true);
+                $closed=proc_close($process);$process=null;if($exit===null||$exit<0)$exit=$closed;if($exit!==0)throw new RuntimeException('launch_failed');$result=['state'=>'queued'];
+            }
+        }catch(Throwable $e){$result=['state'=>'failed','code'=>AsusUpdatePrepare::code($e)];}
+        finally{if(is_resource($process))proc_close($process);}
+        $this->store->writeFile('operations/'.$id.'/dns-resume.json',json_encode($result,JSON_THROW_ON_ERROR));
+    }
     public function apply(string $id): array
     {
         $apply=$this->store->lease('apply.lock');
@@ -117,12 +198,24 @@ final class AsusUpdateWorker
                 $after=$this->prepare->environment();if($after['installed']!==$candidate['package_version']||$after['pending'])throw new RuntimeException('version_mismatch');
                 AsusUpdateSnapshot::verify($env['opt'],$this->store->path('operations/'.$id.'/backup'),$this->owner(),true);
                 $t=$this->ticket($id,'starting');$this->store->update($id,['phase'=>'verifying','installed_version'=>$after['installed'],'settings_verified'=>true]);
+                $this->store->writeFile('operations/'.$id.'/web-started.json',json_encode(['started'=>true],JSON_THROW_ON_ERROR));
                 $this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');
                 $core=$this->lifecycle->restore($t['intent']);
-                $this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
+                $this->quiesceDns($id,'after');$this->resumeDns($id);$this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
             }catch(Throwable $e){
+                $code=AsusUpdatePrepare::code($e);$patch=[];
+                if($ticket&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)!==null&&is_dir($this->store->path('operations/'.$id.'/rollback'))){
+                    $this->store->writeFile('operations/'.$id.'/update-failure.json',json_encode(['code'=>$code],JSON_THROW_ON_ERROR));
+                    try{
+                        if(in_array($code,['core_stop_failed','web_stop_failed'],true))throw new RuntimeException('rollback_failed');
+                        $this->install($id,['action'=>'rollback']);$this->install($id,['action'=>'rollback-verify']);
+                        $result=json_decode($this->store->readFile('operations/'.$id.'/rollback-result.json',1024)??'',true,4,JSON_THROW_ON_ERROR);
+                        if(!is_array($result)||($result['settings_verified']??null)!==true||!in_array($result['core_state']??null,['running','waiting_for_wan','stopped'],true))throw new RuntimeException('rollback_failed');
+                        $this->resumeDns($id);$patch=['core_state'=>$result['core_state'],'installed_version'=>$result['version'],'settings_verified'=>true,'phase'=>'finished'];$code='update_rolled_back';
+                    }catch(Throwable $rollback){$this->store->writeFile('operations/'.$id.'/rollback-failure.json',json_encode(['code'=>AsusUpdatePrepare::code($rollback)],JSON_THROW_ON_ERROR));$patch=['settings_verified'=>false];$code='rollback_failed';}
+                }
                 if($ticket){try{$this->ticket($id,'finished');}catch(Throwable $ignored){}}
-                return $this->store->update($id,['state'=>'failed','code'=>AsusUpdatePrepare::code($e)]);
+                return $this->store->update($id,array_merge($patch,['state'=>'failed','code'=>$code]));
             }
         });}finally{flock($apply,LOCK_UN);fclose($apply);}
     }

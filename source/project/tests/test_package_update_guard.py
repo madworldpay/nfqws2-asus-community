@@ -26,6 +26,7 @@ class PackageUpdateGuardTests(unittest.TestCase):
         if(!$p['own'])$ticket['worker']['start_ticks']='1';if($p['extra']){$ticket=array_replace($ticket,$p['extra']);if(isset($p['extra']['boot_id']))$ticket['worker']['boot_id']=$p['extra']['boot_id'];}
         $s->writeFile('transaction.json',json_encode($ticket));$g=new AsusUpdateGuard($s,(int)$argv[3]);
         if($p['action']==='ordinary'){$f=$g->mutationLease();fclose($f);$v='allowed';}
+        elseif($p['action']==='diagnostic')$v=$g->diagnostic(str_repeat('a',32));
         else $v=$g->authorize($p['action']);echo json_encode(['value'=>$v]);
         }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
         r=subprocess.run([str(self.php),'-n','-r',code,str(PUBLIC),str(self.state),str(os.getuid())],input=json.dumps({'action':action,'phase':phase,'intent':intent,'own':own,'extra':extra,'old_operation':old_operation}),capture_output=True,text=True,timeout=5)
@@ -50,6 +51,16 @@ class PackageUpdateGuardTests(unittest.TestCase):
         self.assertEqual(self.call('ordinary',own=False,old_operation=True),{'value':'allowed'})
         states=json.loads((self.state/'operations.json').read_text())['operations']
         self.assertEqual(next(iter(states.values()))['state'],'interrupted')
+
+    def test_private_diagnostic_reports_closed_proof_without_process_details(self):
+        value=self.call('diagnostic',phase='installing')['value']
+        self.assertEqual(value['ticket'],'present');self.assertTrue(value['operation_matches'])
+        self.assertTrue(value['boot_matches']);self.assertTrue(value['worker_alive']);self.assertTrue(value['worker_ancestor'])
+        self.assertFalse(value['installer_alive']);self.assertFalse(value['installer_ancestor'])
+        self.assertEqual(value['installer_executable'],'missing')
+        self.assertFalse(self.call('diagnostic',own=False)['value']['worker_alive'])
+        self.assertEqual(self.call('diagnostic',extra={'untrusted':'PRIVATE_DETAIL'}),{'value':{'ticket':'invalid'}})
+        raw=json.dumps(value);self.assertNotIn(str(self.base),raw);self.assertNotIn('pid',raw);self.assertNotIn('start_ticks',raw)
 
 
 if __name__=='__main__':unittest.main()

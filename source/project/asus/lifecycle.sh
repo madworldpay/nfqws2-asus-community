@@ -30,6 +30,7 @@ asus_lock() {
 }
 
 asus_firewall_stop() {
+    if command -v asus_ip_health_stop >/dev/null 2>&1; then asus_ip_health_stop || return 1; fi
     asus_detach_family iptables
     command -v ip6tables >/dev/null 2>&1 && asus_detach_family ip6tables
     rm -f "$RUN_DIR/snapshot"
@@ -172,6 +173,7 @@ asus_kill() {
 }
 
 asus_stop() {
+    if command -v asus_ip_health_stop >/dev/null 2>&1; then asus_ip_health_stop || return 1; fi
     cru d nfqws2_asus 8>&- 9>&- >/dev/null 2>&1
     rm -f "$RUN_DIR/enabled" "$RUN_DIR/started" "$RUN_DIR/watchdog-state"
     asus_firewall_stop
@@ -234,6 +236,7 @@ asus_start() {
     while ! asus_running && [ "$tries" -lt 3 ]; do sleep 1; tries=$((tries + 1)); done
     if ! asus_running; then asus_error 'Daemon failed to start'; asus_failed_start; return 1; fi
     if ! asus_firewall_apply; then asus_error 'Firewall setup failed'; asus_failed_start; return 1; fi
+    if command -v asus_ip_health_start >/dev/null 2>&1; then asus_ip_health_start || :; fi
     if [ "${ASUS_RECONCILING:-0}" != 1 ]; then rm -f "$RUN_DIR/watchdog-state"; fi
     command -v nfqws_watchdog_running >/dev/null 2>&1 && nfqws_watchdog_running
     echo 'Started NFQWS2 ASUS service. Verify nfqa_in/nfqa_out packet counters.'
@@ -276,6 +279,7 @@ asus_reconcile() {
     [ -f "$RUN_DIR/enabled" ] || return 0
     ASUS_RECONCILING=1
     if ! asus_running; then
+        if command -v asus_ip_health_stop >/dev/null 2>&1; then asus_ip_health_stop || return 1; fi
         # No prior daemon means the explicit start is still waiting for WAN.
         if [ ! -f "$RUN_DIR/started" ]; then asus_start; else asus_watchdog_recover; fi
         return $?
@@ -296,8 +300,12 @@ asus_reconcile() {
         return $?
     fi
     if asus_snapshot > "$RUN_DIR/current" 2>/dev/null &&
-        cmp -s "$RUN_DIR/current" "$RUN_DIR/snapshot"; then return 0; fi
-    asus_firewall_apply
+        cmp -s "$RUN_DIR/current" "$RUN_DIR/snapshot"; then
+        if command -v asus_ip_health_start >/dev/null 2>&1; then asus_ip_health_start || :; fi
+        return 0
+    fi
+    asus_firewall_apply || return 1
+    if command -v asus_ip_health_start >/dev/null 2>&1; then asus_ip_health_start || :; fi
 }
 
 asus_status() {

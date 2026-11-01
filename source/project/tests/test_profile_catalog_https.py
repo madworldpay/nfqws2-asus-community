@@ -1,5 +1,5 @@
 """Real local TLS exercises certificate, redirects, size and read deadlines."""
-import http.server,json,pathlib,ssl,subprocess,tempfile,threading,time,unittest
+import http.server,json,pathlib,socket,ssl,subprocess,tempfile,threading,time,unittest
 from test_dpi_normalize import PHP,PUBLIC
 
 
@@ -33,19 +33,29 @@ class ProfileCatalogHttpsTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.server.shutdown();cls.server.server_close();cls.thread.join();cls.tmp.cleanup()
 
-    def read(self,path='/ok',cap=64,seconds=2,ca=None):
+    def read(self,path='/ok',cap=64,seconds=2,ca=None,url=None,prelude=''):
         # Reflection reaches the real reader only; production origin stays fixed.
-        code="""require $argv[1].'/profile-catalog-transport.php';try{$m=new ReflectionMethod(AsusProfileCatalogTransport::class,'https');echo json_encode(['body'=>$m->invoke(null,$argv[2],(int)$argv[3],microtime(true)+(float)$argv[4],$argv[5])]);}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"""
-        url='https://127.0.0.1:'+str(self.server.server_port)+path
+        code="""require $argv[1].'/profile-catalog-transport.php';"""+prelude+"""try{$m=new ReflectionMethod(AsusProfileCatalogTransport::class,'https');echo json_encode(['body'=>$m->invoke(null,$argv[2],(int)$argv[3],microtime(true)+(float)$argv[4],$argv[5])]);}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"""
+        url=url or 'https://127.0.0.1:'+str(self.server.server_port)+path
         r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),url,str(cap),str(seconds),str(self.cert if ca is None else ca)],text=True,capture_output=True,timeout=4)
         self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'');return json.loads(r.stdout)
 
     def test_verified_tls_succeeds_but_untrusted_certificate_is_rejected(self):
         self.assertEqual(self.read(),{'body':'{}'})
-        self.assertEqual(self.read(ca='/etc/ssl/certs/ca-certificates.crt'),{'error':'catalog_unavailable'})
+        self.assertEqual(self.read(ca='/etc/ssl/certs/ca-certificates.crt'),{'error':'catalog_tls'})
+
+    def test_missing_ca_and_https_runtime_are_distinguished_without_raw_warnings(self):
+        self.assertEqual(self.read(ca=str(self.cert)+'.absent'),{'error':'catalog_tls'})
+        self.assertEqual(self.read(prelude="stream_wrapper_unregister('https');"),{'error':'catalog_runtime'})
+
+    def test_connection_refused_has_bounded_nonsecret_diagnostic(self):
+        with socket.socket() as reserved:
+            reserved.bind(('127.0.0.1',0))
+            url='https://127.0.0.1:'+str(reserved.getsockname()[1])+'/PRIVATE_CANARY'
+            self.assertEqual(self.read(url=url),{'error':'catalog_connect'})
 
     def test_redirect_is_never_followed(self):
-        before=len(self.requests);self.assertEqual(self.read('/redirect'),{'error':'catalog_unavailable'});self.assertEqual(self.requests[before:],['/redirect'])
+        before=len(self.requests);self.assertEqual(self.read('/redirect'),{'error':'catalog_http'});self.assertEqual(self.requests[before:],['/redirect'])
 
     def test_declared_and_streamed_oversize_and_compression_are_rejected(self):
         for path in ['/length','/large','/compressed']:
@@ -53,3 +63,23 @@ class ProfileCatalogHttpsTests(unittest.TestCase):
 
     def test_slow_body_is_stopped_at_read_deadline(self):
         start=time.monotonic();self.assertEqual(self.read('/slow',seconds=.15),{'error':'catalog_timeout'});self.assertLess(time.monotonic()-start,1.5)
+
+
+class ProfileCatalogDiagnosticTests(unittest.TestCase):
+    def test_php_connection_warnings_are_projected_to_closed_codes(self):
+        # DNS is libc/system-owned; classify recorded PHP warning forms without
+        # making the offline suite depend on a working external DNS resolver.
+        cases=[
+            ('php_network_getaddresses: getaddrinfo failed: Temporary failure in name resolution PRIVATE_CANARY','catalog_dns'),
+            ('php_network_getaddresses: getaddrinfo for PRIVATE_CANARY failed: Name or service not known','catalog_dns'),
+            ('SSL operation failed with code 1: certificate verify failed PRIVATE_CANARY','catalog_tls'),
+            ('Failed to open stream: Connection refused PRIVATE_CANARY','catalog_connect'),
+            ('Failed to open stream: Network is unreachable PRIVATE_CANARY','catalog_connect'),
+            ('Failed to open stream: Connection timed out PRIVATE_CANARY','catalog_timeout'),
+            ('Unable to find the wrapper "https" PRIVATE_CANARY','catalog_runtime'),
+            ('PRIVATE_CANARY unknown provider error','catalog_unavailable'),
+        ]
+        code="""require $argv[1].'/profile-catalog-api.php';$m=new ReflectionMethod(AsusProfileCatalogTransport::class,'connectionError');$out=[];foreach(json_decode(stream_get_contents(STDIN),true) as $case){$code=$m->invoke(null,$case[0]);$out[]=['transport'=>$code,'api'=>AsusProfileCatalogApi::error(new RuntimeException($code))];}echo json_encode($out);"""
+        result=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],input=json.dumps(cases),capture_output=True,text=True,timeout=4)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr);self.assertEqual(result.stderr,'')
+        self.assertEqual(json.loads(result.stdout),[{'transport':expected,'api':expected} for _,expected in cases])

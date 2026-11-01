@@ -45,7 +45,7 @@ try {
         setCsrf,
       };});
       return <TranslationContext.Provider value={{t}}>
-        <output id="snapshot">{JSON.stringify({pending:updates.pending,error:updates.error??null,data:updates.data??null})}</output>
+        <output id="snapshot">{JSON.stringify({csrf,pending:updates.pending,error:updates.error??null,data:updates.data??null})}</output>
         <PackageUpdateDialog open onClose={()=>{}} installed="${installed}" updates={updates}/>
       </TranslationContext.Provider>;
     }
@@ -70,6 +70,10 @@ try {
       res.end(JSON.stringify(value));
     };
     if (cmd === 'packageupdatestatus') {
+      if (fixture.statusFault === 'request_failed') { res.destroy(); return; }
+      if (fixture.statusFault === 'invalid_response') { res.setHeader('Content-Type','text/html'); res.end('<html>Restarting</html>'); return; }
+      if (fixture.statusFault) return respond({error:fixture.statusFault},fixture.statusFault==='auth_required'?401:403);
+      if (fixture.statusBusy) return respond({ error: 'busy' }, 409);
       if (fixture.holdStatus) { fixture.heldStatus.push(respond); return; }
       return respond(fixture.overview);
     }
@@ -95,6 +99,7 @@ try {
   for (const lang of ['ru', 'en']) {
     const pack = JSON.parse(await readFile(join(web, `src/translations/${lang}.json`), 'utf8')).package_update;
     const run = async (name, fixture, test) => {
+      if (process.env.NFQWS_UPDATE_RECOVERY_CASE_FILTER && !name.includes(process.env.NFQWS_UPDATE_RECOVERY_CASE_FILTER)) return;
       fixture.calls = []; fixture.held = []; fixture.heldStatus = [];
       const id = `${lang}-${name}`;
       fixtures.set(id, fixture);
@@ -104,6 +109,7 @@ try {
       page.on('pageerror', error => pageErrors.push(error.message));
       await page.route('https://api.github.com/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
       try {
+        if (fixture.fixedClock) await page.clock.setFixedTime(new Date('2026-11-01T00:00:00Z'));
         await page.goto(`http://127.0.0.1:${server.address().port}/?${lang}`);
         await page.waitForFunction(() => !!window.fixture);
         await test(page, fixture);
@@ -119,8 +125,51 @@ try {
       }
     };
 
+    await run('applying-transport-grace-expiry-reset', { fixedClock:true, check:'success', overview:{check:available,operation:{...operation,state:'applying'}} }, async (page, fixture) => {
+      const start=Date.parse('2026-11-01T00:00:00Z');
+      await waitFor(page,'s.data?.operation?.state === "applying"');
+      const failures=async code=>{fixture.statusFault=code;await page.evaluate(()=>window.fixture.refetch());};
+      await failures('request_failed');
+      assert.equal((await snapshot(page)).error,null,'a validated applying operation tolerates the expected panel transport gap');
+      assert.ok(await page.getByRole('progressbar').count()>0,'installation progress stays visible during the gap');
+      await page.clock.setFixedTime(new Date(start+119999));await failures('invalid_response');
+      assert.equal((await snapshot(page)).error,null,'a restart response is tolerated only inside the same bounded grace');
+      await page.clock.setFixedTime(new Date(start+120001));await failures('request_failed');
+      assert.equal((await snapshot(page)).error,'request_failed','a persistent outage must become visible after 120 seconds');
+      fixture.statusFault=undefined;fixture.overview={check:available,operation};await page.evaluate(()=>window.fixture.refetch());
+      fixture.overview={check:available,operation:{...operation,state:'applying'}};await page.evaluate(()=>window.fixture.refetch());
+      await failures('request_failed');assert.equal((await snapshot(page)).error,'request_failed','the same operation cannot obtain another grace by changing state');
+      fixture.statusFault=undefined;fixture.overview={check:available,operation:{...operation,id:'d'.repeat(32),state:'applying'}};
+      await page.evaluate(()=>window.fixture.refetch());await waitFor(page,'s.data?.operation?.id === "'+'d'.repeat(32)+'"');
+      await failures('invalid_response');assert.equal((await snapshot(page)).error,null,'a different validated operation starts a new grace');
+      await page.clock.setFixedTime(new Date(start+240002));await failures('invalid_response');
+      assert.equal((await snapshot(page)).error,'invalid_response');
+      fixture.statusFault=undefined;await page.evaluate(()=>window.fixture.setCsrf('session-b'));
+      await waitFor(page,'s.csrf === "session-b" && s.data?.operation?.state === "applying"');
+      await failures('request_failed');assert.equal((await snapshot(page)).error,null,'a refreshed session starts its own operation grace');
+      await page.clock.setFixedTime(new Date(start+360003));await failures('request_failed');
+      assert.equal((await snapshot(page)).error,'request_failed');
+      assert.equal(count(fixture,'packageupdatecheck')+count(fixture,'packageupdateprepare')+count(fixture,'packageupdateapply'),0,'grace only polls and never checks or replays mutations');
+    });
+    await run('prepared-transport-errors-visible', {check:'success',overview:{check:available,operation}}, async (page, fixture)=>{
+      await waitFor(page,'s.data?.operation?.state === "prepared" && !s.pending');
+      fixture.statusFault='request_failed';await page.evaluate(()=>window.fixture.refetch());
+      assert.equal((await snapshot(page)).error,'request_failed','prepared is not an applying operation and gets no outage grace');
+    });
+    await run('initial-transport-errors-visible', {statusFault:'request_failed',overview:{check:available,operation:{...operation,state:'applying'}}}, async (page,fixture)=>{
+      await waitFor(page,'s.error === "request_failed"');assert.equal((await snapshot(page)).data,null,'unvalidated applying data must not grant grace');
+      fixture.statusFault='invalid_response';await page.evaluate(()=>window.fixture.refetch());
+      assert.equal((await snapshot(page)).error,'invalid_response','an initial malformed response also remains visible');
+    });
+    await run('applying-auth-errors-visible', {check:'success',overview:{check:available,operation:{...operation,state:'applying'}}}, async (page, fixture)=>{
+      await waitFor(page,'s.data?.operation?.state === "applying"');
+      for(const code of ['auth_required','csrf_failed']){fixture.statusFault=code;await page.evaluate(()=>window.fixture.refetch());assert.equal((await snapshot(page)).error,code,'authentication failures are never hidden by update grace');}
+    });
+
     // Keeping a check error after a later successful status is the reported bug.
     await run('busy-status-recovery', { check: 'busy', overview: { check: { ...current, state: 'checking' }, operation: null } }, async (page, fixture) => {
+      await waitFor(page, '!s.pending && s.data');
+      await page.evaluate(() => window.fixture.refresh());
       await page.getByText(pack.busy, { exact: true }).waitFor();
       await waitFor(page, '!s.pending');
       const checks = count(fixture, 'packageupdatecheck');
@@ -132,8 +181,28 @@ try {
       assert.equal(await page.getByRole('button', { name: pack.check, exact: true }).isEnabled(), true);
       assert.equal(await page.getByRole('button', { name: pack.prepare, exact: true }).isEnabled(), true);
       assert.equal(count(fixture, 'packageupdatecheck'), checks, 'status recovery must not trigger another background check');
-      assert.ok(checks <= 3, 'read-check busy retries must stop');
+      assert.ok(checks <= 6, 'initial and explicit checks each have at most three attempts');
       assert.equal(count(fixture, 'packageupdateprepare') + count(fixture, 'packageupdateapply'), 0);
+    });
+    await run('passive-busy-keeps-valid-overview', { check: 'busy', overview: { check: current, operation: null } }, async (page, fixture) => {
+      await waitFor(page, '!s.pending && s.data');
+      assert.equal((await snapshot(page)).error, null, 'background check contention must not turn a valid overview into an update failure');
+      assert.equal(await page.getByText(pack.busy, { exact: true }).count(), 0);
+      fixture.statusBusy = true;
+      await page.evaluate(() => window.fixture.refetch());
+      assert.equal((await snapshot(page)).error, null, 'a busy background status poll keeps the last validated overview');
+      assert.equal(count(fixture, 'packageupdateprepare') + count(fixture, 'packageupdateapply'), 0);
+      fixture.statusBusy = false;
+      await page.evaluate(() => window.fixture.refresh());
+      assert.equal((await snapshot(page)).error, 'busy', 'an explicit check still reports persistent contention');
+    });
+    await run('manual-joins-background-busy', { check: 'held', overview: { check: current, operation: null } }, async (page, fixture) => {
+      await waitFor(page, 's.pending && s.data');
+      await page.evaluate(() => { void window.fixture.refresh(); });
+      fixture.check = 'busy';
+      fixture.held.splice(0).forEach(held => held.respond({ error: 'busy' }, 409));
+      await waitFor(page, '!s.pending');
+      assert.equal((await snapshot(page)).error, 'busy', 'manual intent must survive joining an existing background check');
     });
     await run('transient-busy-retry', { check: 'transient', overview: { check: current, operation: null } }, async (page, fixture) => {
       await waitFor(page, 's.data?.check.state === "available" && !s.pending');
@@ -200,6 +269,8 @@ try {
         await waitFor(page, '!s.pending');
         await page.evaluate(() => window.fixture.refetch());
         assert.equal((await snapshot(page)).error, 'request_failed', 'successful status must preserve an ambiguous mutation failure');
+        fixture.statusFault='invalid_response';await page.evaluate(()=>window.fixture.refetch());
+        assert.equal((await snapshot(page)).error,'request_failed','transport grace must never mask or replace a manual mutation error');
         const checks = count(fixture, 'packageupdatecheck');
         await page.evaluate(() => window.fixture.refresh());
         assert.equal((await snapshot(page)).error, 'request_failed', 'a background/read check must not erase a prepare/apply error');

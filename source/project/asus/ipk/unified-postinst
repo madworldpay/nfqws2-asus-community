@@ -4,16 +4,22 @@ asus_migration_restore || exit $?
 asus_install_defaults || exit $?
 asus_install_blob_defaults || exit $?
 mkdir -p /opt/var/log /opt/var/run
-/opt/etc/init.d/S81nfqws-asus-web start || exit $?
 if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
     . /opt/lib/nfqws2-asus/update/lifecycle.sh || exit $?
     if asus_update_transaction hook-postinst; then
-        # Only the verified staged worker restores the original core intent.
-        [ ! -f /opt/lib/nfqws2-asus/smartdns/control.sh ] || /bin/sh /opt/lib/nfqws2-asus/smartdns/control.sh queue-resume || exit $?
+        # The verified staged worker restores core intent and resumes SmartDNS
+        # after commit or verified rollback; do not queue code from this payload.
         asus_migration_complete || exit $?
+        # Published80/81 coordinators have no verified-success DNS resume phase.
+        # This root helper recognizes only their sealed process-bound closure;
+        # its detached bridge waits for verified success and the updater lease.
+        if [ -f /opt/share/nfqws-asus-web/update-postinst-resume.php ]; then
+            /opt/bin/php-cgi -n -d register_argc_argv=1 -q -f /opt/share/nfqws-asus-web/update-postinst-resume.php -- queue
+        fi
         exit 0
     fi
 fi
+/opt/etc/init.d/S81nfqws-asus-web start || exit $?
 if [ "${NFQWS_ASUS_NO_START:-0}" = 1 ]; then
     echo 'Diagnostic install: start NFQWS2 after selecting a test client.'
     asus_migration_complete || exit $?

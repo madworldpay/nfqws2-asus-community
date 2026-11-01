@@ -38,6 +38,15 @@ class PackageUpdateApplyTests(unittest.TestCase):
         status=self.fixture.resume_fixture() if self.resuming else self.fixture.status()
         (self.opt/'lib/opkg').mkdir(parents=True,exist_ok=True)
         self.status=self.opt/'lib/opkg/status';self.status.write_text(status);self.status.chmod(0o600)
+        if not self.resuming:
+            info=self.opt/'lib/opkg/info';info.mkdir(parents=True,exist_ok=True)
+            (info/'nfqws2-asus.control').write_text('Package: nfqws2-asus\nVersion: 1.3.1-asus6+b10\nArchitecture: aarch64-3.10\nDepends: iptables, libc\nDescription: installed fixture\n')
+            (info/'nfqws2-asus.list').write_text('/opt/etc/nfqws2/nfqws2.conf\n')
+            # Active core settings are seeded, not declared as opkg conffiles.
+            for path in info.iterdir():path.chmod(0o644)
+            self.opt.chmod(0o755)
+            for path in self.opt.rglob('*'):
+                if path.is_dir():path.chmod(0o755)
         self.state=self.base/'state';self.state.mkdir(mode=0o700);(self.state/'operations').mkdir(mode=0o700)
         self.id='a'*32;self.op=self.state/'operations'/self.id;self.op.mkdir(mode=0o700);self.runtime=self.op/'runtime';self.runtime.mkdir(mode=0o700)
         # Production stages top-level PHP files only, never frontend assets.
@@ -55,7 +64,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
           'sed '+shlex.quote('s/Status: install user unpacked/Status: install user installed/' if self.resuming else 's/+b10/+b11/')+' '+shlex.quote(str(self.status))+' > '+shlex.quote(str(self.base/'new-status'))+'\n'
           'cat '+shlex.quote(str(self.base/'new-status'))+' > '+shlex.quote(str(self.status))+'\n')
         self.body.chmod(0o700)
-        c=self.base/'opkg.c';c.write_text('#include <unistd.h>\n#include <sys/wait.h>\nint main(int argc,char**argv){int s;int p=fork();if(!p){char*args[8];args[0]="sh";args[1]='+json.dumps(str(self.body))+';for(int i=1;i<argc&&i<6;i++)args[i+1]=argv[i];args[argc+1]=0;execv("/bin/sh",args);_exit(99);}if(p<0||waitpid(p,&s,0)!=p)return 99;return WIFEXITED(s)?WEXITSTATUS(s):99;}')
+        c=self.base/'opkg.c';c.write_text('#include <unistd.h>\n#include <sys/wait.h>\nint main(int argc,char**argv){int s;int p=fork();if(!p){char*args[64];args[0]="sh";args[1]='+json.dumps(str(self.body))+';for(int i=1;i<argc&&i<62;i++)args[i+1]=argv[i];args[argc+1]=0;execv("/bin/sh",args);_exit(99);}if(p<0||waitpid(p,&s,0)!=p)return 99;return WIFEXITED(s)?WEXITSTATUS(s):99;}')
         subprocess.run(['gcc',str(c),'-o',str(self.opkg)],check=True,capture_output=True);self.opkg.chmod(0o700)
         subprocess.run(['gcc','-Os','-nostdlib','-static','-fno-builtin','-fno-stack-protector','-fno-pie','-no-pie',
           '-DUPDATE_ROOT="'+str(self.state)+'"','-DOPKG_LOCK="'+str(self.lock)+'"','-DOPKG_BIN="'+str(self.opkg)+'"','-DUPDATE_OWNER='+str(os.getuid()),str(ROOT/'asus/update/opkg-launch.c'),'-o',str(self.runtime/'update-launch')],check=True,capture_output=True)
@@ -79,6 +88,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         (self.base/'config.json').write_text(json.dumps(config));(self.base/'config.json').chmod(0o600)
         self.entry=self.runtime/'worker.php';self.entry.write_text('''<?php
         require __DIR__.'/app/update-worker.php';
+        if(($argv[1]??null)==='--')array_splice($argv,1,1);
         $base='''+json.dumps(str(self.base))+''';$c=json_decode(file_get_contents($base.'/config.json'),true);
         $s=new AsusUpdateStore($base.'/state',$c['env']['owner']);
         $source=new class($base) implements AsusUpdateSource{public function __construct(private string $base){} public function manifest():array{file_put_contents($this->base.'/fetches','x',FILE_APPEND);if(is_file($this->base.'/stalled-check'))usleep(3000000);if(is_file($this->base.'/inject-pending')){file_put_contents($this->base.'/opt/lib/opkg/status',"Package: unrelated\\nVersion: 1\\nStatus: install ok unpacked\\n",FILE_APPEND);unlink($this->base.'/inject-pending');}return ['json'=>file_get_contents($this->base.'/state/manifest.json'),'signature'=>file_get_contents($this->base.'/state/manifest.sig')];}public function download(array $p,string $dest):void{throw new RuntimeException('not_expected');}};
@@ -91,7 +101,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
             else $check->complete($argv[2]);exit;
         }
         $health=isset($c['health_run'])?['web_run'=>$c['health_run'],'health_port'=>$c['health_port']]:['web_health'=>fn()=>true];
-        $worker=new AsusUpdateWorker($s,$prepare,new AsusUpdateLifecycle($c['service']),array_merge(['owner'=>$c['env']['owner'],'opkg'=>$c['opkg']],$health));
+        $worker=new AsusUpdateWorker($s,$prepare,new AsusUpdateLifecycle($c['service']),array_merge(['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'dns_resume_options'=>['php'=>PHP_BINARY,'script'=>$c['env']['opt'].'/lib/nfqws2-asus/smartdns/control.php','owner'=>$c['env']['owner']]],$health));
         if($argv[1]==='authorize'){exit((new AsusUpdateGuard($s,$c['env']['owner'],$c['opkg']))->authorize($argv[2])?0:1);}
         if($argv[1]==='client-apply'){require __DIR__.'/app/update-dispatch.php';$j=$s->readOperation($argv[2]);echo json_encode((new AsusUpdateDispatch($s,$prepare,['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'busybox'=>'/usr/bin/busybox']))->apply($j['id'],$j['revision'],str_repeat('e',32)));exit;}
         if($argv[1]==='guard-apply'){require __DIR__.'/app/update-watchdog.php';(new AsusUpdateWatchdog($s,$c['env']['owner']))->run($argv[2],[PHP_BINARY,'-n',__FILE__,'apply',$argv[2]],AsusUpdateStore::uptime()+10);exit;}
@@ -99,6 +109,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
             // reserve generated an id; replace it with this protected native fixture id.
             $db=json_decode($s->readFile('operations.json'),true);$j['id']='''+json.dumps(self.id)+''';$j['state']='applying';$j['runtime_digest']=hash_file('sha256',__DIR__.'/closure.json');$db['operations']=[$j['id']=>$j];$s->writeFile('operations.json',json_encode($db));
             AsusUpdateSnapshot::capture($c['env']['opt'],__DIR__.'/../backup',$c['env']['owner']);exit;}
+        if($argv[1]==='rollback-finalize'){$worker->rollbackFinalize($argv[2]);exit(0);}
         if($argv[1]==='preflight'){try{$worker->preflight($argv[2],$argv[3]??'install');exit(0);}catch(Throwable $e){$s->writeFile('operations/'.$argv[2].'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)]));exit(1);}}
         if($s->readFile('operations/'.$argv[2].'/guard.json')===null)$s->writeFile('operations/'.$argv[2].'/guard.json',json_encode(['schema'=>1,'guardian'=>AsusUpdateLifecycle::identity(getmypid()),'child'=>AsusUpdateLifecycle::identity(getmypid()),'deadline'=>AsusUpdateStore::uptime()+10]));
         echo json_encode($worker->apply($argv[2]));''')
@@ -162,13 +173,13 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'opkg_busy');self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
     def test_failed_installer_does_not_restart_or_claim_success(self):
         self.service.running();(self.base/'install-fails').touch();r=self.execute()
-        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'install_failed');self.assertEqual(self.commands(),['stop'])
+        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'rollback_failed');self.assertEqual(self.commands(),['stop']);self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'install_failed')
     def test_changed_snapshot_refuses_before_stop(self):
         self.service.running();(self.opt/'etc/nfqws2/nfqws2.conf').write_text('changed');r=self.execute()
         self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'settings_changed');self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
     def test_failed_stop_never_reaches_installer(self):
         self.service.running();(self.service.base/'stop-fails').touch();r=self.execute()
-        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'core_stop_failed');self.assertEqual(self.commands(),['stop']);self.assertFalse((self.base/'installs').exists())
+        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'rollback_failed');self.assertEqual(self.commands(),['stop']);self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'core_stop_failed');self.assertFalse((self.base/'installs').exists())
     def test_own_web_health_uses_its_actual_bind_address(self):
         class Handler(http.server.BaseHTTPRequestHandler):
             def do_GET(self):self.send_response(200);self.end_headers()
@@ -192,6 +203,14 @@ class PackageUpdateApplyTests(unittest.TestCase):
         original=self.body.read_text();original=original.replace('printf opkg','sh '+shlex.quote(str(self.base/'prerm'))+' || exit $?\nprintf opkg')
         original+='\nsh '+shlex.quote(str(self.base/'postinst'))+'\n'
         self.body.write_text(original)
+    def test_legacy_installed_guard_can_quiesce_web_before_new_payload(self):
+        old=self.base/'old-app';shutil.copytree(self.application,old)
+        guard=old/'update-guard.php';guard.write_text(guard.read_text().replace("'web-stop'=>$installer&&($t['phase']==='installing'||$worker&&$t['phase']==='stopping')","'web-stop'=>$installer&&$t['phase']==='installing'"))
+        entry=self.base/'old-authorize.php';entry.write_text('<?php require '+json.dumps(str(old/'update-guard.php'))+';$s=new AsusUpdateStore('+json.dumps(str(self.state))+','+str(os.getuid())+');exit((new AsusUpdateGuard($s,'+str(os.getuid())+','+json.dumps(str(self.opkg))+'))->authorize("web-".$argv[1])?0:1);')
+        self.service.web.write_text('#!/bin/sh\ncase "$1" in start|stop) exec '+shlex.quote(str(self.php))+' -n '+shlex.quote(str(entry))+' "$1";; esac\nexit 0\n')
+        self.service.running();result=self.execute();self.assertEqual(result['state'],'succeeded',result)
+        self.assertEqual(self.commands(),['stop','start'])
+
     def test_verified_hooks_never_duplicate_stop_or_start(self):
         self.install_hooks();self.service.running();result=self.execute()
         self.assertEqual(result['state'],'succeeded',result);self.assertEqual(self.commands(),['stop','start'])
@@ -203,10 +222,11 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.assertEqual(result['state'],'failed',result);self.assertEqual(result['code'],'pending_packages');self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
     def test_installer_success_without_exact_version_is_failure(self):
         self.body.write_text(self.body.read_text().replace('s/+b10/+b11/','s/DOES_NOT_MATCH/NO_CHANGE/'))
-        result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'version_mismatch')
-    def test_postinst_failure_never_restores_core_or_claims_success(self):
-        self.install_hooks();self.service.web.write_text('#!/bin/sh\nexit 9\n');self.service.running()
-        result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'install_failed');self.assertEqual(self.commands(),['stop'])
+        result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'rollback_failed');self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'version_mismatch')
+    def test_failed_web_start_never_claims_success_without_verified_rollback(self):
+        self.install_hooks();self.service.web.write_text('#!/bin/sh\ncase \"$1\" in start) exit 9;; esac\nexit 0\n');self.service.running()
+        result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'rollback_failed');self.assertEqual(self.commands(),['stop']);self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'web_start_failed')
+        self.assertFalse(result['settings_verified'])
     def test_worker_death_keeps_live_installer_protected_then_reports_interrupted(self):
         self.service.running();(self.base/'pending-check').touch()
         p=subprocess.Popen([str(self.php),'-n',str(self.entry),'apply',self.id],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)

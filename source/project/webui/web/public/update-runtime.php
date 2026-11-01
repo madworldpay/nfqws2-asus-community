@@ -99,7 +99,7 @@ final class AsusUpdateRuntime
         foreach($m['files'] as $file=>$item){if(!is_string($file)||!preg_match('~^(?:php|worker\.php|check\.sh|run\.sh|update-launch|(?:app|lib|resources)/[a-zA-Z0-9_+.-]+)$~D',$file)||!is_array($item)||array_keys($item)!==['mode','size','sha256']||!in_array($item['mode'],[0600,0700],true)||!is_int($item['size'])||$item['size']<0||!preg_match('/^[a-f0-9]{64}$/D',$item['sha256']))throw new RuntimeException('invalid_state');
             $p=$runtime.'/'.$file;AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0777)!==$item['mode']||$s['size']!==$item['size']||hash_file('sha256',$p)!==$item['sha256'])throw new RuntimeException('runtime_changed');$total+=$item['size'];
         }
-        foreach(['php','worker.php','check.sh','run.sh','update-launch','lib/'.$m['loader'],'lib/openssl.so','app/update-store.php','resources/update-release-key.pem','resources/package-manifest.schema.json'] as $file)if(!isset($m['files'][$file]))throw new RuntimeException('invalid_state');
+        foreach(['php','worker.php','check.sh','run.sh','update-launch','lib/'.$m['loader'],'lib/openssl.so','app/update-store.php','app/update-rollback.php','app/update-smartdns-resume.php','resources/update-release-key.pem','resources/package-manifest.schema.json'] as $file)if(!isset($m['files'][$file]))throw new RuntimeException('invalid_state');
         if($total!==$m['bytes'])throw new RuntimeException('invalid_state');
         return ['argv'=>self::arguments($runtime,$m['loader'],$m['files']),
             'bytes'=>$total,'digest'=>hash_file('sha256',$runtime.'/closure.json')];

@@ -11,6 +11,7 @@ case "$1" in preflight|firewall|remove-firewall)
 esac
 . "$NFQWS_LIB/platform.sh" || exit 1
 . "$NFQWS_LIB/firewall.sh" || exit 1
+[ ! -f "$NFQWS_LIB/ip-health/runtime.sh" ] || . "$NFQWS_LIB/ip-health/runtime.sh" || exit 1
 
 nfqws_preflight() (
     set -f
@@ -110,7 +111,9 @@ flock -x 9 || exit 1
 case "$1" in
     preflight) nfqws_preflight;;
     firewall) nfqws_capture;;
-    remove-firewall) nfqws_firewall_stop && rm -f "$NFQWS_RUN/capture.state";;
+    remove-firewall)
+        if command -v nfqws_health_stop >/dev/null 2>&1; then nfqws_health_stop || exit 1; fi
+        nfqws_firewall_stop && rm -f "$NFQWS_RUN/capture.state";;
     check-started) nfqws_wait_started;;
     *) echo invalid_operation >&2; exit 1;;
 esac

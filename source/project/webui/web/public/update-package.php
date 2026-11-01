@@ -3,6 +3,8 @@
 final class AsusUpdatePackage
 {
     private const REPLACEES=['nfqws2-keenetic','nfqws-keenetic','tpws-keenetic','nfqws-keenetic-web','nfqws-asus-web'];
+    // Opkg serializes persistent policy bits in this order; "ok" stands alone.
+    private const POLICY_FLAGS=['hold','noprune','prefer','user'];
     public static function fields(string $raw): array
     {
         if(strlen($raw)>2097152||str_contains($raw,"\0"))throw new RuntimeException('invalid_package');$out=[];$key=null;
@@ -16,13 +18,16 @@ final class AsusUpdatePackage
     {
         if(strlen($raw)>2097152)throw new RuntimeException('pending_packages');$db=[];
         foreach(preg_split('/\n[ \t]*\n/',trim($raw)) as $section){$p=self::fields($section);$name=$p['Package']??'';if(!preg_match('/^[a-z0-9][a-z0-9+.-]{0,80}$/D',$name))throw new RuntimeException('pending_packages');
-            $status=preg_split('/\s+/',trim($p['Status']??''));$ownPending=$allowOwnUnpacked&&$name==='nfqws2-asus'&&preg_match('/^install (?:ok|user) unpacked$/D',$p['Status']??'');if(count($status)!==3||!in_array($status[2],['installed','not-installed','config-files'],true)&&!$ownPending)throw new RuntimeException('pending_packages');
+            $own=$name==='nfqws2-asus';$status=preg_split('/\s+/',trim($p['Status']??''));$ownPending=$allowOwnUnpacked&&$own&&preg_match('/^install (?:ok|user) unpacked$/D',$p['Status']??'');
+            if(count($status)!==3||!in_array($status[0],['unknown','install','deinstall','purge'],true)||!in_array($status[2],['installed','not-installed','config-files'],true)&&!$ownPending)throw new RuntimeException('pending_packages');
+            $flags=explode(',',$status[1]);$allowed=$own?['prefer','user']:self::POLICY_FLAGS;
+            if($status[1]!=='ok'&&$flags!==array_values(array_intersect($allowed,$flags)))throw new RuntimeException('pending_packages');
             // Opkg retains superseded versions with preference/user flags. They
             // are absent packages, not an interrupted installation or the active version.
-            if($status[2]==='not-installed'){
-                $flags=explode(',',$status[1]);if(count($flags)!==count(array_unique($flags))||array_diff($flags,['ok','user','prefer']))throw new RuntimeException('pending_packages');continue;
-            }
-            if(isset($db[$name])||!in_array($status[1],['ok','user'],true))throw new RuntimeException('pending_packages');$db[$name]=$p;
+            if($status[2]==='not-installed')continue;
+            // Foreign holds affect their upgrades, not whether they are installed.
+            // Never override a policy flag on the package this operation changes.
+            if(isset($db[$name])||$own&&!in_array($status[1],['ok','user'],true))throw new RuntimeException('pending_packages');$db[$name]=$p;
         }return $db;
     }
     private static function header(string $h,bool $nativeRoot=false): ?array
@@ -82,7 +87,10 @@ final class AsusUpdatePackage
         if($resume){if(!preg_match('/^install (?:ok|user) unpacked$/D',$own['Status']??'')||($own['Version']??null)!==$candidate['package_version']||($own['Architecture']??null)!==$control['Architecture'])throw new RuntimeException('recovery_required');}
         elseif(!preg_match('/^(?:install|deinstall) (?:ok|user) installed$/D',$own['Status']??''))throw new RuntimeException('unsupported_version');
         $deps=self::dependencies($control['Depends']??'');if($deps!==self::dependencies($db['nfqws2-asus']['Depends']??''))throw new RuntimeException('dependency_change');
-        foreach($deps as $p)if(!isset($db[$p])||!preg_match('/^install (?:ok|user) installed$/D',$db[$p]['Status']))throw new RuntimeException('missing_dependencies');
+        foreach($deps as $p){$state=preg_split('/\s+/',trim($db[$p]['Status']??''));
+            // Database validation already checked the flags; --nodeps does not
+            // upgrade held dependencies, which still satisfy installed state.
+            if(count($state)!==3||$state[0]!=='install'||$state[2]!=='installed')throw new RuntimeException('missing_dependencies');}
         foreach(array_filter(array_map('trim',explode(',',$control['Conflicts']??''))) as $p)if(!in_array($p,self::REPLACEES,true))throw new RuntimeException('invalid_package');
         foreach(self::REPLACEES as $p)if(isset($db[$p])&&str_ends_with($db[$p]['Status'],' installed'))throw new RuntimeException('pending_packages');
         if($resume){if($opt===null||!isset($scripts['postinst']))throw new RuntimeException('recovery_required');self::recoveryScripts($opt,$owner,$scripts);self::recoveryPayload($path,$opt,$owner);}
@@ -107,8 +115,11 @@ final class AsusUpdatePackage
             if($parent===$opt)break;if(!str_starts_with($parent,$opt.'/'))throw new RuntimeException('invalid_state');
         }
     }
+    /** The caller has already verified this private candidate's signature/hash. */
+    public static function stockDefaults(string $package,string $opt,int $owner):array
+    {return self::recoveryPayload($package,$opt,$owner,true);}
     /** Compare archive members as bytes, without extracting any archive paths. */
-    private static function recoveryPayload(string $package,string $opt,int $owner): void
+    private static function recoveryPayload(string $package,string $opt,int $owner,bool $defaultsOnly=false): array
     {
         $parent=dirname($package);AsusUpdateStore::noLinks($parent);$s=@lstat($parent);$free=@disk_free_space($parent);
         if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$owner||($s['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
@@ -123,9 +134,9 @@ final class AsusUpdatePackage
                 if($h['name']==='data.tar.gz'){$found=true;break;}if($size%512)self::gzRead($outer,512-$size%512);
             }
             if(!$found||!fflush($out))throw new RuntimeException('invalid_package');fclose($out);$out=null;gzclose($outer);$outer=null;
-            $data=@gzopen($temporary,'rb');if(!$data)throw new RuntimeException('invalid_package');$seen=[];$total=0;$files=0;
+            $data=@gzopen($temporary,'rb');if(!$data)throw new RuntimeException('invalid_package');$seen=[];$total=0;$files=0;$defaults=[];
             for($count=0;$count<8192;$count++){
-                $h=self::gzRead($data,512);if($h===str_repeat("\0",512)){if($files===0)throw new RuntimeException('invalid_package');return;}
+                $h=self::gzRead($data,512);if($h===str_repeat("\0",512)){if($files===0&&!$defaultsOnly)throw new RuntimeException('invalid_package');ksort($defaults);return $defaults;}
                 $size=trim(substr($h,124,12)," \0");$sum=trim(substr($h,148,8)," \0");$mode=trim(substr($h,100,8)," \0");$uid=trim(substr($h,108,8)," \0");
                 if(!preg_match('/^[0-7]{1,11}$/D',$size)||!preg_match('/^[0-7]{1,7}$/D',$sum)||!preg_match('/^[0-7]{1,7}$/D',$mode)||!preg_match('/^0+$/D',$uid)||octdec($size)>16777216||octdec($mode)>0777||array_sum(unpack('C*',substr_replace($h,str_repeat(' ',8),148,8)))!==octdec($sum))throw new RuntimeException('invalid_package');
                 $name=rtrim(substr($h,0,100),"\0");$prefix=rtrim(substr($h,345,155),"\0");if($prefix!=='')$name=$prefix.'/'.$name;if(str_starts_with($name,'./'))$name=substr($name,2);
@@ -136,6 +147,14 @@ final class AsusUpdatePackage
                 $size=(int)octdec($size);$total+=$size;if($total>134217728)throw new RuntimeException('invalid_package');
                 if($h[156]==='5'){if($size!==0)throw new RuntimeException('invalid_package');continue;}
                 $files++;$hash=hash_init('sha256');for($left=$size;$left>0;){$chunk=self::gzRead($data,min(16384,$left));hash_update($hash,$chunk);$left-=strlen($chunk);}if($size%512)self::gzRead($data,512-$size%512);$digest=hash_final($hash);
+                if($defaultsOnly){
+                    $target=null;
+                    if($name==='opt/etc/nfqws2/nfqws2.conf.notactive')$target='etc/nfqws2/nfqws2.conf';
+                    elseif(preg_match('~^opt/etc/nfqws2/lists/([a-zA-Z0-9_.-]+)\.notactive$~D',$name,$match))$target='etc/nfqws2/lists/'.$match[1];
+                    elseif(preg_match('~^opt/share/nfqws2-asus/defaults/blobs/([a-zA-Z0-9_.-]+\.bin)$~D',$name,$match))$target='etc/nfqws2/blobs/'.$match[1];
+                    if($target!==null){if(count($defaults)>=512||((int)octdec($mode)&0022)!==0)throw new RuntimeException('invalid_package');$defaults[$target]=['mode'=>(int)octdec($mode),'size'=>$size,'sha256'=>$digest];}
+                    continue;
+                }
                 // The package owns these two conffiles, whose active contents
                 // are deliberately administrator-specific after installation.
                 if(in_array($name,['opt/etc/nfqws-asus-web/auth.json','opt/etc/nfqws-asus-web/support-relay.json'],true))continue;

@@ -28,12 +28,12 @@ try {
   const upstream={id:'example',label:'Example DoH',protocol:'doh',address:'1.1.1.1',port:443,tls_name:'cloudflare-dns.com',url:'https://cloudflare-dns.com/dns-query',bootstrap:['1.1.1.1'],default:true,domains:[{name:'example.com',include_subdomains:true}]};
   const record={name:'media.example.com',include_subdomains:false,addresses:['203.0.113.10'],checked_at:null};
   const document={values:{NFQWS_ARGS:'--filter-tcp=443',NFQWS_BASE_ARGS:'--debug=0'},ports:{TCP_PORTS:'443'},resources:[{id:'c'.repeat(32),kind:'lists',name:'example.list',encoding:'utf8',data_base64:'eA==',byte_length:1,sha256:'2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881',aliases:[]}],dns_sources:[{id:'draft',origin:'draft',sha256:'d'.repeat(64),profile:{schema_version:1,upstreams:[upstream],records:[record]},complete:true,warnings:[]}],dependencies:[],audit:null,context:{purpose:'Selected example',operator:'Example'},source:null,ignored:[],input_sha256:'b'.repeat(64)};
-  const calls=[],selections=[];let offline=false;
+  const calls=[],selections=[];let offline=false,catalogError='catalog_unavailable';
   await page.route('**/index.php',async route=>{
     const post=new URLSearchParams(route.request().postData());const cmd=post.get('cmd');calls.push(cmd);
     let body;
     if(cmd==='importstatus')body={state:'idle',id:null,can_undo:false,config_saved:false,dns_draft_saved:false};
-    else if(cmd==='importcatalog')body=offline?{error:'catalog_unavailable'}:{schema_version:1,revision:1,build:68,profiles:[{...profile,id:'provider',title:'Provider preset',category:'provider',provider:'Example ISP',region:'Example region'},profile]};
+    else if(cmd==='importcatalog')body=offline?{error:catalogError}:{schema_version:1,revision:1,build:68,profiles:[{...profile,id:'provider',title:'Provider preset',category:'provider',provider:'Example ISP',region:'Example region'},profile]};
     else if(cmd==='importcatalogload'){await new Promise(resolve=>setTimeout(resolve,100));body={document:'{}'};}
     else if(cmd==='importinspect')body=document;
     else if(cmd==='importprepare'){selections.push(JSON.parse(post.get('selection')));body={ready:false,problems:[],warnings:[],required:{files:[],shared:[]},affected_blocks:[],config:'',changes:[],files:[],draft:null,old_draft:null,digest:'e'.repeat(64),proof:null};}
@@ -60,6 +60,18 @@ try {
   await page.getByText('Selected example',{exact:false}).first().waitFor();
   assert.equal(await page.getByRole('checkbox',{name:'Базовая стратегия',exact:true}).isChecked(),true,'A new local JSON resets the full selection after previous opt-out');
   assert.ok(calls.filter(x=>x==='importinspect').length===2,'Local file still enters the same import flow while catalog is unavailable');
+  for(const lang of ['ru','en']) {
+    const locale=JSON.parse(await readFile(join(web,`src/translations/${lang}.json`),'utf8'));
+    for(const code of ['catalog_dns','catalog_tls','catalog_connect','catalog_runtime','catalog_http','catalog_timeout','unauthorized','forbidden','UNEXPECTED_PRIVATE_CANARY','']) {
+      offline=true;catalogError=code;
+      await page.goto(base+'/?lang='+lang);
+      await page.getByRole('button',{name:lang==='en'?'From cloud':'Из облака',exact:true}).click();
+      const expected=locale.import.catalog.errors?.[code] ?? locale.import.catalog.offline;
+      await page.getByText(expected,{exact:true}).waitFor();
+      assert.equal((await page.locator('body').innerText()).includes('UNEXPECTED_PRIVATE_CANARY'),false);
+      assert.equal(calls.includes('importapply'),false,'diagnostics never apply a profile');
+    }
+  }
   offline=false;await page.goto(base+'/?lang=en');await page.getByRole('button',{name:'From cloud',exact:true}).click();await page.getByText('Global strategies',{exact:true}).waitFor();await page.getByText('Provider presets',{exact:true}).waitFor();await page.getByText('From computer (JSON)',{exact:true}).waitFor();
   console.log('PASS actual import dialog: local/VPS sources, two categories, escaped names, complete author selection with recipient opt-out, no automatic apply, rapid-click guard and offline local fallback');
 }finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));await rm(dir,{recursive:true,force:true});}

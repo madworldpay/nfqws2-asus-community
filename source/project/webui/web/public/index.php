@@ -293,6 +293,20 @@ function main(): void
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+  if (in_array($_POST['cmd'], ['iphealthstatus','iphealthconfigure','iphealthremove','iphealthclear','iphealthrecheck'], true)) {
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    if(!$authEnabled||!$sessionValid){http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
+    require_once __DIR__.'/ip-health-api.php';require_once __DIR__.'/support-report.php';
+    try {
+      NfqwsIpHealthApi::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();if(NfqwsPlatform::native())throw new RuntimeException('unsupported_runtime');
+      $value=(new NfqwsIpHealthApi())->handle($_POST);$raw=json_encode($value,JSON_THROW_ON_ERROR);
+      if(strlen($raw)>524288)throw new RuntimeException('output_limit');http_response_code(200);echo $raw;
+    }catch(Throwable $e){$code=NfqwsIpHealthApi::error($e);http_response_code($code==='invalid_request'?400:(in_array($code,['busy','stale_revision','not_found'],true)?409:503));echo json_encode(['error'=>$code]);}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['restartschedule','restartschedulesave'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     require_once __DIR__.'/restart-schedule.php';require_once __DIR__.'/support-report.php';

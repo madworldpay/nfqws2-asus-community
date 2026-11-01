@@ -20,6 +20,6 @@ final class AsusProfileCatalogApi
     }
     public static function error(Throwable $e): string
     {
-        $code=$e->getMessage();return in_array($code,['invalid_request','catalog_invalid','catalog_signature','catalog_unavailable','catalog_timeout','catalog_limit','catalog_changed','catalog_version'],true)?$code:'catalog_invalid';
+        $code=$e->getMessage();return in_array($code,['invalid_request','catalog_invalid','catalog_signature','catalog_unavailable','catalog_runtime','catalog_dns','catalog_tls','catalog_connect','catalog_http','catalog_timeout','catalog_limit','catalog_changed','catalog_version'],true)?$code:'catalog_invalid';
     }
 }

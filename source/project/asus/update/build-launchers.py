@@ -17,23 +17,25 @@ TARGETS={'aarch64':('aarch64-linux-gnu',[]),'armv7':('arm-linux-gnueabi',['-marm
 FLAGS=['-Os','-nostdlib','-static','-fno-builtin','-fno-stack-protector','-fno-pie','-no-pie','-Wl,--build-id=none','-Wl,-z,noexecstack','-s']
 
 
-def build(output,toolchain=None):
+def build(output,toolchain=None,kind='update'):
     output.mkdir(parents=True,exist_ok=True);env=os.environ.copy()
     if toolchain:
         env['PATH']=str(toolchain/'usr/bin')+os.pathsep+env['PATH']
         env['LD_LIBRARY_PATH']=str(toolchain/'usr/lib/x86_64-linux-gnu')
     source=HERE/'opkg-launch.c'
-    record={'source_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'flags':FLAGS,'outputs':{}}
+    flags=FLAGS+(['-DSOCKETS_ONLY=1'] if kind=='sockets' else [])
+    record={'source_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'flags':flags,'outputs':{}}
     for family,(target,options) in TARGETS.items():
         compiler=next((shutil.which(target+'-gcc'+suffix,path=env['PATH']) for suffix in ['', '-15'] if shutil.which(target+'-gcc'+suffix,path=env['PATH'])),None)
         if compiler is None:raise RuntimeError('cross compiler unavailable: '+target)
-        dest=output/(family+'-opkg-launch')
-        subprocess.run([compiler,*options,*FLAGS,str(source),'-o',str(dest)],env=env,check=True)
+        dest=output/(family+('-sockets-launch' if kind=='sockets' else '-opkg-launch'))
+        subprocess.run([compiler,*options,*flags,str(source),'-o',str(dest)],env=env,check=True)
         version=subprocess.check_output([compiler,'-dumpfullversion'],env=env,text=True).strip()
         record['outputs'][family]={'sha256':hashlib.sha256(dest.read_bytes()).hexdigest(),'compiler':target+'-gcc','compiler_version':version,'options':options}
-    (output/'launchers.json').write_text(json.dumps(record,sort_keys=True,indent=2)+'\n')
+    (output/('sockets-launchers.json' if kind=='sockets' else 'launchers.json')).write_text(json.dumps(record,sort_keys=True,indent=2)+'\n')
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=HERE/'bin');parser.add_argument('--toolchain-root',type=Path)
-    args=parser.parse_args();build(args.output,args.toolchain_root)
+    parser.add_argument('--kind',choices=['update','sockets'],default='update')
+    args=parser.parse_args();build(args.output,args.toolchain_root,args.kind)

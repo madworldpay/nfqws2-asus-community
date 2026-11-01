@@ -94,7 +94,8 @@ export function PackageUpdateDialog({
     operation?.state === 'failed' || operation?.state === 'interrupted';
   const errorCode =
     updates.error ??
-    (failed ? operation?.code : check?.state === 'failed' ? check.code : null);
+    (check?.state === 'failed' ? check.code : failed ? operation?.code : null);
+  const previousFailure = failed && check?.state !== 'failed' && !updates.error;
   const knownErrors = [
     'pending_packages',
     'recovery_required',
@@ -105,10 +106,15 @@ export function PackageUpdateDialog({
     'busy',
     'dns_restore_required',
     'dns_restore_failed',
+    'dns_resume_stop_failed',
     'request_failed',
     'core_start_failed',
     'core_stop_failed',
+    'web_stop_failed',
     'settings_changed',
+    'rollback_unavailable',
+    'update_rolled_back',
+    'rollback_failed',
   ] as const;
   const knownError = knownErrors.find((code) => code === errorCode);
   const errorKey = knownError
@@ -127,7 +133,12 @@ export function PackageUpdateDialog({
           {(updates.pending || working || check?.state === 'checking') && (
             <LinearProgress />
           )}
-          {errorCode && <Alert severity="warning">{t(errorKey)}</Alert>}
+          {errorCode && (
+            <Alert severity="warning">
+              {previousFailure && `${t('package_update.previous_attempt')} `}
+              {t(errorKey)}
+            </Alert>
+          )}
           {check?.state === 'unconfigured' && (
             <Alert severity="info">{t('package_update.unconfigured')}</Alert>
           )}

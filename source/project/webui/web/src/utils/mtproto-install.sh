@@ -45,6 +45,11 @@ trap cleanup 0
 trap 'exit 130' INT
 trap 'exit 143' HUP TERM
 
+probe=$(cat <<'PY'
+@@MTPROTO_READINESS@@
+PY
+)
+
 if [ "$NFQWS_MT_METHOD" = docker ]; then
     findexe docker >/dev/null || fail 'Docker CLI is missing. Run this on the Docker host.' 'Нет Docker CLI. Выполните команду на устройстве с Docker.'
     docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable.' 'Служба Docker недоступна.'
@@ -84,18 +89,30 @@ fi
 
 if [ "$NFQWS_MT_METHOD" = docker ]; then
     image='@@MTPROTO_DOCKER_IMAGE@@'
+    launcher=$(cat <<'SH'
+@@MTPROTO_DOCKER_LAUNCHER@@
+SH
+)
+    health=$(cat <<'SH'
+@@MTPROTO_HEALTH_COMMAND@@
+SH
+)
     msg 'Downloading the pinned Docker image...' 'Загрузка закреплённого образа Docker...'
     docker pull "$image"
     container=$(docker create --name nfqws-mtproto --restart unless-stopped \
+        --entrypoint /sbin/tini \
+        --health-cmd "$health" --health-interval 5m --health-timeout 20s --health-start-period 10s --health-retries 3 \
         --log-opt max-size=5m --log-opt max-file=2 \
         --cap-drop ALL --security-opt no-new-privileges:true \
         -p "$NFQWS_MT_PORT:1443" -e "PROXY_SECRET=$NFQWS_MT_KEY" \
         -e PROXY_HOST=0.0.0.0 -e PROXY_PORT=1443 \
-        -e 'PROXY_DC_IPS=2:149.154.167.220 4:149.154.167.220' "$image")
+        -e 'PROXY_DC_IPS=2:149.154.167.220 4:149.154.167.220' \
+        -e PROXY_POOL_SIZE=2 -e CFPROXY_DOMAIN=pclead.co.uk \
+        "$image" -- /bin/sh -c "$launcher")
     docker start "$container" >/dev/null
     sleep 3
     [ "$(docker inspect --format '{{.State.Running}}' "$container")" = true ] || fail 'Proxy stopped. Check Docker logs.' 'Прокси остановился. Проверьте журнал Docker.'
-    docker exec "$container" /opt/venv/bin/python -c 'import socket; socket.create_connection(("127.0.0.1",1443),timeout=3).close()' || fail 'Proxy is not listening; installation rolled back.' 'Прокси не принимает подключения; установка отменена.'
+    docker exec "$container" /opt/venv/bin/python -c "$probe" 127.0.0.1 1443 15 || fail 'Telegram did not respond; the new container was rolled back.' 'Telegram не ответил; новый контейнер удалён.'
 else
     mkdir "$candidate"
     root=$candidate
@@ -223,7 +240,9 @@ EOF
         sleep 3
         systemctl is-active --quiet nfqws-mtproto.service
     fi
+    NFQWS_MT_PROBE_ROOT="$root" NFQWS_MT_PROBE_SECRET="$NFQWS_MT_KEY" \
+        "$python" -c "$probe" 127.0.0.1 "$NFQWS_MT_PORT" 15 || fail 'Telegram did not respond; installation was rolled back.' 'Telegram не ответил; установка отменена.'
 fi
 committed=yes
-msg 'Proxy started. Test the connection in Telegram:' 'Прокси запущен. Проверьте подключение в Telegram:'
+msg 'Telegram response verified. Add the proxy:' 'Ответ Telegram проверен. Добавьте прокси:'
 printf '%s\n' "$NFQWS_MT_LINK"

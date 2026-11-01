@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Alert,
   Button,
@@ -12,24 +12,49 @@ import { API } from '@/api/client';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
-export const LoginDialog = () => {
+export const LoginDialog = ({
+  onSuccess,
+  onCancel,
+}: {
+  onSuccess?: () => void | Promise<void>;
+  onCancel?: VoidFunction;
+} = {}) => {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
+  const [pending, setPending] = useState(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const { t } = useTranslation();
 
   const handleLogin = async () => {
-    if (!user || !password) {
+    if (!user || !password || pending) {
       return;
     }
 
     setLoginError(false);
-    const { data } = await API.login(user, password);
-    const success = data?.status === 0;
-    setLoginError(!success);
-    if (success) {
-      void API.invalidateStatus();
+    setPending(true);
+    try {
+      const { data } = await API.login(user, password);
+      const success = data?.status === 0;
+      // The shared login client may unmount the global dialog by setting auth.
+      // Its fresh status is still required; cancelled local dialogs stay closed.
+      if (success && !onSuccess) void API.invalidateStatus();
+      if (!mounted.current) return;
+      setLoginError(!success);
+      if (success) {
+        if (onSuccess) await onSuccess();
+      }
+    } catch {
+      if (mounted.current) setLoginError(true);
+    } finally {
+      if (mounted.current) setPending(false);
     }
   };
 
@@ -38,7 +63,9 @@ export const LoginDialog = () => {
       <Dialog
         open={true}
         maxWidth="xs"
-        disableEscapeKeyDown
+        aria-label={t('auth.login')}
+        onClose={onCancel}
+        disableEscapeKeyDown={!onCancel}
         slotProps={{
           paper: {
             component: 'form',
@@ -60,6 +87,7 @@ export const LoginDialog = () => {
             fullWidth
             variant="outlined"
             value={user}
+            disabled={pending}
             onChange={(e) => setUser(e.target.value)}
             sx={{ mb: 2, mt: 0 }}
           />
@@ -72,6 +100,7 @@ export const LoginDialog = () => {
             fullWidth
             variant="outlined"
             value={password}
+            disabled={pending}
             onChange={(e) => setPassword(e.target.value)}
             sx={{ mb: 2, mt: 0 }}
           />
@@ -88,7 +117,13 @@ export const LoginDialog = () => {
             pb: 3,
           }}
         >
-          <Button type="submit" variant="contained" sx={{ px: 7 }}>
+          {onCancel && <Button onClick={onCancel}>{t('common.cancel')}</Button>}
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={pending}
+            sx={{ px: 7 }}
+          >
             {t('auth.login')}
           </Button>
         </DialogActions>

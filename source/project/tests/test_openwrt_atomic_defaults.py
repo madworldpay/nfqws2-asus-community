@@ -21,10 +21,12 @@ class NativeAtomicDefaultsTests(unittest.TestCase):
         self.source = self.root / 'usr/share/nfqws2/defaults'
         self.active = self.root / 'etc/nfqws2'
         self.bin = self.base / 'bin'; self.bin.mkdir()
-        # fakeroot needs dynamically linked stat/chown; byte copies and link
-        # publication still use the real BusyBox applets supplied by OpenWrt.
-        for applet in ['cp', 'cmp', 'ln', 'find', 'mkdir', 'chmod', 'rm', 'rmdir', 'mktemp', 'sync', 'cat', 'touch', 'readlink']:
+        # A stock OpenWrt command set need not expose stat. Keep the hook's
+        # entire PATH closed; only ls/chown need dynamic fakeroot interception.
+        for applet in ['cp', 'cmp', 'ln', 'find', 'mkdir', 'chmod', 'rm', 'rmdir', 'mktemp', 'sync', 'cat', 'touch', 'readlink', 'awk', 'wc']:
             (self.bin / applet).symlink_to(BUSYBOX)
+        for name in ['ls', 'chown']:
+            (self.bin / name).symlink_to(shutil.which(name))
         self.resources = {'blobs/new.bin': b'COMPLETE\x00\xffBLOB', 'lua/new.lua': b'-- complete Lua\n', 'lists/new.list': b'complete.example\n'}
         for kind in ['lists', 'lua', 'blobs']:
             (self.source / kind).mkdir(parents=True)
@@ -42,8 +44,11 @@ class NativeAtomicDefaultsTests(unittest.TestCase):
 
     def call(self, prefix=''):
         library = (ROOT / 'openwrt/package-lifecycle.sh').read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
-        body = 'chown -R 0:0 "$IPKG_INSTROOT" || exit\n' + library + '\n' + prefix + '\nnfqws_package_defaults\n'
-        return subprocess.run([FAKEROOT, '/bin/sh', '-c', body], env=os.environ | {'IPKG_INSTROOT': str(self.root), 'PATH': str(self.bin) + ':' + os.environ['PATH']}, capture_output=True, text=True, timeout=15)
+        body = 'PATH="$NATIVE_TEST_PATH"; export PATH\ncommand -v stat >/dev/null 2>&1 && exit 99\nchown -R 0:0 "$IPKG_INSTROOT" || exit\n' + library + '\n' + prefix + '\nnfqws_package_defaults\n'
+        # The host BusyBox ash has standalone applet lookup enabled, unlike a
+        # firmware build without CONFIG_STAT. A POSIX shell with this closed
+        # applet PATH reproduces the unavailable command without a fake stat.
+        return subprocess.run([FAKEROOT, '/bin/sh', '-c', body], env=os.environ | {'IPKG_INSTROOT': str(self.root), 'NATIVE_TEST_PATH': str(self.bin)}, capture_output=True, text=True, timeout=15)
 
     def ok(self, result): self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
@@ -86,7 +91,7 @@ NATIVE_TEST_BUSYBOX={shlex.quote(str(BUSYBOX))}
         self.assertFalse((self.active / 'nfqws2.conf').exists())
         self.ok(self.call()); self.assertEqual((self.active / 'nfqws2.conf').read_bytes(), b'STOCK_CONFIG\n')
 
-    def test_fresh_empty_offline_root_seeds_all_resources_with_safe_modes(self):
+    def test_busybox_without_stat_seeds_fresh_offline_root_with_safe_modes(self):
         shutil.rmtree(self.root / 'etc')
         self.ok(self.call())
         self.assertEqual((self.active / 'nfqws2.conf').read_bytes(), b'STOCK_CONFIG\n')
@@ -154,6 +159,16 @@ NATIVE_TEST_BUSYBOX={shlex.quote(str(BUSYBOX))}
         self.active.chmod(0o755)
         self.assertNotEqual(self.call('chown 65534:65534 '+shlex.quote(str(source))).returncode, 0)
         self.assertFalse((self.active / 'blobs/new.bin').exists()); self.assertEqual(outside.read_bytes(), b'PRIVATE'); self.assert_owner(inode)
+
+    def test_hardlinked_and_writable_sources_are_refused_without_stat(self):
+        source = self.source / 'blobs/new.bin'
+        outside = self.base / 'same-source'; os.link(source, outside)
+        self.assertNotEqual(self.call().returncode, 0)
+        self.assertFalse((self.active / 'blobs/new.bin').exists())
+        outside.unlink(); source.chmod(0o664)
+        self.assertNotEqual(self.call().returncode, 0)
+        self.assertFalse((self.active / 'blobs/new.bin').exists())
+        source.chmod(0o644); self.ok(self.call())
 
 
 if __name__ == '__main__': unittest.main()

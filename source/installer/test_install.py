@@ -152,6 +152,27 @@ state_path.write_text(json.dumps(state))
         (self.router/'opt/lib/opkg/info/nfqws2-asus.list').write_text('\n'.join(paths)+'\n')
         self.state.update(version='1.3.1-asus6+b66',install_error=True,stop_before_failure=True)
 
+    def test_existing_php_install_uses_same_verified_transaction_as_panel(self):
+        self.state.update(version='1.3.1-asus6+b66',enabled=True)
+        baseline=self.router/'opt/share/nfqws2-asus/report-baseline.json'
+        baseline.parent.mkdir(parents=True)
+        baseline.write_text('{}')
+        self.tool('php-cgi', """
+args=sys.argv[1:]
+mode=args[args.index('--')+1]
+emit({'kind':'coordinator','mode':mode})
+if mode=='describe':print('install\\n'+VERSION)
+elif mode=='status':print('succeeded\\n'+VERSION)
+elif mode=='run':
+ state['version']=VERSION
+ state_path.write_text(json.dumps(state))
+""".replace('VERSION',repr(VERSION)),self.router/'opt/bin/php-cgi')
+        result=self.execute()
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual([event['mode'] for event in self.events if event['kind']=='coordinator'],['prepare','describe','run','status'])
+        self.assertEqual(self.installs(),[],'the shell must not run a second, weaker installation path')
+        self.assertEqual(json.loads(self.state_path.read_text())['version'],VERSION)
+
     def test_healthy_legacy_upgrade_waits_for_exclusive_web_apply_lease(self):
         self.state.update(version='1.3.1-asus6+b66',enabled=True,core_running=True,web_running=True)
         root=self.router/'opt/var/lib/nfqws2-asus/updates';root.mkdir(parents=True,mode=0o700)

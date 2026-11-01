@@ -9,12 +9,13 @@ try{
     umask(0077);$store=new AsusUpdateStore();$key=file_get_contents(__DIR__.'/resources/update-release-key.pem');
     $id=$args[0]??null;if(!is_string($id)||!preg_match('/^[a-f0-9]{32}$/D',$id))exit(2);
     if($mode==='preflight'){
-        if(count($args)!==2||!in_array($args[1],['install','configure'],true))exit(2);
+        if(count($args)!==2||!in_array($args[1],['install','configure','rollback','rollback-verify'],true))exit(2);
         try{$prepare=new AsusUpdatePrepare($store,new AsusGithubUpdateSource(),['resources'=>__DIR__.'/resources'],$key);(new AsusUpdateWorker($store,$prepare))->preflight($id,$args[1]);exit(0);}
         catch(Throwable $e){$store->writeFile('operations/'.$id.'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)],JSON_THROW_ON_ERROR));exit(1);}
     }
     if(count($args)!==1)exit(2);
     $runtime=AsusUpdateRuntime::load(__DIR__);if($runtime['digest']!==($store->readOperation($id)['runtime_digest']??null))throw new RuntimeException('runtime_changed');
+    if($mode==='rollback-finalize'){(new AsusUpdateWorker($store))->rollbackFinalize($id);exit(0);}
     if($mode==='guard-apply'){
         (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+240);exit(0);
     }

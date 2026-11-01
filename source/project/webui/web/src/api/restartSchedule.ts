@@ -49,8 +49,9 @@ export async function restartScheduleRequest(
       body: new URLSearchParams(params),
       signal: controller.signal,
     });
-    if (response.status === 401 || response.status === 403)
-      throw new RestartScheduleError('session');
+    if (response.status === 401)
+      throw new RestartScheduleError('auth_required');
+    if (response.status === 403) throw new RestartScheduleError('csrf_failed');
     if (
       !/^application\/json(?:;|$)/i.test(
         response.headers.get('Content-Type') ?? '',

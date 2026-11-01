@@ -4,22 +4,31 @@ $uid=@file_get_contents('/proc/self/status');
 if (!is_string($uid) || !preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',$uid)) exit(1);
 $args=$argv;array_shift($args);if (($args[0]??null)==='--') array_shift($args);
 if (count($args)!==1 || !in_array($args[0],['status','rollback','upgrade','remove','resume'],true)) exit(2);
-require_once '/opt/share/nfqws-asus-web/smartdns-lifecycle.php';
 $lease=null;$resumeLock=null;
 try {
-    $mode=$args[0];$store=new AsusSmartDnsStore();$backend=new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller());$jobs=new AsusSmartDnsConfigJobs($store,$backend);
+    $mode=$args[0];
+    // A clean install has no consent to resume and must remain entirely inert.
+    $intent='/opt/etc/nfqws-asus-web/smartdns/resume-intent.json';
+    if ($mode==='resume' && !file_exists($intent) && !is_link($intent)) exit(0);
+    if ($mode!=='status') {
+        require_once '/opt/share/nfqws-asus-web/update-guard.php';
+        $updates=new AsusUpdateGuard(new AsusUpdateStore());
+        $authorized=in_array($mode,['upgrade','remove'],true) && $updates->authorize('dns-restore');
+        if (!$authorized) {
+            $end=hrtime(true)+($mode==='resume'?60000000000:1000000000);
+            do {
+                try {$lease=$updates->mutationLease();break;}
+                catch (Throwable $e) {if ($e->getMessage()!=='busy' || hrtime(true)>=$end) throw $e;usleep(100000);}
+            } while (true);
+        }
+    }
+    // An update may replace or roll back these classes while resume waits.
+    // Load them only after acquiring the lease, and hold it through the action.
+    require_once '/opt/share/nfqws-asus-web/smartdns-lifecycle.php';
+    $store=new AsusSmartDnsStore();$backend=new AsusSmartDnsNativeBackend($store,new AsusSmartDnsInstaller());$jobs=new AsusSmartDnsConfigJobs($store,$backend);
     if ($mode==='status') {echo json_encode(['status'=>$jobs->status(),'resume_saved'=>$store->intent()!==null],JSON_THROW_ON_ERROR)."\n";exit(0);}
     // Fresh package installation/startup is entirely inert without prior consent.
     if ($mode==='resume' && $store->intent()===null) exit(0);
-    $updates=new AsusUpdateGuard(new AsusUpdateStore());
-    $authorized=in_array($mode,['upgrade','remove'],true) && $updates->authorize('dns-restore');
-    if (!$authorized) {
-        $end=hrtime(true)+($mode==='resume'?60000000000:1000000000);
-        do {
-            try {$lease=$updates->mutationLease();break;}
-            catch (Throwable $e) {if ($e->getMessage()!=='busy' || hrtime(true)>=$end) throw $e;usleep(100000);}
-        } while (true);
-    }
     $lifecycle=new AsusSmartDnsLifecycle($store,$backend);
     if ($mode==='resume') {
         $path=$store->directory(false).'/resume.lock';$s=@lstat($path);
