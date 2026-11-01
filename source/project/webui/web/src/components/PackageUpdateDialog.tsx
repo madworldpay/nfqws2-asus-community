@@ -11,6 +11,8 @@ import {
   Typography,
 } from '@mui/material';
 
+import { CommunityChatLink } from '@/components/CommunityChatLink';
+
 import type { usePackageUpdates } from '@/hooks/usePackageUpdates';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -202,9 +204,12 @@ export function PackageUpdateDialog({
             </Typography>
           )}
           {completedVersion && (
-            <Alert severity="success">
-              {t('package_update.done', { version: completedVersion })}
-            </Alert>
+            <Stack spacing={0.5}>
+              <Alert severity="success">
+                {t('package_update.done', { version: completedVersion })}
+              </Alert>
+              <CommunityChatLink copyable />
+            </Stack>
           )}
           {operation?.core_state === 'waiting_for_wan' && (
             <Alert severity="info">{t('package_update.waiting')}</Alert>
