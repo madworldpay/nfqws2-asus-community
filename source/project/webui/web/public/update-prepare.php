@@ -116,7 +116,7 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
     /** Pure local read; missing or expired metadata never causes network I/O. */
     public function cached(): ?array
     {
-        return $this->store->withLock(function(){
+        return $this->store->withRetryLock(function(){
             $env=$this->environment();$raw=$this->store->readFile('check.json');if($raw===null)return null;$c=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$up=AsusUpdateStore::uptime();
             if(($c['boot_id']??null)!==AsusUpdateStore::boot()||($c['installed']??null)!==$env['installed']||$up<($c['uptime']??INF)||$up-$c['uptime']>=300)return null;return $c['result'];
         });

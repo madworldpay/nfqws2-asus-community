@@ -170,7 +170,7 @@ final class AsusUpdateStore
         });
     }
     public function status(): array
-    {return $this->withLock(function(){$db=$this->db();$active=null;$history=[];foreach($db['operations'] as $job)if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else $active=$job;if($this->readFile('operations.json')===null)$this->save($db);return ['active'=>$active,'history'=>array_reverse($history)];});}
+    {return $this->withRetryLock(function(){$db=$this->db();$active=null;$history=[];foreach($db['operations'] as $job)if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else $active=$job;if($this->readFile('operations.json')===null)$this->save($db);return ['active'=>$active,'history'=>array_reverse($history)];});}
     public function reconcile(string $boot,float $uptime): void
     {$this->withLock(function()use($boot,$uptime){$db=$this->db();$before=$db;foreach($db['operations'] as &$job)if(!in_array($job['state'],self::TERMINAL,true)&&($job['boot_id']!==$boot||$uptime<$job['created_uptime'])){$job['state']='interrupted';$job['code']='interrupted';$job['finished_at']=time();}unset($job);$this->rotate($db);if($db!==$before)$this->save($db);});}
 }

@@ -22,7 +22,15 @@ export function usePackageUpdates(
   const client = useQueryClient();
   const enabled = allowed && !!csrf;
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<{
+    code: string;
+    source: 'check' | 'operation';
+    snapshot?: number;
+  }>();
+  const generation = useRef(0);
+  const refreshRequest = useRef<Promise<void> | null>(null);
+  const mutating = useRef(false);
+  const checked = useRef(false);
   const prepareRequest = useRef<{
     revision: string;
     id: string;
@@ -30,6 +38,20 @@ export function usePackageUpdates(
   } | null>(null);
   const applyRequest = useRef<{ operation: string; id: string } | null>(null);
   const initiated = useRef<string | null>(null);
+  useEffect(() => {
+    const epoch = generation.current;
+    setPending(false);
+    setError(undefined);
+    checked.current = false;
+    prepareRequest.current = null;
+    applyRequest.current = null;
+    initiated.current = null;
+    return () => {
+      generation.current = epoch + 1;
+      refreshRequest.current = null;
+      mutating.current = false;
+    };
+  }, [csrf, enabled]);
   const query = useQuery({
     queryKey: ['package-update-overview', csrf],
     enabled,
@@ -60,30 +82,87 @@ export function usePackageUpdates(
     refetchOnWindowFocus: false,
   });
   const refresh = useCallback(
-    async (force = false) => {
-      if (!enabled) return;
-      setPending(true);
-      setError(undefined);
-      try {
-        const check = await checkPackageUpdate(csrf!, force);
-        client.setQueryData<PackageOverview>(
-          ['package-update-overview', csrf],
-          (old) => ({ check, operation: old?.operation ?? null }),
+    (force = false): Promise<void> => {
+      const key = ['package-update-overview', csrf];
+      const active = () =>
+        ['preparing', 'applying'].includes(
+          client.getQueryData<PackageOverview>(key)?.operation?.state ?? '',
         );
-      } catch (e) {
-        setError(e instanceof PackageUpdateError ? e.code : 'request_failed');
-      } finally {
-        setPending(false);
-      }
+      if (!enabled || mutating.current || active()) return Promise.resolve();
+      if (refreshRequest.current) return refreshRequest.current;
+      checked.current = true;
+      const epoch = generation.current;
+      const snapshot = client.getQueryState(key)?.dataUpdateCount;
+      const current = () => generation.current === epoch && !mutating.current;
+      const unchanged = () =>
+        client.getQueryState(key)?.dataUpdateCount === snapshot;
+      const run = async () => {
+        setPending(true);
+        setError((old) => (old?.source === 'check' ? undefined : old));
+        try {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (!current() || active() || !unchanged()) return;
+            try {
+              const check = await checkPackageUpdate(csrf!, force);
+              // A status poll may have already supplied a newer snapshot.
+              if (!current() || !unchanged()) return;
+              // An older status response must not undo this completed check.
+              await client.cancelQueries({ queryKey: key, exact: true });
+              if (!current() || !unchanged()) return;
+              client.setQueryData<PackageOverview>(key, (old) => ({
+                check,
+                operation: old?.operation ?? null,
+              }));
+              return;
+            } catch (e) {
+              if (!current() || !unchanged()) return;
+              const code =
+                e instanceof PackageUpdateError ? e.code : 'request_failed';
+              if (code === 'busy' && attempt < 2) {
+                await new Promise((resolve) => setTimeout(resolve, 250));
+                continue;
+              }
+              setError((old) =>
+                old?.source === 'operation'
+                  ? old
+                  : { code, source: 'check', snapshot },
+              );
+              return;
+            }
+          }
+        } finally {
+          if (generation.current === epoch) {
+            refreshRequest.current = null;
+            if (!mutating.current) setPending(false);
+          }
+        }
+      };
+      refreshRequest.current = run();
+      return refreshRequest.current;
     },
     [enabled, csrf, client],
   );
   useEffect(() => {
     if (!enabled) return;
-    void refresh();
+    // Read the operation first so reopening a panel during installation only polls.
+    if (query.isSuccess && !checked.current) {
+      checked.current = true;
+      void refresh();
+    }
     const timer = setInterval(() => void refresh(), 300000);
     return () => clearInterval(timer);
-  }, [enabled, refresh]);
+  }, [enabled, query.isSuccess, refresh]);
+  useEffect(() => {
+    if (
+      error?.source === 'check' &&
+      query.isSuccess &&
+      query.data.check.state !== 'checking' &&
+      query.data.check.state !== 'failed' &&
+      client.getQueryState(['package-update-overview', csrf])
+        ?.dataUpdateCount !== error.snapshot
+    )
+      setError(undefined);
+  }, [error, query.isSuccess, query.data, query.dataUpdatedAt, client, csrf]);
   const op = query.data?.operation;
   useEffect(() => {
     if (
@@ -98,10 +177,14 @@ export function usePackageUpdates(
     }
   }, [op]);
   const perform = async (action: () => Promise<PackageOperation>) => {
+    if (mutating.current) return;
+    const epoch = generation.current;
+    mutating.current = true;
     setPending(true);
     setError(undefined);
     try {
       const operation = await action();
+      if (generation.current !== epoch) return;
       client.setQueryData<PackageOverview>(
         ['package-update-overview', csrf],
         (old) => ({
@@ -115,10 +198,17 @@ export function usePackageUpdates(
         }),
       );
     } catch (e) {
-      setError(e instanceof PackageUpdateError ? e.code : 'request_failed');
+      if (generation.current === epoch)
+        setError({
+          code: e instanceof PackageUpdateError ? e.code : 'request_failed',
+          source: 'operation',
+        });
     } finally {
-      setPending(false);
-      void query.refetch();
+      if (generation.current === epoch) {
+        mutating.current = false;
+        setPending(!!refreshRequest.current);
+        void query.refetch();
+      }
     }
   };
   return {
@@ -127,7 +217,7 @@ export function usePackageUpdates(
     notes: candidate ? notesQuery.data : undefined,
     notesLoading: notesEnabled && notesQuery.isFetching,
     error:
-      error ??
+      error?.code ??
       (query.error instanceof PackageUpdateError
         ? query.error.code
         : undefined),
