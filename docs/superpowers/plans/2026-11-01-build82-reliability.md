@@ -71,11 +71,11 @@
 
 The user subsequently requested transparent snapshots/quiesce/install/postflight and restoration of the previous service on failure, with the same ordinary update UI. This additional work is not covered by the completed reliability checkpoint above.
 
-- [ ] Accept healthy persistent policy flags on unrelated installed Entware packages, preserving own held-package and actual unfinished-state gates; reproduce with real ARM opkg.
-- [ ] Capture verified old package payload/metadata and settings under the package-manager mutex before stopping services.
-- [ ] On failure, reinstall the verified local rollback package through opkg, restore settings and original service intent; surface rollback failure explicitly.
-- [ ] Defer SmartDNS transaction resume until the verified final state.
-- [ ] Keep shell/bootstrap and panel paths consistent, regenerate embedded closure and ABI launchers.
+- [x] Accept healthy persistent policy flags on unrelated installed Entware packages, preserving own held-package and actual unfinished-state gates; reproduce with real ARM opkg.
+- [x] Capture verified old package payload/metadata and settings under the package-manager mutex before stopping services.
+- [x] On failure, reinstall the verified local rollback package through opkg, restore settings and original service intent; surface rollback failure explicitly.
+- [x] Defer SmartDNS transaction resume until the verified final state.
+- [x] Keep shell/bootstrap and panel paths consistent, regenerate embedded closure and ABI launchers.
 - [ ] Test install/postflight/rollback failures, killed workers, off-state preservation and both ASUS ABIs; independently review before release.
 
 Evidence: the newly attached 3.72-second video shows Build81 and the pending-packages warning. It does not reveal the actual status rows or whether the warning comes from a historical failed operation. Real opkg has independently demonstrated false-positive rejection of foreign hold/noprune installed rows. No router state was changed during preparation.

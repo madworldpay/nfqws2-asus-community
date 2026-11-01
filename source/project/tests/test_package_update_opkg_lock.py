@@ -54,6 +54,24 @@ class PackageUpdateOpkgLockTests(unittest.TestCase):
         result=subprocess.run(self.argv()+['configure'],capture_output=True,timeout=5)
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertEqual(self.log.read_text(),'preflightopkg:configure nfqws2-asus')
+    def test_rollback_is_confined_to_the_sealed_old_package_under_the_native_mutex(self):
+        result=subprocess.run(self.argv()+['rollback'],capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.log.read_text(),'preflightopkg:--nodeps --force-downgrade --force-reinstall --force-maintainer install '+str(self.op/'rollback/package.ipk'))
+    def test_verify_only_holds_same_native_mutex_and_never_executes_opkg(self):
+        self.preflight.write_text('#!/bin/sh\nprintf preflight >> "'+str(self.log)+'"\nsleep .3\n')
+        p=subprocess.Popen(self.argv()+['rollback-verify'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        try:
+            end=time.monotonic()+2
+            while not self.log.exists() and time.monotonic()<end:time.sleep(.005)
+            self.assertTrue(self.log.exists())
+            with self.lock.open('r+') as lock:
+                with self.assertRaises(BlockingIOError):fcntl.lockf(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            out,err=p.communicate(timeout=2);self.assertEqual(p.returncode,0,err);self.assertEqual(out,b'')
+            self.assertEqual(self.log.read_text(),'preflight')
+        finally:
+            if p.poll() is None:p.kill();p.communicate()
+
     def test_unknown_launcher_action_never_reaches_preflight(self):
         result=subprocess.run(self.argv()+['configure-all'],capture_output=True,timeout=5)
         self.assertEqual(result.returncode,75);self.assertFalse(self.log.exists())

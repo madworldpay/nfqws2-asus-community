@@ -100,12 +100,13 @@ static void path(char *out,const char *id,const char *suffix) {
     const char *parts[]={UPDATE_ROOT,"/operations/",id,suffix};int n=0;
     for(int i=0;i<4;i++)for(const char *p=parts[i];*p;p++){if(n>=2047)done(75);out[n++]=*p;}out[n]=0;
 }
+static int equal(const char *a,const char *b) {while(*a&&*a==*b){a++;b++;}return *a==*b;}
 __attribute__((used,noreturn)) void entry(long *stack) {
     long argc=stack[0];char **argv=(char**)&stack[1];if(argc!=2&&argc!=3)done(75);
-    int configure=argc==3;if(configure){const char *p=argv[2],*want="configure";while(*want&&*p==*want){p++;want++;}if(*p||*want)done(75);}
+    int action=0;if(argc==3){if(equal(argv[2],"configure"))action=1;else if(equal(argv[2],"rollback"))action=2;else if(equal(argv[2],"rollback-verify"))action=3;else done(75);}
     const char *id=argv[1];int n=0;for(;id[n];n++)if(n>=32||!((id[n]>='0'&&id[n]<='9')||(id[n]>='a'&&id[n]<='f')))done(75);if(n!=32)done(75);
     long root=directory(-100,UPDATE_ROOT),ops=directory(root,"operations"),op=directory(ops,id);directory(op,"runtime");
-    path(runtime,id,"/runtime/check.sh");path(package,id,"/package.ipk");
+    path(runtime,id,"/runtime/check.sh");path(package,id,action==2?"/rollback/package.ipk":"/package.ipk");
     long script=call(NR_OPENAT,-100,(long)runtime,OPEN_NOFOLLOW|04000,0);if(!object(script,0,0))done(75);call(NR_CLOSE,script,0,0,0);
     long fd=call(NR_OPENAT,-100,(long)OPKG_LOCK,OPEN_NOFOLLOW|04000|0100|2,0600);if(!object(fd,0,0))done(75);
     if(call(NR_FCNTL,fd,SET_LOCK,(long)&lock,0)<0)done(73);
@@ -118,11 +119,15 @@ __attribute__((used,noreturn)) void entry(long *stack) {
     long child=call(NR_FORK,0,0,0,0);
 #endif
     if(child<0)done(76);
-    if(child==0){call(NR_CLOSE,fd,0,0,0);char *args[]={"sh",runtime,(char*)id,configure?"configure":"install",0};call(NR_EXEC,(long)"/bin/sh",(long)args,(long)env,0);done(74);}
+    if(child==0){call(NR_CLOSE,fd,0,0,0);char *args[]={"sh",runtime,(char*)id,action==1?"configure":action==2?"rollback":action==3?"rollback-verify":"install",0};call(NR_EXEC,(long)"/bin/sh",(long)args,(long)env,0);done(74);}
     int status=0;long waited;do{waited=call(NR_WAIT,child,(long)&status,0,0);}while(waited==-4);
     if(waited!=child||status!=0)done(74);
+    if(action==3)done(0);
     /* No fork here: POSIX locks belong to this PID, which opkg keeps. */
     char *installArgs[]={OPKG_BIN,"--nodeps","install",package,0};
     char *configureArgs[]={OPKG_BIN,"configure","nfqws2-asus",0};
-    call(NR_EXEC,(long)OPKG_BIN,(long)(configure?configureArgs:installArgs),(long)env,0);done(76);
+    /* These force flags are confined to the locally sealed, verified snapshot
+     * accepted by rollback preflight. Never force-overwrite other packages. */
+    char *rollbackArgs[]={OPKG_BIN,"--nodeps","--force-downgrade","--force-reinstall","--force-maintainer","install",package,0};
+    call(NR_EXEC,(long)OPKG_BIN,(long)(action==1?configureArgs:action==2?rollbackArgs:installArgs),(long)env,0);done(76);
 }

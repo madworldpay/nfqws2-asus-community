@@ -62,6 +62,8 @@ final class AsusUpdateLifecycle
         if($intent['mode']==='stopped'){if($this->intent()['mode']!=='stopped')throw new RuntimeException('intent_mismatch');return 'stopped';}
         if(!$this->command('core','start'))throw new RuntimeException('core_start_failed');$state=$this->intent()['mode'];if($state==='stopped')throw new RuntimeException('core_start_failed');return $state;
     }
+    public function webStop(): void
+    {if(!$this->command('web','stop'))throw new RuntimeException('web_stop_failed');}
     public function web(): void
     {if(!$this->command('web','start')||!$this->command('web','status'))throw new RuntimeException('web_start_failed');}
 }

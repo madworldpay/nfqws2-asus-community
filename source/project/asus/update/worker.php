@@ -24,12 +24,13 @@ try{
         if($arguments!==[])exit(1);$f=(new AsusUpdateGuard($store))->mutationLease();fclose($f);exit(0);
     }
     if($mode==='preflight'){
-        if(count($arguments)!==2||!preg_match('/^[a-f0-9]{32}$/D',$arguments[0])||!in_array($arguments[1],['install','configure'],true))exit(1);
+        if(count($arguments)!==2||!preg_match('/^[a-f0-9]{32}$/D',$arguments[0])||!in_array($arguments[1],['install','configure','rollback','rollback-verify'],true))exit(1);
         [$id,$action]=$arguments;
         try{(new AsusUpdateWorker($store))->preflight($id,$action);exit(0);}
         catch(Throwable $e){$store->writeFile('operations/'.$id.'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)],JSON_THROW_ON_ERROR));exit(1);}
     }
     if(count($arguments)!==1||!preg_match('/^[a-f0-9]{32}$/D',$arguments[0]))exit(1);$id=$arguments[0];
+    if($mode==='rollback-finalize'){(new AsusUpdateWorker($store))->rollbackFinalize($id);exit(0);}
     if($mode==='guard-check'){
         $command=[PHP_BINARY,'-n','-d','extension=/opt/lib/php8/openssl.so','-d','register_argc_argv=1','-q','-f',__FILE__,'--','check',$id];
         (new AsusUpdateCheck($store))->guard($id,$command);exit(0);

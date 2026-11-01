@@ -6,6 +6,7 @@ staged worker, signatures, archives, database, snapshot and launcher run for rea
 import base64
 import fcntl
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -21,7 +22,10 @@ sys.path.insert(0,str(PROJECT/'tests'))
 import test_package_update_apply as executable_fixture
 
 
-@unittest.skipUnless(executable_fixture.NATIVE.exists(),'native PHP fixture required')
+OPKG=PROJECT/'.work/packaging-audit-20261012/opkg-x64'
+
+
+@unittest.skipUnless(executable_fixture.NATIVE.exists() and OPKG.is_file(),'native PHP and actual Entware opkg fixtures required')
 class AsusResumeFlowTests(unittest.TestCase):
     def test_exact_build80_configures_before_latest81_and_preserves_private_settings(self):
         fixture=executable_fixture.PackageUpdateApplyTests('test_resume_stopped_core_never_starts_and_leaves_snapshot_and_log')
@@ -34,17 +38,30 @@ class AsusResumeFlowTests(unittest.TestCase):
             fixture.fixture.package(Version=version)
             if build==80:
                 fixture.fixture.add_control_members([('postinst',fixture.fixture.postinst.read_bytes(),tarfile.REGTYPE)])
-                fixture.fixture.payload({'opt/lib/nfqws2-asus/helper.sh':(fixture.fixture.immutable.read_bytes(),0o755)})
+            fixture.fixture.payload({'opt/lib/nfqws2-asus/helper.sh':(fixture.fixture.immutable.read_bytes(),0o755)})
             package={**fixture.fixture.candidate['package'],'filename':f'nfqws2-asus_{version}_aarch64-3.10.ipk'}
             shutil.copyfile(fixture.fixture.pkg,feed/package['filename'])
             manifest={'schema_version':1,'package_version':version,'core_version':'1.3.1-asus6','web_version':'0.1.4','build':build,'notes':'coordinator fixture','packages':[package]}
             raw=json.dumps(manifest,separators=(',',':')).encode()
             (feed/f'{build}.json').write_bytes(raw)
             (feed/f'{build}.sig').write_bytes(base64.b64encode(subprocess.check_output(['openssl','dgst','-sha256','-sign',str(fixture.key)],input=raw)))
-        fixture.status.write_text(fixture.fixture.status().replace('+b10','+b80').replace('Status: install ok installed','Status: install user unpacked',1))
-        fixture.body.write_text('#!/bin/sh\nprintf "%s|%s\\n" "$*" "$NFQWS_ASUS_NO_START" >> '+shlex.quote(str(base/'arguments'))+'\n'
-          'if [ "$1" = configure ]; then expression="s/Status: install user unpacked/Status: install user installed/"; else expression="s/+b80/+b81/"; fi\n'
-          'sed "$expression" '+shlex.quote(str(fixture.status))+' > '+shlex.quote(str(base/'new-status'))+'\ncat '+shlex.quote(str(base/'new-status'))+' > '+shlex.quote(str(fixture.status))+'\n')
+        fixture.status.write_text(fixture.fixture.status().replace('+b10','+b80').replace('Status: install ok installed','Status: install user unpacked',1).replace('Version: 1\nStatus:','Version: 1\nArchitecture: all\nStatus:'))
+        # An unpacked real package already has its original control and file
+        # inventory. Once configure succeeds, the next update must be able to
+        # snapshot that coherent installed baseline without relaxing guards.
+        info=opt/'lib/opkg/info';info.mkdir(parents=True,exist_ok=True)
+        with tarfile.open(feed/'nfqws2-asus_1.3.1-asus6+b80_aarch64-3.10.ipk') as package:
+            with tarfile.open(fileobj=io.BytesIO(package.extractfile('control.tar.gz').read())) as control:
+                for member in control:
+                    self.assertTrue(member.isfile());name=member.name.removeprefix('./')
+                    target=info/('nfqws2-asus.'+name);target.write_bytes(control.extractfile(member).read());target.chmod(member.mode)
+            with tarfile.open(fileobj=io.BytesIO(package.extractfile('data.tar.gz').read())) as data:
+                installed=['/'+member.name.removeprefix('./') for member in data if member.isfile()]
+        (info/'nfqws2-asus.list').write_text('\n'.join(installed)+'\n');(info/'nfqws2-asus.list').chmod(0o644)
+        config=base/'actual-opkg.conf';config.write_text('dest root /\narch all 100\narch aarch64-3.10 150\n')
+        (opt/'tmp').mkdir(mode=0o755,exist_ok=True)
+        actual=shlex.join([str(OPKG),'-f',str(config),'-o',str(base),'--tmp-dir',str(opt/'tmp'),'--force-postinstall'])
+        fixture.body.write_text('#!/bin/sh\nprintf "%s|%s\\n" "$*" "$NFQWS_ASUS_NO_START" >> '+shlex.quote(str(base/'arguments'))+'\nexec '+actual+' "$@"\n')
         template=base/'host-template';shutil.copytree(fixture.runtime,template)
         shutil.rmtree(fixture.state);fixture.state.mkdir(mode=0o700);(fixture.state/'operations').mkdir(mode=0o700)
         work=base/'coordinator';work.mkdir(mode=0o700);shutil.copytree(PROJECT/'webui/web/public',work/'app')
@@ -122,6 +139,8 @@ class AsusResumeFlowTests(unittest.TestCase):
         jobs=json.loads((fixture.state/'operations.json').read_text())['operations']
         self.assertEqual([j['state'] for j in jobs.values()],['succeeded','succeeded'])
         self.assertEqual([j.get('installed_version') for j in jobs.values()],['1.3.1-asus6+b80','1.3.1-asus6+b81'])
+        self.assertIn('Version: 1.3.1-asus6+b81',(info/'nfqws2-asus.control').read_text())
+        self.assertEqual((info/'nfqws2-asus.list').read_text().strip(),'/opt/lib/nfqws2-asus/helper.sh')
 
 
 if __name__=='__main__':unittest.main()

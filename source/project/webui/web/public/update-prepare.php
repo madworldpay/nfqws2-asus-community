@@ -78,7 +78,7 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
     public static function code(Throwable $error): string
     {
         $known=['channel_unconfigured','invalid_channel','invalid_manifest','invalid_signature','signature_unavailable','download_failed','download_size','download_hash','timed_out','channel_auth_failed','release_changed','unsupported_abi','unsupported_version','unsupported_package','invalid_package','package_reader_unavailable','missing_dependencies','dependency_change','pending_packages','insufficient_space','settings_changed','invalid_state','output_limit','stale_revision','busy','request_conflict','missing_operation','runtime_changed','core_stop_failed','core_start_failed','web_start_failed','web_health_failed','intent_mismatch','opkg_busy','install_failed','version_mismatch','launch_failed','interrupted'];
-        $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed','dns_restore_required','dns_restore_failed','recovery_required']);
+        $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed','dns_restore_required','dns_restore_failed','recovery_required','rollback_unavailable','rollback_failed','update_rolled_back','web_stop_failed','dns_resume_stop_failed']);
         return in_array($error->getMessage(),$known,true)?$error->getMessage():'update_failed';
     }
     public function environment(): array
@@ -93,6 +93,13 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
         $machine=$this->environment['machine']??php_uname('m');$family=match($abi){'aarch64-3.10'=>'aarch64-3.10','armv7-2.6','armv7-3.2'=>'armv7',default=>null};
         if($family===null||!($family==='aarch64-3.10'&&$machine==='aarch64'||$family==='armv7'&&in_array($machine,['armv7l','armv8l'],true)))throw new RuntimeException('unsupported_abi');
         return ['opt'=>$opt,'status'=>$status,'abi'=>$abi,'machine'=>$machine,'family'=>$family,'installed'=>$installed,'pending'=>$pending,'owner'=>$owner,'free'=>$this->environment['free']??disk_free_space($this->store->path()),'runtime_bytes'=>$this->environment['runtime_bytes']??33554432];
+    }
+    /** Rollback reads own potentially incomplete state without relaxing the
+     * normal update parser. Foreign records are checked by the sealed snapshot. */
+    public function rollbackEnvironment():array
+    {
+        $opt=rtrim($this->environment['opt']??dirname(AsusDpiStore::optPath('/var')),'/');$owner=$this->environment['owner']??0;AsusUpdateStore::noLinks($opt);$path=$opt.'/lib/opkg/status';AsusUpdateStore::noLinks($path);$s=@lstat($path);
+        if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||$s['size']>2097152)throw new RuntimeException('rollback_failed');$raw=@file_get_contents($path);if(!is_string($raw))throw new RuntimeException('rollback_failed');return ['opt'=>$opt,'owner'=>$owner,'status'=>$raw];
     }
     private function source(): AsusUpdateSource {return $this->source??=new AsusUpdateTransport();}
     private function key(): string

@@ -181,7 +181,48 @@ class PackageUpdatePrepareTests(unittest.TestCase):
 
     def test_user_installed_flag_is_healthy_but_hold_is_not_automatically_changed(self):
         self.assertIn('value',self.call(status=self.status().replace('install ok installed','install user installed')))
-        self.assertEqual(self.call(status=self.status().replace('install ok installed','install hold installed')),{'error':'pending_packages'})
+        for flag in ['hold','noprune','prefer','hold,user','prefer,user']:
+            with self.subTest(flag=flag):
+                self.assertEqual(self.call(status=self.status().replace('install ok installed',f'install {flag} installed',1)),{'error':'pending_packages'})
+
+    # Entware opkg d038e5b6 emits these rows for `flag hold` / `flag noprune`.
+    # Its persistent flag serializer orders hold,noprune,prefer,user; ok stands
+    # alone. Auto-Installed is a separate field, not an unfinished status.
+    OPKG_POLICY_FLAGS=['ok','hold','noprune','prefer','user','hold,noprune','hold,prefer','hold,user',
+                       'noprune,prefer','noprune,user','prefer,user','hold,noprune,prefer',
+                       'hold,noprune,user','hold,prefer,user','noprune,prefer,user','hold,noprune,prefer,user']
+
+    @staticmethod
+    def foreign_record(flag, state='installed', want='install'):
+        return f'Package: foreign\nVersion: 1\nStatus: {want} {flag} {state}\nArchitecture: all\nAuto-Installed: yes\n\n'
+
+    def test_foreign_installed_and_absent_policy_flags_are_not_pending_packages(self):
+        for state in ['installed','not-installed','config-files']:
+            for flag in self.OPKG_POLICY_FLAGS:
+                with self.subTest(state=state,flag=flag):
+                    self.assertIn('value',self.call(status=self.status(other=self.foreign_record(flag,state))))
+
+    def test_held_or_preferred_dependency_is_still_installed(self):
+        for flag in self.OPKG_POLICY_FLAGS:
+            with self.subTest(flag=flag):
+                status=self.status().replace('Package: libc\nVersion: 1\nStatus: install ok installed',
+                                            f'Package: libc\nVersion: 1\nStatus: install {flag} installed\nAuto-Installed: yes')
+                self.assertIn('value',self.call(status=status))
+        status=self.status().replace('Package: libc\nVersion: 1\nStatus: install ok installed',
+                                    'Package: libc\nVersion: 1\nStatus: install hold not-installed')
+        self.assertEqual(self.call(status=status),{'error':'missing_dependencies'})
+
+    def test_foreign_flag_validation_cannot_hide_pending_or_malformed_records(self):
+        for state in ['installed','not-installed','config-files']:
+            for flag in ['reinstreq','obsolete','replace','unknown','','ok,user','hold,hold','user,hold',
+                         'user,prefer','hold,','hold,,user',',user','hold,reinstreq']:
+                with self.subTest(state=state,flag=flag):
+                    self.assertEqual(self.call(status=self.status(other=self.foreign_record(flag,state))),{'error':'pending_packages'})
+        for state in ['unpacked','half-installed','half-configured','post-inst-failed','removal-failed']:
+            for flag in ['ok','hold','hold,noprune,prefer,user']:
+                with self.subTest(state=state,flag=flag):
+                    self.assertEqual(self.call(status=self.status(other=self.foreign_record(flag,state))),{'error':'pending_packages'})
+        self.assertEqual(self.call(status=self.status(other=self.foreign_record('ok',want='hold'))),{'error':'pending_packages'})
 
     def test_fully_installed_own_package_can_retry_after_opkg_preinstall_abort(self):
         for flag in ['ok','user']:

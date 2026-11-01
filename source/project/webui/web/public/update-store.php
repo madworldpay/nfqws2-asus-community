@@ -102,20 +102,22 @@ final class AsusUpdateStore
         }
         // Unknown operator files and links are deliberately left alone.
         $this->pruneTree('operations/'.$id.'/backup','snapshot.json');
+        if($this->readFile('operations/'.$id.'/rollback/staging.json')!==null)$this->pruneTree('operations/'.$id.'/rollback','staging.json',true,false,true);
+        $this->pruneTree('operations/'.$id.'/rollback','cleanup-index.json',false,false,true);
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
         $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
         foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}
-        foreach(['package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
+        foreach(['package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
         @rmdir($dir);
     }
-    private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false): void
+    private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false,bool $rollback=false): void
     {
         $dir=$this->path($name);if(!is_dir($dir))return;$this->directory($name);$raw=$this->readFile($name.'/'.$index);if($raw===null)return;
         try{$v=json_decode($raw,true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
         if(!is_array($v['files']??null)||count($v['files'])>512)throw new RuntimeException('invalid_state');$dirs=[$dir];
         foreach($v['files'] as $file=>$meta){if(!is_string($file)||!preg_match('~^[a-zA-Z0-9_@+.-]+(?:/[a-zA-Z0-9_@+.-]+)*$~D',$file)||in_array('..',explode('/',$file),true)||in_array('.',explode('/',$file),true)||!is_array($meta)||!is_int($meta['mode']??null)||!is_int($meta['size']??null)||$meta['size']<0||!preg_match('/^[a-f0-9]{64}$/D',$meta['sha256']??''))throw new RuntimeException('invalid_state');
             $p=$dir.'/'.$file;$safe=true;for($parent=$p;$parent!==$dir;$parent=dirname($parent))if(is_link($parent)){$safe=false;break;}if(!$safe)continue;
-            $s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1){
+            $s=@lstat($p);$mutable=$rollback&&($meta['uid']??null)===65534&&preg_match('~^quarantine/migration-[a-f0-9]{16}/(?:snapshot|stage\.[1-9][0-9]*)/lists/[a-zA-Z0-9_.-]+$~D',$file);if($s&&($s['mode']&0170000)===0100000&&($s['uid']===$this->owner||$mutable&&$s['uid']===65534)&&$s['nlink']===1){
                 $complete=($s['mode']&0777)===$meta['mode']&&$s['size']===$meta['size']&&hash_file('sha256',$p)===$meta['sha256'];
                 $partial=$incomplete&&in_array($s['mode']&0777,[0600,$meta['mode']],true)&&$s['size']<=$meta['size'];
                 if($complete||$partial)@unlink($p);

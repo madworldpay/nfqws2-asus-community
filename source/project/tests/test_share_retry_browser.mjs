@@ -134,6 +134,7 @@ try {
     await guidancePage.getByRole('checkbox', { name: /NFQWS_ARGS/ }).waitFor();
     await guidancePreview.tap();
     for (const key of ['purpose', 'operator', 'strategy']) assert.ok((await notice.innerText()).includes(pack.share.preview_guidance[key]), `show missing ${key}`);
+    if (process.env.NFQWS_PREVIEW_GUIDANCE_SCREENSHOT && lang === 'ru') await guidancePage.screenshot({ path: process.env.NFQWS_PREVIEW_GUIDANCE_SCREENSHOT });
     await guidancePage.getByLabel(pack.share.purpose, { exact: false }).fill('YouTube');
     assert.ok(!(await notice.innerText()).includes(pack.share.preview_guidance.purpose), 'completed fields leave the guidance');
     assert.ok((await notice.innerText()).includes(pack.share.preview_guidance.operator));
