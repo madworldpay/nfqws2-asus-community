@@ -367,6 +367,17 @@ function main(): void
     exit();
   }
 
+  if ($_POST['cmd']==='mtprotoaddresses') {
+    require_once __DIR__.'/support-report.php';require_once __DIR__.'/mtproto-addresses.php';
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    try {
+      AsusMtprotoAddresses::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();$result=AsusMtprotoAddresses::collect();http_response_code(200);echo json_encode($result,JSON_THROW_ON_ERROR);
+    }catch(Throwable $e){http_response_code(400);echo json_encode(['error'=>'invalid_request']);}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['importcatalog','importcatalogload'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/profile-catalog-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');

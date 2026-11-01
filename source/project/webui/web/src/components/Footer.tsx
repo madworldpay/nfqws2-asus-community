@@ -28,7 +28,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 export const Footer = () => {
   const { auth } = useAppStore();
-  const { anonym } = useStatus();
+  const { anonym, csrfToken } = useStatus();
   const { t, langcode, setLanguage } = useTranslation();
 
   const { mode } = useColorScheme();
@@ -39,7 +39,10 @@ export const Footer = () => {
     <>
       <TechnicalChannel />
       {mtprotoOpen && (
-        <MtprotoInstallDialog onClose={() => setMtprotoOpen(false)} />
+        <MtprotoInstallDialog
+          onClose={() => setMtprotoOpen(false)}
+          csrfToken={csrfToken}
+        />
       )}
       <Box
         sx={{

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DownloadIcon from '@mui/icons-material/Download';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -21,6 +21,8 @@ import {
   Typography,
 } from '@mui/material';
 
+import { getMtprotoAddresses } from '@/api/mtprotoAddresses';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
 import { copyText } from '@/utils/copyText';
@@ -30,7 +32,9 @@ import {
   createMtprotoSecret,
   mtprotoDiagnostics,
   mtprotoLink,
+  suggestMtprotoServer,
   validateMtproto,
+  type MtprotoAddresses,
   type MtprotoMethod,
 } from '@/utils/mtprotoInstall';
 
@@ -91,7 +95,13 @@ function CopyField({
   );
 }
 
-export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
+export function MtprotoInstallDialog({
+  onClose,
+  csrfToken,
+}: {
+  onClose: VoidFunction;
+  csrfToken?: string;
+}) {
   const { t, langcode } = useTranslation();
   const [withDocker, setWithDocker] = useState(false);
   const [dockerMode, setDockerMode] = useState<'portainer' | 'terminal'>(
@@ -99,7 +109,31 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
   );
   const [native, setNative] = useState<'entware' | 'linux'>('entware');
   const method: MtprotoMethod = withDocker ? 'docker' : native;
-  const [server, setServer] = useState('');
+  const [addresses, setAddresses] = useState<MtprotoAddresses>({
+    router: null,
+    docker: null,
+  });
+  const [edited, setEdited] = useState<Partial<Record<MtprotoMethod, string>>>(
+    {},
+  );
+  const suggested = suggestMtprotoServer(
+    method,
+    addresses,
+    window.location.hostname,
+  );
+  const server = edited[method] ?? suggested;
+  useEffect(() => {
+    if (!csrfToken) return;
+    let active = true;
+    void getMtprotoAddresses(csrfToken)
+      .then((value) => {
+        if (active) setAddresses(value);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [csrfToken]);
   const [port, setPort] = useState('1443');
   const [key, setKey] = useState(() => {
     try {
@@ -184,19 +218,26 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
           )}
           <Alert severity="info">{t(`mtproto.help_${method}`)}</Alert>
           <TextField
-            label={t('mtproto.server')}
+            label={t(`mtproto.server_${method}`)}
             placeholder="proxy.example.org"
             value={server}
-            onChange={(e) => setServer(e.target.value)}
+            onChange={(e) =>
+              setEdited((old) => ({ ...old, [method]: e.target.value }))
+            }
             error={!!server && !!errors.server}
             helperText={
               server && errors.server
                 ? t('mtproto.invalid_server')
-                : t('mtproto.server_help')
+                : `${t(`mtproto.server_help_${method}`)} ${t('mtproto.server_remote_help')}`
             }
             fullWidth
             autoComplete="off"
           />
+          {server && edited[method] === undefined && (
+            <Typography variant="caption" color="text.secondary">
+              {t('mtproto.address_detected')}
+            </Typography>
+          )}
           <TextField
             label={t('mtproto.port')}
             value={port}

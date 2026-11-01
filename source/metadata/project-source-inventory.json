@@ -1705,14 +1705,19 @@
     "sha256": "3519690a9582a225b2ab8a1a20934740926b6c2d6b6f40e0f99a1eedcf515f26"
   },
   {
+    "path": "tests/test_mtproto_addresses.py",
+    "bytes": 1943,
+    "sha256": "b3b8a7af1665eb9c73c64b3a0ae0c204b7486462c2490a97a0a52af2de05f94f"
+  },
+  {
     "path": "tests/test_mtproto_install.mjs",
-    "bytes": 5415,
-    "sha256": "eee1b8b7fdcfd404e9a1a37ed33bb2d4712d507cd56408b4ad5111e69bfc0ee5"
+    "bytes": 6097,
+    "sha256": "84120c480a7a203b0f51e979c4eedd91b1782e6038029eab59e077d542e2904b"
   },
   {
     "path": "tests/test_mtproto_ui.mjs",
-    "bytes": 7046,
-    "sha256": "c0fe95eb1b9f8ad6eb51592b86990d666057186053ab9ef982808ebaf368c5a8"
+    "bytes": 8165,
+    "sha256": "4bd02fbe53d8976453ccb00589b645caea9ba3ab5f684026d5882ca1362f45a7"
   },
   {
     "path": "tests/test_native_args.py",
@@ -3056,8 +3061,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 33451,
-    "sha256": "9c04f0c951661c9c2ef4c071e3369c983db98adb1a1dc4ca101d878b358a2c87"
+    "bytes": 34164,
+    "sha256": "57f5c3f75334867bfa0091513dad0e4a9c48db9dfcaec2804784052ed533b734"
   },
   {
     "path": "webui/web/public/logo.woff2",
@@ -3078,6 +3083,11 @@
     "path": "webui/web/public/models.woff2",
     "bytes": 9476,
     "sha256": "ee9eda0bff22892ec88c596d25e483c2e4e6fd0a88d8a56679569f0f13497ecc"
+  },
+  {
+    "path": "webui/web/public/mtproto-addresses.php",
+    "bytes": 1506,
+    "sha256": "c11693bbd7b33291fac639d8844a99a62bee640e977f5f5e340ca4930e7d825f"
   },
   {
     "path": "webui/web/public/openwrt-apk-adapter.php",
@@ -3605,6 +3615,11 @@
     "sha256": "da56378c60425f4f8471f837740f48915171e6dfaa7c6b198ebbbc06e63b6fb4"
   },
   {
+    "path": "webui/web/src/api/mtprotoAddresses.ts",
+    "bytes": 739,
+    "sha256": "19eecdb6550fef7d57c95d2bdbc1bf75095c0d4e585cef4e4ee0ddf63c1fa27a"
+  },
+  {
     "path": "webui/web/src/api/packageUpdateNotes.ts",
     "bytes": 3921,
     "sha256": "eb8706790904ec21863498c0053bc95dcd381146a352878a24308a05a2f16338"
@@ -3771,8 +3786,8 @@
   },
   {
     "path": "webui/web/src/components/Footer.tsx",
-    "bytes": 7163,
-    "sha256": "eea309c8e7191f21e0993b55fa671a53056654a586459cf9b22d5303fb5b1d00"
+    "bytes": 7224,
+    "sha256": "a2e643cda83d02f351b1a8d1edb60ec2be44429e70e9f377599bf27ee25bd684"
   },
   {
     "path": "webui/web/src/components/FormEditor.tsx",
@@ -3826,8 +3841,8 @@
   },
   {
     "path": "webui/web/src/components/MtprotoInstallDialog.tsx",
-    "bytes": 9503,
-    "sha256": "06f39e27618221422a6419630a5bb1a6a0c18faea23e6d041d95099765ebeca8"
+    "bytes": 10576,
+    "sha256": "a758e6a71413d0e4bc7456c613135e312da9b1b88f9f7089cfdb34b6a22136ef"
   },
   {
     "path": "webui/web/src/components/OutputLogDialog.tsx",
@@ -4046,13 +4061,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 72798,
-    "sha256": "f145549e0913190cac652f7e01230b87f4ce3f0c03a08db0548b8616b2a35ba1"
+    "bytes": 73338,
+    "sha256": "39dbbb6b294b23f92d81bbac8a2a6294b3be226b31e3594ef1042551c6e4b9d8"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 118344,
-    "sha256": "0c351d56c34cec61ed64b563b3018307fb2b14ff57bacc8c4b20c5baded9381d"
+    "bytes": 119120,
+    "sha256": "c5a2bf98272f50a11163a9318f4bd8a5de309a5af7437f818ee3ef81d7775d13"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4126,8 +4141,8 @@
   },
   {
     "path": "webui/web/src/utils/mtprotoInstall.ts",
-    "bytes": 3861,
-    "sha256": "19c5d130b205278dfcf0b3df3ade7eba8474a996b888e9057b21b80bfffa1c43"
+    "bytes": 4483,
+    "sha256": "3f3f765fcdadebedd1c2241db79f7c7239adb71367ad6762838e4f90397c633b"
   },
   {
     "path": "webui/web/src/utils/newlineMarkers.ts",

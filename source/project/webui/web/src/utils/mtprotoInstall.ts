@@ -2,6 +2,29 @@ import installer from './mtproto-install.sh?raw';
 
 export type MtprotoMethod = 'docker' | 'entware' | 'linux';
 export type MtprotoValues = { server: string; port: string; secret: string };
+export type MtprotoAddresses = { router: string | null; docker: string | null };
+
+export function suggestMtprotoServer(
+  method: MtprotoMethod,
+  addresses: MtprotoAddresses,
+  panelHost: string,
+) {
+  const detected =
+    method === 'docker'
+      ? addresses.docker
+      : method === 'entware'
+        ? addresses.router
+        : null;
+  if (detected && validServer(detected)) return detected;
+  if (
+    method !== 'entware' ||
+    panelHost.toLowerCase() === 'localhost' ||
+    /^(127|0)\./.test(panelHost) ||
+    /^\[?::1\]?$/.test(panelHost)
+  )
+    return '';
+  return validServer(panelHost) ? panelHost : '';
+}
 
 // Multi-architecture image used by the reference installation (amd64 / arm64).
 export const MTPROTO_DOCKER_IMAGE =
