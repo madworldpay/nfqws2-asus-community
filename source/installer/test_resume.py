@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
 import signal
 import subprocess
 import tempfile
@@ -50,6 +51,31 @@ class AsusResumeBootstrapTests(unittest.TestCase):
                 self.assertIn('opkg completed',(work/'job.log').read_text())
             finally:
                 if parent.poll() is None:parent.kill();parent.wait()
+
+    def test_stock_fallback_survives_ssh_hup_and_keeps_lease_with_or_without_setsid(self):
+        for setsid in [False,True]:
+            with self.subTest(setsid=setsid),tempfile.TemporaryDirectory() as tmp:
+                base=Path(tmp);work=base/'transaction';work.mkdir(mode=0o700);tools=base/'bin';tools.mkdir()
+                for name in ['rm','cat','mv','sleep','tr','flock']:(tools/name).symlink_to(shutil.which(name))
+                if setsid:(tools/'setsid').symlink_to(shutil.which('setsid'))
+                busybox=base/'stock-busybox'
+                busybox.write_text('#!/bin/sh\ncase "$1" in\n--list) printf "ash\\ncat\\n";;\nstart-stop-daemon) echo "applet not found" >&2; exit 127;;\n*) exec /bin/busybox "$@";;\nesac\n');busybox.chmod(0o700)
+                package=work/'package.ipk';package.write_bytes(b'verified package')
+                started=base/'started';completed=base/'completed';lease=base/'bootstrap.lock';lease.touch(mode=0o600)
+                child=base/'opkg.sh';child.write_text('#!/bin/sh\nprintf started > '+shlex.quote(str(started))+'\n/bin/sleep .8\n/bin/cat "$1" > '+shlex.quote(str(completed))+'\nprintf "opkg completed\\n"\n');child.chmod(0o700)
+                source=(ROOT/'install.sh').read_text().split('# BEGIN GENERATED ASUS RECOVERY INSTALLER')[0]
+                source=source.replace('/bin/busybox',str(busybox)).replace('PATH=/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin','PATH='+str(tools))
+                runner=base/'parent.sh';runner.write_text(source+'\nWORK='+shlex.quote(str(work))+'\nKEEP_WORK=0\nexec 9>>'+shlex.quote(str(lease))+'\nflock -n 9 || exit 1\ntrap cleanup 0\ntrap "exit 143" HUP TERM\nnfqws_asus_background '+shlex.quote(str(child))+' '+shlex.quote(str(package))+'\n')
+                parent=subprocess.Popen(['/bin/busybox','ash',str(runner)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+                try:
+                    self.wait_file(started);os.killpg(parent.pid,signal.SIGHUP);parent.wait(timeout=3)
+                    with lease.open('r+') as held:
+                        with self.assertRaises(BlockingIOError):fcntl.flock(held,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                    self.wait_file(completed);self.wait_file(work/'job.status')
+                    self.assertEqual(completed.read_bytes(),b'verified package');self.assertEqual((work/'job.status').read_text(),'0\n')
+                    self.assertIn('opkg completed',(work/'job.log').read_text());self.assertEqual(work.stat().st_mode&0o777,0o700)
+                finally:
+                    if parent.poll() is None:parent.kill();parent.wait()
 
     def bundle(self):
         path=PROJECT/'asus/install-bundle.py'
