@@ -1495,6 +1495,11 @@
     "sha256": "8d6eabb20d4210bca2ac77af0f76d5584333bc354483c40be1f7292d77386ce3"
   },
   {
+    "path": "tests/test_community_chat_ui.mjs",
+    "bytes": 4576,
+    "sha256": "1006f18df4e7608bc93d93ec985b339a0f7acdf2c83e90a6bcfdb628a3f31fb4"
+  },
+  {
     "path": "tests/test_config.mjs",
     "bytes": 4756,
     "sha256": "a1881c5e9f318ec984fee39bb5fac8a256b36a862a9bfb1d318420bb6f200fce"
@@ -3750,6 +3755,11 @@
     "sha256": "0456389906b4999645188e7a87824e4e76e63f55765ff7c26d1f566c2253e8aa"
   },
   {
+    "path": "webui/web/src/components/CommunityChatLink.tsx",
+    "bytes": 1695,
+    "sha256": "68d3683fe00e2e8023f9781bd6cb3d0b68af723a1b9d257ded5e43544a6068f4"
+  },
+  {
     "path": "webui/web/src/components/ConfirmationDialog.tsx",
     "bytes": 1009,
     "sha256": "1a0ceb998ee66c9674da56129d3b58e41c716b792709b5b646ad32e1c79089c8"
@@ -3786,8 +3796,8 @@
   },
   {
     "path": "webui/web/src/components/Footer.tsx",
-    "bytes": 7224,
-    "sha256": "a2e643cda83d02f351b1a8d1edb60ec2be44429e70e9f377599bf27ee25bd684"
+    "bytes": 7324,
+    "sha256": "9ef88275d169761836eb79be247cf980a32defaf7c1a6fb3c1e20353099dac11"
   },
   {
     "path": "webui/web/src/components/FormEditor.tsx",
@@ -3851,8 +3861,8 @@
   },
   {
     "path": "webui/web/src/components/PackageUpdateDialog.tsx",
-    "bytes": 8064,
-    "sha256": "3931f5d06afd11f6e17ef2c3f2ff0010f7c18a0d09cff1c20bb6799bc5a3a9c4"
+    "bytes": 8239,
+    "sha256": "8f9e1a2b6d632e1be6c6ad81607df2902f3ac618e700eb372b5d3f7dfa9713ff"
   },
   {
     "path": "webui/web/src/components/PasswordDialog.tsx",
@@ -4061,13 +4071,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 73338,
-    "sha256": "39dbbb6b294b23f92d81bbac8a2a6294b3be226b31e3594ef1042551c6e4b9d8"
+    "bytes": 73497,
+    "sha256": "1a6c58eb57bab2e8fb656bed2177aea03486fcf4245f6ad47276c3b3f173ade4"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 119120,
-    "sha256": "c5a2bf98272f50a11163a9318f4bd8a5de309a5af7437f818ee3ef81d7775d13"
+    "bytes": 119399,
+    "sha256": "e2c6d95bcc43bf11065e46d56dd09987974cdfd10f448cf17c1bd01ec038102f"
   },
   {
     "path": "webui/web/src/types/types.ts",
