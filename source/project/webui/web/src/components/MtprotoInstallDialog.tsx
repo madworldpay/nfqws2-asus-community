@@ -25,6 +25,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 import { copyText } from '@/utils/copyText';
 import {
+  buildMtprotoCompose,
   buildMtprotoInstall,
   createMtprotoSecret,
   mtprotoDiagnostics,
@@ -93,6 +94,9 @@ function CopyField({
 export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
   const { t, langcode } = useTranslation();
   const [withDocker, setWithDocker] = useState(false);
+  const [dockerMode, setDockerMode] = useState<'portainer' | 'terminal'>(
+    'portainer',
+  );
   const [native, setNative] = useState<'entware' | 'linux'>('entware');
   const method: MtprotoMethod = withDocker ? 'docker' : native;
   const [server, setServer] = useState('');
@@ -109,14 +113,16 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
   const lowPort = method !== 'docker' && Number(port) < 1024;
   const ready = !Object.keys(errors).length && !lowPort;
   const script = ready ? buildMtprotoInstall(method, values, langcode) : '';
+  const portainer = withDocker && dockerMode === 'portainer';
+  const installText = ready && portainer ? buildMtprotoCompose(values) : script;
   const link = ready ? mtprotoLink(values) : '';
   const download = () => {
     const url = URL.createObjectURL(
-      new Blob([script], { type: 'text/plain;charset=utf-8' }),
+      new Blob([installText], { type: 'text/plain;charset=utf-8' }),
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = `nfqws-mtproto-${method}.sh`;
+    a.download = portainer ? 'compose.yaml' : `nfqws-mtproto-${method}.sh`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -142,6 +148,22 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
               {t('mtproto.with_docker')}
             </ToggleButton>
           </ToggleButtonGroup>
+          {withDocker && (
+            <ToggleButtonGroup
+              exclusive
+              fullWidth
+              value={dockerMode}
+              aria-label={t('mtproto.docker_mode')}
+              onChange={(_, value: 'portainer' | 'terminal' | null) => {
+                if (value) setDockerMode(value);
+              }}
+            >
+              <ToggleButton value="portainer">Portainer</ToggleButton>
+              <ToggleButton value="terminal">
+                {t('mtproto.terminal')}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          )}
           {!withDocker && (
             <FormControl fullWidth>
               <InputLabel id="mtproto-target-label">
@@ -208,12 +230,12 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
                 {t('mtproto.step_install')}
               </Typography>
               <Typography variant="body2">
-                {t(`mtproto.run_${method}`)}
+                {t(`mtproto.run_${portainer ? 'portainer' : method}`)}
               </Typography>
               <CopyField
-                key={script}
-                label={t('mtproto.command')}
-                value={script}
+                key={installText}
+                label={t(`mtproto.${portainer ? 'compose' : 'command'}`)}
+                value={installText}
                 lines={4}
               />
               <Button
@@ -221,7 +243,7 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
                 onClick={download}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                {t('mtproto.download')}
+                {t(`mtproto.${portainer ? 'download_compose' : 'download'}`)}
               </Button>
               <Typography variant="subtitle2">
                 {t('mtproto.step_connect')}
@@ -251,6 +273,18 @@ export function MtprotoInstallDialog({ onClose }: { onClose: VoidFunction }) {
             >
               Flowseal/tg-ws-proxy
             </Link>{' '}
+            {withDocker && (
+              <>
+                ·{' '}
+                <Link
+                  href="https://github.com/LordArrin/tg-ws-proxy-docker"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  LordArrin Docker
+                </Link>{' '}
+              </>
+            )}
             · MIT
           </Typography>
         </Stack>

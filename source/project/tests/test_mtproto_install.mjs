@@ -51,7 +51,16 @@ try {
   }
   for (const method of ['entware', 'linux']) assert.throws(() => api.buildMtprotoInstall(method, { ...input, port: '443' }, 'en'), 'Unprivileged native service rejects reserved ports');
   const docker = api.buildMtprotoInstall('docker', input, 'en');
-  assert.ok(docker.includes('docker build'));
+  assert.ok(docker.includes('docker pull'));
+  assert.ok(!docker.includes('docker build'));
+  assert.ok(docker.includes(api.MTPROTO_DOCKER_IMAGE));
+  assert.ok(docker.includes('PROXY_SECRET=$NFQWS_MT_KEY'));
+  const compose = api.buildMtprotoCompose(input);
+  assert.ok(compose.includes(api.MTPROTO_DOCKER_IMAGE));
+  assert.ok(compose.includes('PROXY_SECRET: '+JSON.stringify(secret.slice(2))));
+  assert.ok(compose.includes(JSON.stringify(input.port+':1443')));
+  assert.ok(!compose.includes('privileged: true'));
+  assert.throws(() => api.buildMtprotoCompose({ ...input, secret: 'bad' }));
   assert.ok(docker.includes('Flowseal/tg-ws-proxy'));
   assert.ok(docker.includes('docker info'));
   assert.ok(docker.includes('docker create'));

@@ -1706,13 +1706,13 @@
   },
   {
     "path": "tests/test_mtproto_install.mjs",
-    "bytes": 4869,
-    "sha256": "982d5023f59cd6ce54160fb23b73f8cceecbbea2c13a3f227cc3da67389961ad"
+    "bytes": 5415,
+    "sha256": "eee1b8b7fdcfd404e9a1a37ed33bb2d4712d507cd56408b4ad5111e69bfc0ee5"
   },
   {
     "path": "tests/test_mtproto_ui.mjs",
-    "bytes": 6254,
-    "sha256": "3e29a74ba5d39ad96390a96743a2dbb97885a6623dd0c2b1f795f2990d80f909"
+    "bytes": 7046,
+    "sha256": "c0fe95eb1b9f8ad6eb51592b86990d666057186053ab9ef982808ebaf368c5a8"
   },
   {
     "path": "tests/test_native_args.py",
@@ -3826,8 +3826,8 @@
   },
   {
     "path": "webui/web/src/components/MtprotoInstallDialog.tsx",
-    "bytes": 8169,
-    "sha256": "2e9950de469c50b13fc82791d8d9f4ebc72190bedbe46199b96ca8d008d47fc3"
+    "bytes": 9503,
+    "sha256": "06f39e27618221422a6419630a5bb1a6a0c18faea23e6d041d95099765ebeca8"
   },
   {
     "path": "webui/web/src/components/OutputLogDialog.tsx",
@@ -4046,13 +4046,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 72429,
-    "sha256": "4e156dba1054796b61a5c53effa390914fa1f87832791774c22633595eb358eb"
+    "bytes": 72798,
+    "sha256": "f145549e0913190cac652f7e01230b87f4ce3f0c03a08db0548b8616b2a35ba1"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 117877,
-    "sha256": "c5110392cae23b67ca1426fcbc8ed55ce04f5984421baa2a70e17ec6b987c8b6"
+    "bytes": 118344,
+    "sha256": "0c351d56c34cec61ed64b563b3018307fb2b14ff57bacc8c4b20c5baded9381d"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4121,13 +4121,13 @@
   },
   {
     "path": "webui/web/src/utils/mtproto-install.sh",
-    "bytes": 10514,
-    "sha256": "7210119b847364eb36b50a661f66ae8f56b2720ca427d47f30b565af76bb0534"
+    "bytes": 10660,
+    "sha256": "c9d9530dd7441a0ab4bae8dc7551a34fb0e6d90c97b3a806eb80549260ff6a72"
   },
   {
     "path": "webui/web/src/utils/mtprotoInstall.ts",
-    "bytes": 2923,
-    "sha256": "a51c9a90530924319d428b9ce7addf3e1d2c5413c7f421ba30c5dc393f521e63"
+    "bytes": 3861,
+    "sha256": "19c5d130b205278dfcf0b3df3ade7eba8474a996b888e9057b21b80bfffa1c43"
   },
   {
     "path": "webui/web/src/utils/newlineMarkers.ts",

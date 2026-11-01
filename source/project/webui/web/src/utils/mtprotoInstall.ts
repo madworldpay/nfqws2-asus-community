@@ -3,6 +3,10 @@ import installer from './mtproto-install.sh?raw';
 export type MtprotoMethod = 'docker' | 'entware' | 'linux';
 export type MtprotoValues = { server: string; port: string; secret: string };
 
+// Multi-architecture image used by the reference installation (amd64 / arm64).
+export const MTPROTO_DOCKER_IMAGE =
+  'lordarrin/tg-ws-proxy@sha256:3561fe079f358a6266bfb7aac6bcd273ef2489c6d6ed7f27d235ca9bcffb3382';
+
 export function createMtprotoSecret(
   bytes = crypto.getRandomValues(new Uint8Array(16)),
 ) {
@@ -72,7 +76,34 @@ export function buildMtprotoInstall(
     throw new Error('Invalid MTProto values');
   if (method !== 'docker' && Number(v.port) < 1024)
     throw new Error('Native service requires port >= 1024');
-  return `#!/bin/sh\n(\nset -eu\nNFQWS_MT_METHOD='${method}'\nNFQWS_MT_LANG='${language === 'ru' ? 'ru' : 'en'}'\nNFQWS_MT_PORT='${v.port}'\nNFQWS_MT_KEY='${v.secret.slice(2)}'\nNFQWS_MT_LINK='${mtprotoLink(v)}'\n${installer}\n)\n`;
+  return `#!/bin/sh\n(\nset -eu\nNFQWS_MT_METHOD='${method}'\nNFQWS_MT_LANG='${language === 'ru' ? 'ru' : 'en'}'\nNFQWS_MT_PORT='${v.port}'\nNFQWS_MT_KEY='${v.secret.slice(2)}'\nNFQWS_MT_LINK='${mtprotoLink(v)}'\n${installer.replace('@@MTPROTO_DOCKER_IMAGE@@', MTPROTO_DOCKER_IMAGE)}\n)\n`;
+}
+
+export function buildMtprotoCompose(v: MtprotoValues) {
+  if (Object.keys(validateMtproto(v)).length)
+    throw new Error('Invalid MTProto values');
+  return `services:
+  mtproto:
+    image: ${MTPROTO_DOCKER_IMAGE}
+    container_name: nfqws-mtproto
+    restart: unless-stopped
+    ports:
+      - "${v.port}:1443"
+    environment:
+      PROXY_HOST: "0.0.0.0"
+      PROXY_PORT: "1443"
+      PROXY_SECRET: "${v.secret.slice(2)}"
+      PROXY_DC_IPS: "2:149.154.167.220 4:149.154.167.220"
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+`;
 }
 
 export function mtprotoDiagnostics(method: MtprotoMethod) {

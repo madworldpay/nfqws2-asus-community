@@ -21,7 +21,11 @@ try{
  let command=await page.getByLabel('Команда установки',{exact:true}).inputValue();assert.ok(command.includes("NFQWS_MT_METHOD='entware'"));assert.ok(command.includes(secret.slice(2)));
  await page.getByRole('button',{name:'Копировать: Команда установки',exact:true}).click();
  assert.equal((await page.evaluate(()=>window.copied)).at(-1),command,'HTTP fallback copies entire multi-line command inside modal');
- await page.getByRole('button',{name:'С Docker',exact:true}).click();command=await page.getByLabel('Команда установки',{exact:true}).inputValue();assert.ok(command.includes("NFQWS_MT_METHOD='docker'"));assert.equal(await page.getByLabel('Секрет',{exact:true}).inputValue(),secret,'Switching methods preserves key');
+ await page.getByRole('button',{name:'С Docker',exact:true}).click();
+ const compose=await page.getByLabel('Конфигурация Portainer',{exact:true}).inputValue();assert.ok(compose.includes('lordarrin/tg-ws-proxy@sha256:'));assert.ok(compose.includes('PROXY_SECRET: "'+secret.slice(2)+'"'));
+ await page.getByRole('button',{name:'Копировать: Конфигурация Portainer',exact:true}).click();assert.equal((await page.evaluate(()=>window.copied)).at(-1),compose);
+ const yamlEvent=page.waitForEvent('download');await page.getByRole('button',{name:'Скачать compose.yaml',exact:true}).click();const yaml=await yamlEvent;assert.equal(yaml.suggestedFilename(),'compose.yaml');assert.equal(await readFile(await yaml.path(),'utf8'),compose);
+ await page.getByRole('button',{name:'Терминал',exact:true}).click();command=await page.getByLabel('Команда установки',{exact:true}).inputValue();assert.ok(command.includes("NFQWS_MT_METHOD='docker'"));assert.equal(await page.getByLabel('Секрет',{exact:true}).inputValue(),secret,'Switching methods preserves key');
  const link=await page.getByLabel('Ссылка подключения',{exact:true}).inputValue();assert.equal(new URL(link).searchParams.get('secret'),secret);
  await page.getByRole('button',{name:'Копировать: Ссылка подключения',exact:true}).click();assert.equal((await page.evaluate(()=>window.copied)).at(-1),link);
  const downloadEvent=page.waitForEvent('download');await page.getByRole('button',{name:'Скачать скрипт .sh',exact:true}).click();const download=await downloadEvent;assert.equal(await readFile(await download.path(),'utf8'),command,'Downloaded script equals displayed/copied command');
@@ -35,5 +39,5 @@ try{
  await page.getByRole('button',{name:'Закрыть',exact:true}).click();await page.getByRole('button',{name:'Open',exact:true}).click();await page.getByLabel('Адрес прокси',{exact:true}).fill('proxy.example.org');assert.notEqual(await page.getByLabel('Секрет',{exact:true}).inputValue(),secret,'Closing discards key');
  await page.evaluate(()=>localStorage.setItem('lang',JSON.stringify('en')));await page.reload();await page.getByRole('heading',{name:'Install Telegram proxy',exact:true}).waitFor();await page.getByLabel('Proxy address',{exact:true}).fill('proxy.example.org');await page.getByRole('button',{name:'With Docker',exact:true}).click();await page.getByRole('button',{name:'Copy: Connection link',exact:true}).click();assert.match((await page.evaluate(()=>window.copied)).at(-1),/^https:\/\/t.me\/proxy\?/);
  assert.deepEqual(mutations,[],'Opening, switching, key generation, copy and download perform no backend mutation');
- console.log('PASS real MTProto UI: native/Docker, HTTP clipboard fallback, exact downloaded script, key/link consistency, invalid input and low ports, fresh keys on reopen, RU/EN, mobile, no backend mutations');
+ console.log('PASS real MTProto UI: native/Docker + Portainer YAML, HTTP clipboard fallback, exact downloaded script, key/link consistency, invalid input and low ports, fresh keys on reopen, RU/EN, mobile, no backend mutations');
 }finally{await browser?.close();if(server)await new Promise(r=>server.close(r));}

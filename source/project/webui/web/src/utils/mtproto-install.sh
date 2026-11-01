@@ -69,6 +69,7 @@ else
     [ ! -e "$candidate" ] && [ ! -L "$candidate" ] && [ ! -e "$service" ] && [ ! -L "$service" ] || fail 'MTProto files already exist; nothing was changed.' 'Файлы MTProto уже существуют; ничего не изменено.'
 fi
 
+if [ "$NFQWS_MT_METHOD" != docker ]; then
 curlbin=$(findexe curl) || fail 'curl is required.' 'Нужна программа curl.'
 printf '' | sha256sum >/dev/null 2>&1 || fail 'sha256sum is required.' 'Нужна программа sha256sum.'
 work=$(mktemp -d /tmp/nfqws-mtproto.XXXXXX)
@@ -79,16 +80,18 @@ printf '%s  %s\n' '87a38c235d7a4a66d8a3fa50d64e42cc962c11c210a9e65df1469302a6521
 mkdir "$work/source"
 tar -xzf "$work/source.tgz" -C "$work/source"
 source="$work/source/tg-ws-proxy-50d539c718f1689c0437b7cf623e5995018c01e3"
+fi
 
 if [ "$NFQWS_MT_METHOD" = docker ]; then
-    image=nfqws-mtproto:50d539c718f1
-    # Archive extraction honors umask 077; the image runs as its non-root app user.
-    chmod -R a+rX "$source"
-    docker build -t "$image" "$source"
+    image='@@MTPROTO_DOCKER_IMAGE@@'
+    msg 'Downloading the pinned Docker image...' 'Загрузка закреплённого образа Docker...'
+    docker pull "$image"
     container=$(docker create --name nfqws-mtproto --restart unless-stopped \
         --log-opt max-size=5m --log-opt max-file=2 \
         --cap-drop ALL --security-opt no-new-privileges:true \
-        -p "$NFQWS_MT_PORT:1443" -e "TG_WS_PROXY_SECRET=$NFQWS_MT_KEY" "$image")
+        -p "$NFQWS_MT_PORT:1443" -e "PROXY_SECRET=$NFQWS_MT_KEY" \
+        -e PROXY_HOST=0.0.0.0 -e PROXY_PORT=1443 \
+        -e 'PROXY_DC_IPS=2:149.154.167.220 4:149.154.167.220' "$image")
     docker start "$container" >/dev/null
     sleep 3
     [ "$(docker inspect --format '{{.State.Running}}' "$container")" = true ] || fail 'Proxy stopped. Check Docker logs.' 'Прокси остановился. Проверьте журнал Docker.'

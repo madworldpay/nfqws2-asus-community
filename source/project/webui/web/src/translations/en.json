@@ -940,7 +940,7 @@
     "device": "Device",
     "help_entware": "For ASUS with Entware. Runs as a separate service; requires a free TCP port from 1024. Missing Python dependencies are installed separately.",
     "help_linux": "For Linux with systemd, Python 3 and python3-venv. The proxy gets its own Python environment and service.",
-    "help_docker": "Run on a device with Docker CLI and a working Docker daemon. The image is built from verified source; this can take several minutes.",
+    "help_docker": "For Docker on x86-64 or ARM64. Uses a ready-made, pinned LordArrin image based on Flowseal. Choose Portainer or a terminal.",
     "server": "Proxy address",
     "server_help": "IP or hostname of the device running the proxy. For access away from home, use an externally reachable address and port.",
     "invalid_server": "Enter an IP or hostname without https://, path or port.",
@@ -961,11 +961,16 @@
     "link": "Connection link",
     "open_telegram": "Open in Telegram",
     "diagnostics": "Diagnostic command",
-    "private": "The secret grants access to this proxy. Keep the link and installation command private. Save them before closing this window; generated keys are not stored. A new secret only changes this command, not a proxy already installed.",
+    "private": "The secret grants access to this proxy. Save the link and configuration before closing this window and share only with people you trust: keys are not stored. A new secret only changes the text in this window, not a proxy already installed.",
     "source": "Based on",
     "copy": "Copy",
     "copied": "Copied",
     "copy_failed": "Copy failed. Select and copy the text manually.",
-    "close": "Close"
+    "close": "Close",
+    "docker_mode": "Docker installation",
+    "terminal": "Terminal",
+    "compose": "Portainer configuration",
+    "download_compose": "Download compose.yaml",
+    "run_portainer": "In Portainer, open Stacks → Add stack and name it nfqws-mtproto. Paste the configuration into Web editor and select Deploy the stack. Choose a free port; keep any existing proxy."
   }
 }
