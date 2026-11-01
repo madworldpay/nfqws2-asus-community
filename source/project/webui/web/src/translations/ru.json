@@ -941,8 +941,6 @@
     "help_entware": "Для ASUS с Entware. Запускается отдельной службой; нужен свободный TCP-порт от 1024. Недостающие зависимости Python устанавливаются отдельно.",
     "help_linux": "Для Linux с systemd, Python 3 и python3-venv. У прокси будет своё окружение Python и отдельная служба.",
     "help_docker": "Для Docker на x86-64 или ARM64. Используется готовый закреплённый образ LordArrin на основе Flowseal. Выберите Portainer или терминал.",
-    "server": "Адрес прокси",
-    "server_help": "IP или имя устройства, где будет работать прокси. Для подключения вне дома нужен доступный извне адрес и порт.",
     "invalid_server": "Введите IP или имя без https://, пути и порта.",
     "port": "TCP-порт",
     "port_help": "Выберите свободный порт: 1–65535. Установщик не открывает порты в межсетевом экране.",
@@ -971,6 +969,14 @@
     "terminal": "Терминал",
     "compose": "Конфигурация Portainer",
     "download_compose": "Скачать compose.yaml",
-    "run_portainer": "В Portainer откройте Stacks → Add stack, назовите стек nfqws-mtproto. Вставьте конфигурацию в Web editor и нажмите Deploy the stack. Нужен свободный порт; существующий прокси не удаляйте."
+    "run_portainer": "В Portainer откройте Stacks → Add stack, назовите стек nfqws-mtproto. Вставьте конфигурацию в Web editor и нажмите Deploy the stack. Нужен свободный порт; существующий прокси не удаляйте.",
+    "server_entware": "Адрес роутера ASUS",
+    "server_docker": "Адрес устройства с Docker",
+    "server_linux": "Адрес сервера Linux",
+    "server_help_entware": "Для Telegram дома используется IP этого роутера ASUS. Адрес можно изменить.",
+    "server_help_docker": "Подставлен адрес AI Board, если он найден. Для другого компьютера или NAS с Docker укажите его IP.",
+    "server_help_linux": "Укажите IP сервера Linux, на который устанавливаете прокси.",
+    "server_remote_help": "Этот адрес попадёт в ссылку Telegram. Для подключения вне дома укажите внешний IP или DDNS и настройте доступ к выбранному TCP-порту.",
+    "address_detected": "Адрес подставлен автоматически. Можно отредактировать."
   }
 }

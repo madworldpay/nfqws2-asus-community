@@ -941,8 +941,6 @@
     "help_entware": "For ASUS with Entware. Runs as a separate service; requires a free TCP port from 1024. Missing Python dependencies are installed separately.",
     "help_linux": "For Linux with systemd, Python 3 and python3-venv. The proxy gets its own Python environment and service.",
     "help_docker": "For Docker on x86-64 or ARM64. Uses a ready-made, pinned LordArrin image based on Flowseal. Choose Portainer or a terminal.",
-    "server": "Proxy address",
-    "server_help": "IP or hostname of the device running the proxy. For access away from home, use an externally reachable address and port.",
     "invalid_server": "Enter an IP or hostname without https://, path or port.",
     "port": "TCP port",
     "port_help": "Choose a free port, 1–65535. The installer does not open firewall ports.",
@@ -971,6 +969,14 @@
     "terminal": "Terminal",
     "compose": "Portainer configuration",
     "download_compose": "Download compose.yaml",
-    "run_portainer": "In Portainer, open Stacks → Add stack and name it nfqws-mtproto. Paste the configuration into Web editor and select Deploy the stack. Choose a free port; keep any existing proxy."
+    "run_portainer": "In Portainer, open Stacks → Add stack and name it nfqws-mtproto. Paste the configuration into Web editor and select Deploy the stack. Choose a free port; keep any existing proxy.",
+    "server_entware": "ASUS router address",
+    "server_docker": "Docker host address",
+    "server_linux": "Linux server address",
+    "server_help_entware": "At home, Telegram uses this ASUS router’s IP. You can change the address.",
+    "server_help_docker": "The AI Board address is filled in when detected. For Docker on another computer or NAS, enter its IP.",
+    "server_help_linux": "Enter the IP of the Linux server where you will install the proxy.",
+    "server_remote_help": "This address goes into the Telegram link. For access away from home, use an external IP or DDNS and configure access to the selected TCP port.",
+    "address_detected": "Address filled in automatically. You can edit it."
   }
 }

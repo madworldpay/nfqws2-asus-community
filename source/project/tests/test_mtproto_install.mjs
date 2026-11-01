@@ -18,6 +18,12 @@ try {
   assert.equal(secret, 'dd0102030405060708090a0b0c0d0e0f10');
   assert.notEqual(api.createMtprotoSecret(), api.createMtprotoSecret(), 'Fresh secrets use independent secure random bytes');
   assert.throws(() => api.createMtprotoSecret(new Uint8Array(4)));
+  assert.equal(api.suggestMtprotoServer('entware', {router:'192.168.8.1',docker:'192.168.8.20'}, 'router.example.org'),'192.168.8.1');
+  assert.equal(api.suggestMtprotoServer('docker', {router:'192.168.8.1',docker:'192.168.8.20'}, 'router.example.org'),'192.168.8.20');
+  assert.equal(api.suggestMtprotoServer('docker', {router:null,docker:null}, '192.168.8.1'),'');
+  assert.equal(api.suggestMtprotoServer('entware', {router:null,docker:null}, 'router.example.org'),'router.example.org');
+  assert.equal(api.suggestMtprotoServer('entware', {router:null,docker:null}, 'localhost'),'');
+  assert.equal(api.suggestMtprotoServer('entware', {router:null,docker:null}, '127.0.0.1'),'');
   const input = { server: 'proxy.example.org', port: '8443', secret };
   assert.deepEqual(api.validateMtproto(input), {});
   for (const value of ['https://proxy.example.org', 'host;id', '$(id)', 'a\nb', '--help', 'host:443', 'user@host', 'host/path', 'a..b', 'a#b']) {
