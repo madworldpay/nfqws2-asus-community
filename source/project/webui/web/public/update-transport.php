@@ -82,6 +82,15 @@ final class AsusUpdateTransport implements AsusUpdateSource
         return ['json'=>$json,'signature'=>$signature];
     }
 
+    /** Explicit own-package recovery uses immutable public release metadata.
+     * Construction has already validated any configured private channel; no
+     * channel error causes a fallback or forwards its credentials to GitHub. */
+    public function archive(string $version): array
+    {
+        $source=new AsusGithubUpdateSource($this->owner,$this->ca,$this->timeouts);
+        $raw=$source->archive($version);$this->publicSource=$source;return $raw;
+    }
+
     public function download(array $package,string $destination): void
     {
         if($this->publicSource!==null){$this->publicSource->download($package,$destination);return;}

@@ -78,6 +78,16 @@ class PackageUpdateStoreTests(unittest.TestCase):
         for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
         self.assertFalse(own.exists());self.assertEqual(unknown.read_text(),'KEEP')
 
+    def test_rotation_reclaims_killed_recovery_spool_and_retained_opkg_log(self):
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        for name in ['recovery-data.gz','opkg.log']:
+            path=folder/name;path.write_bytes(b'partial private recovery data');path.chmod(0o600)
+        note=folder/'operator-note';note.write_text('KEEP')
+        self.call([['update',[job,{'state':'interrupted','code':'interrupted'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        for name in ['recovery-data.gz','opkg.log']:self.assertFalse((folder/name).exists(),name)
+        self.assertEqual(note.read_text(),'KEEP')
+
     def test_rotation_reclaims_native_archives_journals_and_only_unchanged_scoped_keys(self):
         import hashlib
         job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job

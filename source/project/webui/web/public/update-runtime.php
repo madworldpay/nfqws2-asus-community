@@ -69,7 +69,7 @@ final class AsusUpdateRuntime
         try{if(!mkdir($destination,0700))throw new RuntimeException('invalid_state');
             $planned=[];foreach($sources as $name=>$source)$planned[$name]=['mode'=>$source['mode'],'size'=>$source['size'],'sha256'=>$source['sha256']];$scripts=[];
             foreach(['check.sh'=>'preflight','run.sh'=>'guard-apply'] as $name=>$mode){
-                $scripts[$name]="#!/bin/sh\n[ \"\$#\" = 1 ] || exit 1\nexec ".implode(' ',array_map('escapeshellarg',self::arguments($destination,$loader,$planned))).' -- '.$mode.' "$1"'."\n";
+                $check=$mode==='preflight';$scripts[$name]="#!/bin/sh\n[ \"\$#\" = ".($check?'2':'1')." ] || exit 1\nexec ".implode(' ',array_map('escapeshellarg',self::arguments($destination,$loader,$planned))).' -- '.$mode.' "$1"'.($check?' "$2"':'')."\n";
                 $planned[$name]=['mode'=>0700,'size'=>strlen($scripts[$name]),'sha256'=>hash('sha256',$scripts[$name])];
             }
             // Persist ownership before copying any bulk bytes. A killed stage

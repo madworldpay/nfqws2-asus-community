@@ -105,7 +105,7 @@ final class AsusUpdateStore
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
         $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
         foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}
-        foreach(['package.ipk','package.apk','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
+        foreach(['package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
         @rmdir($dir);
     }
     private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false): void

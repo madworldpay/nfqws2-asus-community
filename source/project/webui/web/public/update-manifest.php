@@ -48,18 +48,19 @@ final class AsusPackageManifest
         if(!$details||$details['type']!==OPENSSL_KEYTYPE_RSA||$details['bits']!==3072||@openssl_verify($json,$bytes,$key,OPENSSL_ALGO_SHA256)!==1)throw new RuntimeException('invalid_signature');
     }
 
-    public static function candidate(array $manifest,string $family,string $installedVersion): ?array
+    public static function candidate(array $manifest,string $family,string $installedVersion,bool $configure=false): ?array
     {
         if(!in_array($family,['aarch64-3.10','armv7'],true))throw new RuntimeException('unsupported_abi');
         $installed=self::version($installedVersion,'unsupported_version');
         $target=self::version($manifest['package_version'],'invalid_manifest');
+        if($configure&&$manifest['package_version']!==$installedVersion)throw new RuntimeException('recovery_required');
         // The global Build increases across core versions; a signed old core is never an upgrade.
-        if($target['build']<=$installed['build']||$target['parts']<$installed['parts'])return null;
-        foreach($manifest['packages'] as $package)if($package['family']===$family)return [
+        if(!$configure&&($target['build']<=$installed['build']||$target['parts']<$installed['parts']))return null;
+        foreach($manifest['packages'] as $package)if($package['family']===$family)return array_merge([
             'revision'=>$manifest['revision'],'package_version'=>$manifest['package_version'],
             'core_version'=>$manifest['core_version'],'web_version'=>$manifest['web_version'],
             'build'=>$manifest['build'],'notes'=>$manifest['notes'],'package'=>$package,
-        ];
+        ],$configure?['action'=>'configure']:[]);
         throw new RuntimeException('unsupported_package');
     }
 }

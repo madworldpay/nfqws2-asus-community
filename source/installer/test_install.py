@@ -1,5 +1,6 @@
 """Run the real installer against a disposable router filesystem and HTTP/opkg boundaries."""
 import hashlib
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -7,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -100,6 +102,10 @@ elif action=='install':
             if state.get('change_payload'): (work/'router/opt/etc/init.d/S51nfqws2').write_text('#!/bin/sh\nexit 1\n')
             if state.get('delete_payload'): (work/'router/opt/etc/init.d/S51nfqws2').unlink()
             state_path.write_text(json.dumps(state))
+            if state.get('interrupt_parent'):
+                import signal,time
+                os.kill(int((work/'parent.pid').read_text()),signal.SIGHUP)
+                time.sleep(.3)
         sys.exit(1)
     state['version']='1.3.2-asus6+b67'
     state['package_status']=state.get('post_install_status','install ok installed')
@@ -111,6 +117,16 @@ else:raise AssertionError(args)
         self.tool('df', "print('Filesystem 1024-blocks Used Available Capacity Mounted on\\nusb 2097152 10 '+str(state['free_kb'])+' 1% /opt')")
         self.checksum_command(self.work/'dependency-sha256sum', installed=True)
 
+        self.tool('php-cgi', r'''
+args=sys.argv[1:]
+assert args[args.index('-f')+1].endswith('/nfqws2-asus/update/worker.php')
+mode=args[args.index('--')+1]
+assert mode in ['shell-init','shell-check']
+root=work/'router/opt/var/lib/nfqws2-asus/updates'
+root.mkdir(parents=True,exist_ok=True,mode=0o700);root.chmod(0o700)
+lock=root/'apply.lock';lock.touch(mode=0o600,exist_ok=True)
+''',self.router/'opt/bin/php-cgi')
+        helper=self.router/'opt/lib/nfqws2-asus/update/worker.php';helper.parent.mkdir(parents=True);helper.write_text('<?php // router service boundary fixture')
         self.recovery_fixture()
         self.state.update(version='', install_error=False, stop_before_failure=False)
 
@@ -125,11 +141,27 @@ if action=='status':sys.exit(0 if state.get(field,False) else 1)
 emit({'kind':'service','field':field,'action':action})
 if action=='start' and state.get('recovery_start_error'):sys.exit(1)
 state[field]=action=='start'
+if field=='core_running':
+    enabled=work/'router/tmp/nfqws2-asus/enabled'
+    if action=='stop':enabled.unlink(missing_ok=True)
+    elif action=='start':enabled.parent.mkdir(parents=True,exist_ok=True);enabled.touch()
 state_path.write_text(json.dumps(state))
 """.replace('FIELD',repr(field)),path)
             paths.append(str(path))
         (self.router/'opt/lib/opkg/info/nfqws2-asus.list').write_text('\n'.join(paths)+'\n')
         self.state.update(version='1.3.1-asus6+b66',install_error=True,stop_before_failure=True)
+
+    def test_healthy_legacy_upgrade_waits_for_exclusive_web_apply_lease(self):
+        self.state.update(version='1.3.1-asus6+b66',enabled=True,core_running=True,web_running=True)
+        root=self.router/'opt/var/lib/nfqws2-asus/updates';root.mkdir(parents=True,mode=0o700)
+        lock=root/'apply.lock';lock.touch(mode=0o600)
+        with lock.open('r+') as stream:
+            fcntl.flock(stream,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            result=self.execute();self.assertNotEqual(result.returncode,0)
+            self.assertEqual(self.package_changes(),[])
+            self.assertFalse(any(e['kind']=='service' for e in self.events))
+        result=self.execute();self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(len(self.installs()),1)
 
     def test_failed_preinst_restores_verified_old_core_and_web(self):
         self.recovery_fixture();self.state.update(core_running=True,web_running=True,enabled=True)
@@ -138,6 +170,14 @@ state_path.write_text(json.dumps(state))
         self.assertTrue(final['core_running'],r.stdout+r.stderr)
         self.assertTrue(final['web_running'],r.stdout+r.stderr)
         self.assertIn('восстановлено',r.stdout)
+
+    def test_disconnected_parent_still_restores_unchanged_old_services_after_failed_preinst(self):
+        self.recovery_fixture();self.state.update(core_running=True,web_running=True,enabled=True,interrupt_parent=True)
+        result=self.execute();self.assertNotEqual(result.returncode,0)
+        final=json.loads(self.state_path.read_text());self.assertTrue(final['core_running']);self.assertTrue(final['web_running'])
+        self.assertEqual([e['action'] for e in self.events if e['kind']=='service'],['stop','stop','start','start'])
+        retained=list((self.router/'opt/tmp').glob('nfqws2-asus-install.*'));self.assertEqual(len(retained),1)
+        self.assertIn('восстановлено',(retained[0]/'job.log').read_text())
 
     def test_failed_preinst_restores_wait_wan_but_keeps_stopped_services_off(self):
         for enabled,core,web in [(True,False,False),(False,False,True),(False,False,False)]:
@@ -192,6 +232,7 @@ state_path.write_text(json.dumps(state))
         path.parent.mkdir(parents=True, exist_ok=True)
         self.tool(path.name, r'''
 import hashlib
+import fcntl
 args=sys.argv[1:]
 if BUSYBOX:
     applet=args.pop(0)
@@ -210,7 +251,7 @@ print(digest+'  '+name)
         # Only native utility dependencies remain on PATH; no host sha256sum
         # or absolute BusyBox can accidentally satisfy this router fixture.
         self.isolated_checksum_tools=True
-        for name in ['tr','awk','grep','mkdir','rm','wc']:
+        for name in ['tr','awk','grep','mkdir','rm','wc','cat','mv','sleep','env','sed','flock','ls']:
             if not (self.bin/name).exists():(self.bin/name).symlink_to(shutil.which(name))
         for path in [self.bin/'sha256sum',self.router/'opt/bin/sha256sum']:
             path.unlink(missing_ok=True)
@@ -235,19 +276,33 @@ print(digest+'  '+name)
         text = text.replace('/opt/', str(self.router) + '/opt/').replace(
             '/proc/', str(self.router) + '/proc/').replace('/tmp/nfqws2-asus/', str(self.router) + '/tmp/nfqws2-asus/')
         text = text.replace('PATH=', 'PATH=' + str(self.bin) + ':', 1)
+        text = text.replace("'drwx------ 0'", "'drwx------ "+str(os.getuid())+"'").replace("'-rw------- 1 0'", "'-rw------- 1 "+str(os.getuid())+"'")
         # Standalone BusyBox ash prefers its built-in uname/df applets to PATH.
         # Bind these OS boundaries explicitly; all installer shell logic stays real.
         text = text.replace('$(uname -m)', f'$("{self.bin}/uname" -m)')
         text = text.replace('df -Pk ', f'"{self.bin}/df" -Pk ')
         script = self.work / 'install.sh'
+        if self.state.get('interrupt_parent'):
+            marker='# Keep the entry point last so an incomplete piped download cannot run a partial installer.'
+            text=text.replace(marker,'printf \'%s\\n\' "$$" > '+str(self.work/'parent.pid')+'\n'+marker)
         script.write_text(text)
         shell = ['/bin/busybox', 'ash'] if os.environ.get('INSTALL_TEST_BUSYBOX') else ['/bin/sh']
         result = subprocess.run(shell + [str(script)] + list(args), env={**os.environ, 'INSTALL_FIXTURE': str(self.work)},
                                 text=True, capture_output=True, timeout=15)
+        if self.state.get('interrupt_parent'):
+            end=time.monotonic()+5
+            while time.monotonic()<end:
+                retained=list((self.router/'opt/tmp').glob('nfqws2-asus-install.*'))
+                if retained and all((p/'job.status').exists() for p in retained):break
+                time.sleep(.02)
         self.events = [json.loads(x) for x in self.log.read_text().splitlines()] if self.log.exists() else []
         self.assertEqual(self.owner_file.read_text(), 'keep.example\n')
         self.assertEqual(self.unrelated.read_bytes(), b'not ours')
-        self.assertEqual(list((self.router/'opt/tmp').glob('nfqws2-asus-install.*')), [])
+        for retained in (self.router/'opt/tmp').glob('nfqws2-asus-install.*'):
+            self.assertEqual(retained.stat().st_mode&0o777,0o700)
+            self.assertTrue((retained/'job.log').is_file())
+            self.assertTrue((retained/'job.status').is_file())
+            self.assertNotEqual((retained/'job.status').read_text(),'0\n')
         return result
 
     def installs(self):
@@ -469,14 +524,50 @@ print(digest+'  '+name)
         self.assertEqual(self.installs()[0]['no_start'],'1')
         self.assertIn('Готово',r.stdout)
 
-    def test_user_unpacked_install_is_not_upgraded(self):
+    def resume_bridge(self):
+        self.tool('php-cgi', r'''
+args=sys.argv[1:]
+assert '-f' in args and '--' in args
+bundle=pathlib.Path(args[args.index('-f')+1]);assert bundle.read_text().startswith('<?php\nconst NFQWS_ASUS_INSTALL_FILES')
+mode,job=args[args.index('--')+1:]
+assert pathlib.Path(job)==bundle.parent
+emit({'kind':'resume','mode':mode})
+if mode=='describe':print('configure\n'+state['version'])
+elif mode=='run':
+    state.update(version='1.3.2-asus6+b67',package_status='install user installed');state_path.write_text(json.dumps(state))
+elif mode=='status':print('succeeded\n'+state['version'])
+elif mode=='check':print('Подпись и пакет проверены. Установка не запускалась.')
+else:assert mode=='prepare'
+''',self.router/'opt/bin/php-cgi')
+
+    def test_pending_version_enters_trusted_bridge_before_any_latest_catalog_or_raw_opkg(self):
+        self.resume_bridge()
+        for flag in ['ok','user']:
+            with self.subTest(flag=flag):
+                self.state.update(version='1.3.1-asus6+b66',package_status=f'install {flag} unpacked',enabled=True)
+                self.log.unlink(missing_ok=True)
+                result=self.execute();self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+                self.assertEqual([e['mode'] for e in self.events if e['kind']=='resume'],['prepare','describe','run','status'])
+                self.assertFalse(any(e['kind'] in ['download','install','update'] for e in self.events))
+                self.assertIn('Готово',result.stdout)
+
+    def test_pending_check_enters_signed_probe_without_configure_or_upgrade(self):
+        self.resume_bridge();self.state.update(version='1.3.1-asus6+b66',package_status='install user unpacked',enabled=True)
+        result=self.execute('--check');self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(self.events,[{'kind':'resume','mode':'check'}])
+        final=json.loads(self.state_path.read_text());self.assertEqual(final['package_status'],'install user unpacked')
+        self.assertTrue((self.router/'tmp/nfqws2-asus/enabled').exists())
+
+    def test_pending_without_php_never_runs_raw_opkg(self):
+        (self.router/'opt/bin/php-cgi').unlink()
         self.state.update(version='1.3.1-asus6+b66', package_status='install user unpacked', enabled=True)
         r=self.execute();self.assertNotEqual(r.returncode,0)
         self.assertEqual(self.installs(),[])
         self.assertFalse(any(x['kind']=='update' for x in self.events))
         self.assertTrue((self.router/'tmp/nfqws2-asus/enabled').is_file())
 
-    def test_incomplete_install_is_reported_without_changing_enabled_intent(self):
+    def test_pending_without_php_preserves_enabled_intent(self):
+        (self.router/'opt/bin/php-cgi').unlink()
         self.state.update(version='1.3.1-asus6+b66', package_status='install ok unpacked', enabled=True)
         r=self.execute();self.assertNotEqual(r.returncode,0)
         self.assertEqual(self.installs(),[])
@@ -534,7 +625,7 @@ pathlib.Path(out).write_bytes((work/'http'/url.rsplit('/',1)[1]).read_bytes())
 ''')
         # No curl can be discovered in this isolated PATH. Native utilities remain real.
         (self.bin/'curl').unlink()
-        for name in ['tr','awk','grep','mkdir','mktemp','rm','wc','sha256sum']:
+        for name in ['tr','awk','grep','mkdir','mktemp','rm','wc','sha256sum','cat','mv','sleep','env','sed','flock','ls']:
             (self.bin/name).symlink_to(shutil.which(name))
         old=INSTALLER.read_text()
         temporary=self.work/'wget-install.sh'
