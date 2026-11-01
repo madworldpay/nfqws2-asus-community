@@ -1,0 +1,52 @@
+# Render the catalog's resolved directory, protected TLS file paths, and the
+# regexp-escaped public hostname. Keep the private upload path in sync with
+# source-control.py; it must be separate from the root-only control directory.
+server.modules = ( "mod_access", "mod_setenv", "mod_proxy", "mod_openssl" )
+server.document-root = "CATALOG_ROOT"
+server.port = 5443
+server.bind = "0.0.0.0"
+server.username = "nobody"
+server.groupname = "nobody"
+server.pid-file = "/opt/var/run/nfqws-source-frontend/lighttpd.pid"
+server.errorlog = "/dev/null"
+server.tag = ""
+server.follow-symlink = "disable"
+server.max-connections = 64
+server.max-request-size = 4100
+server.max-read-idle = 10
+server.max-write-idle = 20
+server.max-keep-alive-idle = 3
+server.max-keep-alive-requests = 10
+server.kbytes-per-second = 2048
+connection.kbytes-per-second = 512
+server.upload-dirs = ( "/opt/var/run/nfqws-source-body" )
+server.stream-request-body = 2
+mimetype.assign = ( ".json" => "application/json" )
+ssl.engine = "enable"
+ssl.pemfile = "TLS_CERTIFICATE"
+ssl.privkey = "TLS_PRIVATE_KEY"
+ssl.openssl.ssl-conf-cmd = ( "MinProtocol" => "TLSv1.2", "Options" => "-SessionTicket" )
+setenv.set-response-header = ( "X-Content-Type-Options" => "nosniff", "Cache-Control" => "no-store" )
+$HTTP["host"] !~ "^SUPPORT_HOST_REGEX(?::5443)?$" {
+    url.access-deny = ( "" )
+}
+$HTTP["querystring"] != "" {
+    url.access-deny = ( "" )
+}
+$HTTP["url"] =~ "^/nfqws-profiles/v1/(catalog\.json|files/[a-f0-9]{64}\.json)$" {
+    server.max-request-size = 1
+    $HTTP["request-method"] !~ "^(GET|HEAD)$" { url.access-deny = ( "" ) }
+    $HTTP["url"] =~ "/files/" {
+        setenv.set-response-header = ( "X-Content-Type-Options" => "nosniff", "Cache-Control" => "public, max-age=31536000, immutable" )
+    }
+} else $HTTP["url"] =~ "^/nfqws-support/v[1-4]/reports$" {
+    $HTTP["request-method"] != "POST" { url.access-deny = ( "" ) }
+    $REQUEST_HEADER["Transfer-Encoding"] != "" { url.access-deny = ( "" ) }
+    proxy.server = ( "" => (( "host" => "127.0.0.1", "port" => 8875 )) )
+} else $HTTP["url"] =~ "^(/health|/nfqws-support/v3/location)$" {
+    server.max-request-size = 1
+    $HTTP["request-method"] != "GET" { url.access-deny = ( "" ) }
+    proxy.server = ( "" => (( "host" => "127.0.0.1", "port" => 8875 )) )
+} else {
+    url.access-deny = ( "" )
+}
