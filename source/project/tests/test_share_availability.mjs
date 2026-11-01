@@ -25,12 +25,12 @@ export function render(language,mail,preview){
  globalThis.window={isSecureContext:false};
  globalThis.fetch=async()=>{throw Error('Availability rendering must not send requests');};
  const cases=[
-  [{configured:false,sharing_v3:false,sharing_v4:false,code:'not_configured'},/Канал отправки не настроен/,/Sending channel is not configured/],
-  [{configured:true,sharing_v3:true,sharing_v4:false,code:'ready'},/формат v4/,/format v4/],
-  [{configured:true,sharing_v3:true,code:'ready'},/формат v4/,/format v4/],
-  [{configured:true,sharing_v3:true,sharing_v4:'true',code:'ready'},/формат v4/,/format v4/],
-  [{configured:false,sharing_v3:false,sharing_v4:false,code:'https_unavailable'},/HTTPS.*TLS/,/HTTPS.*TLS/],
-  [{configured:false,sharing_v3:false,sharing_v4:false,code:'invalid_config'},/Некорректная конфигурация/,/Invalid sending configuration/],
+  [{configured:false,sharing_v3:false,sharing_v4:false,code:'not_configured'},/Отправка разработчику не подключена/,/Sending to the developer is not connected/],
+  [{configured:true,sharing_v3:true,sharing_v4:false,code:'ready'},/не поддерживают выбранные материалы/,/do not support the selected materials/],
+  [{configured:true,sharing_v3:true,code:'ready'},/не поддерживают выбранные материалы/,/do not support the selected materials/],
+  [{configured:true,sharing_v3:true,sharing_v4:'true',code:'ready'},/не поддерживают выбранные материалы/,/do not support the selected materials/],
+  [{configured:false,sharing_v3:false,sharing_v4:false,code:'https_unavailable'},/защищённое соединение/,/secure connection/],
+  [{configured:false,sharing_v3:false,sharing_v4:false,code:'invalid_config'},/Настройки отправки повреждены/,/sending settings are damaged/],
   [{configured:false,sharing_v3:false,sharing_v4:false,code:'PRIVATE_CHANNEL_CANARY'},/недоступна/,/unavailable/],
  ];
  for(const lang of ['ru','en'])for(const [mail,ruReason,enReason] of cases)for(const preview of [false,true]) {

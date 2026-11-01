@@ -143,7 +143,7 @@ export const ShareDeliveryButtons = ({
         disabled={disabled || !snapshot || !mailAvailable}
         onClick={onSend}
       >
-        {t(retry ? 'report.send_again' : 'report.send')}
+        {t(retry ? 'share.send_again' : 'share.send')}
       </Button>
     </>
   );
@@ -286,7 +286,10 @@ export const ShareDialog = ({
       active = false;
     };
   }, [csrfToken, fail]);
-  const terminal = result?.state === 'accepted' || result?.state === 'unknown';
+  const terminal = result?.state === 'accepted';
+  // Keep preparation and edits available after a lost confirmation. The old
+  // uncertain snapshot still cannot be sent again without a fresh preview.
+  const uncertain = result?.state === 'unknown';
   const disabled = busy || terminal;
   const perform = async (name: string, fn: () => Promise<void>) => {
     if (pending.current || terminal) return;
@@ -380,8 +383,9 @@ export const ShareDialog = ({
     validStrategy;
   const prepare = () =>
     perform('prepare', async () => {
-      invalidate();
-      const seq = revision.current.value;
+      // Retain the previous download and receipt if replacement preparation
+      // fails. Selection edits already invalidate their own stale snapshots.
+      const seq = ++revision.current.value;
       const selection: ShareSelection = {
         version: 4,
         link_installation: link,
@@ -432,8 +436,11 @@ export const ShareDialog = ({
         }
       }
       const prepared = await prepareShare(selection, token);
-      if (mounted.current && seq === revision.current.value)
+      if (mounted.current && seq === revision.current.value) {
         setSnapshot(prepared);
+        setResult(undefined);
+        setSaved(undefined);
+      }
     });
   const send = () =>
     perform('send', async () => {
@@ -681,7 +688,19 @@ export const ShareDialog = ({
                   : 'warning'
             }
           >
-            {t(`report.mail_states.${result.state}`)}
+            {t(
+              uncertain
+                ? 'share.delivery_unknown'
+                : `report.mail_states.${result.state}`,
+            )}
+            <Typography
+              variant="caption"
+              component="div"
+              sx={{ mt: 0.5, overflowWrap: 'anywhere', userSelect: 'text' }}
+            >
+              {t('share.submission_reference')}{' '}
+              <span style={{ userSelect: 'all' }}>{result.submissionId}</span>
+            </Typography>
           </Alert>
         )}
         <Button disabled={busy} onClick={onClose}>
@@ -700,7 +719,7 @@ export const ShareDialog = ({
           mail={state?.mail}
           snapshot={snapshot}
           busy={busy}
-          disabled={disabled}
+          disabled={disabled || uncertain}
           retry={result?.state === 'failed_safe'}
           onSave={save}
           onSend={() => void send()}
