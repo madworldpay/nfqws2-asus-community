@@ -126,6 +126,9 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertIn(name,files.keys())
         self.assertNotIn('etc/init.d/nfqws2-native',files)  # no default_postinst auto-start
         self.assertNotIn('etc/nfqws2/nfqws2.conf',files)  # never overwrite active files
+        self.assertNotIn('etc/nfqws2/restart-schedule.conf',files)
+        for installed,source in [('restart-schedule.sh',ROOT/'asus/restart-schedule.sh'),('restart-schedule-worker.php',ROOT/'openwrt/restart-schedule-worker.php')]:
+            self.assertEqual(files['usr/lib/nfqws2/'+installed],(source.read_bytes(),0o644))
         self.assertFalse(any(p.startswith('opt/')or p.endswith('.ko')or'/libc.so'in p for p in files))
         profile=json.loads(files['usr/share/nfqws2/platform.json'][0])
         self.assertEqual((profile['platform'],profile['arch']),('openwrt','arm_cortex-a9'))
@@ -143,10 +146,12 @@ class NativeBuilderTests(unittest.TestCase):
             web=root/'usr/lib/nfqws2-web/nfqws2-native-web';web.parent.mkdir(parents=True);web.write_text('fixture')
             builder.write_files(root,{'usr/share/nfqws2/defaults/web-config':((ROOT/'openwrt/web-config').read_bytes(),0o600)})
             active=root/'etc/nfqws2/nfqws2.conf';active.parent.mkdir(parents=True);active.write_text('# preserve my config\n')
+            schedule=active.parent/'restart-schedule.conf';schedule.write_text('periodic and watchdog settings\n');schedule.chmod(0o600)
             custom=active.parent/'lua/manual.lua';custom.parent.mkdir(mode=0o755);custom.write_text('my Lua\n')
             hook=Path(td)/'postinst';hook.write_bytes(builder.package_hook(target,'postinstall'))
             subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},check=True,capture_output=True)
             self.assertEqual(active.read_text(),'# preserve my config\n')
+            self.assertEqual(schedule.read_text(),'periodic and watchdog settings\n')
             self.assertEqual(custom.read_text(),'my Lua\n')
             self.assertEqual((custom.parent/'local-guarded-ts.lua').read_bytes(),(ROOT/'asus/lua/local-guarded-ts.lua').read_bytes())
             self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native'),'/usr/lib/nfqws2/nfqws2-native')

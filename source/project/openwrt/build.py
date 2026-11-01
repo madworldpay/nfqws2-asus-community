@@ -120,6 +120,8 @@ def payload_files(target,engine,source=None):
         installed='nfqws2-native'if name=='nfqws2.init'else name
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
     files['usr/lib/nfqws2/diagnostics.sh']=((ROOT/'asus/diagnostics.sh').read_bytes(),0o644)
+    files['usr/lib/nfqws2/restart-schedule.sh']=((ROOT/'asus/restart-schedule.sh').read_bytes(),0o644)
+    files['usr/lib/nfqws2/restart-schedule-worker.php']=((HERE/'restart-schedule-worker.php').read_bytes(),0o644)
     for name,mode in [('quiesce.php',0o644),('quiesce.sh',0o755),('worker.php',0o644),('worker.sh',0o755),('service-guard.php',0o644),('service-lease.sh',0o644)]:
         files['usr/lib/nfqws2/update/'+name]=((HERE/'update'/name).read_bytes(),mode)
     if target['format']=='apk':

@@ -24,7 +24,7 @@ class NativeServiceLease(unittest.TestCase):
  def test_active_update_blocks_start_stop_reload_and_firewall_before_mutation(self):
   with self.lock.open('r+')as f:
    fcntl.flock(f,fcntl.LOCK_EX)
-   for component,action in [('core','start'),('core','stop'),('core','reload'),('core','firewall'),('core','remove-firewall'),('web','restart')]:
+   for component,action in [('core','start'),('core','stop'),('core','reload'),('core','scheduledrestart'),('core','firewall'),('core','remove-firewall'),('web','restart')]:
     with self.subTest(component=component,action=action):
      p=subprocess.run(['sh','-c',self.script(component=component,action=action)],env={**os.environ,'NFQWS_UPDATE_ALLOWED':'1'},text=True,capture_output=True,timeout=2);self.assertNotEqual(p.returncode,0);self.assertNotIn('entered',p.stdout)
  def test_live_manual_manager_is_refused_even_when_os_lease_is_free(self):

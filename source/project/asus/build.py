@@ -327,7 +327,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/share/licenses/nfqws2-asus/dpi-detector-MIT.txt'] = local('support/dpi-detector-MIT.txt')
     core['opt/share/doc/nfqws2-asus/USAGE.md'] = local('docs/USAGE.md')
     core['opt/share/doc/nfqws2-asus/IMPORT.md'] = local('docs/IMPORT.md')
-    for name in ['platform.sh', 'lifecycle.sh', 'diagnostics.sh', 'abi.sh', 'compatibility.sh', 'legacy.sh']:
+    for name in ['platform.sh', 'lifecycle.sh', 'restart-schedule.sh', 'diagnostics.sh', 'abi.sh', 'compatibility.sh', 'legacy.sh']:
         core['opt/lib/nfqws2-asus/'+name] = local('asus/'+name)
     if family == 'armv7':
         profile = ROOT/'asus/legacy/rt-ac87u-384.13_10'
@@ -358,14 +358,14 @@ def build_one(cache, output, offline, arch, build_number=None):
         core[shell_path[1:]] = busybox['opt/bin/busybox'], 0o755
     # Isolate applets from global Entware/POSIX symlinks. In particular, the
     # current Entware busybox preinst requires busybox before first installation.
-    for applet in 'awk cat chmod cmp cp cut date find grep head id ip kill mkdir mv readlink rm rmdir sed sh sha256sum sleep stat sysctl touch tr uname wc'.split():
+    for applet in 'awk cat chmod cmp cp cut date find grep head id ip kill ls mkdir mv readlink rm rmdir sed sh sha256sum sleep stat sysctl touch tr uname wc'.split():
         core['opt/lib/nfqws2-asus/bin/'+applet] = (
             f'#!{shell_path} sh\nexec {shell_path} {applet} "$@"\n'.encode(), 0o755)
     licenses(core, 'nfqws2-asus')
     conffiles = ''  # Active NFQWS2 config/lists are created once, never unpacked over.
 
     dist = ROOT/'webui/web/dist'
-    for name in ['index.html', 'index.php', 'asus.php', 'ark.php', 'platform.php', 'resource-paths.php', 'support-report.php',
+    for name in ['index.html', 'index.php', 'asus.php', 'ark.php', 'platform.php', 'restart-schedule.php', 'resource-paths.php', 'support-report.php',
                  'support-report-io.php', 'support-report-values.php',
                  'support-report-platform.php', 'support-report-network.php',
                  'support-mail.php', 'support-mail-proof.php', 'support-report-dns.php',
