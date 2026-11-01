@@ -65,7 +65,13 @@ asus_migration_blob_tree_safe() {
     asus_migration_blob_parent_safe "$path" || return 1
     unsafe=$(asus_migration_cmd find "$path" ! -type d ! -type f) || return 1
     [ -z "$unsafe" ] || return 1
-    unsafe=$(asus_migration_cmd find "$path" -type f ! -links 1) || return 1
+    # Entware BusyBox find omits -links. Keep the hard-link check using stat;
+    # a failed stat also makes the -exec predicate fail and prints an unsafe path.
+    unsafe=$(asus_migration_cmd find "$path" -type f ! -exec "$ASUS_MIGRATION_BUSYBOX" sh -c '
+        metadata=$("$0" stat -t "$1") || exit 1
+        links=$(printf "%s\n" "$metadata" | "$0" awk '\''END {if(NF<14)exit 1;print $(NF-6)}'\'') || exit 1
+        [ "$links" = 1 ]
+    ' "$ASUS_MIGRATION_BUSYBOX" '{}' ';' -print) || return 1
     [ -z "$unsafe" ]
 }
 asus_migration_blob_file_safe() {
@@ -92,7 +98,7 @@ asus_migration_blob_reclaim_stages() {
             links=$(asus_migration_cmd stat -t "$stage/file" | asus_migration_cmd awk '{print $(NF-6)}') || return 1
             case "$links" in
                 1) ;;
-                2) matches=$(asus_migration_cmd find "$directory" -maxdepth 1 -type f -samefile "$stage/file") || return 1
+                2) matches=$(asus_migration_cmd find "$directory" -maxdepth 1 -type f -exec "$ASUS_MIGRATION_BUSYBOX" test "$stage/file" -ef '{}' ';' -print) || return 1
                     [ -n "$matches" ] && [ "$(printf '%s\n' "$matches" | asus_migration_cmd awk 'END {print NR}')" = 1 ] || return 1
                     case "$matches" in "$directory"/*.bin) ;; *) return 1;; esac;;
                 *) return 1;;

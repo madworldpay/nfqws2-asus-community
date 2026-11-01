@@ -138,6 +138,16 @@ class LegacyRelayUpdateTests(unittest.TestCase):
             failed=subprocess.run(args+[str(candidate)],capture_output=True,timeout=10);self.assertNotEqual(failed.returncode,0,failed.stdout+failed.stderr)
             self.assertEqual(active.read_bytes(),OLD);self.assertEqual(active.stat().st_ino,before.st_ino)
             stage=opt/'var/lib/nfqws2-asus/relay-config-preserve';self.assertTrue(stage.is_dir())
+            status=opt/'lib/opkg/status';before_status=status.read_bytes()
+            self.assertRegex(before_status.decode(),r'Package: nfqws2-asus\nVersion: 1.3.1-asus6\+b10\n(?:[^\n]*\n)*?Status: deinstall user installed\n')
+            # Read the real manager's failure state through the production package inspector.
+            # A previously aborted preinst must not make the next explicit update impossible.
+            metadata={'package_version':'1.3.1-asus6+b11','package':{'family':'aarch64-3.10','size':candidate.stat().st_size,'sha256':hashlib.sha256(candidate.read_bytes()).hexdigest()}}
+            code="require $argv[1].'/update-prepare.php';try{$v=AsusUpdatePackage::inspect($argv[2],json_decode($argv[3],true),file_get_contents($argv[4]),'aarch64-3.10','aarch64');echo json_encode(['version'=>$v['Version']]);}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"
+            inspected=subprocess.run([str(NATIVE),'-n','-r',code,str(ROOT/'webui/web/public'),str(candidate),json.dumps(metadata),str(status)],capture_output=True,text=True,timeout=10)
+            self.assertEqual(inspected.returncode,0,inspected.stderr)
+            self.assertEqual(json.loads(inspected.stdout),{'version':'1.3.1-asus6+b11'})
+            self.assertEqual(status.read_bytes(),before_status)
             retry=subprocess.run(args+[str(candidate)],capture_output=True,timeout=10);self.assertEqual(retry.returncode,0,retry.stdout+retry.stderr)
             self.assertFalse(stage.exists());self.assertEqual(active.read_bytes(),OLD)
             after=active.stat();self.assertEqual((after.st_mode,after.st_uid,after.st_gid),(before.st_mode,before.st_uid,before.st_gid))

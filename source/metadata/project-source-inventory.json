@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "461144ccfd56ee3cf0f9a9d80e520c5b872166b23092d5fd838ecbdb46d64dab"
+    "sha256": "5ced0deaf966775a8b592f6bd95a33a67053b242a7c13654896cd9f2d36a0e37"
   },
   {
     "path": "LICENSE",
@@ -211,8 +211,8 @@
   },
   {
     "path": "asus/ipk/migration.sh",
-    "bytes": 16797,
-    "sha256": "e0d4ed725a51a72e600209705bce80e7f0958a0b03ca2973cba0c3ad17deee3a"
+    "bytes": 17265,
+    "sha256": "0543254087fab7cbc0f15392571875b444f2338d84edd4e493a860a35d5bd0f6"
   },
   {
     "path": "asus/ipk/postrm",
@@ -1446,8 +1446,8 @@
   },
   {
     "path": "tests/test_blob_defaults.py",
-    "bytes": 11155,
-    "sha256": "4fe1d9353f28063fe06f7185f72f02d177396a0ad1a4cbb844993bd08e76bca0"
+    "bytes": 11628,
+    "sha256": "28f6351452a8a804ef2eb7baace54ee236f140c5a3a161371df333ed933e57ee"
   },
   {
     "path": "tests/test_blob_editor_ui.mjs",
@@ -1703,6 +1703,16 @@
     "path": "tests/test_migration_reinstall.py",
     "bytes": 34520,
     "sha256": "3519690a9582a225b2ab8a1a20934740926b6c2d6b6f40e0f99a1eedcf515f26"
+  },
+  {
+    "path": "tests/test_mtproto_install.mjs",
+    "bytes": 5415,
+    "sha256": "eee1b8b7fdcfd404e9a1a37ed33bb2d4712d507cd56408b4ad5111e69bfc0ee5"
+  },
+  {
+    "path": "tests/test_mtproto_ui.mjs",
+    "bytes": 7046,
+    "sha256": "c0fe95eb1b9f8ad6eb51592b86990d666057186053ab9ef982808ebaf368c5a8"
   },
   {
     "path": "tests/test_native_args.py",
@@ -2066,13 +2076,13 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 25812,
-    "sha256": "a2b52176ad5c3d9650f95bfe14eb018bd5f41be6f4e7f8d437b9b81c01b7634e"
+    "bytes": 26661,
+    "sha256": "9fea30ee7b658799306f5f4eea020d4f76ab327b90fbf83e29a75215f10f0d9e"
   },
   {
     "path": "tests/test_package_update_relay.py",
-    "bytes": 15286,
-    "sha256": "815b2c8bc0691e3b8a61a2084327943e1c455c487229ae56ddb86c3367074e20"
+    "bytes": 16594,
+    "sha256": "435f2658a680f8dfef847fad573c018c9363c5f940d66fd03fdf41a8be33498d"
   },
   {
     "path": "tests/test_package_update_runtime.py",
@@ -3491,8 +3501,8 @@
   },
   {
     "path": "webui/web/public/update-package.php",
-    "bytes": 9121,
-    "sha256": "db96be2389b0028dca0deed0c74e8032526ef3020bb8803157ee9f2c2ad4d90b"
+    "bytes": 9461,
+    "sha256": "d18fe84f068a86b2b83389fdf368dd0c44b30539213d9c2334b23fc46097c573"
   },
   {
     "path": "webui/web/public/update-prepare.php",
@@ -3761,8 +3771,8 @@
   },
   {
     "path": "webui/web/src/components/Footer.tsx",
-    "bytes": 6648,
-    "sha256": "d720ea99f71aa74cec13776018690ce995a503712128d55b92ccb02c2f8daed3"
+    "bytes": 7163,
+    "sha256": "eea309c8e7191f21e0993b55fa671a53056654a586459cf9b22d5303fb5b1d00"
   },
   {
     "path": "webui/web/src/components/FormEditor.tsx",
@@ -3813,6 +3823,11 @@
     "path": "webui/web/src/components/MainTabs.tsx",
     "bytes": 3304,
     "sha256": "dbd9a1a6e4ee4fc968ae50f4aa51b00c7ee3bee14a8bc0a1499fcf9bf2e2acef"
+  },
+  {
+    "path": "webui/web/src/components/MtprotoInstallDialog.tsx",
+    "bytes": 9503,
+    "sha256": "06f39e27618221422a6419630a5bb1a6a0c18faea23e6d041d95099765ebeca8"
   },
   {
     "path": "webui/web/src/components/OutputLogDialog.tsx",
@@ -4031,13 +4046,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 69697,
-    "sha256": "e881d50ceb494792faceede1d9c24d707cc9ab112e146aed14020f4477415d56"
+    "bytes": 72798,
+    "sha256": "f145549e0913190cac652f7e01230b87f4ce3f0c03a08db0548b8616b2a35ba1"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 113719,
-    "sha256": "74c98347cbe28aab61b60d6db9d7a29cbb1f7ec33c4af3d7dcba6043ce45f833"
+    "bytes": 118344,
+    "sha256": "0c351d56c34cec61ed64b563b3018307fb2b14ff57bacc8c4b20c5baded9381d"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4085,6 +4100,11 @@
     "sha256": "bebe5c3c3789350e082561c3082b0ccdd0459a4c206cd9a3acdd32673d1ae637"
   },
   {
+    "path": "webui/web/src/utils/copyText.ts",
+    "bytes": 1265,
+    "sha256": "365dbd40f776dcd51b8d303f541ac7e4a239b7cad29df5e33387f692109cfba2"
+  },
+  {
     "path": "webui/web/src/utils/createAppRouter.tsx",
     "bytes": 335,
     "sha256": "8ecf7d09628c85cdae9d0c1174b8d263cc2c37936263097d8a79d901cdf5e80b"
@@ -4098,6 +4118,16 @@
     "path": "webui/web/src/utils/getFileTypeForTab.ts",
     "bytes": 375,
     "sha256": "dc991ed0a1f81d167bd850b5e8c01cc75e9b7c4c6c41caa6754bcd41a79cef9a"
+  },
+  {
+    "path": "webui/web/src/utils/mtproto-install.sh",
+    "bytes": 10660,
+    "sha256": "c9d9530dd7441a0ab4bae8dc7551a34fb0e6d90c97b3a806eb80549260ff6a72"
+  },
+  {
+    "path": "webui/web/src/utils/mtprotoInstall.ts",
+    "bytes": 3861,
+    "sha256": "19c5d130b205278dfcf0b3df3ade7eba8474a996b888e9057b21b80bfffa1c43"
   },
   {
     "path": "webui/web/src/utils/newlineMarkers.ts",

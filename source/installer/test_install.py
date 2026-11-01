@@ -22,7 +22,7 @@ class InstallerTests(unittest.TestCase):
         self.router = self.work / 'router'
         self.bin = self.work / 'bin'
         self.bin.mkdir()
-        for name in ['opt/bin', 'opt/tmp', 'opt/etc/init.d', 'opt/etc/nfqws2', 'proc']:
+        for name in ['opt/bin', 'opt/tmp', 'opt/etc/init.d', 'opt/etc/nfqws2', 'opt/lib/opkg/info', 'proc']:
             (self.router / name).mkdir(parents=True, exist_ok=True)
         (self.router / 'proc/self').mkdir()
         (self.router / 'proc/self/status').write_text('Uid:\t0\t0\t0\t0\n')
@@ -73,7 +73,18 @@ elif action=='compare-versions':
 elif action=='update':emit({'kind':'update'})
 elif action=='install':
     emit({'kind':'install','asset':pathlib.Path(args[1]).name,'no_start':os.environ.get('NFQWS_ASUS_NO_START')})
-    if state['install_error']:sys.exit(1)
+    if state['install_error']:
+        import subprocess
+        if state.get('stop_before_failure'):
+            for name in ['S51nfqws2','S81nfqws-asus-web']:
+                subprocess.run([str(work/'router/opt/etc/init.d'/name),'stop'],check=True)
+            state=json.loads(state_path.read_text())
+            state['package_status']=state.get('failure_status','deinstall user installed')
+            state['version']=state.get('failure_version',state['version'])
+            if state.get('change_payload'): (work/'router/opt/etc/init.d/S51nfqws2').write_text('#!/bin/sh\nexit 1\n')
+            if state.get('delete_payload'): (work/'router/opt/etc/init.d/S51nfqws2').unlink()
+            state_path.write_text(json.dumps(state))
+        sys.exit(1)
     state['version']='1.3.2-asus6+b67'
     state['package_status']=state.get('post_install_status','install ok installed')
     state_path.write_text(json.dumps(state))
@@ -82,6 +93,75 @@ else:raise AssertionError(args)
         self.tool('nvram', "assert sys.argv[1]=='get'; print({'productid':'GT-BE19000AI','odmpid':'','lan_ipaddr':'192.168.50.1','sw_mode':'1'}.get(sys.argv[2],''))")
         self.tool('uname', "print(state['cpu'])")
         self.tool('df', "print('Filesystem 1024-blocks Used Available Capacity Mounted on\\nusb 2097152 10 '+str(state['free_kb'])+' 1% /opt')")
+
+        self.recovery_fixture()
+        self.state.update(version='', install_error=False, stop_before_failure=False)
+
+    def recovery_fixture(self):
+        paths=[]
+        for name,field in [('S51nfqws2','core_running'),('S81nfqws-asus-web','web_running')]:
+            path=self.router/'opt/etc/init.d'/name
+            self.tool(name, """
+field=FIELD
+action=sys.argv[1]
+if action=='status':sys.exit(0 if state.get(field,False) else 1)
+emit({'kind':'service','field':field,'action':action})
+if action=='start' and state.get('recovery_start_error'):sys.exit(1)
+state[field]=action=='start'
+state_path.write_text(json.dumps(state))
+""".replace('FIELD',repr(field)),path)
+            paths.append(str(path))
+        (self.router/'opt/lib/opkg/info/nfqws2-asus.list').write_text('\n'.join(paths)+'\n')
+        self.state.update(version='1.3.1-asus6+b66',install_error=True,stop_before_failure=True)
+
+    def test_failed_preinst_restores_verified_old_core_and_web(self):
+        self.recovery_fixture();self.state.update(core_running=True,web_running=True,enabled=True)
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        final=json.loads(self.state_path.read_text())
+        self.assertTrue(final['core_running'],r.stdout+r.stderr)
+        self.assertTrue(final['web_running'],r.stdout+r.stderr)
+        self.assertIn('восстановлено',r.stdout)
+
+    def test_failed_preinst_restores_wait_wan_but_keeps_stopped_services_off(self):
+        for enabled,core,web in [(True,False,False),(False,False,True),(False,False,False)]:
+            with self.subTest(enabled=enabled,core=core,web=web):
+                self.recovery_fixture();self.state.update(enabled=enabled,core_running=core,web_running=web)
+                r=self.execute();self.assertNotEqual(r.returncode,0)
+                final=json.loads(self.state_path.read_text())
+                self.assertEqual(final['core_running'],enabled or core)
+                self.assertEqual(final['web_running'],web)
+
+    def test_failed_upgrade_never_starts_changed_partial_or_new_payload(self):
+        cases=[{'change_payload':True},{'delete_payload':True},{'failure_status':'install user unpacked'},{'failure_version':VERSION}]
+        for case in cases:
+            with self.subTest(case=case):
+                self.recovery_fixture();self.state.update(enabled=True,core_running=True,web_running=True,**case)
+                self.log.unlink(missing_ok=True)
+                r=self.execute();self.assertNotEqual(r.returncode,0)
+                self.assertFalse(any(e.get('action')=='start' for e in self.events))
+                for key in case:self.state.pop(key,None)
+
+    def test_restore_manifest_supports_owner_filenames_with_spaces_and_unicode(self):
+        self.recovery_fixture();self.state.update(enabled=True,core_running=True,web_running=True)
+        (self.router/'opt/etc/nfqws2/owner space список.list').write_text('example.org\n')
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        final=json.loads(self.state_path.read_text())
+        self.assertTrue(final['core_running'],r.stdout+r.stderr)
+        self.assertTrue(final['web_running'],r.stdout+r.stderr)
+
+    def test_unsafe_recovery_manifest_aborts_before_install_and_service_stops(self):
+        self.recovery_fixture();self.state.update(enabled=True,core_running=True,web_running=True)
+        os.mkfifo(self.router/'opt/etc/nfqws2/unsupported.pipe')
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        self.assertEqual(self.installs(),[])
+        self.assertFalse(any(e.get('kind')=='service' for e in self.events))
+        final=json.loads(self.state_path.read_text())
+        self.assertTrue(final['core_running']);self.assertTrue(final['web_running'])
+
+    def test_failed_recovery_stays_failure_and_reports_it(self):
+        self.recovery_fixture();self.state.update(enabled=True,core_running=True,web_running=True,recovery_start_error=True)
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        self.assertIn('не удалось',r.stdout+r.stderr)
 
     def tool(self, name, body, path=None):
         p = path or self.bin / name
@@ -97,6 +177,7 @@ else:raise AssertionError(args)
         enabled = self.router / 'tmp/nfqws2-asus/enabled'
         enabled.parent.mkdir(parents=True, exist_ok=True)
         if self.state['enabled']:enabled.touch()
+        else:enabled.unlink(missing_ok=True)
         text = self.installer.read_text().replace('/opt/', str(self.router) + '/opt/').replace(
             '/proc/', str(self.router) + '/proc/').replace('/tmp/nfqws2-asus/', str(self.router) + '/tmp/nfqws2-asus/')
         text = text.replace('PATH=', 'PATH=' + str(self.bin) + ':', 1)
@@ -197,6 +278,38 @@ else:raise AssertionError(args)
         self.assertEqual(self.installs(),[])
         self.assertFalse(any(x['kind']=='update' for x in self.events))
         self.assertIn('уже установлен',r.stdout)
+
+    def test_aborted_upgrade_can_retry_without_losing_enabled_intent(self):
+        for flag in ['ok', 'user']:
+            for enabled in [False, True]:
+                with self.subTest(flag=flag, enabled=enabled):
+                    self.state.update(version='1.3.1-asus6+b66', package_status=f'deinstall {flag} installed', enabled=enabled)
+                    self.log.unlink(missing_ok=True)
+                    r=self.execute();self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+                    self.assertEqual(self.installs(),[{'kind':'install','asset':f'nfqws2-asus_{VERSION}_aarch64-3.10.ipk','no_start':'0' if enabled else '1'}])
+                    self.assertIn('Готово',r.stdout)
+
+    def test_aborted_upgrade_check_only_does_not_change_package_state(self):
+        self.state.update(version='1.3.1-asus6+b66', package_status='deinstall user installed', enabled=True)
+        r=self.execute('--check');self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertEqual(self.installs(),[])
+        self.assertFalse(any(x['kind']=='update' for x in self.events))
+        self.assertEqual(json.loads(self.state_path.read_text())['package_status'],'deinstall user installed')
+
+    def test_deinstall_wish_cannot_be_reported_as_success_at_current_version_or_postflight(self):
+        self.state.update(version=VERSION, package_status='deinstall user installed')
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        self.assertNotIn('уже установлен',r.stdout);self.assertEqual(self.installs(),[])
+        self.state.update(version='1.3.1-asus6+b66', package_status='deinstall user installed', post_install_status='deinstall user installed')
+        r=self.execute();self.assertNotEqual(r.returncode,0)
+        self.assertEqual(len(self.installs()),1);self.assertNotIn('Готово',r.stdout)
+
+    def test_retry_does_not_accept_purge_hold_or_partial_installation(self):
+        for status in ['purge user installed','deinstall hold installed','deinstall user unpacked','deinstall ok half-configured','deinstall reinstreq installed']:
+            with self.subTest(status=status):
+                self.state.update(version='1.3.1-asus6+b66',package_status=status)
+                r=self.execute();self.assertNotEqual(r.returncode,0)
+                self.assertEqual(self.installs(),[])
 
     def test_first_install_accepts_user_flag_from_opkg(self):
         self.state['post_install_status']='install user installed'

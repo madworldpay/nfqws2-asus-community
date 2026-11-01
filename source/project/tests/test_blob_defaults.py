@@ -30,6 +30,10 @@ class BlobDefaultsTests(unittest.TestCase):
   self.unchanged_settings();self.ok(self.call());self.assertEqual(p.stat().st_ino,before.st_ino)
  def test_snapshot_restores_modified_legacy_package_blob_after_payload_removal(self):
   p=self.active/'tls_clienthello.bin';p.write_bytes(b'OWNER_TLS\x00\xff');p.chmod(0o600);self.ok(self.call('save'));snapshot=self.state/'snapshot';self.assertTrue((snapshot/'blobs/tls_clienthello.bin').exists());self.assertEqual((snapshot/'blobs/tls_clienthello.bin').read_bytes(),p.read_bytes());p.unlink();self.ok(self.call('upgrade'));self.assertEqual(p.read_bytes(),b'OWNER_TLS\x00\xff');self.assertEqual(stat.S_IMODE(p.stat().st_mode),0o600);self.unchanged_settings()
+
+ def test_link_safety_does_not_split_owner_filenames(self):
+  p=self.active/'owner space\nline.bin';p.write_bytes(b'OWNER_BYTES');self.ok(self.call('save'));self.assertEqual((self.state/'snapshot/blobs'/p.name).read_bytes(),b'OWNER_BYTES')
+  outside=self.base/'outside';outside.write_bytes(b'PRIVATE_CANARY');os.link(outside,self.active/'linked space\nline.bin');self.assertNotEqual(self.call('seed').returncode,0);self.assertEqual(outside.read_bytes(),b'PRIVATE_CANARY')
  def test_missing_active_directory_is_created_and_existing_modes_are_preserved(self):
   self.active.rmdir();mode=self.active.parent.stat().st_mode;self.ok(self.call());self.assertEqual(len(list(self.active.iterdir())),12);self.assertEqual(self.active.parent.stat().st_mode,mode);self.unchanged_settings()
  def test_source_and_destination_links_special_files_and_hardlinks_fail_closed(self):
