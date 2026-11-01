@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useConfig } from '@/config/useConfig';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
@@ -36,6 +36,7 @@ import { ImportDialog } from '@/components/ImportDialog';
 import { OutputLogDialog } from '@/components/OutputLogDialog';
 import { PasswordDialog } from '@/components/PasswordDialog';
 import { RequirementsDialog } from '@/components/RequirementsDialog';
+import { RestartScheduleDialog } from '@/components/RestartScheduleDialog';
 import { ShareDialog } from '@/components/ShareDialog';
 import { ShareThanks } from '@/components/ShareThanks';
 import { ThemeMenu } from '@/components/ThemeMenu';
@@ -54,7 +55,8 @@ export const Header = () => {
   const open = Boolean(anchorEl);
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
 
-  const { service, nfqws2, arkLoaded, platform } = useStatus();
+  const { service, nfqws2, arkLoaded, platform, authenticated, csrfToken } =
+    useStatus();
 
   const config = useConfig(nfqws2);
 
@@ -67,6 +69,9 @@ export const Header = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [shareThanks, setShareThanks] = useState(0);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [actionPending, setActionPending] = useState(false);
+  const actionInFlight = useRef(false);
   const { appearance } = useAppearanceStore();
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -78,16 +83,31 @@ export const Header = () => {
   };
 
   const handleMenuClick = async (command: ServiceActionRequest['cmd']) => {
+    if (!auth || !authenticated || actionInFlight.current) return;
+    actionInFlight.current = true;
+    setActionPending(true);
     handleMenuClose();
     setOutput(true);
-    const { data } = await API.action(command);
-    setOutput(
-      `> ${platform === 'openwrt' ? 'nfqws2-native' : 'nfqws2-asus'} ${command}\n${data?.output?.join('\n') || ''}`,
-    );
-    void API.invalidateStatus();
-
-    if (command === 'upgrade') {
-      setNeedReload(true);
+    try {
+      const { data, error } = await API.action(command);
+      const lines = data?.output?.join('\n') || '';
+      const failed = error || !data || data.status !== 0;
+      setOutput(
+        `> ${platform === 'openwrt' ? 'nfqws2-native' : 'nfqws2-asus'} ${command}\n${lines}${failed ? `\n${t(command === 'restart' ? 'restart_schedule.restart_failed' : 'restart_schedule.action_failed')}` : ''}`,
+      );
+      if (!failed && command === 'upgrade') setNeedReload(true);
+    } catch {
+      setOutput(
+        t(
+          command === 'restart'
+            ? 'restart_schedule.restart_failed'
+            : 'restart_schedule.action_failed',
+        ),
+      );
+    } finally {
+      actionInFlight.current = false;
+      setActionPending(false);
+      void API.invalidateStatus();
     }
   };
 
@@ -293,9 +313,59 @@ export const Header = () => {
               flexGrow={1}
               justifyContent="flex-end"
             >
+              {auth && authenticated && (
+                <>
+                  <Tooltip
+                    title={t('restart_schedule.restart')}
+                    enterTouchDelay={0}
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label={t('restart_schedule.restart')}
+                        disabled={!service || actionPending}
+                        onClick={() => void handleMenuClick('restart')}
+                        sx={{ width: 36, height: 36 }}
+                      >
+                        <Box
+                          component="span"
+                          aria-hidden="true"
+                          sx={{ fontSize: 26, lineHeight: 1 }}
+                        >
+                          ↻
+                        </Box>
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  {csrfToken && (
+                    <Tooltip
+                      title={t('restart_schedule.title')}
+                      enterTouchDelay={0}
+                    >
+                      <IconButton
+                        size="small"
+                        aria-label={t('restart_schedule.title')}
+                        aria-haspopup="dialog"
+                        aria-expanded={scheduleOpen}
+                        onClick={() => setScheduleOpen(true)}
+                        sx={{ width: 36, height: 36 }}
+                      >
+                        <Box
+                          component="span"
+                          aria-hidden="true"
+                          sx={{ fontSize: 21, lineHeight: 1 }}
+                        >
+                          ⏱
+                        </Box>
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </>
+              )}
               <Button
                 variant="text"
                 size="small"
+                aria-label={t('restart_schedule.menu')}
                 onClick={handleMenuOpen}
                 sx={{
                   color: 'text.secondary',
@@ -338,9 +408,10 @@ export const Header = () => {
                   </ListItemIcon>
                   <Trans i18nKey="system.change_theme" />
                 </MenuItem>
-                {service && (
+                {auth && authenticated && service && (
                   <MenuItem
                     onClick={() => handleMenuClick('restart')}
+                    disabled={actionPending}
                     sx={{ fontSize: 14 }}
                   >
                     <ListItemIcon>
@@ -350,27 +421,31 @@ export const Header = () => {
                   </MenuItem>
                 )}
 
-                {service ? (
-                  <MenuItem
-                    onClick={() => handleMenuClick('stop')}
-                    sx={{ fontSize: 14 }}
-                  >
-                    <ListItemIcon>
-                      <StopCircleIcon />
-                    </ListItemIcon>
-                    <Trans i18nKey="common.stop" />
-                  </MenuItem>
-                ) : (
-                  <MenuItem
-                    onClick={() => handleMenuClick('start')}
-                    sx={{ fontSize: 14 }}
-                  >
-                    <ListItemIcon>
-                      <PlayArrowIcon />
-                    </ListItemIcon>
-                    <Trans i18nKey="common.start" />
-                  </MenuItem>
-                )}
+                {auth &&
+                  authenticated &&
+                  (service ? (
+                    <MenuItem
+                      onClick={() => handleMenuClick('stop')}
+                      disabled={actionPending}
+                      sx={{ fontSize: 14 }}
+                    >
+                      <ListItemIcon>
+                        <StopCircleIcon />
+                      </ListItemIcon>
+                      <Trans i18nKey="common.stop" />
+                    </MenuItem>
+                  ) : (
+                    <MenuItem
+                      onClick={() => handleMenuClick('start')}
+                      disabled={actionPending}
+                      sx={{ fontSize: 14 }}
+                    >
+                      <ListItemIcon>
+                        <PlayArrowIcon />
+                      </ListItemIcon>
+                      <Trans i18nKey="common.start" />
+                    </MenuItem>
+                  ))}
               </Menu>
             </Stack>
           </Stack>
@@ -396,16 +471,25 @@ export const Header = () => {
       </Box>
 
       <ThemeMenu anchorEl={themeAnchor} onClose={() => setThemeAnchor(null)} />
-      <OutputLogDialog
-        content={output}
-        open={Boolean(output)}
-        onClose={() => {
-          setOutput('');
-          if (needReload) {
-            window.location.reload();
-          }
-        }}
-      />
+      {auth && authenticated && (
+        <OutputLogDialog
+          content={output}
+          open={Boolean(output)}
+          onClose={() => {
+            setOutput('');
+            if (needReload) {
+              window.location.reload();
+            }
+          }}
+        />
+      )}
+      {auth && authenticated && csrfToken && scheduleOpen && (
+        <RestartScheduleDialog
+          key={csrfToken}
+          csrfToken={csrfToken}
+          onClose={() => setScheduleOpen(false)}
+        />
+      )}
       {requirementsOpen && (
         <RequirementsDialog
           onClose={() => setRequirementsOpen(false)}

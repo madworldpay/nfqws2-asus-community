@@ -105,7 +105,7 @@ final class AsusUpdateStore
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
         $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
         foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}
-        foreach(['package.ipk','package.apk','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
+        foreach(['package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
         @rmdir($dir);
     }
     private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false): void
@@ -170,7 +170,7 @@ final class AsusUpdateStore
         });
     }
     public function status(): array
-    {return $this->withLock(function(){$db=$this->db();$active=null;$history=[];foreach($db['operations'] as $job)if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else $active=$job;if($this->readFile('operations.json')===null)$this->save($db);return ['active'=>$active,'history'=>array_reverse($history)];});}
+    {return $this->withRetryLock(function(){$db=$this->db();$active=null;$history=[];foreach($db['operations'] as $job)if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else $active=$job;if($this->readFile('operations.json')===null)$this->save($db);return ['active'=>$active,'history'=>array_reverse($history)];});}
     public function reconcile(string $boot,float $uptime): void
     {$this->withLock(function()use($boot,$uptime){$db=$this->db();$before=$db;foreach($db['operations'] as &$job)if(!in_array($job['state'],self::TERMINAL,true)&&($job['boot_id']!==$boot||$uptime<$job['created_uptime'])){$job['state']='interrupted';$job['code']='interrupted';$job['finished_at']=time();}unset($job);$this->rotate($db);if($db!==$before)$this->save($db);});}
 }

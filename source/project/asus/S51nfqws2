@@ -10,6 +10,7 @@ RUN_DIR=/tmp/nfqws2-asus
 PIDFILE=$RUN_DIR/pid
 . /opt/lib/nfqws2-asus/platform.sh
 . /opt/lib/nfqws2-asus/lifecycle.sh
+. /opt/lib/nfqws2-asus/restart-schedule.sh
 . /opt/lib/nfqws2-asus/diagnostics.sh
 if [ "$1" = diagnostics ]; then
     [ "$#" = 1 ] || exit 2

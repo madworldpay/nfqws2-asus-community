@@ -23,15 +23,20 @@ printf '%s\\n' "$*" >> "$TEST_LOG"
             guard=Path(td)/'service-lease.sh';guard.write_text('nfqws_native_update_enter() { [ "$FAIL_UPDATE_GUARD" != 1 ]; }\n')
             init=Path(td)/'init';init.write_text((ROOT/'openwrt/nfqws2.init').read_text().replace('/usr/lib/nfqws2/update/service-lease.sh',str(guard)))
             launch=Path(td)/'launch.env';launch.write_text("NFQWS_LAUNCH_ARGS='--user=nobody --qnum=300 --filter-tcp=443'\n")
+            (Path(td)/'started').touch()
             body='''
 NFQWS_CONTROL="$CONTROL"; NFQWS_RUN="$RUN"; action="$ACTION"
 . "$INIT"
 procd_open_instance() { echo procd-open >> "$TEST_LOG"; }
 procd_set_param() { printf 'procd-%s\\n' "$*" >> "$TEST_LOG"; }
 procd_close_instance() { echo procd-close >> "$TEST_LOG"; }
-[ "$action" != restart ] || stop_service
-start_service
-service_started
+start() { start_service && service_started; }
+if [ "$action" = reload ]; then
+    reload_service
+else
+    [ "$action" != restart ] || stop_service
+    start
+fi
 '''
             r=subprocess.run(['sh','-c',body],capture_output=True,text=True,env={**os.environ,
                 'CONTROL':str(control),'RUN':td,'INIT':str(init),
@@ -47,14 +52,15 @@ service_started
         for action in ['start','restart','reload','boot']:
             r,calls=self.run_init(action,failed=True)
             self.assertNotEqual(r.returncode,0)
-            self.assertEqual(calls,['preflight'])
+            self.assertEqual(calls,['process-pid','preflight']if action=='reload'else['preflight'])
 
-    def test_foreground_supervision_and_actual_queue_check(self):
+    def test_foreground_process_has_no_second_respawner_and_actual_queue_check(self):
         r,calls=self.run_init('start')
         self.assertEqual(r.returncode,0,r.stderr)
         self.assertEqual(calls[0:2],['preflight','firewall'])
         self.assertIn('procd-command /usr/bin/nfqws2 --user=nobody --qnum=300 --filter-tcp=443',calls)
-        self.assertIn('procd-respawn 3600 5 5',calls)
+        self.assertFalse(any(c.startswith('procd-respawn ')for c in calls),
+                         'an independent procd respawner would bypass watchdog OFF and its recovery latch')
         self.assertEqual(calls[-1],'check-started')
         self.assertFalse(any('--daemon' in c or '--pidfile' in c for c in calls))
 

@@ -293,6 +293,22 @@ function main(): void
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+  if (in_array($_POST['cmd'], ['restartschedule','restartschedulesave'], true)) {
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    require_once __DIR__.'/restart-schedule.php';require_once __DIR__.'/support-report.php';
+    try {
+      NfqwsRestartSchedule::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();$schedule=new NfqwsRestartSchedule();
+      if($_POST['cmd']==='restartschedulesave'){
+        require_once __DIR__.'/update-guard.php';$scheduleLease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
+        require_once __DIR__.'/import-store.php';$value=(new AsusImportStore())->locked(fn()=>$schedule->save($_POST['enabled']==='1',(int)$_POST['interval_hours'],$_POST['watchdog_enabled']==='1'));
+      }else $value=$schedule->read();
+      http_response_code(200);echo json_encode($value,JSON_THROW_ON_ERROR);
+    }catch(Throwable $e){$code=in_array($e->getMessage(),['invalid_request','busy','unsupported_scheduler'],true)?$e->getMessage():'invalid_state';http_response_code($code==='invalid_request'?400:($code==='busy'?409:503));echo json_encode(['error'=>$code]);}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['technicalstart','technicalstatus','technicalstop'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     if (!$authEnabled || !$sessionValid) {http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}

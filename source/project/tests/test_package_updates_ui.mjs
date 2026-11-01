@@ -34,6 +34,17 @@ assert.equal(calls.at(-1)[1].body.get('csrf_token'), 'csrf');
 assert.equal((await api.getPackageUpdate('csrf', operation.id)).id, operation.id);
 assert.equal((await api.getPackageUpdateOverview('csrf')).operation.state, 'applying');
 
+const resume = {...available, installed_version:candidate.package_version, candidate:{...candidate,action:'configure'}};
+globalThis.fetch=async()=>Response.json(resume);
+assert.deepEqual(await api.checkPackageUpdate('csrf'),resume);
+for(const invalid of [
+ {...resume,candidate:{...resume.candidate,action:'configure-all'}},
+ {...resume,installed_version:'1.3.1-asus6+b11'},
+]){
+ globalThis.fetch=async()=>Response.json(invalid);
+ await assert.rejects(api.checkPackageUpdate('csrf'),e=>e.code==='invalid_response');
+}
+
 for(const [version,installed,family,format]of [
  ['1.3.2-r72','1.3.2-r71','x86_64','apk'],
  ['1.3.2-72','1.3.2-71','arm_cortex-a9','ipk'],
@@ -71,9 +82,9 @@ try {
 import {createElement as h} from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 import {PackageUpdateDialog} from '@/components/PackageUpdateDialog';import {TranslationContext} from '@/context/TranslationContext';
 import ru from '@/translations/ru.json';import en from '@/translations/en.json';
-export function render(language,operation){
+export function render(language,operation,resuming=false){
 const pack=language==='ru'?ru:en;const t=(key,params={})=>key.split('.').reduce((v,k)=>v[k],pack).replace(/{{(\\w+)}}/g,(_,k)=>String(params[k]??''));
-return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageUpdateDialog,{open:true,onClose(){},installed:'1.3.1-asus6+b17',updates:{pending:false,error:null,data:{check:{state:'available',candidate:{package_version:'1.3.1-asus6+b18',core_version:'1.3.1-asus6',web_version:'0.1.4',build:18,revision:'x',notes:''}},operation},refresh(){},prepare(){},apply(){}}})));
+return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageUpdateDialog,{open:true,onClose(){},installed:'1.3.1-asus6+b17',updates:{pending:false,error:null,data:{check:{state:'available',candidate:{package_version:resuming?'1.3.1-asus6+b17':'1.3.1-asus6+b18',core_version:'1.3.1-asus6',web_version:'0.1.4',build:resuming?17:18,revision:'x',notes:'',...(resuming?{action:'configure'}:{})}},operation},refresh(){},prepare(){},apply(){}}})));
 }`},bundle:true,platform:'node',format:'cjs',outfile,logLevel:'silent',tsconfig:fileURLToPath(new URL('../webui/web/tsconfig.app.json',import.meta.url)),plugins:[{name:'render-in-place',setup(b){b.onResolve({filter:/^@mui\/material$/},()=>({path:'mui',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`import {createElement as h} from 'react';export const Dialog=({children})=>h('section',{},children);export const DialogTitle=Dialog,DialogContent=Dialog,DialogActions=Dialog,Stack=Dialog,Typography=Dialog,Button=Dialog,LinearProgress=Dialog,Link=Dialog;export const Alert=({children,severity})=>h('div',{'data-severity':severity},children);`,resolveDir:fileURLToPath(new URL('../webui/web/',import.meta.url))}));}}]});
  const {render}=await import(pathToFileURL(outfile));
  for(const lang of ['ru','en'])for(const installed_version of ['1.3.1-asus6+b16',undefined]) {
@@ -92,4 +103,12 @@ return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageU
   assert.doesNotMatch(error,/другая операция|Another operation/,'an unresolved DNS restore is not a running update');
  }
  console.log('PASS RU/EN DNS recovery errors show the SmartDNS recovery action');
+ for(const lang of ['ru','en']) {
+  const html=render(lang,{...operation,state:'prepared',revision:'x'},true);
+  assert.match(html,lang==='ru'?/Завершение прерванной установки/:/Finish interrupted installation/);
+  assert.match(html,lang==='ru'?/Завершить установку/:/Finish installation/);
+  const error=render(lang,{...operation,state:'failed',code:'recovery_required'},true);
+  assert.match(error,lang==='ru'?/Настройки сохранены/:/Settings have been preserved/);
+ }
+ console.log('PASS RU/EN verified recovery has explicit action and preservation failure text');
 }finally{await rm(directory,{recursive:true,force:true});}

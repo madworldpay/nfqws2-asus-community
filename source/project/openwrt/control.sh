@@ -99,6 +99,7 @@ nfqws_diagnostics() {
 [ "$(id -u)" = 0 ] || { echo root_required >&2; exit 1; }
 case "$1" in
     diagnostics) nfqws_diagnostics; exit $?;;
+    process-pid) nfqws_process_pid; exit $?;;
     status) if nfqws_check; then echo 'nfqws2 is running'; exit 0; else echo 'nfqws2 is stopped or queue is unavailable'; exit 1; fi;;
     check) nfqws_check; exit $?;;
     network-event) nfqws_process_pid >/dev/null || exit 0; exec /etc/init.d/nfqws2-native reload;;

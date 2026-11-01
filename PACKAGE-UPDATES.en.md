@@ -30,6 +30,19 @@ The strategy catalog and submission receiver run on ASUS, submissions are delive
 to the project's Gmail inbox, and releases come from GitHub. Importing, submitting
 and updating do not require a VPS.
 
+## Interrupted ASUS installation
+
+From Build 81, the installer can finish an interrupted NFQWS2 ASUS installation.
+For an older panel, rerun the usual installer command: it verifies the interrupted
+package's signature, exact version and installed files before continuing to the
+latest release. Other unfinished Entware packages and active operations still
+block the update; rebooting does not replace those checks.
+
+An SSH disconnect does not cancel an installation already running in the
+background. On failure, the installer shows the retained log path. A partially
+installed package can remain stopped after an error; check the result before
+starting it. Full rollback of all program files is not implemented.
+
 ## Through the panel
 
 The panel automatically checks current public GitHub releases.

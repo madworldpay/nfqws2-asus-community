@@ -7,18 +7,18 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 16750,
-      "sha256": "a1d1dbf3408cc573d649d6a98a8b34ac71ff9832aae7d8bde535ef5ffd75db9c"
+      "bytes": 18304,
+      "sha256": "bae8c61475508ebf3f434bfb380cbaf732ca23e6945e084f3b7c9ed07ff4b755"
     },
     {
       "file": "COMPATIBILITY.en.md",
-      "bytes": 2184,
-      "sha256": "45467353feda0f4b0b73f7a45372943dbeedc2477459b91abcf055357fc87f26"
+      "bytes": 2552,
+      "sha256": "beb3afa7116826b12304cb1c66221bebe5232fec5fd08861a0556a0ac4c4fa23"
     },
     {
       "file": "COMPATIBILITY.md",
-      "bytes": 3367,
-      "sha256": "d9ae2f3235f71eef5377d93cede3ee6ca1da0f7214ee598a9528233873b95acd"
+      "bytes": 3912,
+      "sha256": "0e57dde59e3dcd6ad85e33e002e86c4059c65ed88daf3d6117a79387127604c5"
     },
     {
       "file": "CONTRIBUTING.en.md",
@@ -117,13 +117,13 @@
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 6081,
-      "sha256": "edfe4de043d3e9a50c3b6c5504e768f2699eafa096a4738ca936f0e39df94081"
+      "bytes": 6795,
+      "sha256": "364abb3031eee0998bfd4f4baaa67fbad3ea0440f51e257c6610ac49155a42a0"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 9887,
-      "sha256": "178bf3d9ba3a3a4ad0d67afff6031c458825a735df106714c59935401500bebd"
+      "bytes": 11168,
+      "sha256": "e698334195fa1d84a62781530a0a1967568605ae2f227d5b162b1e09356ce7ac"
     },
     {
       "file": "PRESETS.en.md",
@@ -147,13 +147,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 14048,
-      "sha256": "82922ebb1f16a65967756951970af54a1fabfd606d8b58d98e04657a3814c073"
+      "bytes": 14732,
+      "sha256": "b62d7bf1a3fe69eb2a17d84a3165e7f547b881e00198180d2e80c9b28fe1be26"
     },
     {
       "file": "README.md",
-      "bytes": 23252,
-      "sha256": "df1a0ba79f2a80283cbe2cc15a4c2cfcedf5945b220dbe984661cfbb2514fbba"
+      "bytes": 24468,
+      "sha256": "1c338401ce5466b064054e28e035cc5624c96d45c8932c8ce76baa3b7a6eb91e"
     },
     {
       "file": "ROADMAP.en.md",

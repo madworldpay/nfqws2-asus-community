@@ -16,7 +16,7 @@
       "compiler": "aarch64-linux-gnu-gcc",
       "compiler_version": "15.2.0",
       "options": [],
-      "sha256": "20734a078601018986ba8e6ea9f9f92059b35bfff1feb378e573e994339dbdb9"
+      "sha256": "5ffb7a4ff34d522cb738ed55905dd44164cce9bae71f0398766054ddbc57155e"
     },
     "armv7": {
       "compiler": "arm-linux-gnueabi-gcc",
@@ -26,8 +26,8 @@
         "-march=armv7-a",
         "-mfloat-abi=soft"
       ],
-      "sha256": "f4e8e09bd795323d36b621324ee65b0b0c61b23206e215454e583373ed9e2357"
+      "sha256": "5f3e10d2a68f7ebbdf881e292015546a46b7389143d287426875827f662f9ab6"
     }
   },
-  "source_sha256": "1d2e7f1444aa6175d49049f35291aff5a86ca403a9315447449e77bb6425fe6b"
+  "source_sha256": "764c3c1688d764bccfba0081e96e0c315c1123c89dbd8128bd214a329da573bc"
 }

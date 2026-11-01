@@ -3,7 +3,7 @@
 nfqws_native_update_enter() {
     local component=$1 action=$2 permission validation
     case "$component:$action" in
-        core:start|core:restart|core:reload|core:boot|core:preflight|core:firewall) permission=core-start;;
+        core:start|core:restart|core:reload|core:boot|core:preflight|core:firewall|core:scheduledrestart) permission=core-start;;
         core:stop|core:shutdown|core:remove-firewall) permission=core-stop;;
         web:start|web:restart|web:reload|web:boot) permission=web-start;;
         web:stop|web:shutdown) permission=web-stop;;

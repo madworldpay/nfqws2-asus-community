@@ -26,7 +26,15 @@ final class AsusUpdateLifecycle
         if($raw!==null&&preg_match('/^[1-9][0-9]{0,9}$/D',trim($raw))){$candidate=self::identity((int)trim($raw));$engine=realpath($this->options['engine']??'/opt/usr/bin/nfqws2');
             if($candidate!==null&&$engine!==false&&in_array($candidate['exe'],[$engine,$engine.' (deleted)'],true))$identity=$candidate;
         }
-        return ['mode'=>$identity!==null?'running':($enabled?'waiting_for_wan':'stopped'),'process'=>$identity,'enabled'=>$enabled];
+        $latched=false;
+        if($identity===null&&$this->stateFile('watchdog-state')!==null){
+            require_once __DIR__.'/restart-schedule.php';
+            $settings=(new NfqwsRestartSchedule($this->options['config']??null,$this->options['owner']??0,null,$this->options['run']??'/tmp/nfqws2-asus'))->read(false);
+            // The third attempt may have become ready briefly, then exited
+            // before the next tick could write locked. Its budget is spent.
+            $latched=$settings['watchdog_enabled']&&$settings['watchdog_attempts']>=3;
+        }
+        return ['mode'=>$identity!==null?'running':($enabled&&!$latched?'waiting_for_wan':'stopped'),'process'=>$identity,'enabled'=>$enabled];
     }
     private function command(string $component,string $action): bool
     {

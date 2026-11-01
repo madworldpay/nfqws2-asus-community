@@ -50,6 +50,13 @@ class PackageUpdateOpkgLockTests(unittest.TestCase):
     def test_failed_preflight_never_executes_opkg(self):
         self.preflight.write_text('#!/bin/sh\nprintf preflight >> "'+str(self.log)+'"\nexit 1\n')
         self.assertEqual(self.run_launch().returncode,74);self.assertEqual(self.log.read_text(),'preflight')
+    def test_explicit_resume_executes_only_own_configure_under_same_mutex(self):
+        result=subprocess.run(self.argv()+['configure'],capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.log.read_text(),'preflightopkg:configure nfqws2-asus')
+    def test_unknown_launcher_action_never_reaches_preflight(self):
+        result=subprocess.run(self.argv()+['configure-all'],capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,75);self.assertFalse(self.log.exists())
     def test_system_admin_commands_work_in_preflight_and_installer_without_inheriting_path(self):
         # ASUS preinst needs cru from /usr/sbin. Exercise the same executable
         # lookup boundary with a harmless real system utility on the test host.

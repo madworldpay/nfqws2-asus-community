@@ -98,7 +98,7 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         payload={'action':action,'candidate':self.candidate,'status':self.status(), 'abi':'aarch64-3.10','machine':'aarch64',**kwargs}
         code='''if(!is_file($argv[1].'/update-prepare.php')){echo json_encode(['error'=>'missing_prepare']);exit;}
         require $argv[1].'/update-prepare.php';$p=json_decode(stream_get_contents(STDIN),true);
-        try{if($p['action']==='inspect')$v=AsusUpdatePackage::inspect($argv[2],$p['candidate'],$p['status'],$p['abi'],$p['machine']);
+        try{if($p['action']==='inspect')$v=AsusUpdatePackage::inspect($argv[2],$p['candidate'],$p['status'],$p['abi'],$p['machine'],$argv[3],(int)$argv[5]);
         elseif($p['action']==='space')$v=AsusUpdatePackage::space($p['free'],$p['ipk'],$p['snapshot'],$p['runtime']);
         elseif($p['action']==='snapshot')$v=AsusUpdateSnapshot::capture($argv[3],$argv[4],(int)$argv[5]);
         else $v=AsusUpdateSnapshot::verify($argv[3],$argv[4],(int)$argv[5],$p['allow_defaults']??false);echo json_encode(['value'=>$v]);
@@ -109,6 +109,75 @@ class PackageUpdatePrepareTests(unittest.TestCase):
     def test_exact_ipk_and_installed_dependencies_are_required(self):
         result=self.call();self.assertIn('value',result);self.assertEqual(result['value']['Version'],'1.3.1-asus6+b11')
         self.assertEqual(self.call(status=self.status().replace('Package: libc','Package: missing')),{'error':'missing_dependencies'})
+
+    def resume_fixture(self):
+        script=b'#!/bin/sh\nexit 0\n'
+        self.add_control_members([('postinst',script,tarfile.REGTYPE)])
+        self.candidate['action']='configure'
+        info=self.base/'opt/lib/opkg/info';info.mkdir(parents=True)
+        self.postinst=info/'nfqws2-asus.postinst';self.postinst.write_bytes(script);self.postinst.chmod(0o755)
+        payload=self.base/'opt/lib/nfqws2-asus/helper.sh';payload.parent.mkdir(parents=True);payload.write_bytes(b'#!/bin/sh\nexit 0\n');payload.chmod(0o755);self.immutable=payload
+        (self.base/'opt').chmod(0o755)
+        for directory in (self.base/'opt').rglob('*'):
+            if directory.is_dir():directory.chmod(0o755)
+        self.payload({'opt/lib/nfqws2-asus/helper.sh':(payload.read_bytes(),0o755)})
+        return self.status().replace('+b10','+b11').replace('Status: install ok installed','Status: install user unpacked',1)
+
+    def payload(self, files, directories=()):
+        with tarfile.open(self.pkg) as outer:members={m.name:outer.extractfile(m).read() for m in outer if m.isfile()}
+        stream=io.BytesIO()
+        with tarfile.open(fileobj=stream,mode='w:gz',format=tarfile.USTAR_FORMAT) as archive:
+            for name in directories:
+                info=tarfile.TarInfo(name);info.mode=0o755;info.type=tarfile.DIRTYPE;archive.addfile(info)
+            for name,(raw,mode) in files.items():
+                info=tarfile.TarInfo(name);info.size=len(raw);info.mode=mode;archive.addfile(info,io.BytesIO(raw))
+        members['data.tar.gz']=stream.getvalue()
+        with tarfile.open(self.pkg,'w:gz') as outer:
+            for name,data in members.items():
+                info=tarfile.TarInfo(name);info.size=len(data);outer.addfile(info,io.BytesIO(data))
+        self.candidate['package'].update(size=self.pkg.stat().st_size,sha256=hashlib.sha256(self.pkg.read_bytes()).hexdigest())
+
+    def test_verified_same_version_own_unpacked_can_resume_configuration(self):
+        status=self.resume_fixture()
+        self.assertIn('value',self.call(status=status))
+
+    def test_resume_rejects_other_pending_rows_and_wrong_version(self):
+        status=self.resume_fixture()
+        self.assertEqual(self.call(status=status+'Package: other\nVersion: 1\nStatus: install user unpacked\n'),{'error':'pending_packages'})
+        self.assertEqual(self.call(status=status.replace('+b11','+b10')),{'error':'recovery_required'})
+
+    def test_resume_refuses_changed_or_linked_installed_postinst(self):
+        status=self.resume_fixture();self.postinst.write_bytes(b'#!/bin/sh\nexit 7\n')
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        outside=self.base/'outside';outside.write_bytes(b'#!/bin/sh\nexit 0\n');self.postinst.unlink();self.postinst.symlink_to(outside)
+        self.assertEqual(self.call(status=status),{'error':'invalid_state'})
+
+    def test_resume_refuses_changed_script_mode_or_writable_payload_directory(self):
+        status=self.resume_fixture();self.postinst.chmod(0o644)
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        self.postinst.chmod(0o755);self.immutable.parent.chmod(0o777)
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+
+    def test_resume_never_replays_unconsumed_migration_over_current_settings(self):
+        status=self.resume_fixture();migration=self.base/'opt/etc/nfqws2-asus-migration';(migration/'snapshot').mkdir(parents=True)
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        (migration/'data-restored').write_text('Original data restored.\n');(migration/'data-restored').chmod(0o600)
+        self.assertIn('value',self.call(status=status))
+
+    def test_resume_requires_entire_immutable_payload_but_preserves_mutable_auth(self):
+        status=self.resume_fixture();self.immutable.write_bytes(b'changed helper')
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        self.immutable.write_bytes(b'#!/bin/sh\nexit 0\n');self.immutable.chmod(0o644)
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        self.immutable.chmod(0o755)
+        auth=self.base/'opt/etc/nfqws-asus-web/auth.json';auth.parent.mkdir(parents=True);auth.write_bytes(b'CUSTOM PRIVATE AUTH')
+        self.payload({'opt/lib/nfqws2-asus/helper.sh':(self.immutable.read_bytes(),0o755),'opt/etc/nfqws-asus-web/auth.json':(b'factory default',0o600)})
+        self.assertIn('value',self.call(status=status));self.assertEqual(auth.read_bytes(),b'CUSTOM PRIVATE AUTH')
+
+    def test_resume_accepts_real_builder_directory_headers_with_one_trailing_slash(self):
+        status=self.resume_fixture()
+        self.payload({'opt/lib/nfqws2-asus/helper.sh':(self.immutable.read_bytes(),0o755)},directories=['opt/','opt/lib/','opt/lib/nfqws2-asus/'])
+        self.assertIn('value',self.call(status=status))
 
     def test_user_installed_flag_is_healthy_but_hold_is_not_automatically_changed(self):
         self.assertIn('value',self.call(status=self.status().replace('install ok installed','install user installed')))
@@ -247,10 +316,14 @@ class PackageUpdateCoordinatorTests(unittest.TestCase):
         self.base=self.fixture.base;opt,config,web=self.fixture.fixture()
         (opt/'lib/opkg').mkdir(parents=True);(opt/'lib/opkg/status').write_text(self.fixture.status())
         self.manifest={'schema_version':1,'package_version':'1.3.1-asus6+b11','core_version':'1.3.1-asus6','web_version':'0.1.4','build':11,'notes':'Real test release.','packages':[self.fixture.candidate['package']]}
-    def call(self, commands, error=None, free=100000000, installed_key=False):
+    def call(self, commands, error=None, free=100000000, installed_key=False, archived=False):
         import base64
         raw=json.dumps(self.manifest,separators=(',',':'));sig=base64.b64encode(subprocess.check_output(['openssl','dgst','-sha256','-sign',str(self.key)],input=raw.encode())).decode()
         payload={'json':raw,'signature':sig,'public':None if installed_key else self.public,'commands':commands,'error':error,'free':free}
+        if archived:
+            newer=json.loads(raw);newer.update(package_version='1.3.1-asus6+b12',build=12);newer['packages'][0]['filename']='nfqws2-asus_1.3.1-asus6+b12_aarch64-3.10.ipk'
+            latest=json.dumps(newer,separators=(',',':'));latest_sig=base64.b64encode(subprocess.check_output(['openssl','dgst','-sha256','-sign',str(self.key)],input=latest.encode())).decode()
+            payload.update(latest_json=latest,latest_signature=latest_sig)
         if installed_key:
             resource=self.base/'resources';resource.mkdir(exist_ok=True)
             (resource/'update-release-key.pem').write_text(self.public)
@@ -258,7 +331,8 @@ class PackageUpdateCoordinatorTests(unittest.TestCase):
         code='''require $argv[1].'/update-prepare.php';if(!class_exists('AsusUpdatePrepare')){echo json_encode(['error'=>'missing_coordinator']);exit;}
         $p=json_decode(stream_get_contents(STDIN),true);$count=0;
         $source=new class($p,$argv[2]) implements AsusUpdateSource{public function __construct(private array $p,private string $base){}
-          public function manifest():array{file_put_contents($this->base.'/fetches','x',FILE_APPEND);if($this->p['error'])throw new RuntimeException($this->p['error']);return ['json'=>$this->p['json'],'signature'=>$this->p['signature']];}
+          public function manifest():array{file_put_contents($this->base.'/fetches','x',FILE_APPEND);if($this->p['error'])throw new RuntimeException($this->p['error']);return ['json'=>$this->p['latest_json']??$this->p['json'],'signature'=>$this->p['latest_signature']??$this->p['signature']];}
+          public function archive(string $version):array{file_put_contents($this->base.'/archives',$version."\\n",FILE_APPEND);return ['json'=>$this->p['json'],'signature'=>$this->p['signature']];}
           public function download(array $package,string $destination):void{copy($this->base.'/package.ipk',$destination);chmod($destination,0600);}};
         try{$resolved=AsusDpiStore::optPath('/var',$argv[2].'/opt');$resolved=dirname($resolved);$s=new AsusUpdateStore($argv[2].'/state',(int)$argv[3]);$c=new AsusUpdatePrepare($s,$source,['opt'=>$resolved,'resources'=>$argv[2].'/resources','abi'=>'aarch64-3.10','machine'=>'aarch64','owner'=>(int)$argv[3],'free'=>$p['free'],'runtime_bytes'=>1000],$p['public']);
         $out=[];foreach($p['commands'] as $cmd){if(in_array($cmd[0],['prepare','reserveCached'],true)&&$cmd[1][0]==='REV')$cmd[1][0]=hash('sha256',$p['json']);$out[]=$c->{$cmd[0]}(...$cmd[1]);}echo json_encode($out);
@@ -270,6 +344,15 @@ class PackageUpdateCoordinatorTests(unittest.TestCase):
         r=self.call([['check',[]],['check',[]]])
         self.assertIsInstance(r,list);self.assertEqual(r[0]['state'],'available');self.assertEqual((self.base/'fetches').read_text(),'x')
         r=self.call([['check',[True]]],error='download_failed');self.assertEqual(r[0]['state'],'failed');self.assertIsNone(r[0]['candidate'])
+
+    def test_pending_own_version_prepares_verified_archive_before_newer_latest(self):
+        # Build 11 is unpacked while discovery has advanced to Build 12.
+        status=self.fixture.resume_fixture();(self.base/'opt/lib/opkg/status').write_text(status)
+        result=self.call([['check',[True]],['prepare',['REV','1'*32]]],archived=True)
+        self.assertIsInstance(result,list);self.assertEqual(result[0]['state'],'available',result)
+        self.assertEqual(result[0]['candidate']['package_version'],'1.3.1-asus6+b11')
+        self.assertEqual(result[0]['candidate']['action'],'configure');self.assertEqual(result[1]['state'],'prepared',result)
+        self.assertFalse((self.base/'fetches').exists());self.assertEqual((self.base/'archives').read_text().splitlines(),['1.3.1-asus6+b11']*3)
 
     def test_installed_public_key_filename_matches_the_actual_ipk_layout(self):
         r=self.call([['check',[]]],installed_key=True)

@@ -97,6 +97,7 @@ export function PackageUpdateDialog({
     (failed ? operation?.code : check?.state === 'failed' ? check.code : null);
   const knownErrors = [
     'pending_packages',
+    'recovery_required',
     'missing_dependencies',
     'dependency_change',
     'insufficient_space',
@@ -136,9 +137,14 @@ export function PackageUpdateDialog({
           {candidate && (
             <>
               <Typography variant="subtitle1">
-                {t('package_update.available', {
-                  version: formatPackageVersion(candidate.package_version),
-                })}
+                {t(
+                  candidate.action === 'configure'
+                    ? 'package_update.recovery_available'
+                    : 'package_update.available',
+                  {
+                    version: formatPackageVersion(candidate.package_version),
+                  },
+                )}
               </Typography>
               <Typography variant="subtitle2">
                 {t('package_update.changes')}
@@ -238,7 +244,11 @@ export function PackageUpdateDialog({
             disabled={updates.pending}
             onClick={() => void updates.apply(operation)}
           >
-            {t('package_update.install')}
+            {t(
+              candidate?.action === 'configure'
+                ? 'package_update.configure'
+                : 'package_update.install',
+            )}
           </Button>
         )}
         <Button onClick={onClose}>{t('package_update.close')}</Button>

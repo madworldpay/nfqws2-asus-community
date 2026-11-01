@@ -33,16 +33,16 @@ final class AsusUpdateWorker
         if(!is_string($job['runtime_digest']??null)||!hash_equals($job['runtime_digest'],$closure['digest']))throw new RuntimeException('runtime_changed');
         $env=$this->prepare->environment();$manifest=AsusPackageManifest::verify($this->store->readFile($base.'/manifest.json')??'',
             $this->store->readFile($base.'/manifest.sig')??'',file_get_contents($runtime.'/resources/update-release-key.pem'));
-        $candidate=AsusPackageManifest::candidate($manifest,$env['family'],$env['installed']);
+        $candidate=AsusPackageManifest::candidate($manifest,$env['family'],$env['installed'],$env['pending']);
         $saved=json_decode($this->store->readFile($base.'/candidate.json')??'',true,32,JSON_THROW_ON_ERROR);
         if($candidate===null||$candidate!==$saved||$candidate['revision']!==$job['revision'])throw new RuntimeException('stale_revision');
         if($fresh){$check=$this->prepare->check(true);if($check['state']!=='available'||$check['candidate']!==$candidate)throw new RuntimeException('stale_revision');}
-        AsusUpdatePackage::inspect($this->store->path($base.'/package.ipk'),$candidate,$env['status'],$env['abi'],$env['machine']);
+        AsusUpdatePackage::inspect($this->store->path($base.'/package.ipk'),$candidate,$env['status'],$env['abi'],$env['machine'],$env['opt'],$env['owner']);
         AsusUpdateSnapshot::verify($env['opt'],$this->store->path($base.'/backup'),$this->owner());
         AsusUpdatePackage::space($env['free'],0,0,0);return [$env,$candidate];
     }
     /** Native launcher owns the opkg POSIX mutex throughout this child check. */
-    public function preflight(string $id): void
+    public function preflight(string $id,string $action='install'): void
     {
         $f=$this->store->lease('operations/'.$id.'/critical.lock');
         try{
@@ -51,6 +51,7 @@ final class AsusUpdateWorker
             $raw=$this->store->readFile('operations/'.$id.'/guard.json',4096);$guard=$raw===null?null:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
             if(!is_array($guard)||($guard['child']??null)!==$t['worker']||!is_numeric($guard['deadline']??null)||AsusUpdateStore::uptime()>=$guard['deadline'])throw new RuntimeException('timed_out');
             [$env,$candidate]=$this->validate($id,false);
+            if(!in_array($action,['install','configure'],true)||$action!==($candidate['action']??'install'))throw new RuntimeException('invalid_state');
             $status=@file_get_contents('/proc/self/status');if(!is_string($status)||!preg_match('/^PPid:\s+([0-9]+)/m',$status,$m))throw new RuntimeException('invalid_state');
             $installer=AsusUpdateLifecycle::identity((int)$m[1]);$expected=$this->store->path('operations/'.$id.'/runtime/update-launch');
             if($installer===null||$installer['exe']!==$expected||$installer['uid']!==$this->owner())throw new RuntimeException('invalid_state');
@@ -66,10 +67,12 @@ final class AsusUpdateWorker
             $this->ticket($id,'installing');$this->store->update($id,['phase'=>'installing']);
         }finally{flock($f,LOCK_UN);fclose($f);}
     }
-    private function install(string $id): void
+    private function install(string $id,array $candidate): void
     {
-        $p=@proc_open([$this->store->path('operations/'.$id.'/runtime/update-launch'),$id],
-            [0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$pipes,'/',
+        $argv=[$this->store->path('operations/'.$id.'/runtime/update-launch'),$id];if(($candidate['action']??null)==='configure')$argv[]='configure';
+        $this->store->writeFile('operations/'.$id.'/opkg.log','');
+        $p=@proc_open($argv,
+            [0=>['file','/dev/null','r'],1=>['file',$this->store->path('operations/'.$id.'/opkg.log'),'a'],2=>['file',$this->store->path('operations/'.$id.'/opkg.log'),'a']],$pipes,'/',
             ['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','LC_ALL'=>'C']);
         if(!is_resource($p))throw new RuntimeException('launch_failed');$exit=null;
         try{do{$status=proc_get_status($p);if(!$status['running']){$exit=$status['exitcode'];break;}usleep(25000);}while(true);}
@@ -110,8 +113,8 @@ final class AsusUpdateWorker
                 $this->writeTicket(['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>$identity,'installer'=>null,'phase'=>'validating','intent'=>['mode'=>'stopped']]);$ticket=true;
                 $this->store->update($id,['identity'=>$identity,'phase'=>'validating']);
                 [$env,$candidate]=$this->validate($id,true);
-                $this->install($id);
-                $after=$this->prepare->environment();if($after['installed']!==$candidate['package_version'])throw new RuntimeException('version_mismatch');
+                $this->install($id,$candidate);
+                $after=$this->prepare->environment();if($after['installed']!==$candidate['package_version']||$after['pending'])throw new RuntimeException('version_mismatch');
                 AsusUpdateSnapshot::verify($env['opt'],$this->store->path('operations/'.$id.'/backup'),$this->owner(),true);
                 $t=$this->ticket($id,'starting');$this->store->update($id,['phase'=>'verifying','installed_version'=>$after['installed'],'settings_verified'=>true]);
                 $this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');

@@ -34,8 +34,10 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.service=lifecycle_fixtures.PackageUpdateLifecycleTests('test_running_intent_stops_then_starts_exactly_once')
         # This helper supplies real executable init fixtures, not a mocked lifecycle.
         self.service.setUp();self.addCleanup(self.service.doCleanups)
-        self.base=self.fixture.base;self.opt=self.fixture.fixture()[0];(self.opt/'lib/opkg').mkdir(parents=True)
-        self.status=self.opt/'lib/opkg/status';self.status.write_text(self.fixture.status());self.status.chmod(0o600)
+        self.base=self.fixture.base;self.opt=self.fixture.fixture()[0];self.resuming=self._testMethodName.startswith('test_resume_')
+        status=self.fixture.resume_fixture() if self.resuming else self.fixture.status()
+        (self.opt/'lib/opkg').mkdir(parents=True,exist_ok=True)
+        self.status=self.opt/'lib/opkg/status';self.status.write_text(status);self.status.chmod(0o600)
         self.state=self.base/'state';self.state.mkdir(mode=0o700);(self.state/'operations').mkdir(mode=0o700)
         self.id='a'*32;self.op=self.state/'operations'/self.id;self.op.mkdir(mode=0o700);self.runtime=self.op/'runtime';self.runtime.mkdir(mode=0o700)
         # Production stages top-level PHP files only, never frontend assets.
@@ -47,12 +49,13 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.lock=self.base/'opkg.lock';self.lock.touch(mode=0o600)
         self.opkg=self.base/'opkg';self.body=self.base/'opkg-body'
         self.body.write_text('#!/bin/sh\nprintf opkg >> '+shlex.quote(str(self.base/'installs'))+'\n'
+          'printf "%s|%s\\n" "$*" "$NFQWS_ASUS_NO_START" >> '+shlex.quote(str(self.base/'arguments'))+'\n'
           'if [ -f '+shlex.quote(str(self.base/'install-fails'))+' ]; then exit 1; fi\n'
           'if [ -f '+shlex.quote(str(self.base/'pending-check'))+' ]; then sleep .4; fi\n'
-          'sed "s/+b10/+b11/" '+shlex.quote(str(self.status))+' > '+shlex.quote(str(self.base/'new-status'))+'\n'
+          'sed '+shlex.quote('s/Status: install user unpacked/Status: install user installed/' if self.resuming else 's/+b10/+b11/')+' '+shlex.quote(str(self.status))+' > '+shlex.quote(str(self.base/'new-status'))+'\n'
           'cat '+shlex.quote(str(self.base/'new-status'))+' > '+shlex.quote(str(self.status))+'\n')
         self.body.chmod(0o700)
-        c=self.base/'opkg.c';c.write_text('#include <unistd.h>\n#include <sys/wait.h>\nint main(){int s;int p=fork();if(!p){execl("/bin/sh","sh",'+json.dumps(str(self.body))+',(char*)0);_exit(99);}if(p<0||waitpid(p,&s,0)!=p)return 99;return WIFEXITED(s)?WEXITSTATUS(s):99;}')
+        c=self.base/'opkg.c';c.write_text('#include <unistd.h>\n#include <sys/wait.h>\nint main(int argc,char**argv){int s;int p=fork();if(!p){char*args[8];args[0]="sh";args[1]='+json.dumps(str(self.body))+';for(int i=1;i<argc&&i<6;i++)args[i+1]=argv[i];args[argc+1]=0;execv("/bin/sh",args);_exit(99);}if(p<0||waitpid(p,&s,0)!=p)return 99;return WIFEXITED(s)?WEXITSTATUS(s):99;}')
         subprocess.run(['gcc',str(c),'-o',str(self.opkg)],check=True,capture_output=True);self.opkg.chmod(0o700)
         subprocess.run(['gcc','-Os','-nostdlib','-static','-fno-builtin','-fno-stack-protector','-fno-pie','-no-pie',
           '-DUPDATE_ROOT="'+str(self.state)+'"','-DOPKG_LOCK="'+str(self.lock)+'"','-DOPKG_BIN="'+str(self.opkg)+'"','-DUPDATE_OWNER='+str(os.getuid()),str(ROOT/'asus/update/opkg-launch.c'),'-o',str(self.runtime/'update-launch')],check=True,capture_output=True)
@@ -68,7 +71,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
             (folder/'manifest.json').write_bytes(raw);(folder/'manifest.sig').write_text(sig)
         self.candidate={**{k:v for k,v in manifest.items() if k not in ['schema_version','packages']},'revision':revision,'package':self.fixture.candidate['package']}
         # Candidate projection uses the production verifier, not a duplicated test schema.
-        project='require $argv[1]."/update-manifest.php";$m=AsusPackageManifest::verify(file_get_contents($argv[2]),file_get_contents($argv[3]),file_get_contents($argv[4]));echo json_encode(AsusPackageManifest::candidate($m,"aarch64-3.10","1.3.1-asus6+b10"));'
+        project='require $argv[1]."/update-manifest.php";$m=AsusPackageManifest::verify(file_get_contents($argv[2]),file_get_contents($argv[3]),file_get_contents($argv[4]));echo json_encode(AsusPackageManifest::candidate($m,"aarch64-3.10","1.3.1-asus6+b'+('11",true' if self.resuming else '10"')+'));'
         self.candidate=json.loads(subprocess.check_output([str(NATIVE),'-n','-r',project,str(PUBLIC),str(self.op/'manifest.json'),str(self.op/'manifest.sig'),str(resources/'update-release-key.pem')]))
         (self.op/'candidate.json').write_text(json.dumps(self.candidate));shutil.copyfile(self.fixture.pkg,self.op/'package.ipk')
         self.env={'opt':str(self.opt),'resources':str(resources),'abi':'aarch64-3.10','machine':'aarch64','owner':os.getuid(),'free':100000000}
@@ -96,10 +99,10 @@ class PackageUpdateApplyTests(unittest.TestCase):
             // reserve generated an id; replace it with this protected native fixture id.
             $db=json_decode($s->readFile('operations.json'),true);$j['id']='''+json.dumps(self.id)+''';$j['state']='applying';$j['runtime_digest']=hash_file('sha256',__DIR__.'/closure.json');$db['operations']=[$j['id']=>$j];$s->writeFile('operations.json',json_encode($db));
             AsusUpdateSnapshot::capture($c['env']['opt'],__DIR__.'/../backup',$c['env']['owner']);exit;}
-        if($argv[1]==='preflight'){try{$worker->preflight($argv[2]);exit(0);}catch(Throwable $e){$s->writeFile('operations/'.$argv[2].'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)]));exit(1);}}
+        if($argv[1]==='preflight'){try{$worker->preflight($argv[2],$argv[3]??'install');exit(0);}catch(Throwable $e){$s->writeFile('operations/'.$argv[2].'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)]));exit(1);}}
         if($s->readFile('operations/'.$argv[2].'/guard.json')===null)$s->writeFile('operations/'.$argv[2].'/guard.json',json_encode(['schema'=>1,'guardian'=>AsusUpdateLifecycle::identity(getmypid()),'child'=>AsusUpdateLifecycle::identity(getmypid()),'deadline'=>AsusUpdateStore::uptime()+10]));
         echo json_encode($worker->apply($argv[2]));''')
-        (self.runtime/'check.sh').write_text('#!/bin/sh\nexec '+shlex.quote(str(self.php))+' -n '+shlex.quote(str(self.entry))+' preflight "$1"\n');(self.runtime/'check.sh').chmod(0o700)
+        (self.runtime/'check.sh').write_text('#!/bin/sh\nexec '+shlex.quote(str(self.php))+' -n '+shlex.quote(str(self.entry))+' preflight "$1" "$2"\n');(self.runtime/'check.sh').chmod(0o700)
         (self.runtime/'run.sh').write_text('#!/bin/sh\nexec '+shlex.quote(str(self.php))+' -n '+shlex.quote(str(self.entry))+' guard-apply "$1"\n');(self.runtime/'run.sh').chmod(0o700)
         (self.base/'check.sh').write_text('#!/bin/sh\nexec '+shlex.quote(str(self.php))+' -n '+shlex.quote(str(self.entry))+' guard-check "$1"\n');(self.base/'check.sh').chmod(0o700)
         files={}
@@ -124,6 +127,29 @@ class PackageUpdateApplyTests(unittest.TestCase):
     def commands(self):return self.service.log.read_text().splitlines() if self.service.log.exists() else []
     def test_running_stops_before_install_and_restores_once(self):
         self.service.running();r=self.execute();self.assertEqual(r['state'],'succeeded');self.assertEqual(r['core_state'],'running');self.assertEqual(self.commands(),['stop','start'])
+    def test_resume_running_uses_only_configure_and_restores_after_verified_status(self):
+        self.service.running();result=self.execute();self.assertEqual(result['state'],'succeeded',result)
+        self.assertEqual(result['core_state'],'running');self.assertEqual(self.commands(),['stop','start'])
+        self.assertEqual((self.base/'arguments').read_text(),'configure nfqws2-asus|1\n')
+        self.assertEqual((self.opt/'etc/nfqws2/nfqws2.conf').read_text(),'PRIVATE_CONFIG')
+    def test_resume_stopped_core_never_starts_and_leaves_snapshot_and_log(self):
+        result=self.execute();self.assertEqual(result['state'],'succeeded',result);self.assertEqual(result['core_state'],'stopped')
+        self.assertEqual(self.commands(),[]);self.assertTrue((self.op/'backup/snapshot.json').is_file());self.assertTrue((self.op/'opkg.log').is_file())
+    def test_resume_waiting_intent_survives_configuration(self):
+        (self.service.run/'enabled').touch(mode=0o600);(self.service.base/'no-wan').touch()
+        result=self.execute();self.assertEqual(result['state'],'succeeded',result);self.assertEqual(result['core_state'],'waiting_for_wan');self.assertEqual(self.commands(),['stop','start'])
+    def test_resume_changed_payload_is_refused_before_stop(self):
+        self.service.running();self.fixture.immutable.write_text('CHANGED')
+        result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'recovery_required')
+        self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
+    def test_resume_foreign_pending_race_is_blocked_under_opkg_mutex(self):
+        self.service.running();(self.base/'inject-pending').touch()
+        result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'pending_packages')
+        self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
+    def test_resume_success_without_installed_status_never_starts_core(self):
+        self.body.write_text(self.body.read_text().replace('s/Status: install user unpacked/Status: install user installed/','s/DOES_NOT_MATCH/NO_CHANGE/'))
+        self.service.running();result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'version_mismatch')
+        self.assertEqual(self.commands(),['stop']);self.assertTrue((self.op/'opkg.log').is_file())
     def test_stopped_service_never_starts_even_temporarily(self):
         r=self.execute();self.assertEqual(r['state'],'succeeded');self.assertEqual(r['core_state'],'stopped');self.assertEqual(self.commands(),[])
     def test_waiting_for_wan_is_preserved_without_claiming_running(self):
@@ -176,7 +202,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.service.running();(self.base/'inject-pending').touch();result=self.execute()
         self.assertEqual(result['state'],'failed',result);self.assertEqual(result['code'],'pending_packages');self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
     def test_installer_success_without_exact_version_is_failure(self):
-        self.body.write_text(self.body.read_text().replace('sed "s/+b10/+b11/"','cat'))
+        self.body.write_text(self.body.read_text().replace('s/+b10/+b11/','s/DOES_NOT_MATCH/NO_CHANGE/'))
         result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'version_mismatch')
     def test_postinst_failure_never_restores_core_or_claims_success(self):
         self.install_hooks();self.service.web.write_text('#!/bin/sh\nexit 9\n');self.service.running()

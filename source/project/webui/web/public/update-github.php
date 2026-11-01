@@ -11,8 +11,8 @@ final class AsusGithubUpdateSource implements AsusUpdateSource
     private const CORE='(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})-asus[1-9][0-9]{0,5}';
     private const NATIVE_CORE='(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})\.(?:0|[1-9][0-9]{0,5})';
 
-    public function __construct(private int $owner=0,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt',private array $timeouts=['metadata'=>15,'download'=>180],private string $platform='asus-entware')
-    {if(!in_array($platform,['asus-entware','openwrt'],true))throw new RuntimeException('invalid_channel');}
+    public function __construct(private int $owner=0,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt',private array $timeouts=['metadata'=>15,'download'=>180],private string $platform='asus-entware',private ?int $build=null)
+    {if(!in_array($platform,['asus-entware','openwrt'],true)||($build!==null&&($platform!=='asus-entware'||$build<1||$build>2147483647)))throw new RuntimeException('invalid_channel');}
 
     private static function redirect(string $url): string
     {
@@ -72,7 +72,8 @@ final class AsusGithubUpdateSource implements AsusUpdateSource
 
     public function manifest(): array
     {
-        $raw=$this->request($this->platform==='openwrt'?self::NATIVE_METADATA:self::METADATA,self::ENVELOPE_LIMIT,microtime(true)+min(15,$this->timeouts['metadata']));
+        $url=$this->build===null?($this->platform==='openwrt'?self::NATIVE_METADATA:self::METADATA):self::RELEASES.'build'.$this->build.'/public.json';
+        $raw=$this->request($url,self::ENVELOPE_LIMIT,microtime(true)+min(15,$this->timeouts['metadata']),$this->build!==null);
         $envelope=AsusSupportSchema::decode($raw,self::ENVELOPE_LIMIT,'invalid_manifest');
         if(!is_object($envelope))throw new RuntimeException('invalid_manifest');
         $keys=array_keys(get_object_vars($envelope));sort($keys);
@@ -82,6 +83,13 @@ final class AsusGithubUpdateSource implements AsusUpdateSource
         $signature=base64_decode($envelope->signature,true);
         if(strlen($envelope->signature)>1024||$signature===false||strlen($signature)!==384||base64_encode($signature)!==$envelope->signature)throw new RuntimeException('invalid_signature');
         return ['json'=>$json,'signature'=>$envelope->signature];
+    }
+
+    /** A pending package is matched only to its exact signed historical release. */
+    public function archive(string $version): array
+    {
+        if($this->platform!=='asus-entware'||!preg_match('/^'.self::CORE.'\\+b([1-9][0-9]{0,9})$/D',$version,$m)||(float)$m[1]>2147483647)throw new RuntimeException('unsupported_version');
+        return (new self($this->owner,$this->ca,$this->timeouts,'asus-entware',(int)$m[1]))->manifest();
     }
 
     public function download(array $package,string $destination): void

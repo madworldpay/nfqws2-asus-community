@@ -78,7 +78,7 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
     public static function code(Throwable $error): string
     {
         $known=['channel_unconfigured','invalid_channel','invalid_manifest','invalid_signature','signature_unavailable','download_failed','download_size','download_hash','timed_out','channel_auth_failed','release_changed','unsupported_abi','unsupported_version','unsupported_package','invalid_package','package_reader_unavailable','missing_dependencies','dependency_change','pending_packages','insufficient_space','settings_changed','invalid_state','output_limit','stale_revision','busy','request_conflict','missing_operation','runtime_changed','core_stop_failed','core_start_failed','web_start_failed','web_health_failed','intent_mismatch','opkg_busy','install_failed','version_mismatch','launch_failed','interrupted'];
-        $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed','dns_restore_required','dns_restore_failed']);
+        $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed','dns_restore_required','dns_restore_failed','recovery_required']);
         return in_array($error->getMessage(),$known,true)?$error->getMessage():'update_failed';
     }
     public function environment(): array
@@ -86,15 +86,15 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
         $opt=$this->environment['opt']??dirname(AsusDpiStore::optPath('/var'));$opt=rtrim($opt,'/');
         AsusUpdateStore::noLinks($opt);$path=$opt.'/lib/opkg/status';$s=@lstat($path);$owner=$this->environment['owner']??0;
         if(!$s||($s['mode']&0170000)!==0100000||$s['nlink']!==1||$s['uid']!==$owner||$s['size']>2097152)throw new RuntimeException('invalid_state');$status=@file_get_contents($path);if(!is_string($status))throw new RuntimeException('invalid_state');
-        $db=AsusUpdatePackage::database($status);$installed=$db['nfqws2-asus']['Version']??null;if(!is_string($installed)||!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+-asus[0-9]+\+b[1-9][0-9]*$/D',$installed))throw new RuntimeException('unsupported_version');
+        $db=AsusUpdatePackage::database($status,true);$installed=$db['nfqws2-asus']['Version']??null;if(!is_string($installed)||!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+-asus[0-9]+\+b[1-9][0-9]*$/D',$installed))throw new RuntimeException('unsupported_version');$pending=preg_match('/^install (?:ok|user) unpacked$/D',$db['nfqws2-asus']['Status']??'')===1;
         $abi=$this->environment['abi']??null;
         if($abi===null){$text='';$configs=array_merge([$opt.'/etc/opkg.conf'],glob($opt.'/etc/opkg/*.conf')?:[]);if(count($configs)>129)throw new RuntimeException('unsupported_abi');
             foreach($configs as $p){AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s)continue;if(($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['size']>65536)throw new RuntimeException('unsupported_abi');$raw=@file_get_contents($p);if(!is_string($raw))throw new RuntimeException('unsupported_abi');$text.=$raw."\n";}$abi=AsusReportPlatform::abi($text);}
         $machine=$this->environment['machine']??php_uname('m');$family=match($abi){'aarch64-3.10'=>'aarch64-3.10','armv7-2.6','armv7-3.2'=>'armv7',default=>null};
         if($family===null||!($family==='aarch64-3.10'&&$machine==='aarch64'||$family==='armv7'&&in_array($machine,['armv7l','armv8l'],true)))throw new RuntimeException('unsupported_abi');
-        return ['opt'=>$opt,'status'=>$status,'abi'=>$abi,'machine'=>$machine,'family'=>$family,'installed'=>$installed,'owner'=>$owner,'free'=>$this->environment['free']??disk_free_space($this->store->path()),'runtime_bytes'=>$this->environment['runtime_bytes']??33554432];
+        return ['opt'=>$opt,'status'=>$status,'abi'=>$abi,'machine'=>$machine,'family'=>$family,'installed'=>$installed,'pending'=>$pending,'owner'=>$owner,'free'=>$this->environment['free']??disk_free_space($this->store->path()),'runtime_bytes'=>$this->environment['runtime_bytes']??33554432];
     }
-    private function source(): AsusUpdateSource {return $this->source??new AsusUpdateTransport();}
+    private function source(): AsusUpdateSource {return $this->source??=new AsusUpdateTransport();}
     private function key(): string
     {
         if($this->publicKey!==null)return $this->publicKey;$p=($this->environment['resources']??'/opt/share/nfqws2-asus').'/update-release-key.pem';if(!is_file($p))$p=dirname(__DIR__,3).'/updates/trusted-release-key.pem';$v=@file_get_contents($p);if(!is_string($v))throw new RuntimeException('signature_unavailable');return $v;
@@ -103,22 +103,22 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
     {
         $lease=$this->store->lease('check.lock');try{$boot=AsusUpdateStore::boot();$up=AsusUpdateStore::uptime();$raw=null;$env=null;
             try{$env=$this->environment();$cached=$this->cached();if(!$force&&$cached!==null)return $cached;
-                $this->deadline?->begin(15);try{$raw=$this->source()->manifest();}finally{$this->deadline?->end();}
-                $manifest=AsusPackageManifest::verify($raw['json'],$raw['signature'],$this->key());$candidate=AsusPackageManifest::candidate($manifest,$env['family'],$env['installed']);
+                $this->deadline?->begin(15);try{$source=$this->source();$raw=$env['pending']&&method_exists($source,'archive')?$source->archive($env['installed']):$source->manifest();}finally{$this->deadline?->end();}
+                $manifest=AsusPackageManifest::verify($raw['json'],$raw['signature'],$this->key());$candidate=AsusPackageManifest::candidate($manifest,$env['family'],$env['installed'],$env['pending']);
                 $result=['state'=>$candidate===null?'current':'available','code'=>null,'candidate'=>$candidate,'installed_version'=>$env['installed']];
             }catch(Throwable $e){$code=self::code($e);$result=['state'=>$code==='channel_unconfigured'?'unconfigured':'failed','code'=>$code,'candidate'=>null,'installed_version'=>$env['installed']??null];}
             $this->store->withRetryLock(function()use($result,$raw,$boot,$up,$env){
                 if(in_array($result['state'],['available','current'],true)){$this->store->writeFile('manifest.json',$raw['json']);$this->store->writeFile('manifest.sig',$raw['signature']);}
-                $this->store->writeFile('check.json',json_encode(['boot_id'=>$boot,'uptime'=>$up,'installed'=>$env['installed']??null,'result'=>$result],JSON_THROW_ON_ERROR));
+                $this->store->writeFile('check.json',json_encode(['boot_id'=>$boot,'uptime'=>$up,'installed'=>$env['installed']??null,'pending'=>$env['pending']??false,'result'=>$result],JSON_THROW_ON_ERROR));
             });return $result;
         }finally{flock($lease,LOCK_UN);fclose($lease);}
     }
     /** Pure local read; missing or expired metadata never causes network I/O. */
     public function cached(): ?array
     {
-        return $this->store->withLock(function(){
+        return $this->store->withRetryLock(function(){
             $env=$this->environment();$raw=$this->store->readFile('check.json');if($raw===null)return null;$c=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$up=AsusUpdateStore::uptime();
-            if(($c['boot_id']??null)!==AsusUpdateStore::boot()||($c['installed']??null)!==$env['installed']||$up<($c['uptime']??INF)||$up-$c['uptime']>=300)return null;return $c['result'];
+            if(($c['boot_id']??null)!==AsusUpdateStore::boot()||($c['installed']??null)!==$env['installed']||($c['pending']??false)!==$env['pending']||$up<($c['uptime']??INF)||$up-$c['uptime']>=300)return null;return $c['result'];
         });
     }
     public function reserveCached(string $revision,string $requestId): array
@@ -145,7 +145,7 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
                 if($fresh['state']!=='available'||$fresh['candidate']!==$candidate)throw new RuntimeException('stale_revision');
                 $estimate=AsusUpdateSnapshot::estimate($env['opt'],$env['owner']);AsusUpdatePackage::space($env['free'],$candidate['package']['size'],$estimate,$env['runtime_bytes']);
                 $path=$this->store->path($base.'/package.ipk');$this->deadline?->begin(180);try{$this->source()->download($candidate['package'],$path);}finally{$this->deadline?->end();}
-                AsusUpdatePackage::inspect($path,$candidate,$env['status'],$env['abi'],$env['machine']);
+                AsusUpdatePackage::inspect($path,$candidate,$env['status'],$env['abi'],$env['machine'],$env['opt'],$env['owner']);
                 $free=$this->environment['free']??disk_free_space($this->store->path());AsusUpdatePackage::space($free,0,$estimate,$env['runtime_bytes']);
                 AsusUpdateSnapshot::capture($env['opt'],$this->store->path($base.'/backup'),$env['owner']);
                 $patch=['state'=>'prepared','prepared_uptime'=>AsusUpdateStore::uptime(),'code'=>null];if($stage!==null){$runtime=$stage($id,$env);if(!is_array($runtime)||!preg_match('/^[a-f0-9]{64}$/D',$runtime['digest']??''))throw new RuntimeException('invalid_state');$patch['runtime_digest']=$runtime['digest'];}

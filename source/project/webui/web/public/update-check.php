@@ -34,7 +34,7 @@ final class AsusUpdateCheck
     {$this->backgroundLock(function()use($id,$code){$t=$this->task();if(($t['id']??null)===$id&&$t['state']==='checking'){$t['state']='failed';$t['code']=$code;$this->save($t);}});}
     public function status(): array
     {
-        return $this->store->withLock(function(){
+        return $this->store->withRetryLock(function(){
             $t=$this->task();if($t!==null&&$t['state']==='checking'){
                 $age=AsusUpdateStore::uptime()-$t['started_uptime'];
                 if($t['boot_id']!==AsusUpdateStore::boot()||$age<0){$this->fail($t['id'],'interrupted');return $this->result('failed','interrupted');}
@@ -47,8 +47,16 @@ final class AsusUpdateCheck
     }
     public function request(bool $force=false): array
     {
-        try{$id=$this->store->withLock(function()use($force){
-            if(!$force&&$this->prepare->cached()!==null)return null;
+        try{$reservation=$this->store->withRetryLock(function()use($force){
+            // A previous failed refresh must not hide a still-valid local
+            // result when the caller explicitly starts another cached check.
+            if(!$force&&($cached=$this->prepare->cached())!==null){
+                $previous=$this->task();
+                if(($previous['state']??null)==='failed'&&in_array($cached['state'],['available','current'],true)){
+                    $previous['state']='done';$previous['code']=null;$this->save($previous);
+                }
+                return $cached;
+            }
             $task=$this->task();if($task!==null&&$task['state']==='checking'){
                 $age=AsusUpdateStore::uptime()-$task['started_uptime'];if($task['boot_id']===AsusUpdateStore::boot()&&$age>=0&&$age<17)return null;
             }
@@ -59,7 +67,9 @@ final class AsusUpdateCheck
             if($e->getMessage()==='channel_unconfigured')return $this->result('unconfigured','channel_unconfigured');
             if($e->getMessage()==='invalid_channel')return $this->result('failed','invalid_channel');throw $e;
         }
-        if($id===null)return $this->status();
+        if(is_array($reservation))return $reservation;
+        if($reservation===null)return $this->status();
+        $id=$reservation;
         try{
             if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-launch.php';NfqwsOpenWrtUpdateLaunch::launch($this->store,'check',$id);return $this->status();}
             $busybox=$this->options['busybox']??AsusUpdateStore::installed('libexec/nfqws2-asus/busybox');$entry=$this->options['entry']??AsusUpdateStore::installed('lib/nfqws2-asus/update/check.sh');

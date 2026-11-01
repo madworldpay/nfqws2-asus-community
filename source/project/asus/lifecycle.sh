@@ -173,7 +173,7 @@ asus_kill() {
 
 asus_stop() {
     cru d nfqws2_asus 8>&- 9>&- >/dev/null 2>&1
-    rm -f "$RUN_DIR/enabled"
+    rm -f "$RUN_DIR/enabled" "$RUN_DIR/started" "$RUN_DIR/watchdog-state"
     asus_firewall_stop
     asus_kill || return 1
     asus_restore_sysctls
@@ -195,7 +195,13 @@ asus_failed_start() {
 
 asus_start() {
     local tries=0
-    if asus_running; then echo 'Service NFQWS2 is already running'; return 0; fi
+    if asus_running; then
+        if [ "${ASUS_RECONCILING:-0}" != 1 ]; then
+            rm -f "$RUN_DIR/watchdog-state"
+            command -v nfqws_watchdog_running >/dev/null 2>&1 && nfqws_watchdog_running
+        fi
+        echo 'Service NFQWS2 is already running'; return 0
+    fi
     asus_check || return 1
     # Runtime settings are an explicit snapshot; saving the form does not
     # silently apply only the firewall half of a new configuration.
@@ -204,6 +210,10 @@ asus_start() {
     fi
     if command -v asus_save_compatibility >/dev/null 2>&1; then
         asus_save_compatibility || return 1
+    fi
+    if [ "${ASUS_RECONCILING:-0}" != 1 ]; then
+        # An explicit start rearms recovery even when it must wait for WAN.
+        rm -f "$RUN_DIR/started" "$RUN_DIR/watchdog-state"
     fi
     cru a nfqws2_asus '* * * * * /opt/etc/init.d/S51nfqws2 reconcile >/dev/null 2>&1' 8>&- 9>&- || return 1
     touch "$RUN_DIR/enabled"
@@ -214,25 +224,74 @@ asus_start() {
         return 0
     fi
     if ! asus_sysctls; then asus_failed_start; return 1; fi
+    # Only a genuine WAN wait is free to reconcile without the watchdog.
+    # A daemon launch was attempted even if it exits before readiness succeeds.
+    touch "$RUN_DIR/started" || return 1
     # Same argument construction as the pinned upstream package; no eval.
-    if ! "$NFQWS_BIN" --daemon --pidfile="$PIDFILE" $(ISP_INTERFACE="$ASUS_WAN"; _startup_args) 8>&- 9>&-; then
+    if ! "$NFQWS_BIN" --daemon --pidfile="$PIDFILE" $(ISP_INTERFACE="$ASUS_WAN"; _startup_args) 7>&- 8>&- 9>&-; then
         asus_failed_start; return 1
     fi
     while ! asus_running && [ "$tries" -lt 3 ]; do sleep 1; tries=$((tries + 1)); done
     if ! asus_running; then asus_error 'Daemon failed to start'; asus_failed_start; return 1; fi
     if ! asus_firewall_apply; then asus_error 'Firewall setup failed'; asus_failed_start; return 1; fi
+    if [ "${ASUS_RECONCILING:-0}" != 1 ]; then rm -f "$RUN_DIR/watchdog-state"; fi
+    command -v nfqws_watchdog_running >/dev/null 2>&1 && nfqws_watchdog_running
     echo 'Started NFQWS2 ASUS service. Verify nfqa_in/nfqa_out packet counters.'
 }
+
+asus_scheduler_lock() {
+    # Core/update leases are already held by S51. Import writers use this same
+    # inode; nonblocking acquisition avoids inversion with their core action.
+    local directory=/opt/var/lib/nfqws2-asus/import
+    [ ! -L "$directory" ] || return 2
+    (umask 077; mkdir -p "$directory") || return 2
+    [ "$(stat -t "$directory" | awk '{print $5}')" = 0 ] || return 2
+    [ "$(stat -t "$directory" | awk '{print $4}')" = 41c0 ] || return 2
+    [ ! -L "$directory/writer.lock" ] || return 2
+    if [ -e "$directory/writer.lock" ]; then nfqws_restart_state_safe "$directory/writer.lock" || return 2; fi
+    exec 7>>"$directory/writer.lock" || return 2
+    flock -n 7 || return 1
+}
+
+asus_watchdog_recover() (
+    command -v nfqws_watchdog_due >/dev/null 2>&1 || return 0
+    nfqws_restart_settings && [ "$NFQWS_WATCHDOG_ENABLED" = 1 ] || return 0
+    asus_scheduler_lock || return 0
+    nfqws_watchdog_attempt || return 0
+    asus_start
+)
+
+asus_restart_scheduled() (
+    local pid
+    command -v nfqws_restart_schedule_due >/dev/null 2>&1 || return 1
+    pid=$(cat "$PIDFILE" 2>/dev/null)
+    nfqws_restart_schedule_due "$pid" || return 1
+    asus_scheduler_lock || return 1
+    # A save could have changed the revision while the writer lease was busy.
+    nfqws_restart_schedule_due "$pid" || return 1
+    asus_validate && asus_firewall_stop && asus_kill && asus_start || return 2
+)
 
 asus_reconcile() {
     [ -f "$RUN_DIR/enabled" ] || return 0
     ASUS_RECONCILING=1
-    if ! asus_running; then asus_start; return $?; fi
+    if ! asus_running; then
+        # No prior daemon means the explicit start is still waiting for WAN.
+        if [ ! -f "$RUN_DIR/started" ]; then asus_start; else asus_watchdog_recover; fi
+        return $?
+    fi
+    command -v nfqws_watchdog_running >/dev/null 2>&1 && nfqws_watchdog_running
+    local scheduled
+    asus_restart_scheduled; scheduled=$?
+    case "$scheduled" in 0) return 0;; 1) ;; *) return 1;; esac
     ASUS_WAN=$(asus_interfaces)
     if [ -z "$ASUS_WAN" ]; then asus_firewall_stop; return 0; fi
     if [ "$(cat "$RUN_DIR/wan" 2>/dev/null)" != "$ASUS_WAN" ]; then
         # Socket binding / multi-WAN arguments must follow the new interface set.
         asus_firewall_stop
+        # A deliberate network rebind keeps its existing WAN retry behavior;
+        # it is not counted as an unexpected process exit by the watchdog.
+        rm -f "$RUN_DIR/started"
         asus_kill && asus_start
         return $?
     fi
