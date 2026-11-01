@@ -78,10 +78,17 @@ final class AsusUpdateWorker
     /** Fixed snapshot postinst, under the real opkg process and its POSIX mutex. */
     public function rollbackFinalize(string $id):void
     {
-        $this->runtime($id);$t=$this->guard()->context($id);
-        if($t['phase']!=='installing'||!$this->guard()->authorize('hook-postinst'))throw new RuntimeException('rollback_failed');
-        AsusUpdateRollback::finalize($this->rollbackEnvironment($id),$this->store->path('operations/'.$id.'/rollback'),$this->store->path('operations/'.$id.'/backup'));
-        $this->store->writeFile('operations/'.$id.'/rollback-finalized.json',json_encode(['restored'=>true],JSON_THROW_ON_ERROR));
+        $stage='runtime';
+        try{
+            $this->runtime($id);$stage='context';$t=$this->guard()->context($id);$stage='authorization';
+            if($t['phase']!=='installing'||!$this->guard()->authorize('hook-postinst'))throw new RuntimeException('rollback_failed');
+            $stage='environment';$env=$this->rollbackEnvironment($id);
+            $stage='restore';AsusUpdateRollback::finalize($env,$this->store->path('operations/'.$id.'/rollback'),$this->store->path('operations/'.$id.'/backup'));
+            $stage='receipt';$this->store->writeFile('operations/'.$id.'/rollback-finalized.json',json_encode(['restored'=>true],JSON_THROW_ON_ERROR));
+        }catch(Throwable $e){
+            try{$this->store->writeFile('operations/'.$id.'/rollback-finalize-error.json',json_encode(['schema'=>1,'stage'=>$stage,'code'=>AsusUpdatePrepare::code($e),'guard'=>$this->guard()->diagnostic($id)],JSON_THROW_ON_ERROR));}catch(Throwable $ignored){}
+            throw $e;
+        }
     }
     /** Native launcher owns the opkg POSIX mutex throughout this child check. */
     public function preflight(string $id,string $action='install'): void

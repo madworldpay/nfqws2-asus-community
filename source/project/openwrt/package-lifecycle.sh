@@ -203,29 +203,27 @@ nfqws_package_preinstall() {
 # Package defaults are trusted, flat resources. All publication stays below the
 # package root and uses an exclusive hard link so an owner's file always wins.
 nfqws_package_default_parent() {
-    local path=$1 boundary=${IPKG_INSTROOT%/} metadata mode
+    local path=$1 boundary=${IPKG_INSTROOT%/}
     [ -n "$boundary" ] || boundary=/
     case "$path" in /*) ;; *) return 1;; esac
     if [ "$boundary" != / ]; then case "$path" in "$boundary"|"$boundary"/*) ;; *) return 1;; esac; fi
     while :; do
         [ -d "$path" ] && [ ! -L "$path" ] || return 1
-        metadata=$(stat -c '%a %u' "$path") || return 1
-        mode=${metadata% *}
-        case "$mode" in ''|*[!0-7]*) return 1;; esac
-        [ "${metadata##* }" = 0 ] && [ "$((0$mode & 0022))" = 0 ] || return 1
+        # stat is optional in stock OpenWrt BusyBox. Numeric ls fields retain
+        # the same root-owner and group/other-write boundary without it.
+        LC_ALL=C ls -dn "$path" | awk '
+          NR==1 && substr($1,1,1)=="d" && $3=="0" && substr($1,6,1)!="w" && substr($1,9,1)!="w" {safe=1}
+          END {exit NR!=1 || !safe}' || return 1
         [ "$path" != "$boundary" ] || return 0
         path=${path%/*}; [ -n "$path" ] || path=/
     done
 }
 
 nfqws_package_default_source() {
-    local metadata mode
     [ -f "$1" ] && [ ! -L "$1" ] || return 1
-    metadata=$(stat -c '%u %h %a' "$1") || return 1
-    case "$metadata" in '0 1 '*) ;; *) return 1;; esac
-    mode=${metadata##* }
-    case "$mode" in ''|*[!0-7]*) return 1;; esac
-    [ "$((0$mode & 0022))" = 0 ]
+    LC_ALL=C ls -ln "$1" | awk '
+      NR==1 && substr($1,1,1)=="-" && $2=="1" && $3=="0" && substr($1,6,1)!="w" && substr($1,9,1)!="w" {safe=1}
+      END {exit NR!=1 || !safe}'
 }
 
 # After power loss only a private stage can remain, optionally linked to its
@@ -239,18 +237,18 @@ nfqws_package_default_reclaim() {
         case "$suffix" in [A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]) ;; *) continue;; esac
         name=${name#.nfqws2-seed.}; name=${name%.*}
         case "$name" in ''|[!A-Za-z0-9]*|*[!A-Za-z0-9_.-]*) return 1;; esac
-        [ -d "$stage" ] && [ ! -L "$stage" ] && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || return 1
+        [ -d "$stage" ] && [ ! -L "$stage" ] && [ "$(LC_ALL=C ls -dn "$stage" | awk '{print $1 ":" $3}')" = drwx------:0 ] || return 1
         unsafe=$(find "$stage" -mindepth 1 ! -path "$stage/file") || return 1
         [ -z "$unsafe" ] || return 1
         if [ -e "$stage/file" ] || [ -L "$stage/file" ]; then
             [ -f "$stage/file" ] && [ ! -L "$stage/file" ] || return 1
-            metadata=$(stat -c '%u:%a' "$stage/file") || return 1
-            case "$metadata" in 0:600|0:644) ;; *) return 1;; esac
-            links=$(stat -c '%h' "$stage/file") || return 1
+            metadata=$(LC_ALL=C ls -ln "$stage/file" | awk '{print $1 ":" $2 ":" $3}') || return 1
+            case "$metadata" in -rw-------:[12]:0|-rw-r--r--:[12]:0) ;; *) return 1;; esac
+            links=${metadata#*:}; links=${links%%:*}
             case "$links" in
                 1) ;;
                 2) leaf=$directory/$name
-                    [ -f "$leaf" ] && [ ! -L "$leaf" ] && [ "$(stat -c '%d:%i' "$stage/file")" = "$(stat -c '%d:%i' "$leaf")" ] || return 1;;
+                    [ -f "$leaf" ] && [ ! -L "$leaf" ] && [ "$stage/file" -ef "$leaf" ] || return 1;;
                 *) return 1;;
             esac
             rm "$stage/file" || return 1

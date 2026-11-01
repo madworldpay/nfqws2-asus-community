@@ -393,6 +393,8 @@ try {
     for (const code of [
       "core_stopped",
       "socket_unavailable",
+      "socket_preparing",
+      "socket_setup_failed",
       "multiwan_unsupported",
       "queue_in_use",
       "clock_unavailable",
@@ -400,7 +402,7 @@ try {
     ]) {
       data.runtime.code = code;
       data.runtime.state =
-        code === "starting"
+        code === "starting" || code === "socket_preparing"
           ? "starting"
           : code === "core_stopped"
             ? "stopped"

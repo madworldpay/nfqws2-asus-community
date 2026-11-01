@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SmartdnsRouteImport } from './routes/smartdns'
+import { Route as IpHealthRouteImport } from './routes/ip-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TabChar123FilenameChar125RouteImport } from './routes/$tab.{-$filename}'
 
 const SmartdnsRoute = SmartdnsRouteImport.update({
   id: '/smartdns',
   path: '/smartdns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IpHealthRoute = IpHealthRouteImport.update({
+  id: '/ip-health',
+  path: '/ip-health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -32,30 +38,34 @@ const TabChar123FilenameChar125Route =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ip-health': typeof IpHealthRoute
   '/smartdns': typeof SmartdnsRoute
   '/$tab/{-$filename}': typeof TabChar123FilenameChar125Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ip-health': typeof IpHealthRoute
   '/smartdns': typeof SmartdnsRoute
   '/$tab/{-$filename}': typeof TabChar123FilenameChar125Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ip-health': typeof IpHealthRoute
   '/smartdns': typeof SmartdnsRoute
   '/$tab/{-$filename}': typeof TabChar123FilenameChar125Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/smartdns' | '/$tab/{-$filename}'
+  fullPaths: '/' | '/ip-health' | '/smartdns' | '/$tab/{-$filename}'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/smartdns' | '/$tab/{-$filename}'
-  id: '__root__' | '/' | '/smartdns' | '/$tab/{-$filename}'
+  to: '/' | '/ip-health' | '/smartdns' | '/$tab/{-$filename}'
+  id: '__root__' | '/' | '/ip-health' | '/smartdns' | '/$tab/{-$filename}'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  IpHealthRoute: typeof IpHealthRoute
   SmartdnsRoute: typeof SmartdnsRoute
   TabChar123FilenameChar125Route: typeof TabChar123FilenameChar125Route
 }
@@ -67,6 +77,13 @@ declare module '@tanstack/react-router' {
       path: '/smartdns'
       fullPath: '/smartdns'
       preLoaderRoute: typeof SmartdnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ip-health': {
+      id: '/ip-health'
+      path: '/ip-health'
+      fullPath: '/ip-health'
+      preLoaderRoute: typeof IpHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  IpHealthRoute: IpHealthRoute,
   SmartdnsRoute: SmartdnsRoute,
   TabChar123FilenameChar125Route: TabChar123FilenameChar125Route,
 }

@@ -1060,7 +1060,7 @@
     "repeat_duration": "7 days",
     "repeat_help": "on a repeat incident",
     "auto_check": "Automatic recheck",
-    "auto_help": "every 15 minutes; restored after 3 responsive checks",
+    "auto_help": "Checked in turn, at least 15 minutes apart per IP; restored after 3 responsive checks.",
     "evidence_note": "A single timeout or QUIC failure does not add an IP to the list.",
     "dns_title": "DNS filter",
     "dns_scope": "Plain UDP DNS",
@@ -1101,6 +1101,8 @@
       "unavailable": "Monitoring is unavailable",
       "core_stopped": "Start NFQWS2 to enable monitoring.",
       "socket_unavailable": "Marked probe sockets are unavailable. Monitoring is inactive.",
+      "socket_preparing": "Preparing address checks. Your NFQWS2 settings are preserved.",
+      "socket_setup_failed": "Could not prepare address checks. Your NFQWS2 settings are preserved.",
       "multiwan_unsupported": "Monitoring is unavailable with multiple uplinks.",
       "queue_in_use": "The monitoring queue is already in use.",
       "clock_unavailable": "Set the router clock to enable monitoring."

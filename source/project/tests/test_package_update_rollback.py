@@ -1,4 +1,5 @@
 """A private old-payload archive is restored by real opkg, never by rewriting its DB."""
+import hashlib
 import io
 import json
 import os
@@ -46,15 +47,17 @@ class PackageRollbackTests(unittest.TestCase):
         files = {'opt/usr/bin/nfqws2': (binary, 0o755), 'opt/etc/nfqws2/nfqws2.conf': (b'factory\n', 0o600)}
         files.update(extras or {})
         if build == 81: files['opt/share/new-only'] = (b'new-only\n', 0o644)
-        path.write_bytes(self.section({'debian-binary': (b'2.0\n', 0o644), 'control.tar.gz': (self.section({'control': (control, 0o644), 'conffiles': (b'/opt/etc/nfqws2/nfqws2.conf\n', 0o644), 'postinst': (b'#!/bin/sh\nexit 0\n', 0o755)}), 0o644), 'data.tar.gz': (self.section(files), 0o644)}))
+        # ASUS creates active core settings separately; they are not opkg
+        # conffiles. The real auth/relay bookkeeping has its own regression.
+        path.write_bytes(self.section({'debian-binary': (b'2.0\n', 0o644), 'control.tar.gz': (self.section({'control': (control, 0o644), 'postinst': (b'#!/bin/sh\nexit 0\n', 0o755)}), 0o644), 'data.tar.gz': (self.section(files), 0o644)}))
 
-    def opkg(self, package):
-        return subprocess.run([str(OPKG), '-f', str(self.config), '-o', str(self.base), '--tmp-dir', str(self.opt/'tmp'), '--force-postinstall', '--nodeps', '--force-downgrade', '--force-reinstall', '--force-maintainer', 'install', str(package)], capture_output=True, text=True, timeout=10, umask=0o022)
+    def opkg(self, package, umask=0o022):
+        return subprocess.run([str(OPKG), '-f', str(self.config), '-o', str(self.base), '--tmp-dir', str(self.opt/'tmp'), '--force-postinstall', '--nodeps', '--force-downgrade', '--force-reinstall', '--force-maintainer', 'install', str(package)], capture_output=True, text=True, timeout=10, umask=umask)
 
     def call(self, action):
         script = r'''require $argv[1].'/update-prepare.php';
         try {
-          $env=['opt'=>$argv[2],'owner'=>(int)$argv[5],'installed'=>'1.3.2-asus6+b80','pending'=>false,'status'=>file_get_contents($argv[2].'/lib/opkg/status'),'defaults'=>json_decode($argv[8],true)];
+          $env=['opt'=>$argv[2],'owner'=>(int)$argv[5],'installed'=>$argv[10],'pending'=>false,'status'=>file_get_contents($argv[2].'/lib/opkg/status'),'defaults'=>json_decode($argv[8],true)];
           if($argv[6]==='settings')$result=AsusUpdateSnapshot::capture($argv[2],$argv[4],(int)$argv[5]);
           else {require $argv[1].'/update-rollback.php';$result=match($argv[6]){
             'capture'=>AsusUpdateRollback::capture($env,$argv[3],$argv[4],$argv[7]),
@@ -64,8 +67,10 @@ class PackageRollbackTests(unittest.TestCase):
             'defaults'=>AsusUpdatePackage::stockDefaults($argv[9],$env['opt'],$env['owner'])};}
           echo json_encode(['value'=>$result]);
         }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
-        command = shlex.join([PHP, '-n', '-r', script, str(PUBLIC), str(self.opt), str(self.snapshot), str(self.settings), str(os.getuid()), 'finalize', '', json.dumps(getattr(self,'defaults',{})),str(getattr(self,'reader',self.base/'old.ipk'))])
-        result = subprocess.run([PHP, '-n', '-d', 'memory_limit=16M', '-r', script, str(PUBLIC), str(self.opt), str(self.snapshot), str(self.settings), str(os.getuid()), action, '#!/bin/sh\nexec '+command+'\n',json.dumps(getattr(self,'defaults',{})),str(getattr(self,'reader',self.base/'old.ipk'))], capture_output=True, text=True, timeout=10)
+        public = getattr(self,'public',PUBLIC)
+        installed=getattr(self,'installed','1.3.2-asus6+b80')
+        command = shlex.join([PHP, '-n', '-r', script, str(public), str(self.opt), str(self.snapshot), str(self.settings), str(os.getuid()), 'finalize', '', json.dumps(getattr(self,'defaults',{})),str(getattr(self,'reader',self.base/'old.ipk')),installed])
+        result = subprocess.run([PHP, '-n', '-d', 'memory_limit=16M', '-r', script, str(public), str(self.opt), str(self.snapshot), str(self.settings), str(os.getuid()), action, '#!/bin/sh\nexec '+command+'\n',json.dumps(getattr(self,'defaults',{})),str(getattr(self,'reader',self.base/'old.ipk')),installed], capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr); self.assertEqual(result.stderr, '')
         return json.loads(result.stdout)
 
@@ -81,6 +86,130 @@ class PackageRollbackTests(unittest.TestCase):
         self.assertFalse((self.opt/'share/new-only').exists())
         self.assertIn('value', self.call('verify'))
         self.assertIn('Version: 1.3.2-asus6+b80', self.status.read_text())
+
+    def test_real_opkg_legacy_umask_index_is_read_without_chmod_or_db_rewrite(self):
+        index=self.opt/'lib/opkg/info/nfqws2-asus.list';index.unlink()
+        result=self.opkg(self.base/'old.ipk',umask=0)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(index.stat().st_mode&0o777,0o666)
+        self.settings_file.write_text('OWNER CONFIG\n')
+        before=(index.read_bytes(),index.stat().st_ino,self.status.read_bytes())
+        result=self.call('capture');self.assertIn('value',result,result)
+        self.assertEqual((index.read_bytes(),index.stat().st_ino,self.status.read_bytes()),before)
+        self.assertEqual(index.stat().st_mode&0o777,0o666)
+        self.assertIn('value',self.call('verify'))
+
+    def test_legacy_index_cannot_append_neighbor_or_arbitrary_root_file(self):
+        index=self.opt/'lib/opkg/info/nfqws2-asus.list';original=index.read_text();index.chmod(0o666)
+        for name in ['share/nfqws2-asus-neighbor/secret','usr/bin/foreign']:
+            with self.subTest(name=name):
+                path=self.opt/name;path.parent.mkdir(parents=True,exist_ok=True);path.parent.chmod(0o755)
+                path.write_text('FOREIGN');path.chmod(0o644);index.write_text(original+'/opt/'+name+'\n')
+                self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+                self.assertFalse(self.snapshot.exists());self.assertEqual(path.read_text(),'FOREIGN')
+
+    def test_foreign_claim_inside_project_namespace_refuses_even_ordinary_index(self):
+        name='share/nfqws2-asus/foreign-note';path=self.opt/name;path.parent.mkdir(parents=True);path.parent.chmod(0o755)
+        path.write_text('FOREIGN');path.chmod(0o644)
+        foreign=self.opt/'lib/opkg/info/other-package.list';foreign.write_text('/opt/'+name+'\n');foreign.chmod(0o666)
+        index=self.opt/'lib/opkg/info/nfqws2-asus.list';index.write_text(index.read_text()+'/opt/'+name+'\n')
+        self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+        self.assertFalse(self.snapshot.exists());self.assertEqual(path.read_text(),'FOREIGN')
+
+    def test_legacy_index_and_foreign_index_links_are_never_followed(self):
+        index=self.opt/'lib/opkg/info/nfqws2-asus.list';raw=index.read_bytes()
+        outside=self.base/'outside-index';outside.write_bytes(raw);outside.chmod(0o666)
+        for path in [index,index.with_name('foreign.list')]:
+            for kind in ['symlink','hardlink']:
+                with self.subTest(path=path.name,kind=kind):
+                    if path.exists():path.unlink()
+                    if kind=='symlink':path.symlink_to(outside)
+                    else:os.link(outside,path)
+                    self.assertIn(self.call('capture').get('error'),['invalid_state','rollback_unavailable'])
+                    self.assertEqual(outside.read_bytes(),raw);self.assertFalse(self.snapshot.exists())
+                    path.unlink()
+                    if path==index:path.write_bytes(raw);path.chmod(0o644)
+
+    def test_writable_manager_directory_and_payload_are_not_legacy_exceptions(self):
+        info=self.opt/'lib/opkg/info'
+        for path in [info,info.parent,self.opt/'lib',self.owned]:
+            with self.subTest(path=path):
+                mode=path.stat().st_mode&0o777;path.chmod(mode|0o022)
+                self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+                self.assertFalse(self.snapshot.exists());path.chmod(mode)
+
+    def test_index_reordering_during_capture_is_not_hidden_by_sorted_payload(self):
+        self.public=self.base/'app';shutil.copytree(PUBLIC,self.public)
+        source=self.public/'update-rollback.php';raw=source.read_text()
+        barrier='self::staging($destination,$files,$metadata,$aux,$postinst);'
+        self.assertIn(barrier,raw)
+        # Deterministic concurrent-manager rewrite after admission, using real files.
+        mutation="$p=$opt.'/lib/opkg/info/nfqws2-asus.list';file_put_contents($p,implode(\"\\n\",array_reverse(explode(\"\\n\",trim(file_get_contents($p))))).\"\\n\");"
+        source.write_text(raw.replace(barrier,barrier+mutation,1))
+        self.assertEqual(self.call('capture'),{'error':'settings_changed'})
+
+    def test_real_foreign_package_index_allows_shared_directories_but_never_foreign_payload(self):
+        name='share/nfqws2-asus/foreign-note'
+        package=self.base/'foreign.ipk'
+        control=b'Package: other-package\nVersion: 1\nArchitecture: all\nDescription: ownership fixture\n'
+        package.write_bytes(self.section({'debian-binary':(b'2.0\n',0o644),'control.tar.gz':(self.section({'control':(control,0o644)}),0o644),'data.tar.gz':(self.section({'opt/'+name:(b'FOREIGN',0o644)}),0o644)}))
+        result=self.opkg(package,umask=0);self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        info=self.opt/'lib/opkg/info';foreign=info/'other-package.list'
+        self.assertEqual(foreign.stat().st_mode&0o777,0o666)
+        foreign.write_text('/opt\n/opt/usr/bin/\n'+foreign.read_text())
+        self.assertIn('value',self.call('capture'))
+        shutil.rmtree(self.snapshot)
+        own=info/'nfqws2-asus.list';own.write_text(own.read_text()+str(self.opt/name)+'\n')
+        self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+        self.assertFalse(self.snapshot.exists());self.assertEqual((self.opt/name).read_bytes(),b'FOREIGN')
+        for claim in ['//opt/'+name,'/'+str(self.opt/name),'/opt//'+name,'/opt/'+name+'//']:
+            with self.subTest(claim=claim):
+                foreign.write_text(claim+'\n')
+                try:
+                    self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+                    self.assertFalse(self.snapshot.exists());self.assertEqual((self.opt/name).read_bytes(),b'FOREIGN')
+                finally:
+                    if self.snapshot.exists():shutil.rmtree(self.snapshot)
+
+    def test_index_special_modes_and_size_are_not_legacy_exceptions(self):
+        index=self.opt/'lib/opkg/info/nfqws2-asus.list';raw=index.read_bytes()
+        for mode in [0o664,0o646,0o1666,0o2666,0o4666]:
+            with self.subTest(mode=oct(mode)):
+                index.chmod(mode);self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'});self.assertFalse(self.snapshot.exists())
+        index.chmod(0o666);index.write_bytes(raw+b'\n'*131073)
+        self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'});self.assertFalse(self.snapshot.exists())
+
+    def test_index_replacement_between_stat_and_open_is_detected(self):
+        self.public=self.base/'app';shutil.copytree(PUBLIC,self.public)
+        source=self.public/'update-rollback.php';raw=source.read_text()
+        barrier="$f=@fopen($path,'rb');if(!$f)throw new RuntimeException('rollback_unavailable');"
+        self.assertIn(barrier,raw)
+        # A writer replaces the path after lstat while preserving bytes and modes.
+        mutation="copy($path,$path.'.replacement');chmod($path.'.replacement',lstat($path)['mode']&0777);rename($path.'.replacement',$path);"
+        source.write_text(raw.replace(barrier,mutation+barrier,1))
+        self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+        self.assertFalse(self.snapshot.exists())
+
+    def test_actual_cli_fallback_sanitizes_entry_failure_and_preserves_precise_record(self):
+        self.public=self.base/'app';shutil.copytree(PUBLIC,self.public)
+        worker=self.public/'update-worker.php'
+        worker.write_text(worker.read_text().replace('{$this->prepare=',"{throw new RuntimeException('PRIVATE_DETAIL');$this->prepare=",1))
+        state=self.base/'state';op=state/'operations'/('a'*32);op.mkdir(parents=True,mode=0o700)
+        state.chmod(0o700);op.parent.chmod(0o700)
+        source=(ROOT/'asus/update/worker.php').read_text()
+        source=source.replace(r'0\s+0\s+0\s+0',r'\s+'.join([str(os.getuid())]*4))
+        source=source.replace('new AsusUpdateStore();','new AsusUpdateStore('+json.dumps(str(state))+','+str(os.getuid())+');')
+        entry=self.base/'entry.php';entry.write_text(source)
+        record=op/'rollback-finalize-error.json'
+        for existing in [None,{'schema':1,'stage':'context','code':'invalid_state','guard':{'ticket':'missing'}}]:
+            with self.subTest(existing=existing):
+                if existing is not None:record.write_text(json.dumps(existing));record.chmod(0o600)
+                result=subprocess.run([PHP,'-n',str(entry),'--','rollback-finalize','a'*32],capture_output=True,text=True,timeout=3)
+                self.assertEqual(result.returncode,1);self.assertEqual(result.stdout+result.stderr,'')
+                value=json.loads(record.read_text())
+                if existing is not None:self.assertEqual(value,existing)
+                else:self.assertEqual(value,{'schema':1,'stage':'entry','code':'update_failed','guard':{'ticket':'missing'}})
+                self.assertEqual(record.stat().st_mode&0o777,0o600);self.assertNotIn('PRIVATE_DETAIL',record.read_text())
 
     def test_candidate_stock_map_reads_only_closed_config_list_and_blob_templates(self):
         self.reader=self.base/'candidate.ipk'
@@ -158,6 +287,25 @@ class PackageRollbackTests(unittest.TestCase):
         with self.status.open('a') as out:out.write('Package: nfqws2-asus\nVersion: 1.3.2-asus6+b79\nArchitecture: all\nStatus: install prefer,user not-installed\n\n')
         self.assertIn('value',self.call('capture'))
 
+    def test_real_manager_rollback_ignores_historical57_while_live_status_is_uncommitted(self):
+        with self.status.open('a') as out:out.write('Package: nfqws2-asus\nVersion: 1.3.2-asus6+b57\nArchitecture: all\nStatus: install prefer,user not-installed\n\n')
+        self.assertIn('value',self.call('capture'))
+        self.package(self.base/'new.ipk',81,b'NEW executable\n')
+        result=self.opkg(self.base/'new.ipk');self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        result=self.opkg(self.snapshot/'package.ipk');self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertNotIn('"error"',result.stdout,result.stdout+result.stderr)
+        self.assertIn('value',self.call('verify'))
+        self.assertEqual(self.owned.read_bytes(),b'old executable\n');self.assertEqual(self.settings_file.read_text(),'OWNER CONFIG\n')
+
+    def test_absent_own_is_never_healthy_and_unexpected_live_version_still_blocks_restore(self):
+        self.assertIn('value',self.call('capture'));original=self.status.read_text()
+        self.status.write_text(original.replace('+b80','+b57'))
+        self.assertEqual(self.call('finalize'),{'error':'rollback_failed'})
+        self.status.write_text(original.replace('Status: install user installed','Status: install prefer,user not-installed'))
+        self.assertEqual(self.call('verify'),{'error':'rollback_failed'})
+        self.snapshot=self.base/'another-snapshot'
+        self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'});self.assertFalse(self.snapshot.exists())
+
     def test_tampered_settings_copy_refuses_before_any_restore_write(self):
         self.assertIn('value',self.call('capture'))
         (self.settings/'etc/nfqws2/nfqws2.conf').write_text('ATTACK\n')
@@ -225,17 +373,24 @@ class PackageRollbackTests(unittest.TestCase):
 
 
 class PublishedPayloadRollbackTests(unittest.TestCase):
-    def test_published_build80_both_architectures_stream_snapshot_with_modified_active_settings(self):
-        assets=Path(os.environ.get('ASUS_RECOVERY_ARTIFACTS',Path.home()/'.local/state/nfqws2-asus/repairs/build80-export-20261101/release80/assets'))
-        if not assets.is_dir():self.skipTest('published signed Build80 fixtures unavailable')
-        for abi in ['armv7','aarch64-3.10']:
-            with self.subTest(abi=abi):
+    def test_build80_81_82_both_architectures_stream_snapshot_with_modified_settings(self):
+        repair=Path.home()/'.local/state/nfqws2-asus/repairs'
+        builds=[(80,Path(os.environ.get('ASUS_RECOVERY_ARTIFACTS',repair/'build80-export-20261101/release80/assets'))),
+                (81,Path(os.environ.get('ASUS_BUILD81_ARTIFACTS',repair/'build81-asus-20261101/release81/asus'))),
+                (82,Path(os.environ.get('ASUS_BUILD82_ARTIFACTS',repair/'build82-hardware-20261101/candidate-asus')))]
+        cases=[(build,abi,directory/f'nfqws2-asus_1.3.2-asus6+b{build}_{abi}.ipk')
+               for build,directory in builds for abi in ['armv7','aarch64-3.10']
+               if (directory/f'nfqws2-asus_1.3.2-asus6+b{build}_{abi}.ipk').is_file()]
+        if not cases:self.skipTest('real ASUS package fixtures unavailable')
+        for build,abi,package in cases:
+            with self.subTest(build=build,abi=abi):
                 case=PackageRollbackTests();case.setUp()
                 try:
                     shutil.rmtree(case.opt);shutil.rmtree(case.settings)
-                    package=assets/f'nfqws2-asus_1.3.2-asus6+b80_{abi}.ipk'
+                    case.installed=f'1.3.2-asus6+b{build}'
                     with tarfile.open(package) as outer:
-                        data=outer.extractfile('data.tar.gz').read();control=outer.extractfile('control.tar.gz').read()
+                        members={m.name.removeprefix('./'):m for m in outer}
+                        data=outer.extractfile(members['data.tar.gz']).read();control=outer.extractfile(members['control.tar.gz']).read()
                     owned=[]
                     with tarfile.open(fileobj=io.BytesIO(data)) as archive:
                         for member in archive:
@@ -246,14 +401,17 @@ class PublishedPayloadRollbackTests(unittest.TestCase):
                             else:
                                 self.assertTrue(member.isfile());target.parent.mkdir(parents=True,exist_ok=True)
                                 target.write_bytes(archive.extractfile(member).read());target.chmod(member.mode)
-                                owned.append('/'+member.name)
+                                owned.append('/'+str(path))
                     info=case.opt/'lib/opkg/info';info.mkdir(parents=True)
+                    info.chmod(0o755);info.parent.chmod(0o755)
                     with tarfile.open(fileobj=io.BytesIO(control)) as archive:
                         for member in archive:
-                            self.assertTrue(member.isfile());target=info/('nfqws2-asus.'+member.name)
+                            self.assertTrue(member.isfile());name=member.name.removeprefix('./');self.assertNotIn('/',name);target=info/('nfqws2-asus.'+name)
                             target.write_bytes(archive.extractfile(member).read());target.chmod(member.mode)
-                    (info/'nfqws2-asus.list').write_text('\n'.join(owned)+'\n');(info/'nfqws2-asus.list').chmod(0o644)
-                    case.status.write_text((info/'nfqws2-asus.control').read_text()+'Status: install user installed\n\n');case.status.chmod(0o600)
+                    (info/'nfqws2-asus.list').write_text('\n'.join(owned)+'\n');(info/'nfqws2-asus.list').chmod(0o666)
+                    conffiles=(info/'nfqws2-asus.conffiles').read_text().splitlines()
+                    hashes=''.join(' '+name+' '+hashlib.sha256((case.base/name.lstrip('/')).read_bytes()).hexdigest()+'\n' for name in conffiles)
+                    case.status.write_text((info/'nfqws2-asus.control').read_text()+'Status: install user installed\nConffiles:\n'+hashes+'\n');case.status.chmod(0o600)
                     baseline=json.loads((case.opt/'share/nfqws2-asus/report-baseline.json').read_text())
                     for name in baseline['resources']:
                         target=case.opt/'etc/nfqws2'/('blobs/'+name[5:] if name.startswith('blob/') else name)
@@ -305,6 +463,42 @@ class PackageRollbackApplyTests(unittest.TestCase):
         self.assertEqual(result['code'],'update_rolled_back',result)
         self.assertEqual(result['core_state'],'stopped',result)
         self.assertEqual(c.commands(),[])
+
+    def test_real_rollback_hook_persists_closed_context_failure_diagnostic(self):
+        c=self.case
+        code='$p=$argv[1]."/transaction.json";$v=json_decode(file_get_contents($p),true);$v["worker"]["start_ticks"]="1";file_put_contents($p,json_encode($v));'
+        mutation=shlex.join([str(c.php),'-n','-r',code,str(c.state)])
+        c.body.write_text(c.body.read_text().replace('*) exec ','*) '+mutation+'; exec ',1))
+        result=c.execute();self.assertEqual(result['code'],'rollback_failed',result)
+        path=c.op/'rollback-finalize-error.json';self.assertTrue(path.is_file())
+        value=json.loads(path.read_text());self.assertEqual(value['stage'],'context');self.assertEqual(value['code'],'invalid_state')
+        self.assertFalse(value['guard']['worker_alive']);self.assertEqual(path.stat().st_mode&0o777,0o600)
+        self.assertNotIn(str(c.base),path.read_text());self.assertNotIn('start_ticks',path.read_text())
+
+    def test_real_rollback_hook_distinguishes_wrong_phase_authorization_failure(self):
+        c=self.case
+        code='$p=$argv[1]."/transaction.json";$v=json_decode(file_get_contents($p),true);$v["phase"]="finished";file_put_contents($p,json_encode($v));'
+        mutation=shlex.join([str(c.php),'-n','-r',code,str(c.state)])
+        c.body.write_text(c.body.read_text().replace('*) exec ','*) '+mutation+'; exec ',1))
+        result=c.execute();self.assertEqual(result['code'],'rollback_failed',result)
+        path=c.op/'rollback-finalize-error.json';self.assertTrue(path.is_file())
+        value=json.loads(path.read_text());self.assertEqual(value['stage'],'authorization');self.assertEqual(value['code'],'rollback_failed')
+        self.assertEqual(value['guard']['phase'],'finished');self.assertTrue(value['guard']['worker_alive'])
+
+    def test_real_rollback_hook_reports_changed_runtime_before_guard_admission(self):
+        c=self.case;resource=c.runtime/'resources/package-manifest.schema.json'
+        mutation='printf " " >> '+shlex.quote(str(resource))
+        c.body.write_text(c.body.read_text().replace('*) exec ','*) '+mutation+'; exec ',1))
+        result=c.execute();self.assertEqual(result['code'],'rollback_failed',result)
+        path=c.op/'rollback-finalize-error.json';self.assertTrue(path.is_file())
+        value=json.loads(path.read_text());self.assertEqual(value['stage'],'runtime');self.assertEqual(value['code'],'runtime_changed')
+
+    def test_real_rollback_hook_distinguishes_manager_environment_from_restore(self):
+        c=self.case;mutation='ln '+shlex.quote(str(c.status))+' '+shlex.quote(str(c.base/'status-alias'))
+        c.body.write_text(c.body.read_text().replace('*) exec ','*) '+mutation+'; exec ',1))
+        result=c.execute();self.assertEqual(result['code'],'rollback_failed',result)
+        path=c.op/'rollback-finalize-error.json';self.assertTrue(path.is_file())
+        value=json.loads(path.read_text());self.assertEqual(value['stage'],'environment');self.assertEqual(value['code'],'rollback_failed')
     def test_signed_candidate_postinst_seed_is_quarantined_by_full_worker_rollback(self):
         import base64,hashlib
         c=self.case;c.fixture.payload({'opt/share/nfqws2-asus/defaults/blobs/new.bin':(b'NEW',0o644)},directories=['opt/','opt/share/','opt/share/nfqws2-asus/','opt/share/nfqws2-asus/defaults/','opt/share/nfqws2-asus/defaults/blobs/'])

@@ -42,7 +42,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
             info=self.opt/'lib/opkg/info';info.mkdir(parents=True,exist_ok=True)
             (info/'nfqws2-asus.control').write_text('Package: nfqws2-asus\nVersion: 1.3.1-asus6+b10\nArchitecture: aarch64-3.10\nDepends: iptables, libc\nDescription: installed fixture\n')
             (info/'nfqws2-asus.list').write_text('/opt/etc/nfqws2/nfqws2.conf\n')
-            (info/'nfqws2-asus.conffiles').write_text('/opt/etc/nfqws2/nfqws2.conf\n')
+            # Active core settings are seeded, not declared as opkg conffiles.
             for path in info.iterdir():path.chmod(0o644)
             self.opt.chmod(0o755)
             for path in self.opt.rglob('*'):

@@ -39,14 +39,37 @@ final class NfqwsIpHealthStore
         }
         return $canonical;
     }
+    /** Firmware owns these boundaries, whose stock modes differ from our dirs. */
+    public static function systemDirectory(string $path,array $s):bool
+    {
+        if($s['uid']!==0)return false;
+        if($path==='/tmp')return ($s['mode']&0170000)===0040000;
+        if(($s['mode']&0170000)!==0120000)return false;
+        $target=match($path){'/var'=>'/tmp','/var/run'=>'/tmp/run',default=>null};
+        if($target===null||realpath($path)!==$target)return false;
+        clearstatcache(true,'/tmp');$tmp=@lstat('/tmp');
+        if($tmp===false||$tmp['uid']!==0||($tmp['mode']&0170000)!==0040000)return false;
+        clearstatcache(true,$target);$t=@lstat($target);
+        return $t!==false&&$t['uid']===0&&($t['mode']&0170000)===0040000&&($target==='/tmp'||($t['mode']&0022)===0);
+    }
+    /** /opt is the platform anchor; writable firmware mount parents are outside it. */
+    private function optBoundary(string $path):?string
+    {
+        clearstatcache(true,'/opt');$root=realpath('/opt');
+        if($root===false||$root==='/'||($path!==$root&&!str_starts_with($path,$root.'/')))return null;
+        $alias=@lstat('/opt');clearstatcache(true,$root);$s=@lstat($root);
+        if($alias===false||$alias['uid']!==0||!in_array($alias['mode']&0170000,[0040000,0120000],true)||$s===false||$s['uid']!==0||($s['mode']&0170000)!==0040000||($s['mode']&0022)!==0)throw new RuntimeException('invalid_state');
+        return $root;
+    }
     private function directory(string $path,bool $create,bool $ram=false):bool
     {
         if($path===''||$path[0]!=='/'||str_contains($path,"\0")||preg_match('~(?:^|/)\.\.?(?:/|$)~',$path))throw new RuntimeException('invalid_state');
+        $boundary=$ram?null:$this->optBoundary($path);
         for($p=$path;$p!=='/';$p=dirname($p)){
             clearstatcache(true,$p);$s=@lstat($p);if($s===false)continue;
-            // Firmware aliases are allowed only at the fixed system boundary.
-            if(is_link($p)){if(in_array($p,['/var','/var/run'],true)&&$s['uid']===0)continue;throw new RuntimeException('invalid_state');}
-            if(($s['mode']&0170000)!==0040000||!in_array($s['uid'],[0,$this->owner],true)||(($s['mode']&0022)!==0&&!($s['uid']===0&&($s['mode']&01000)!==0)))throw new RuntimeException('invalid_state');
+            if(self::systemDirectory($p,$s)){if($p==='/tmp')break;continue;}
+            if(($s['mode']&0170000)!==0040000||!in_array($s['uid'],[0,$this->owner],true)||($s['mode']&0022)!==0)throw new RuntimeException('invalid_state');
+            if($p===$boundary)break;
         }
         if(!is_dir($path)){if(!$create)return false;$mask=umask(0077);try{if(!@mkdir($path,0700,true)&&!is_dir($path))throw new RuntimeException('storage_unavailable');}finally{umask($mask);}}
         $s=lstat($path);if($s['uid']!==$this->owner||!in_array($s['mode']&0777,$ram?[0700,0755]:[0700],true))throw new RuntimeException('invalid_state');return true;
@@ -124,12 +147,12 @@ final class NfqwsIpHealthStore
         }catch(Throwable $e){return ['state'=>'unavailable','code'=>'invalid_state','updated_at'=>null,'dns'=>'unavailable'];}
     }
     public function status(?int $now=null):array{$now??=time();$v=$this->view($now);return ['schema_version'=>1,'revision'=>self::revision($v,$now),'enabled'=>$v['enabled'],'runtime'=>$this->runtime($now),'entries'=>self::publicEntries($v,$now)];}
-    private function mutation(string $revision,int $now,callable $fn,bool $publish=true,bool $resetEvidence=false):array
+    private function mutation(string $revision,int $now,callable $fn,bool $publish=true,bool $resetEvidence=false,bool $persistSelection=false):array
     {
         if(!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new RuntimeException('invalid_request');
-        $this->locked($this->directory,true,function()use($revision,$now,$fn,$publish,$resetEvidence){$old=$this->state();$v=$old;self::prune($v,$now);if(!hash_equals(self::revision($v,$now),$revision))throw new RuntimeException('stale_revision');$fn($v);self::prune($v,$now);if($v!==$old)$this->write($this->directory.'/bans.json',$v,524288);if($publish){$effective=$v;if($this->runtime($now)['state']!=='active')$effective['enabled']=false;$this->publishRaw(self::formatManifest($effective,$now,$v['generation']));}if($resetEvidence&&$this->directory($this->runtimeDir,false,true))$this->evidence(function(array &$ram){$ram=[];});});return $this->status($now);
+        $this->locked($this->directory,true,function()use($revision,$now,$fn,$publish,$resetEvidence,$persistSelection){$old=$this->state();$v=$old;self::prune($v,$now);if(!hash_equals(self::revision($v,$now),$revision))throw new RuntimeException('stale_revision');$fn($v);self::prune($v,$now);if($v!==$old||($persistSelection&&!file_exists($this->directory.'/bans.json')))$this->write($this->directory.'/bans.json',$v,524288);if($publish){$effective=$v;if($this->runtime($now)['state']!=='active')$effective['enabled']=false;$this->publishRaw(self::formatManifest($effective,$now,$v['generation']));}if($resetEvidence&&$this->directory($this->runtimeDir,false,true))$this->evidence(function(array &$ram){$ram=[];});});return $this->status($now);
     }
-    public function configure(bool $enabled,string $revision,?int $now=null):array{return $this->mutation($revision,$now??time(),function(array &$v)use($enabled){$v['enabled']=$enabled;},true,!$enabled);}
+    public function configure(bool $enabled,string $revision,?int $now=null):array{return $this->mutation($revision,$now??time(),function(array &$v)use($enabled){$v['enabled']=$enabled;},true,!$enabled,true);}
     public function remove(string $id,string $revision,?int $now=null):array
     {if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('invalid_request');return $this->mutation($revision,$now??time(),function(array &$v)use($id){if(!isset($v['entries'][$id]))throw new RuntimeException('not_found');unset($v['entries'][$id]);});}
     public function clear(string $revision,?int $now=null):array{return $this->mutation($revision,$now??time(),function(array &$v){$v['entries']=[];$v['recheck']=[];});}

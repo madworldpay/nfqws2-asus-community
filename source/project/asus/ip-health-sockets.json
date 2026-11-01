@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "abi": "armv7-2.6",
+      "php_version": "8.2.8",
+      "version": "8.2.8-1",
+      "architecture": "armv7-2.6",
+      "filename": "php8-mod-sockets_8.2.8-1_armv7-2.6.ipk",
+      "size": 31615,
+      "sha256": "ca2b4baf82b6a370f65f3d651eedf7b7589760ef873e42ea29202aee8669ed43",
+      "php_package_version": "8.2.8-1",
+      "files": {
+        "opt/etc/php8/20_sockets.ini": {
+          "size": 21,
+          "sha256": "587cefd856e6159855674b2bc344b15c2787dfda02240f1509728bd53cf1e8d8",
+          "mode": 420
+        },
+        "opt/lib/php8/sockets.so": {
+          "size": 71300,
+          "sha256": "70be5b56578d4e859061488e297450856ad6801b09a90e1ec6d21ead8e751db2",
+          "mode": 493
+        }
+      }
+    },
+    {
+      "abi": "armv7-3.2",
+      "php_version": "8.4.16",
+      "version": "8.4.16-4",
+      "architecture": "armv7-3.2",
+      "filename": "php8-mod-sockets_8.4.16-4_armv7-3.2.ipk",
+      "size": 34782,
+      "sha256": "fb36c35006bc436ad63f556ba829a19079c7a86339f4c3966fd038165219f872",
+      "php_package_version": "8.4.16-4",
+      "files": {
+        "opt/etc/php8/20_sockets.ini": {
+          "size": 21,
+          "sha256": "587cefd856e6159855674b2bc344b15c2787dfda02240f1509728bd53cf1e8d8",
+          "mode": 420
+        },
+        "opt/lib/php8/sockets.so": {
+          "size": 79852,
+          "sha256": "9a3099665e45bd2d376a9815a44e413b114160e6839c2147a19a39ac548d47b3",
+          "mode": 493
+        }
+      }
+    },
+    {
+      "abi": "aarch64-3.10",
+      "php_version": "8.4.16",
+      "version": "8.4.16-4",
+      "architecture": "aarch64-3.10",
+      "filename": "php8-mod-sockets_8.4.16-4_aarch64-3.10.ipk",
+      "size": 40403,
+      "sha256": "c9f6ea5ba2894fd3cb978d8594a7518ee914d73478d3010ca8fb7c533d1b0027",
+      "php_package_version": "8.4.16-4",
+      "files": {
+        "opt/etc/php8/20_sockets.ini": {
+          "size": 21,
+          "sha256": "587cefd856e6159855674b2bc344b15c2787dfda02240f1509728bd53cf1e8d8",
+          "mode": 420
+        },
+        "opt/lib/php8/sockets.so": {
+          "size": 112704,
+          "sha256": "c3efcf7e5c92782ceaaa13b27fd5276dc8e86e3bc866c6eba85831fd2af56d1b",
+          "mode": 493
+        }
+      }
+    }
+  ]
+}

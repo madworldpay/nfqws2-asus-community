@@ -96,7 +96,7 @@ class PackageUpdateStoreTests(unittest.TestCase):
         own=rollback/'package.ipk';own.write_bytes(b'old sealed payload');own.chmod(0o600)
         note=rollback/'operator-note';note.write_text('KEEP')
         index=rollback/'cleanup-index.json';index.write_text(json.dumps({'files':{'package.ipk':{'mode':0o600,'size':18,'sha256':hashlib.sha256(b'old sealed payload').hexdigest()}}}));index.chmod(0o600)
-        names=['rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json']
+        names=['rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','rollback-finalize-error.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json']
         for name in names:p=folder/name;p.write_text('{}');p.chmod(0o600)
         self.call([['update',[job,{'state':'failed','code':'update_rolled_back'}]]])
         for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])

@@ -7,6 +7,8 @@ $args=$argv;array_shift($args);if(($args[0]??null)==='--')array_shift($args);$mo
 $private='/tmp/nfqws2-asus/ip-health-private';$public='/tmp/nfqws2-asus-ip-health';
 $store=new NfqwsIpHealthStore();$runtime=new NfqwsIpHealthRuntime($store,$private,$public);
 try{
+    if($mode==='enabled'){if($args!==[])exit(1);exit($store->view()['enabled']?0:1);}
+    if($mode==='module'){if($args!==[])exit(1);exit(extension_loaded('sockets')&&function_exists('socket_create')?0:1);}
     if($mode==='inactive'){
         if(count($args)!==1||!in_array($args[0],['core_stopped','socket_unavailable','multiwan_unsupported','queue_in_use','starting','unavailable'],true))exit(1);
         $runtime->inactive($args[0],time());exit(0);

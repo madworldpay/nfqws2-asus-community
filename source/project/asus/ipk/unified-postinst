@@ -10,6 +10,12 @@ if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
         # The verified staged worker restores core intent and resumes SmartDNS
         # after commit or verified rollback; do not queue code from this payload.
         asus_migration_complete || exit $?
+        # Published80/81 coordinators have no verified-success DNS resume phase.
+        # This root helper recognizes only their sealed process-bound closure;
+        # its detached bridge waits for verified success and the updater lease.
+        if [ -f /opt/share/nfqws-asus-web/update-postinst-resume.php ]; then
+            /opt/bin/php-cgi -n -d register_argc_argv=1 -q -f /opt/share/nfqws-asus-web/update-postinst-resume.php -- queue
+        fi
         exit 0
     fi
 fi

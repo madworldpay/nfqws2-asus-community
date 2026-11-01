@@ -1,0 +1,34 @@
+{
+  "flags": [
+    "-Os",
+    "-nostdlib",
+    "-static",
+    "-fno-builtin",
+    "-fno-stack-protector",
+    "-fno-pie",
+    "-no-pie",
+    "-Wl,--build-id=none",
+    "-Wl,-z,noexecstack",
+    "-s",
+    "-DSOCKETS_ONLY=1"
+  ],
+  "outputs": {
+    "aarch64": {
+      "compiler": "aarch64-linux-gnu-gcc",
+      "compiler_version": "15.2.0",
+      "options": [],
+      "sha256": "82c6c5f188eeb3a793a1ac4f05adebe7ffb0306a3c2d54abb2d4f04969e22d95"
+    },
+    "armv7": {
+      "compiler": "arm-linux-gnueabi-gcc",
+      "compiler_version": "15.2.0",
+      "options": [
+        "-marm",
+        "-march=armv7-a",
+        "-mfloat-abi=soft"
+      ],
+      "sha256": "56289cc945f94874f5a3f27077a74a6914da8c1de0428c4c2875e692f15b8825"
+    }
+  },
+  "source_sha256": "aaa0dff9ffe9e053a6d5da150e15d58ade6f568281340ad4b42689ec3040a759"
+}

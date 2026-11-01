@@ -39,6 +39,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 const runtimeCodes = new Set([
   'core_stopped',
   'socket_unavailable',
+  'socket_preparing',
+  'socket_setup_failed',
   'multiwan_unsupported',
   'queue_in_use',
   'clock_unavailable',

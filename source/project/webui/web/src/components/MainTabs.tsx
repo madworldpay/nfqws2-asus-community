@@ -2,11 +2,13 @@ import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import { Box, Tab, Tabs } from '@mui/material';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
 
 import { mainTabsValues, type MainTabsValues } from '@/types/types';
 
+import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const MainTabs = () => {
@@ -14,6 +16,7 @@ export const MainTabs = () => {
   const { pathname } = useLocation();
 
   const { t } = useTranslation();
+  const { platform, isPending } = useStatus();
 
   const { tab } = useParams({ strict: false }) as {
     tab?: MainTabsValues;
@@ -21,11 +24,13 @@ export const MainTabs = () => {
 
   const currentTab = /^\/smartdns\/?$/.test(pathname)
     ? 'smartdns'
-    : !tab
-      ? 'settings'
-      : mainTabsValues.includes(tab)
-        ? tab
-        : false;
+    : /^\/ip-health\/?$/.test(pathname)
+      ? 'ip-health'
+      : !tab
+        ? 'settings'
+        : mainTabsValues.includes(tab)
+          ? tab
+          : false;
 
   return (
     <>
@@ -113,6 +118,16 @@ export const MainTabs = () => {
               },
             }}
           />
+
+          {platform === 'asus-entware' && !isPending && (
+            <Tab
+              value="ip-health"
+              icon={<ShieldOutlinedIcon fontSize="small" />}
+              iconPosition="start"
+              label={t('tabs.ip_health')}
+              sx={{ minHeight: 50, fontSize: 14 }}
+            />
+          )}
         </Tabs>
       </Box>
     </>

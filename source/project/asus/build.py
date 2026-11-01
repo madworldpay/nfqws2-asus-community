@@ -89,7 +89,7 @@ def runtime_shim(family, service, binary):
             f'exec /opt/libexec/{service}/"$abi"/{binary} "$@"\n').encode(), 0o755
 
 
-def asset(name, cache, offline):
+def raw_asset(name, cache, offline):
     path = cache / name
     expected = ASSETS[name]
     if not path.exists():
@@ -104,6 +104,11 @@ def asset(name, cache, offline):
     data = path.read_bytes()
     if hashlib.sha256(data).hexdigest() != expected['sha256']:
         raise RuntimeError(f'SHA256 mismatch: {name}')
+    return data
+
+
+def asset(name, cache, offline):
+    data = raw_asset(name, cache, offline)
     with tarfile.open(fileobj=io.BytesIO(data)) as outer:
         member = next(m for m in outer if m.name.removeprefix('./') == 'data.tar.gz')
         with tarfile.open(fileobj=io.BytesIO(outer.extractfile(member).read())) as inner:
@@ -137,10 +142,10 @@ def local(path, executable=False):
     return (ROOT/path).read_bytes(), 0o755 if executable else 0o644
 
 
-def update_launcher(target, base=None, stem='opkg-launch', manifest='launchers.json'):
+def update_launcher(target, base=None, stem='opkg-launch', manifest='launchers.json', source=None):
     base = base or ROOT/'asus/update'
     meta = json.loads((base/'bin'/manifest).read_text())
-    if meta['source_sha256'] != hashlib.sha256((base/(stem+'.c')).read_bytes()).hexdigest():
+    if meta['source_sha256'] != hashlib.sha256((base/(source or stem+'.c')).read_bytes()).hexdigest():
         raise RuntimeError('Update launcher source changed; reproduce both launchers first')
     family = 'aarch64' if target['elf_class'] == 2 else 'armv7'
     data = (base/'bin'/(family+'-'+stem)).read_bytes()
@@ -244,6 +249,38 @@ def package(output, name, version, depends, conflicts, payload, prefix, conffile
     print(path.name, len(result), 'bytes')
 
 
+def ip_health_sockets_payload(cache, offline, family):
+    catalog = json.loads((ROOT/'asus/ip-health-sockets.json').read_text())
+    abis = {'armv7-2.6', 'armv7-3.2'} if family == 'armv7' else {'aarch64-3.10'} if family == 'aarch64-3.10' else set()
+    if not abis:
+        raise RuntimeError('Unsupported IP Health sockets family')
+    entries = [entry for entry in catalog['entries'] if entry['abi'] in abis]
+    if {entry['abi'] for entry in entries} != abis:
+        raise RuntimeError('Incomplete IP Health sockets catalog')
+    prefix = 'opt/share/nfqws2-asus/ip-health-sockets/'
+    files = {prefix+'catalog.json': ((json.dumps({'schema_version':1,'entries':entries}, sort_keys=True)+'\n').encode(), 0o644)}
+    for entry in entries:
+        name = entry['filename']
+        if ASSETS[name]['sha256'] != entry['sha256']:
+            raise RuntimeError('IP Health sockets pin mismatch')
+        files[prefix+'ipks/'+name] = raw_asset(name, cache, offline), 0o644
+    return files
+
+
+def web_payload(dist=None):
+    dist = Path(dist) if dist is not None else ROOT/'webui/web/dist'
+    if not (dist/'index.html').is_file():
+        raise RuntimeError('Build frontend before ASUS packaging')
+    # Public PHP is copied verbatim by Vite. Never ship a new lifecycle with a
+    # previous dist that merely happens to contain the required filenames.
+    for source in (ROOT/'webui/web/public').glob('*.php'):
+        installed = dist/source.name
+        if not installed.is_file() or installed.read_bytes() != source.read_bytes():
+            raise RuntimeError('Rebuild the shared production frontend: ASUS backend is stale')
+    return {'opt/share/nfqws-asus-web/'+str(p.relative_to(dist)): (p.read_bytes(), 0o644)
+            for p in sorted(dist.rglob('*')) if p.is_file() and not p.name.endswith('.map')}
+
+
 def build_one(cache, output, offline, arch, build_number=None):
     target = TARGETS[arch]
     nfq = asset(target['engine_asset'], cache, offline)
@@ -276,6 +313,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/share/nfqws2-asus/report-baseline.json'] = (
         (json.dumps(baseline, sort_keys=True, separators=(',', ':')) + '\n').encode(), 0o644)
     family = target.get('family', arch)
+    core.update(ip_health_sockets_payload(cache, offline, family))
     core['opt/lib/nfqws2-asus/target.sh'] = f"ASUS_PACKAGE_ARCH='{family}'\n".encode(), 0o644
     config = (ROOT/'core/etc/nfqws2/nfqws2.conf').read_text()
     config = config.replace('# Provider network interface, e.g. eth3\n'
@@ -321,6 +359,9 @@ def build_one(cache, output, offline, arch, build_number=None):
     for name in ['worker.php','session.sh','guard.sh']:
         core['opt/lib/nfqws2-asus/technical-channel/'+name] = local('asus/technical-channel/'+name,name.endswith('.sh'))
     core['opt/libexec/nfqws2-asus/update-launch'] = update_launcher(target)
+    core['opt/libexec/nfqws2-asus/sockets-launch'] = update_launcher(target, stem='sockets-launch', manifest='sockets-launchers.json', source='opkg-launch.c')
+    for name in ['worker.php', 'control.sh']:
+        core['opt/lib/nfqws2-asus/ip-health-sockets/'+name] = local('asus/ip-health-sockets/'+name, name == 'control.sh')
     core['opt/libexec/nfqws2-asus/location-launch'] = update_launcher(target, ROOT/'asus/share', 'location-launch')
     for name in ['worker.php', 'worker.sh', 'check.sh', 'lifecycle.sh']:
         core['opt/lib/nfqws2-asus/update/'+name] = local('asus/update/'+name, name in ['worker.sh', 'check.sh'])
@@ -345,6 +386,8 @@ def build_one(cache, output, offline, arch, build_number=None):
     # Keep the pinned upstream profile construction, including IPv6 binding.
     core['opt/lib/nfqws2-asus/args.sh'] = ('#!/bin/sh\n'+args[0]+'\n').encode(), 0o644
     core['opt/etc/init.d/S51nfqws2'] = local('asus/S51nfqws2', True)
+    for name in ['runtime.sh', 'worker.php', 'monitor.lua', 'dns.lua', 'control.sh']:
+        core['opt/lib/nfqws2-asus/ip-health/'+name] = local('ip-health/'+name, name == 'control.sh')
     busybox = asset(target['busybox_asset'], cache, offline)
     validate_elf(busybox['opt/bin/busybox'], target, 'busybox')
     shell_path = '/opt/libexec/nfqws2-asus/busybox'
@@ -364,19 +407,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     licenses(core, 'nfqws2-asus')
     conffiles = ''  # Active NFQWS2 config/lists are created once, never unpacked over.
 
-    dist = ROOT/'webui/web/dist'
-    for name in ['index.html', 'index.php', 'update-rollback.php', 'update-smartdns-resume.php', 'asus.php', 'ark.php', 'platform.php', 'restart-schedule.php', 'resource-paths.php', 'support-report.php',
-                 'support-report-io.php', 'support-report-values.php',
-                 'support-report-platform.php', 'support-report-network.php',
-                 'support-mail.php', 'support-mail-proof.php', 'support-report-dns.php',
-                 'share-api.php', 'share-bundle.php', 'share-source.php', 'share-strategy.php',
-                 'share-location-worker.php', 'dpi-saved-store.php', 'dpi-saved-projector.php',
-                 'import-api.php', 'import-config.php', 'import-document.php',
-                 'import-plan.php', 'import-store.php', 'import-transaction.php', 'import-keenetic.php', 'blob-api.php', 'blob-store.php']:
-        if not (dist/name).is_file():
-            raise RuntimeError('Build frontend first: cd webui/web && corepack yarn openapi && corepack yarn build')
-    web = {'opt/share/nfqws-asus-web/'+str(p.relative_to(dist)): (p.read_bytes(), 0o644)
-           for p in sorted(dist.rglob('*')) if p.is_file() and not p.name.endswith('.map')}
+    web = web_payload()
     light = asset(target['lighttpd_asset'], cache, offline)
     cgi = asset(target['mod_cgi_asset'], cache, offline)
     validate_elf(light['opt/sbin/lighttpd'], target, 'lighttpd')

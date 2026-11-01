@@ -42,5 +42,17 @@
   "nfqws2-keenetic_1.3.2_all_entware.ipk": {
     "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.2/nfqws2-keenetic_1.3.2_all_entware.ipk",
     "sha256": "6de14a39345e05c887cd0d9af573bf42b4a489773d36011079c6f5c2fe2a0dd9"
+  },
+  "php8-mod-sockets_8.2.8-1_armv7-2.6.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k2.6/php8-mod-sockets_8.2.8-1_armv7-2.6.ipk",
+    "sha256": "ca2b4baf82b6a370f65f3d651eedf7b7589760ef873e42ea29202aee8669ed43"
+  },
+  "php8-mod-sockets_8.4.16-4_armv7-3.2.ipk": {
+    "url": "https://bin.entware.net/armv7sf-k3.2/php8-mod-sockets_8.4.16-4_armv7-3.2.ipk",
+    "sha256": "fb36c35006bc436ad63f556ba829a19079c7a86339f4c3966fd038165219f872"
+  },
+  "php8-mod-sockets_8.4.16-4_aarch64-3.10.ipk": {
+    "url": "https://bin.entware.net/aarch64-k3.10/php8-mod-sockets_8.4.16-4_aarch64-3.10.ipk",
+    "sha256": "c9f6ea5ba2894fd3cb978d8594a7518ee914d73478d3010ca8fb7c533d1b0027"
   }
 }

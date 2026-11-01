@@ -27,6 +27,7 @@ class IpHealthRuntimeTests(unittest.TestCase):
         (self.proc/'sys/kernel/random/boot_id').write_text(self.boot+'\n')
         (self.proc/'net/netfilter').mkdir(parents=True)
         self.queue=self.proc/'net/netfilter/nfnetlink_queue';self.queue.write_text('301 42 0 2 65535 0 0 0 1\n')
+        self.netlink=self.proc/'net/netlink';self.netlink.write_text('sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n00000000 12 42 00000000 0 0 0 2 0 123456\n')
         self.engine=self.root/'nfqws2';self.engine.write_text('fixture');self.engine.chmod(0o755)
         for pid,ticks in [(41,500),(42,600)]:
             p=self.proc/str(pid);p.mkdir()
@@ -34,6 +35,8 @@ class IpHealthRuntimeTests(unittest.TestCase):
             (p/'exe').symlink_to(self.engine)
             (p/'status').write_text('Uid:\t'+('\t'.join([str(os.getuid())]*4))+'\n')
             (p/'cmdline').write_bytes(str(self.engine).encode()+b'\0--qnum=301\0')
+            (p/'fd').mkdir()
+        (self.proc/'42/fd/5').symlink_to('socket:[123456]')
         self.now=int(time.time())
         self.facts={'schema_version':1,'boot_id':self.boot,'core_pid':41,'core_start_ticks':'500',
                     'observer_pid':42,'observer_start_ticks':'600','queue':301,'interface':'eth0',
@@ -43,7 +46,7 @@ class IpHealthRuntimeTests(unittest.TestCase):
     def write_facts(self):
         path=self.private/'runtime.json';path.write_text(json.dumps(self.facts));path.chmod(0o600)
 
-    def tick(self, available=True, busy=False):
+    def tick(self, available=True, busy=False, runtime_public=PUBLIC):
         source=PUBLIC/'ip-health-runtime.php'
         self.assertTrue(source.is_file(),'IP health runtime is missing')
         code=r'''require $argv[1].'/ip-health-runtime.php';
@@ -55,7 +58,7 @@ class IpHealthRuntimeTests(unittest.TestCase):
         $lease=function(){if($GLOBALS['busy'])throw new RuntimeException('busy');return null;};$GLOBALS['busy']=$argv[9]==='1';
         $runtime=new NfqwsIpHealthRuntime($store,$argv[2].'/private',$argv[2].'/run',$argv[2].'/proc',$argv[3],(int)$argv[4],$probe,$lease);
         $runtime->tick((int)$argv[5]);echo json_encode(['status'=>$store->status((int)$argv[5]),'calls'=>$probe->calls]);'''
-        p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(self.root),str(self.engine),str(os.getuid()),str(self.now),'unused','unused','1'if available else'0','1'if busy else'0'],capture_output=True,text=True,timeout=5)
+        p=subprocess.run([PHP,'-n','-r',code,str(runtime_public),str(self.root),str(self.engine),str(os.getuid()),str(self.now),'unused','unused','1'if available else'0','1'if busy else'0'],capture_output=True,text=True,timeout=5)
         self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');return json.loads(p.stdout)
 
     def observe(self):
@@ -66,6 +69,122 @@ class IpHealthRuntimeTests(unittest.TestCase):
         self.assertEqual(len(v['calls']),3);self.assertEqual(v['status']['entries'][0]['until'],self.now+86400)
         self.assertEqual(self.log.read_text(),'');manifest=self.run/'active.txt'
         self.assertIn(f'expires {self.now+15}',manifest.read_text());self.assertEqual(manifest.stat().st_mode&0o777,0o644)
+
+    def test_daemon_owns_queue_by_netlink_socket_not_parent_port_id(self):
+        # nfqws2 binds before --daemon forks; the peer port remains the parent PID.
+        self.queue.write_text('301 40 0 2 65535 0 0 0 1\n')
+        self.netlink.write_text('sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n00000000 12 40 00000000 0 0 0 2 0 123456\n')
+        self.observe();v=self.tick()
+        self.assertEqual(v['status']['runtime']['state'],'active')
+        self.assertEqual(len(v['calls']),3)
+
+    def test_queue_socket_requires_unambiguous_netfilter_inode_owned_by_daemon(self):
+        header='sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n'
+        row='00000000 12 42 00000000 0 0 0 2 0 123456\n'
+        cases={
+            'foreign inode':header+row.replace('123456','999999'),
+            'wrong netlink protocol':header+row.replace(' 12 ',' 0 '),
+            'duplicate port':header+row+row.replace('123456','999999'),
+            'duplicate inode':header+row+row.replace(' 42 ',' 99 '),
+            'bad header':header.replace('Inode','Unknown')+row,
+            'truncated row':header+'00000000 12 42\n',
+            'oversized table':header+row+'x'*65536,
+        }
+        for name,table in cases.items():
+            with self.subTest(name=name):
+                self.netlink.write_text(table);self.observe();v=self.tick()
+                self.assertEqual(v['calls'],[])
+                self.assertEqual(v['status']['runtime']['code'],'queue_in_use')
+                self.assertTrue(self.log.read_text())
+                self.assertIn('enabled 0',(self.run/'active.txt').read_text())
+
+    def test_queue_socket_missing_or_unreadable_fd_fails_open(self):
+        descriptor=self.proc/'42/fd/5'
+        for kind in ['foreign socket','plain file','missing fd directory','missing netlink','duplicate queue','oversized queue']:
+            with self.subTest(kind=kind):
+                if descriptor.is_symlink() or descriptor.exists():descriptor.unlink()
+                if not descriptor.parent.exists():descriptor.parent.mkdir()
+                self.netlink.write_text('sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n00000000 12 42 00000000 0 0 0 2 0 123456\n')
+                self.queue.write_text('301 42 0 2 65535 0 0 0 1\n')
+                if kind=='foreign socket':descriptor.symlink_to('socket:[999999]')
+                elif kind=='plain file':descriptor.write_text('socket:[123456]')
+                else:
+                    descriptor.symlink_to('socket:[123456]')
+                    if kind=='missing fd directory':descriptor.unlink();descriptor.parent.rmdir()
+                    elif kind=='missing netlink':self.netlink.unlink()
+                    elif kind=='duplicate queue':self.queue.write_text(self.queue.read_text()*2)
+                    else:self.queue.write_text(self.queue.read_text()+'x'*65536)
+                self.observe();v=self.tick();self.assertEqual(v['calls'],[])
+                self.assertEqual(v['status']['runtime']['code'],'queue_in_use')
+                self.assertTrue(self.log.read_text())
+
+    def instrumented_runtime(self, marker, inserted):
+        # Mutate the real fixture proc boundary at a deterministic read checkpoint.
+        # Production has no hooks; dependency classes remain their unmodified sources.
+        app=self.root/'runtime-app';app.mkdir(exist_ok=True)
+        source=(PUBLIC/'ip-health-runtime.php').read_text()
+        source=source.replace("require_once __DIR__.'/ip-health-controller.php';",'require_once '+json.dumps(str(PUBLIC/'ip-health-controller.php'))+';')
+        self.assertEqual(source.count(marker),1)
+        (app/'ip-health-runtime.php').write_text(source.replace(marker,inserted+marker))
+        return app
+
+    def test_queue_proof_rechecks_socket_tuple_and_descriptor_before_use(self):
+        for changed in ['queue','netlink','descriptor']:
+            with self.subTest(changed=changed):
+                self.queue.write_text('301 42 0 2 65535 0 0 0 1\n')
+                self.netlink.write_text('sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n00000000 12 42 00000000 0 0 0 2 0 123456\n')
+                descriptor=self.proc/'42/fd/5'
+                if descriptor.is_symlink():descriptor.unlink()
+                descriptor.symlink_to('socket:[123456]')
+                if changed=='queue':mutate='file_put_contents('+json.dumps(str(self.queue))+',"301 99 0 2 65535 0 0 0 1\\n");'
+                elif changed=='netlink':mutate='file_put_contents('+json.dumps(str(self.netlink))+',"sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\\n00000000 12 42 00000000 0 0 0 2 0 999999\\n");'
+                else:mutate='unlink('+json.dumps(str(descriptor))+');symlink("socket:[999999]",'+json.dumps(str(descriptor))+');'
+                app=self.instrumented_runtime('// Re-read the selected tuple',mutate)
+                self.observe();v=self.tick(runtime_public=app)
+                self.assertEqual(v['calls'],[]);self.assertEqual(v['status']['runtime']['code'],'queue_in_use')
+                self.assertTrue(self.log.read_text())
+
+    def test_queue_proof_rechecks_process_identity_and_boot_after_fd_walk(self):
+        for changed in ['observer','core','boot']:
+            with self.subTest(changed=changed):
+                for pid,ticks in [(41,500),(42,600)]:
+                    (self.proc/str(pid)/'stat').write_text(f'{pid} (nfqws2) S '+'0 '*18+str(ticks)+' 0\n')
+                (self.proc/'sys/kernel/random/boot_id').write_text(self.boot+'\n')
+                if changed=='boot':path=self.proc/'sys/kernel/random/boot_id';content='aaaaaaaa-2222-3333-4444-555555555555\n'
+                else:
+                    pid=42 if changed=='observer' else 41;path=self.proc/str(pid)/'stat';content=f'{pid} (reused pid) S '+'0 '*18+'999 0\n'
+                mutate='file_put_contents('+json.dumps(str(path))+','+json.dumps(content)+');'
+                marker="        if(trim((string)@file_get_contents($this->proc.'/sys/kernel/random/boot_id'))!==$v['boot_id']||"
+                app=self.instrumented_runtime(marker,'        '+mutate)
+                self.observe();v=self.tick(runtime_public=app)
+                self.assertEqual(v['calls'],[])
+                self.assertEqual(v['status']['runtime']['code'],'unavailable'if changed=='observer'else'core_stopped')
+                self.assertTrue(self.log.read_text())
+
+    def test_large_socket_numbers_and_legacy_netlink_dump_pointer_are_supported(self):
+        for port in ['4294967295','-2147483648']:
+            with self.subTest(port=port):
+                inode='18446744073709551615'
+                self.queue.write_text(f'301 {port} 0 2 65535 0 0 0 1\n')
+                # Linux2.6 uses signed port IDs and a pointer in the Dump column.
+                self.netlink.write_text(f'sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n00000000 12 {port} 00000000 0 0 deadbeef 2 0 {inode}\n00000000 0 {port} 00000000 0 0 0 2 0 98\n')
+                descriptor=self.proc/'42/fd/5';descriptor.unlink();descriptor.symlink_to(f'socket:[{inode}]')
+                self.assertEqual(self.tick()['status']['runtime']['state'],'active')
+
+    def test_noncanonical_or_out_of_range_port_ids_fail_closed(self):
+        for port in ['0','-0','042','4294967296','-2147483649']:
+            with self.subTest(port=port):
+                self.queue.write_text(f'301 {port} 0 2 65535 0 0 0 1\n')
+                self.netlink.write_text(f'sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n00000000 12 {port} 00000000 0 0 0 2 0 123456\n')
+                v=self.tick();self.assertEqual(v['status']['runtime']['code'],'queue_in_use')
+
+    def test_fd_walk_is_bounded_and_duplicate_owned_descriptors_are_valid(self):
+        fd=self.proc/'42/fd'
+        (fd/'6').symlink_to('socket:[123456]')
+        self.assertEqual(self.tick()['status']['runtime']['state'],'active')
+        for number in range(10,1034):(fd/str(number)).symlink_to('/dev/null')
+        self.observe();v=self.tick();self.assertEqual(v['calls'],[])
+        self.assertEqual(v['status']['runtime']['code'],'queue_in_use')
 
     def test_entware_opt_alias_matches_the_actual_process_executable(self):
         alias=self.root/'opt-alias';alias.symlink_to(self.root,target_is_directory=True)
@@ -115,6 +234,21 @@ class IpHealthRuntimeTests(unittest.TestCase):
         state=self.root/'state/bans.json';stamp=state.stat().st_mtime_ns;self.tick();self.assertEqual(state.stat().st_mtime_ns,stamp)
         self.facts['boot_id']='aaaaaaaa-2222-3333-4444-555555555555';self.write_facts()
         v=self.tick();self.assertEqual(v['calls'],[]);self.assertNotEqual(v['status']['runtime']['state'],'active')
+
+    def test_actual_worker_enabled_read_is_inert_and_respects_saved_disable(self):
+        source=PUBLIC.parents[2]/'ip-health/worker.php';app=self.root/'enabled-app';app.mkdir()
+        for path in PUBLIC.glob('*.php'):shutil.copyfile(path,app/path.name)
+        root_status=self.root/'root-status';root_status.write_text('Uid:\t0\t0\t0\t0\n')
+        code=source.read_text().replace('/proc/self/status',str(root_status)).replace('/opt/share/nfqws-asus-web',str(app))
+        code=code.replace('$store=new NfqwsIpHealthStore();',f'$store=new NfqwsIpHealthStore({json.dumps(str(self.root/"state"))},{json.dumps(str(self.run))});')
+        entry=self.root/'enabled.php';entry.write_text(code)
+        def enabled():return subprocess.run([PHP,'-n',str(entry),'enabled'],capture_output=True,text=True,timeout=2)
+        result=enabled();self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertFalse((self.root/'state').exists(),'reading default enabled must not create a journal or lock')
+        script='require $argv[1]."/ip-health-store.php";$s=new NfqwsIpHealthStore($argv[2]."/state",$argv[2]."/run");$s->configure(false,$s->status()["revision"]);'
+        subprocess.run([PHP,'-n','-r',script,str(PUBLIC),str(self.root)],check=True,capture_output=True)
+        saved=(self.root/'state/bans.json').read_bytes();result=enabled()
+        self.assertEqual(result.returncode,1,result.stdout+result.stderr);self.assertEqual((self.root/'state/bans.json').read_bytes(),saved)
 
     def test_actual_worker_survives_hup_and_duplicate_keeps_held_lease(self):
         source=PUBLIC.parents[2]/'ip-health/worker.php';self.assertTrue(source.exists())

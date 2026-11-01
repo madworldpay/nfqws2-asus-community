@@ -26,8 +26,37 @@ final class NfqwsRestartSchedule
         if($cmd==='restartschedulesave'&&(!in_array($post['enabled'],['0','1'],true)||!in_array($post['watchdog_enabled'],['0','1'],true)||
             !preg_match('/^[1-9][0-9]{0,2}$/D',$post['interval_hours'])||(int)$post['interval_hours']>168))throw new RuntimeException('invalid_request');
     }
+    /** Timer-only ASUS anchors. Stock firmware mount parents are not managed
+     * directories; every directory below the validated anchor stays strict. */
+    private function guardedFile(string $directory,string $name,bool $volatile=false):string
+    {
+        if(NfqwsPlatform::native())return NfqwsPlatform::guardFile($directory,$name,$this->owner);
+        $boundary=null;
+        if($volatile&&$directory==='/tmp/nfqws2-asus'){
+            clearstatcache(true,'/tmp');$s=@lstat('/tmp');
+            if(!$s||$s['uid']!==0||($s['mode']&0170000)!==0040000)throw new RuntimeException('invalid_state');
+            $boundary='/tmp';
+        }elseif(!$volatile){
+            clearstatcache(true,'/opt');$opt=realpath('/opt');
+            if($opt!==false&&$opt!=='/'&&$directory===$opt.'/etc/nfqws2'){
+                $alias=@lstat('/opt');clearstatcache(true,$opt);$s=@lstat($opt);
+                if(!$alias||$alias['uid']!==0||!in_array($alias['mode']&0170000,[0040000,0120000],true)||!$s||$s['uid']!==0||($s['mode']&0170000)!==0040000||($s['mode']&07022)!==0)throw new RuntimeException('invalid_state');
+                $boundary=$opt;
+            }
+        }
+        if($boundary===null)return NfqwsPlatform::guardFile($directory,$name,$this->owner);
+        if(!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D',$name)||in_array($name,['.','..'],true))throw new RuntimeException('invalid_state');
+        for($p=$directory;$p!==$boundary;$p=dirname($p)){
+            clearstatcache(true,$p);$s=@lstat($p);
+            if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$this->owner||($s['mode']&07022)!==0)throw new RuntimeException('invalid_state');
+        }
+        if($volatile&&($s['mode']&07777)!==0700)throw new RuntimeException('invalid_state');
+        $path=$directory.'/'.$name;clearstatcache(true,$path);$s=@lstat($path);
+        if($s!==false&&(($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||$s['nlink']!==1||($s['mode']&07777)!==0600))throw new RuntimeException('invalid_state');
+        return $path;
+    }
     private function path():string
-    {try{return NfqwsPlatform::guardFile($this->directory,'restart-schedule.conf',$this->owner);}catch(Throwable $e){throw new RuntimeException('invalid_state');}}
+    {try{return $this->guardedFile($this->directory,'restart-schedule.conf');}catch(Throwable $e){throw new RuntimeException('invalid_state');}}
     private function record():array
     {
         $path=$this->path();clearstatcache(true,$path);$s=@lstat($path);
@@ -45,7 +74,7 @@ final class NfqwsRestartSchedule
         if(!$record['watchdog_enabled'])return $value;
         $directory=$this->runtime??(NfqwsPlatform::native()?'/var/run/nfqws2-native':'/tmp/nfqws2-asus');
         if(@lstat($directory)===false)return $value;
-        try{$path=NfqwsPlatform::guardFile($directory,'watchdog-state',$this->owner);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
+        try{$path=$this->guardedFile($directory,'watchdog-state',true);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
         $s=@lstat($path);if($s===false)return $value;
         if($s['uid']!==$this->owner||($s['mode']&0777)!==0600||$s['size']>128)throw new RuntimeException('invalid_state');
         $raw=(string)file_get_contents($path);
@@ -72,7 +101,7 @@ final class NfqwsRestartSchedule
         $revision=($enabled===$previous['enabled']&&$hours===$previous['interval_hours'])?$previous['revision']:null;
         $watchdogRevision=$watchdog===$previous['watchdog_enabled']?$previous['watchdog_revision']:null;
         $raw='enabled='.($enabled?'1':'0')."\ninterval_hours=$hours\nwatchdog_enabled=".($watchdog?'1':'0')."\nrevision=".($revision??bin2hex(random_bytes(16)))."\nwatchdog_revision=".($watchdogRevision??bin2hex(random_bytes(16)))."\n";
-        $path=$this->path();$tmp=NfqwsPlatform::guardFile($this->directory,'.restart-schedule-'.bin2hex(random_bytes(12)),$this->owner);
+        $path=$this->path();$tmp=$this->guardedFile($this->directory,'.restart-schedule-'.bin2hex(random_bytes(12)));
         $mask=umask(0077);try{$f=@fopen($tmp,'xb');}finally{umask($mask);}
         if(!$f)throw new RuntimeException('invalid_state');
         try{if(fwrite($f,$raw)!==strlen($raw)||!fflush($f)||(function_exists('fsync')&&!fsync($f)))throw new RuntimeException('invalid_state');

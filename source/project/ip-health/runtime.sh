@@ -12,6 +12,11 @@ asus_ip_health_php() {
     fi
 }
 
+asus_ip_health_queue_sockets() {
+    [ -x /opt/lib/nfqws2-asus/ip-health-sockets/control.sh ] || return 0
+    /opt/lib/nfqws2-asus/ip-health-sockets/control.sh queue 7>&- 8>&- 9>&-
+}
+
 asus_ip_health_directory() {
     local path=$1 mode=$2 hex=$3
     [ ! -L "$path" ] || return 1
@@ -33,6 +38,9 @@ asus_ip_health_rules() {
             done
         fi
     done
+    # FORWARD sees transit replies from VPNs/other uplinks as well. Restrict
+    # only that hook to this generation's WAN; OUTPUT retains local DNS scope.
+    printf '%s\n' "-A nfqh_forward -i $ASUS_WAN -j nfqh_local"
     if [ "$ASUS_CLIENT_MODE" = include ]; then
         for addr in $clients; do
             printf '%s\n' "-A nfqh_pre -i $ASUS_WAN -m conntrack --ctdir $reply --ctorigsrc $addr -j nfqh_in"
@@ -45,7 +53,6 @@ asus_ip_health_rules() {
         [ -z "$ASUS_HEALTH_LAN" ] || printf '%s\n' "-A nfqh_local -o $ASUS_HEALTH_LAN -p udp --sport 53 -j NFQUEUE --queue-num $ASUS_HEALTH_QUEUE --queue-bypass"
     fi
     printf '%s\n' "-A nfqh_in -p tcp --sport 443 -j NFQUEUE --queue-num $ASUS_HEALTH_QUEUE --queue-bypass"
-    printf '%s\n' "-A nfqh_in -p udp --sport 53 -j NFQUEUE --queue-num $ASUS_HEALTH_QUEUE --queue-bypass"
     printf '%s\n' "-A nfqh_out -p tcp --dport 443 -j NFQUEUE --queue-num $ASUS_HEALTH_QUEUE --queue-bypass"
     printf '%s\n' "-A nfqh_out -p udp --dport 443 -j NFQUEUE --queue-num $ASUS_HEALTH_QUEUE --queue-bypass"
 }
@@ -57,7 +64,7 @@ asus_ip_health_firewall_family() {
     (umask 077; set -C; : > "$ASUS_HEALTH_PRIVATE/chains$family") || return 1
     # Atomic -N refuses foreign chains. Record only successful creations; never
     # flush a pre-existing name or claim it after a failed create.
-    for chain in nfqh_pre nfqh_post nfqh_local nfqh_in nfqh_out; do
+    for chain in nfqh_pre nfqh_post nfqh_forward nfqh_local nfqh_in nfqh_out; do
         "$cmd" -w -t mangle -N "$chain" || return 1
         printf '%s\n' "$chain" >> "$ASUS_HEALTH_PRIVATE/chains$family"
     done
@@ -65,28 +72,36 @@ asus_ip_health_firewall_family() {
     while IFS= read -r line; do set -- $line; "$cmd" -w -t mangle "$@" || return 1; done < "$ASUS_HEALTH_PRIVATE/rules$family"
     "$cmd" -w -t mangle -I PREROUTING 1 -j nfqh_pre || return 1
     "$cmd" -w -t mangle -I POSTROUTING 1 -j nfqh_post || return 1
+    "$cmd" -w -t mangle -I FORWARD 1 -j nfqh_forward || return 1
     "$cmd" -w -t mangle -I OUTPUT 1 -j nfqh_local
 }
 
 asus_ip_health_firewall_stop() {
-    local family cmd marker chain parent
+    local family cmd marker chain chains parent
     for family in 4 6; do
         marker=$ASUS_HEALTH_PRIVATE/chains$family
         [ -f "$marker" ] && [ ! -L "$marker" ] || continue
         [ "$(LC_ALL=C ls -ln "$marker" | awk '{print $1 ":" $2 ":" $3}')" = '-rw-------:1:0' ] || continue
         cmd=iptables; [ "$family" != 6 ] || cmd=ip6tables
         # Remove only jumps to successfully created, recorded chains.
-        for parent in PREROUTING POSTROUTING OUTPUT; do
-            case "$parent" in PREROUTING) chain=nfqh_pre;; POSTROUTING) chain=nfqh_post;; OUTPUT) chain=nfqh_local;; esac
-            grep -Fx "$chain" "$marker" >/dev/null || continue
-            while "$cmd" -w -t mangle -D "$parent" -j "$chain" >/dev/null 2>&1; do :; done
+        for parent in PREROUTING POSTROUTING FORWARD OUTPUT; do
+            case "$parent" in
+                PREROUTING) chains=nfqh_pre;; POSTROUTING) chains=nfqh_post;;
+                # The second name cleans the prior unpublished test adapter.
+                # Both require recorded successful creation before any delete.
+                FORWARD) chains='nfqh_forward nfqh_local';; OUTPUT) chains=nfqh_local;;
+            esac
+            for chain in $chains; do
+                grep -Fx "$chain" "$marker" >/dev/null || continue
+                while "$cmd" -w -t mangle -D "$parent" -j "$chain" >/dev/null 2>&1; do :; done
+            done
         done
         # Internal references must be flushed before deleting owned chains.
-        for chain in nfqh_pre nfqh_post nfqh_local nfqh_in nfqh_out; do
+        for chain in nfqh_pre nfqh_post nfqh_forward nfqh_local nfqh_in nfqh_out; do
             grep -Fx "$chain" "$marker" >/dev/null || continue
             "$cmd" -w -t mangle -F "$chain" >/dev/null 2>&1 || :
         done
-        for chain in nfqh_pre nfqh_post nfqh_local nfqh_in nfqh_out; do
+        for chain in nfqh_pre nfqh_post nfqh_forward nfqh_local nfqh_in nfqh_out; do
             grep -Fx "$chain" "$marker" >/dev/null || continue
             "$cmd" -w -t mangle -X "$chain" >/dev/null 2>&1 || :
         done
@@ -115,6 +130,7 @@ asus_ip_health_start() {
     asus_running || return 0
     asus_ip_health_directory "$ASUS_HEALTH_PRIVATE" 700 41c0 || return 1
     asus_ip_health_directory "$ASUS_HEALTH_PUBLIC" 755 41ed || return 1
+    asus_ip_health_php enabled >/dev/null 2>&1 || { asus_ip_health_stop || :; return 0; }
     set -- $ASUS_WAN
     if [ "$#" != 1 ] || { [ "$(nvram get wan0_state_t 2>/dev/null)" = 2 ] && [ "$(nvram get wan1_state_t 2>/dev/null)" = 2 ]; }; then
         asus_ip_health_stop || :
@@ -131,7 +147,12 @@ asus_ip_health_start() {
     asus_ip_health_php healthy "$generation" "$pid" >/dev/null 2>&1 && return 0
     asus_ip_health_stop || return 1
     if awk -v q="$q" '$1==q {found=1} END{exit !found}' /proc/net/netfilter/nfnetlink_queue; then asus_ip_health_php inactive queue_in_use >/dev/null 2>&1; return 0; fi
-    asus_ip_health_php available "$ASUS_WAN" >/dev/null 2>&1 || return 0
+    if ! asus_ip_health_php available "$ASUS_WAN" >/dev/null 2>&1; then
+        # A loaded module cannot fix unsupported SO_MARK/BINDTODEVICE. Do not
+        # create a ready -> reconcile -> acquire loop on those kernels.
+        asus_ip_health_php module >/dev/null 2>&1 || asus_ip_health_queue_sockets >/dev/null 2>&1 || :
+        return 0
+    fi
     uid=$(id -u "$USER") && gid=$(id -g "$USER") || return 1
     if [ ! -e "$ASUS_HEALTH_PUBLIC/events" ] && [ ! -L "$ASUS_HEALTH_PUBLIC/events" ]; then
         mkdir -m 700 "$ASUS_HEALTH_PUBLIC/events" || return 1
@@ -160,5 +181,11 @@ asus_ip_health_start() {
     if ! asus_ip_health_firewall_family 4 || { [ "$IPV6_ENABLED" = 1 ] && ! asus_ip_health_firewall_family 6; }; then
         asus_ip_health_stop || :; return 1
     fi
-    (trap '' HUP; asus_ip_health_php loop </dev/null >"$ASUS_HEALTH_PRIVATE/worker.log" 2>&1 7>&- 8>&- 9>&- &)
+    (
+        trap '' HUP
+        # Ash saves function redirections in extra FDs until it returns. Drop
+        # inherited leases and caller stdio in this child before the function.
+        exec </dev/null >"$ASUS_HEALTH_PRIVATE/worker.log" 2>&1 7>&- 8>&- 9>&-
+        asus_ip_health_php loop &
+    )
 }

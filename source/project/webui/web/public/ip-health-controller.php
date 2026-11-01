@@ -29,7 +29,14 @@ final class NfqwsIpHealthController
         });
         // Ordinary retests consume one probe. A queued manual recheck of a
         // suspended network requires a fresh control and both neutral SNIs.
-        foreach($state['entries'] as $id=>$entry){$queued=in_array($id,$state['recheck'],true);$suspended=$entry['generation']!==$generation;if($suspended&&!$queued)continue;if(!$queued&&($entry['last_check']??$entry['first_seen'])>$now-900)continue;
+        // Explicit requests precede automatic work. Pick the oldest check
+        // next so a slow, full list cannot repeatedly favor its first entries.
+        $queuedIds=array_fill_keys($state['recheck'],true);$entries=$state['entries'];
+        uasort($entries,static function(array $a,array $b)use($queuedIds):int{
+            $priority=(int)isset($queuedIds[$b['id']])-(int)isset($queuedIds[$a['id']]);
+            return $priority?:(($a['last_check']??$a['first_seen'])<=>($b['last_check']??$b['first_seen']));
+        });
+        foreach($entries as $id=>$entry){$queued=in_array($id,$state['recheck'],true);$suspended=$entry['generation']!==$generation;if($suspended&&!$queued)continue;if(!$queued&&($entry['last_check']??$entry['first_seen'])>$now-900)continue;
             if($suspended){$answer='unknown';if($this->probe->check('1.1.1.1',self::SNIS[0],$interface)==='replied'){$answer=$this->probe->check($entry['ip'],self::SNIS[0],$interface);if($answer==='silent'){$second=$this->probe->check($entry['ip'],self::SNIS[1],$interface);$answer=$second==='silent'?'silent':($second==='replied'?'replied':'unknown');}}}
             else $answer=$this->probe->check($entry['ip'],self::SNIS[0],$interface);
             $this->store->transaction(function(array &$v)use($id,$entry,$answer,$now,$generation,$suspended){if(!$v['enabled']||$v['generation']!==$generation||($v['entries'][$id]??null)!==$entry)return;$v['recheck']=array_values(array_diff($v['recheck'],[$id]));$e=&$v['entries'][$id];$e['last_check']=$now;$e['check_state']=in_array($answer,['silent','replied'],true)?$answer:'unknown';$e['successes']=$answer==='replied'?$e['successes']+1:0;if($suspended&&$answer==='silent')$e['generation']=$generation;if($e['successes']>=3)unset($v['entries'][$id]);},$now);return;

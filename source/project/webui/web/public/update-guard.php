@@ -57,6 +57,26 @@ final class AsusUpdateGuard
         if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-guard.php';return (new NfqwsOpenWrtUpdateGuard($this->store,$this->owner))->context($id);}
         $t=$this->ticket();if($t===null||$t['id']!==$id||$t['boot_id']!==AsusUpdateStore::boot()||!$this->worker($t)||!self::ancestor($t['worker']['pid']))throw new RuntimeException('invalid_state');return $t;
     }
+    /** Private failure journal only: closed proof states, never process details. */
+    public function diagnostic(string $id):array
+    {
+        if(NfqwsPlatform::native())return ['ticket'=>'unsupported'];
+        try{$t=$this->ticket();}catch(Throwable $e){return ['ticket'=>'invalid'];}
+        if($t===null)return ['ticket'=>'missing'];
+        $prefix=$this->store->path('operations/'.$t['id'].'/runtime').'/';
+        $worker=AsusUpdateLifecycle::identity($t['worker']['pid']);
+        $installer=$t['installer']===null?null:AsusUpdateLifecycle::identity($t['installer']['pid']);
+        $opkg=realpath($this->opkg);
+        $kind=function(?array $identity)use($prefix,$opkg):string{
+            if($identity===null)return 'missing';$exe=$identity['exe'];
+            if($exe===$prefix.'update-launch')return 'launcher';if($opkg!==false&&$exe===$opkg)return 'opkg';
+            if($exe===$prefix.'php')return 'php';if(str_starts_with($exe,$prefix.'lib/ld'))return 'loader';return 'other';
+        };
+        return ['ticket'=>'present','operation_matches'=>$t['id']===$id,'boot_matches'=>$t['boot_id']===AsusUpdateStore::boot(),'phase'=>$t['phase'],
+            'worker_alive'=>$this->worker($t),'worker_ancestor'=>self::ancestor($t['worker']['pid']),'worker_executable'=>$kind($worker),
+            'installer_alive'=>$this->installer($t),'installer_ancestor'=>$t['installer']!==null&&self::ancestor($t['installer']['pid']),
+            'installer_executable'=>$kind($installer),'recorded_installer_executable'=>$kind($t['installer'])];
+    }
     /** Caller holds this shared lease for its entire ordinary mutation. */
     public function mutationLease()
     {

@@ -16,8 +16,11 @@ final class NfqwsIpHealthRuntime
     }
     private function directory(string $path,int $uid,int $mode):void
     {
+        if($path===''||$path[0]!=='/'||str_contains($path,"\0")||preg_match('~(?:^|/)\.\.?(?:/|$)~',$path))throw new RuntimeException('invalid_state');
         for($p=$path;$p!=='/';$p=dirname($p)){
-            $s=@lstat($p);if(!$s||($s['mode']&0170000)!==0040000||!in_array($s['uid'],[0,$this->owner,$uid],true)||(($s['mode']&0022)!==0&&!($s['uid']===0&&($s['mode']&01000)!==0)))throw new RuntimeException('invalid_state');
+            clearstatcache(true,$p);$s=@lstat($p);if(!$s)throw new RuntimeException('invalid_state');
+            if(NfqwsIpHealthStore::systemDirectory($p,$s)){if($p==='/tmp')break;continue;}
+            if(($s['mode']&0170000)!==0040000||!in_array($s['uid'],[0,$this->owner,$uid],true)||($s['mode']&0022)!==0)throw new RuntimeException('invalid_state');
         }
         $s=lstat($path);if($s['uid']!==$uid||($s['mode']&0777)!==$mode)throw new RuntimeException('invalid_state');
     }
@@ -42,6 +45,57 @@ final class NfqwsIpHealthRuntime
         if($queue!==null){$args=explode("\0",(string)@file_get_contents($this->proc.'/'.$pid.'/cmdline'));if(!in_array('--qnum='.$queue,$args,true))return false;}
         return true;
     }
+    private function procLines(string $path):array
+    {
+        $raw=@file_get_contents($this->proc.$path,false,null,0,65537);
+        if(!is_string($raw)||strlen($raw)>65536||str_contains($raw,"\0"))throw new RuntimeException('queue_in_use');
+        $rows=explode("\n",trim($raw));if(count($rows)>4096)throw new RuntimeException('queue_in_use');return $rows;
+    }
+    /** Port IDs and socket inodes must remain strings on 32-bit PHP. */
+    private static function decimal(string $value,string $max):bool
+    {return preg_match('/^(?:0|[1-9][0-9]*)$/D',$value)===1&&(strlen($value)<strlen($max)||(strlen($value)===strlen($max)&&strcmp($value,$max)<=0));}
+    private static function port(string $value):bool
+    {
+        // Linux 2.6 prints the same u32 peer ID as signed in both proc tables.
+        return $value!==''&&$value!=='0'&&$value!=='-0'&&($value[0]==='-'?self::decimal(substr($value,1),'2147483648'):self::decimal($value,'4294967295'));
+    }
+    private function queueSocket(int $queue):array
+    {
+        $port=null;
+        foreach($this->procLines('/net/netfilter/nfnetlink_queue') as $line){
+            if($line==='')continue;$row=preg_split('/\s+/',trim($line));
+            if(count($row)!==9)throw new RuntimeException('queue_in_use');
+            if($row[0]!== (string)$queue)continue;
+            if($port!==null||!self::port($row[1]))throw new RuntimeException('queue_in_use');$port=$row[1];
+        }
+        if($port===null)throw new RuntimeException('queue_in_use');
+        $rows=$this->procLines('/net/netlink');$header=preg_split('/\s+/',trim(array_shift($rows)??''));
+        if($header!==['sk','Eth','Pid','Groups','Rmem','Wmem','Dump','Locks','Drops','Inode'])throw new RuntimeException('queue_in_use');
+        $inode=null;$seen=[];
+        foreach($rows as $line){
+            if($line==='')continue;$row=preg_split('/\s+/',trim($line));
+            if(count($row)!==10)throw new RuntimeException('queue_in_use');
+            if($row[1]==='12'&&$row[2]===$port){
+                if($inode!==null||$row[9]==='0'||!self::decimal($row[9],'18446744073709551615'))throw new RuntimeException('queue_in_use');$inode=$row[9];
+            }
+            $seen[]=$row[9];
+        }
+        if($inode===null||count(array_keys($seen,$inode,true))!==1)throw new RuntimeException('queue_in_use');
+        return [$port,$inode];
+    }
+    private function ownsQueue(array $facts):void
+    {
+        $socket=$this->queueSocket($facts['queue']);$directory=$this->proc.'/'.$facts['observer_pid'].'/fd';
+        $handle=@opendir($directory);if($handle===false)throw new RuntimeException('queue_in_use');$owned=null;$count=0;
+        try{while(($fd=readdir($handle))!==false){
+            if($fd==='.'||$fd==='..')continue;
+            if(++$count>1024||!self::decimal($fd,'2147483647'))throw new RuntimeException('queue_in_use');
+            $link=@readlink($directory.'/'.$fd);if(!is_string($link)||strlen($link)>4096)throw new RuntimeException('queue_in_use');
+            if($link==='socket:['.$socket[1].']')$owned=$fd;
+        }}finally{closedir($handle);}
+        // Re-read the selected tuple, rather than volatile packet counters.
+        if($owned===null||$this->queueSocket($facts['queue'])!==$socket||@readlink($directory.'/'.$owned)!=='socket:['.$socket[1].']')throw new RuntimeException('queue_in_use');
+    }
     private function facts(bool $live=true):array
     {
         $this->directory($this->privateDir,$this->owner,0700);$this->directory($this->runDir,$this->owner,0755);
@@ -53,9 +107,10 @@ final class NfqwsIpHealthRuntime
         if(!$live)return $v;
         if(!$this->identity($v['core_pid'],$v['core_start_ticks'],$v['engine_uid']))throw new RuntimeException('core_stopped');
         if(!$this->identity($v['observer_pid'],$v['observer_start_ticks'],$v['engine_uid'],$v['queue']))throw new RuntimeException('unavailable');
-        $queues=(string)@file_get_contents($this->proc.'/net/netfilter/nfnetlink_queue');if(strlen($queues)>65536)throw new RuntimeException('queue_in_use');$found=0;
-        foreach(explode("\n",trim($queues)) as $line){$row=preg_split('/\s+/',trim($line));if(($row[0]??null)===(string)$v['queue']){if(($row[1]??null)!==(string)$v['observer_pid'])throw new RuntimeException('queue_in_use');$found++;}}
-        if($found!==1)throw new RuntimeException('queue_in_use');return $v;
+        $this->ownsQueue($v);
+        if(trim((string)@file_get_contents($this->proc.'/sys/kernel/random/boot_id'))!==$v['boot_id']||!$this->identity($v['core_pid'],$v['core_start_ticks'],$v['engine_uid']))throw new RuntimeException('core_stopped');
+        if(!$this->identity($v['observer_pid'],$v['observer_start_ticks'],$v['engine_uid'],$v['queue']))throw new RuntimeException('unavailable');
+        return $v;
     }
     public function liveFacts():array{return $this->facts();}
     public function writePrivate(string $name,array $value):void
