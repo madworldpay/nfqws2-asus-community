@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "5ced0deaf966775a8b592f6bd95a33a67053b242a7c13654896cd9f2d36a0e37"
+    "sha256": "95aebc97bc646c67fdcd923a5965b001f3c8a5c4d3a77075112e12a3a311d760"
   },
   {
     "path": "LICENSE",
@@ -2226,8 +2226,8 @@
   },
   {
     "path": "tests/test_share_availability.mjs",
-    "bytes": 4337,
-    "sha256": "516e21106d49e63740a95e9781fd4213a11f32c1f4fd872cfd8b90c69ec35d4a"
+    "bytes": 4647,
+    "sha256": "2ad7c927b10966cff10796f5f1a9c9cd42dc342654dd67e8a474da635ffc463a"
   },
   {
     "path": "tests/test_share_bundle_api.py",
@@ -2303,6 +2303,11 @@
     "path": "tests/test_share_resources.py",
     "bytes": 7640,
     "sha256": "057cfe5bee873a47b68fc1bf2975d66453276aede9d7831693f5333bd368446e"
+  },
+  {
+    "path": "tests/test_share_retry_browser.mjs",
+    "bytes": 9765,
+    "sha256": "6f65c15c80b6f82f1c09cdd2ef96ec4968446c4f8ca7893e582f3b3486675a8f"
   },
   {
     "path": "tests/test_share_router_http.py",
@@ -3901,8 +3906,8 @@
   },
   {
     "path": "webui/web/src/components/ShareDialog.tsx",
-    "bytes": 20834,
-    "sha256": "51ac66f10cc14b6be47954630bb997ed58067f63791bcb3eb453a01a322f539c"
+    "bytes": 21657,
+    "sha256": "e823b4f30280da86d2969b4bb2f5e53ab39e59ba3832ca696d8b9469a90fb267"
   },
   {
     "path": "webui/web/src/components/ShareDnsSection.tsx",
@@ -4071,13 +4076,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 73497,
-    "sha256": "1a6c58eb57bab2e8fb656bed2177aea03486fcf4245f6ad47276c3b3f173ade4"
+    "bytes": 73545,
+    "sha256": "fa0716d9e40b68953b3ebc750c98663a1a91a7d03da46e77ffb0e272257205f2"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 119399,
-    "sha256": "e2c6d95bcc43bf11065e46d56dd09987974cdfd10f448cf17c1bd01ec038102f"
+    "bytes": 119287,
+    "sha256": "d5179127f1af5fd3c71e9f337e42531f300bb62be834dc9a403eb7cbf1f6897f"
   },
   {
     "path": "webui/web/src/types/types.ts",
