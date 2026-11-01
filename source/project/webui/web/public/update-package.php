@@ -72,7 +72,11 @@ final class AsusUpdatePackage
         if($s['size']!==($candidate['package']['size']??null))throw new RuntimeException('download_size');if(!hash_equals($candidate['package']['sha256'],hash_file('sha256',$path)))throw new RuntimeException('download_hash');
         $control=self::control($path,$family);
         if(($control['Package']??null)!=='nfqws2-asus'||($control['Version']??null)!==$candidate['package_version']||($control['Architecture']??null)!==($family==='armv7'?'all':$family)||($control['Replaces']??'')!=='nfqws-asus-web')throw new RuntimeException('invalid_package');
-        $db=self::database($status);if(!isset($db['nfqws2-asus'])||!preg_match('/^install (?:ok|user) installed$/D',$db['nfqws2-asus']['Status']??''))throw new RuntimeException('unsupported_version');
+        // Opkg marks the old version deinstall before running the new preinst.
+        // A failed preinst leaves that old, fully configured version installed.
+        // The explicit newer update can retry it through opkg without changing
+        // the database by hand. Pending payload states and held flags stay blocked.
+        $db=self::database($status);if(!isset($db['nfqws2-asus'])||!preg_match('/^(?:install|deinstall) (?:ok|user) installed$/D',$db['nfqws2-asus']['Status']??''))throw new RuntimeException('unsupported_version');
         $deps=self::dependencies($control['Depends']??'');if($deps!==self::dependencies($db['nfqws2-asus']['Depends']??''))throw new RuntimeException('dependency_change');
         foreach($deps as $p)if(!isset($db[$p])||!preg_match('/^install (?:ok|user) installed$/D',$db[$p]['Status']))throw new RuntimeException('missing_dependencies');
         foreach(array_filter(array_map('trim',explode(',',$control['Conflicts']??''))) as $p)if(!in_array($p,self::REPLACEES,true))throw new RuntimeException('invalid_package');

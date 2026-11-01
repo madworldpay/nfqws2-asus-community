@@ -4,8 +4,10 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import TelegramIcon from '@mui/icons-material/Telegram';
 import {
   Box,
+  Button,
   IconButton,
   Link,
   Stack,
@@ -15,6 +17,7 @@ import {
 
 import { API } from '@/api/client';
 
+import { MtprotoInstallDialog } from '@/components/MtprotoInstallDialog';
 import { TechnicalChannel } from '@/components/TechnicalChannel';
 import { ThemeMenu } from '@/components/ThemeMenu';
 
@@ -30,10 +33,14 @@ export const Footer = () => {
 
   const { mode } = useColorScheme();
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
+  const [mtprotoOpen, setMtprotoOpen] = useState(false);
 
   return (
     <>
       <TechnicalChannel />
+      {mtprotoOpen && (
+        <MtprotoInstallDialog onClose={() => setMtprotoOpen(false)} />
+      )}
       <Box
         sx={{
           display: 'flex',
@@ -44,11 +51,19 @@ export const Footer = () => {
           borderColor: 'divider',
           backgroundColor: 'background.paper',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
           gap: 2,
           alignItems: 'center',
           lineHeight: '28px',
         }}
       >
+        <Button
+          size="small"
+          startIcon={<TelegramIcon />}
+          onClick={() => setMtprotoOpen(true)}
+        >
+          {t('mtproto.button')}
+        </Button>
         <Stack
           direction="row"
           spacing={2}

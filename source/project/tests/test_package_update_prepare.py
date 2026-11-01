@@ -114,6 +114,18 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         self.assertIn('value',self.call(status=self.status().replace('install ok installed','install user installed')))
         self.assertEqual(self.call(status=self.status().replace('install ok installed','install hold installed')),{'error':'pending_packages'})
 
+    def test_fully_installed_own_package_can_retry_after_opkg_preinstall_abort(self):
+        for flag in ['ok','user']:
+            with self.subTest(flag=flag):
+                status=self.status().replace('Status: install ok installed',f'Status: deinstall {flag} installed',1)
+                self.assertIn('value',self.call(status=status))
+
+    def test_dependency_removal_and_own_purge_are_not_update_retries(self):
+        status=self.status().replace('Package: libc\nVersion: 1\nStatus: install ok installed','Package: libc\nVersion: 1\nStatus: deinstall user installed')
+        self.assertEqual(self.call(status=status),{'error':'missing_dependencies'})
+        status=self.status().replace('Status: install ok installed','Status: purge user installed',1)
+        self.assertEqual(self.call(status=status),{'error':'unsupported_version'})
+
     def test_obsolete_uninstalled_version_does_not_shadow_the_installed_package(self):
         obsolete='Package: nfqws2-asus\nVersion: 1.3.1-asus6+b7\nStatus: install prefer,user not-installed\n\n'
         for status in [obsolete+self.status(),self.status()+obsolete]:

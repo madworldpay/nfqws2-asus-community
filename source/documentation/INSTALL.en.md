@@ -27,19 +27,17 @@ Connect to the router over SSH with Entware ready and run:
 
 ```sh
 (
-  set -e
   umask 077
   nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir"
+  mkdir "$nfqws_dir" || exit 1
   trap 'rm -rf "$nfqws_dir"' 0
-  curl -fL --connect-timeout 10 --max-time 60 \
-    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
-    -o "$nfqws_dir/install.sh"
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
   sh "$nfqws_dir/install.sh"
 )
 ```
 
-The command is the same for supported ARMv7 and AArch64 packages.
+The same command works on ASUS/Entware and OpenWrt; the installer selects the package.
 
 The installer downloads the current IPK over HTTPS and verifies SHA256.
 The command above uses `curl` supplied with Merlin; the installer also supports GNU `wget`. Installation requires at least 128 MB of free Entware storage
@@ -107,19 +105,7 @@ If stopping fails, save diagnostics and investigate the cause; do not use force.
 
 ## OpenWrt
 
-The native package installs without Entware. Connect to the router over SSH as `root` and run:
-
-```sh
-(
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
-  trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
-  sh "$nfqws_dir/install.sh"
-)
-```
+**OpenWrt uses the same command above.** Connect to the router over SSH as `root`; Entware is not required.
 
 After installation, open the panel address, select devices and a strategy,
 save settings and start NFQWS2. To stop: `/etc/init.d/nfqws2-native stop`.

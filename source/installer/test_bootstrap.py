@@ -40,7 +40,7 @@ class BootstrapTests(unittest.TestCase):
     def commands(self):
         commands = [command for command in re.findall(r'```sh\n(.*?)\n```', (ROOT/'README.md').read_text(), re.S)
                     if 'nfqws_dir=/tmp/nfqws2-install.' in command]
-        self.assertEqual(len(commands), 2)
+        self.assertEqual(len(commands), 1)
         return commands
 
     def test_stock_shell_downloads_and_runs_without_mktemp(self):

@@ -61,6 +61,90 @@ package_healthy() {
     esac
 }
 
+# A failed new preinst runs after the old prerm has stopped the services. Only
+# restart the old services when their complete installed payload is unchanged.
+recovery_hash() {
+    if [ "$HASH_BUSYBOX" = 1 ]; then "$HASH" sha256sum "$1"; else "$HASH" "$1"; fi
+}
+recovery_entry() {
+    recovery_path=$1
+    case "$recovery_path" in /opt/*) ;; *) return 1;; esac
+    case "$recovery_path" in *'
+'*|*/../*|*/./*) return 1;; esac
+    if printf '%s' "$recovery_path" | LC_ALL=C grep -q '[[:cntrl:]]'; then return 1; fi
+    if [ -L "$recovery_path" ]; then
+        recovery_target=$(/bin/busybox readlink "$recovery_path" | recovery_hash -) || return 1
+        printf 'L|%s|%s\n' "${recovery_target%% *}" "$recovery_path"
+    elif [ -f "$recovery_path" ]; then
+        recovery_digest=$(recovery_hash "$recovery_path") || return 1
+        recovery_digest=${recovery_digest%% *}
+        recovery_exec=0
+        [ ! -x "$recovery_path" ] || recovery_exec=1
+        printf 'F|%s|%s|%s\n' "$recovery_digest" "$recovery_exec" "$recovery_path"
+    elif [ -d "$recovery_path" ]; then
+        printf 'D|%s\n' "$recovery_path"
+    else return 1; fi
+}
+recovery_manifest() {
+    recovery_list=/opt/lib/opkg/info/nfqws2-asus.list
+    [ -f "$recovery_list" ] && [ ! -L "$recovery_list" ] || return 1
+    recovery_entry "$recovery_list" || return 1
+    [ -x /opt/etc/init.d/S51nfqws2 ] && [ -x /opt/etc/init.d/S81nfqws-asus-web ] || return 1
+    recovery_entry /opt/etc/init.d/S51nfqws2 || return 1
+    recovery_entry /opt/etc/init.d/S81nfqws-asus-web || return 1
+    recovery_count=0
+    while IFS= read -r recovery_member || [ -n "$recovery_member" ]; do
+        [ -n "$recovery_member" ] || continue
+        recovery_count=$((recovery_count + 1))
+        [ "$recovery_count" -le 8192 ] || return 1
+        recovery_entry "$recovery_member" || return 1
+    done < "$recovery_list"
+    [ "$recovery_count" -gt 0 ] || return 1
+    # An interrupted old install can leave an incomplete opkg file receipt.
+    # Include the actual startup closure and its config, including absent roots.
+    for recovery_root in /opt/lib/nfqws2-asus /opt/lib/nfqws-asus-web /opt/libexec/nfqws2-asus /opt/libexec/nfqws-asus-web /opt/share/nfqws2 /opt/share/nfqws-asus-web /opt/etc/nfqws2 /opt/etc/nfqws-asus-web /opt/usr/bin/nfqws2 /opt/bin/nfqws2; do
+        if [ -d "$recovery_root" ] && [ ! -L "$recovery_root" ]; then
+            /bin/busybox find "$recovery_root" -print > "$WORK/recovery-paths" || return 1
+            /bin/busybox sort "$WORK/recovery-paths" > "$WORK/recovery-sorted" || return 1
+            while IFS= read -r recovery_member; do
+                recovery_count=$((recovery_count + 1))
+                [ "$recovery_count" -le 16384 ] || return 1
+                recovery_entry "$recovery_member" || return 1
+            done < "$WORK/recovery-sorted"
+        elif [ -e "$recovery_root" ] || [ -L "$recovery_root" ]; then
+            recovery_entry "$recovery_root" || return 1
+        else printf 'A|%s\n' "$recovery_root"; fi
+    done
+}
+restore_previous_services() {
+    [ -n "$previous_version" ] || return 0
+    read_package_status
+    recovery_valid=0
+    if [ "$installed" = "$previous_version" ] && [ "$recovery_ready" = 1 ]; then
+        case "$package_status" in
+            'install ok installed'|'install user installed'|'hold ok installed'|'deinstall ok installed'|'deinstall user installed')
+                if recovery_manifest > "$WORK/recovery-after"; then
+                    recovery_after=$(recovery_hash "$WORK/recovery-after") || recovery_after=''
+                    [ "${recovery_after%% *}" != "$recovery_before" ] || recovery_valid=1
+                fi
+                ;;
+        esac
+    fi
+    if [ "$recovery_valid" != 1 ]; then
+        say 'Автоматический запуск отменён: прежний пакет или его файлы изменились либо не удалось подтвердить их целостность. Сохраните вывод установки.'
+        return 1
+    fi
+    recovery_failed=0
+    if [ "$previous_core" = 1 ]; then /opt/etc/init.d/S51nfqws2 start || recovery_failed=1; fi
+    if [ "$previous_web" = 1 ]; then /opt/etc/init.d/S81nfqws-asus-web start || recovery_failed=1; fi
+    if [ "$recovery_failed" = 0 ]; then
+        say 'Прежнее состояние служб восстановлено; обновление не установлено.'
+    else
+        say 'Прежние службы не удалось полностью запустить. Сохраните вывод выше.'
+        return 1
+    fi
+}
+
 main() {
     WORK='' CHECK_ONLY=0
     case "${1-}" in
@@ -142,6 +226,14 @@ EOF
     if ! package_healthy; then
         case "$package_status:$installed" in
             ':'|'deinstall ok config-files:'*|'deinstall ok not-installed:'*|'purge ok not-installed:'*|'unknown ok not-installed:'*) installed='' ;;
+            'deinstall ok installed:'?*|'deinstall user installed:'?*)
+                # An aborted upgrade can mark the old package for removal before
+                # preinst runs, while leaving its configured payload installed.
+                # Retry a newer package through opkg; never rewrite its database
+                # or treat this wish as a healthy same-version/postflight result.
+                [ "$installed" != "$version" ] || fail 'Пакет установлен, но opkg сохранил незавершённое действие. Повторная установка той же версии автоматически не выполняется; сохраните вывод opkg status nfqws2-asus.'
+                say 'Повтор обновления после прерванной попытки…'
+                ;;
             *) fail "Предыдущая установка NFQWS2 ASUS не завершена (статус: $package_status). Сохраните вывод opkg status nfqws2-asus для исправления. Настройки и состояние службы не менялись." ;;
         esac
     fi
@@ -179,11 +271,27 @@ EOF
             no_start=0
         fi
     fi
+    previous_version=$installed previous_core=0 previous_web=0 recovery_ready=0
+    [ "$no_start" != 0 ] || previous_core=1
+    if [ -n "$installed" ]; then
+        if [ -x /opt/etc/init.d/S81nfqws-asus-web ] && /opt/etc/init.d/S81nfqws-asus-web status >/dev/null 2>&1; then previous_web=1; fi
+        if recovery_manifest > "$WORK/recovery-before"; then
+            recovery_before=$(recovery_hash "$WORK/recovery-before") || recovery_before=''
+            recovery_before=${recovery_before%% *}
+            [ -z "$recovery_before" ] || recovery_ready=1
+        fi
+    fi
+    if [ -n "$previous_version" ] && { [ "$previous_core" = 1 ] || [ "$previous_web" = 1 ]; } && [ "$recovery_ready" != 1 ]; then
+        fail 'Не удалось подготовить безопасное восстановление прежних служб. Установка не выполнялась, работающие службы не останавливались. Проверьте файлы NFQWS2 и сохраните вывод.'
+    fi
     mkdir "$WORK/opkg" || fail 'Не удалось подготовить временный каталог opkg.'
     say 'Обновление списка пакетов Entware…'
     "$OPKG" --tmp-dir "$WORK/opkg" update || fail 'Не удалось обновить список пакетов Entware. Установка не выполнялась.'
     say 'Установка NFQWS2 ASUS с сохранением настроек…'
-    NFQWS_ASUS_NO_START=$no_start "$OPKG" --tmp-dir "$WORK/opkg" install "$package" || fail 'opkg сообщил об ошибке установки. Сохраните вывод выше; принудительная установка не выполнялась.'
+    if ! NFQWS_ASUS_NO_START=$no_start "$OPKG" --tmp-dir "$WORK/opkg" install "$package"; then
+        restore_previous_services || :
+        fail 'opkg сообщил об ошибке установки. Сохраните вывод выше; принудительная установка не выполнялась.'
+    fi
     was_installed=$installed
     read_package_status
     [ "$installed" = "$version" ] && package_healthy || fail 'opkg завершился, но установка нужной версии не завершена. Сохраните вывод установки и opkg status nfqws2-asus.'
@@ -939,7 +1047,7 @@ final class AsusUpdateLifecycle
     {if(!$this->command('web','start')||!$this->command('web','status'))throw new RuntimeException('web_start_failed');}
 }
 
-// webui/web/public/update-package.php sha256=db96be2389b0028dca0deed0c74e8032526ef3020bb8803157ee9f2c2ad4d90b
+// webui/web/public/update-package.php sha256=d18fe84f068a86b2b83389fdf368dd0c44b30539213d9c2334b23fc46097c573
 /** Read only bounded control metadata; never extract or execute archive paths. */
 final class AsusUpdatePackage
 {
@@ -1013,7 +1121,11 @@ final class AsusUpdatePackage
         if($s['size']!==($candidate['package']['size']??null))throw new RuntimeException('download_size');if(!hash_equals($candidate['package']['sha256'],hash_file('sha256',$path)))throw new RuntimeException('download_hash');
         $control=self::control($path,$family);
         if(($control['Package']??null)!=='nfqws2-asus'||($control['Version']??null)!==$candidate['package_version']||($control['Architecture']??null)!==($family==='armv7'?'all':$family)||($control['Replaces']??'')!=='nfqws-asus-web')throw new RuntimeException('invalid_package');
-        $db=self::database($status);if(!isset($db['nfqws2-asus'])||!preg_match('/^install (?:ok|user) installed$/D',$db['nfqws2-asus']['Status']??''))throw new RuntimeException('unsupported_version');
+        // Opkg marks the old version deinstall before running the new preinst.
+        // A failed preinst leaves that old, fully configured version installed.
+        // The explicit newer update can retry it through opkg without changing
+        // the database by hand. Pending payload states and held flags stay blocked.
+        $db=self::database($status);if(!isset($db['nfqws2-asus'])||!preg_match('/^(?:install|deinstall) (?:ok|user) installed$/D',$db['nfqws2-asus']['Status']??''))throw new RuntimeException('unsupported_version');
         $deps=self::dependencies($control['Depends']??'');if($deps!==self::dependencies($db['nfqws2-asus']['Depends']??''))throw new RuntimeException('dependency_change');
         foreach($deps as $p)if(!isset($db[$p])||!preg_match('/^install (?:ok|user) installed$/D',$db[$p]['Status']))throw new RuntimeException('missing_dependencies');
         foreach(array_filter(array_map('trim',explode(',',$control['Conflicts']??''))) as $p)if(!in_array($p,self::REPLACEES,true))throw new RuntimeException('invalid_package');

@@ -172,6 +172,10 @@ The package includes NFQWS2, WebUI, embedded Lua and service utilities.
 
 </details>
 
+### Telegram proxy
+
+The **MTProto for Telegram** button at the bottom of the panel prepares installation with Docker, on ASUS with Entware, or on Linux with systemd. A `dd` secret, connection link and command are generated automatically, with copy buttons and a script download. Access away from home requires an externally reachable address and port. The installer preserves an existing proxy and NFQWS settings.
+
 ## Updates and profile catalog
 
 The strategy catalog is hosted on ASUS. User-submitted profiles and diagnostics
