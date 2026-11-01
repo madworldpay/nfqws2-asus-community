@@ -65,10 +65,12 @@
     "busy": "The panel is busy with another operation. Try saving again later.",
     "unsupported": "A scheduler is unavailable on this device. Scheduled restart was not enabled.",
     "scheduler_unavailable": "The scheduler is unavailable. You can turn off the timer and recovery.",
-    "session": "Your session has expired. Reload the page and sign in.",
+    "session": "Sign in again to save. Your changes are kept.",
     "request_failed": "Could not load or save settings. Try again.",
     "restart_failed": "Could not restart NFQWS2. Try again.",
-    "action_failed": "Could not run the command. Try again."
+    "action_failed": "Could not run the command. Try again.",
+    "recover": "Refresh session",
+    "csrf": "Refresh the session, then save again. Your changes are kept."
   },
   "common": {
     "start": "Start",
@@ -507,6 +509,17 @@
     "link_installation": "Link to previous submissions",
     "link_help": "Includes a random code for this installation to connect repeat reports. It is not derived from an IP, MAC or serial number. Unchecked means no code is sent. Model and firmware help compare results; a submitted strategy is not yet verified.",
     "preview": "Preview",
+    "preview_guidance": {
+      "selection": "Select what to include in the JSON.",
+      "purpose": "Fill in Service or purpose.",
+      "operator": "Fill in Internet provider / operator.",
+      "strategy": "Select a strategy block or the entire config.",
+      "draft": "Wait for the config to load, or click Refresh from config.",
+      "files": "Wait for the selected files to finish loading.",
+      "report": "Click Collect diagnostics.",
+      "session": "Reload the page and sign in to the panel.",
+      "download": "To download JSON to your device, click Preview → Download JSON. No sending setup is needed."
+    },
     "preview_steps": "Review the preview before sending to the developer.",
     "preview_hint": "The developer will receive the materials shown in this preview.",
     "source": "Model, firmware and submission details",
@@ -887,7 +900,17 @@
       "provider": "Provider presets",
       "global": "Global strategies",
       "updated": "Updated",
-      "update": "Update the package to use this preset."
+      "update": "Update the package to use this preset.",
+      "errors": {
+        "catalog_dns": "The router could not find the catalog server. Check DNS and retry.",
+        "catalog_tls": "The catalog certificate could not be verified. Check the router clock and Entware updates.",
+        "catalog_runtime": "HTTPS support is unavailable in Entware. Update the package dependencies.",
+        "catalog_connect": "The router could not connect to the catalog. Try again later.",
+        "catalog_http": "The catalog server did not return a list. Try again later.",
+        "catalog_timeout": "The catalog did not respond in time. Try again later.",
+        "unauthorized": "Your session expired. Sign in to the panel again.",
+        "forbidden": "The session changed. Reload the page and retry."
+      }
     },
     "keenetic": {
       "choose": "Paste a Keenetic strategy",

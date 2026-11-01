@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import en from '@/translations/en.json';
 import {
   Alert,
   Button,
@@ -15,10 +16,15 @@ import {
   type CatalogProfile,
   type ProfileCatalog,
 } from '@/api/profileCatalogClient';
+import { ShareError } from '@/api/shareClient';
 
 import { InlineHelp } from '@/components/InlineHelp';
 
 import { useTranslation } from '@/hooks/useTranslation';
+
+const catalogErrorCodes = Object.keys(
+  en.import.catalog.errors,
+) as (keyof typeof en.import.catalog.errors)[];
 
 export const ImportCatalog = ({
   csrfToken,
@@ -32,34 +38,41 @@ export const ImportCatalog = ({
   const { t, langcode } = useTranslation();
   const [catalog, setCatalog] = useState<ProfileCatalog>();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
-  const mounted = useRef(false);
+  const [error, setError] = useState<string>();
+  const generation = useRef(0);
   const pending = useRef(false);
   const refresh = useCallback(async () => {
     if (pending.current) return;
+    const epoch = generation.current;
     pending.current = true;
     setBusy(true);
-    setError(false);
+    setError(undefined);
     try {
       const result = await loadProfileCatalog(csrfToken);
-      if (mounted.current) setCatalog(result);
-    } catch {
-      if (mounted.current) {
+      if (generation.current === epoch) setCatalog(result);
+    } catch (e) {
+      if (generation.current === epoch) {
         setCatalog(undefined);
-        setError(true);
+        setError(e instanceof ShareError ? e.code : 'catalog_unavailable');
       }
     } finally {
-      pending.current = false;
-      if (mounted.current) setBusy(false);
+      if (generation.current === epoch) {
+        pending.current = false;
+        setBusy(false);
+      }
     }
   }, [csrfToken]);
   useEffect(() => {
-    mounted.current = true;
+    generation.current += 1;
+    pending.current = false;
+    setCatalog(undefined);
     void refresh();
     return () => {
-      mounted.current = false;
+      generation.current += 1;
+      pending.current = false;
     };
   }, [refresh]);
+  const knownError = catalogErrorCodes.find((code) => code === error);
   return (
     <Stack spacing={1}>
       <Stack direction="row" alignItems="center" spacing={1}>
@@ -76,7 +89,15 @@ export const ImportCatalog = ({
         </Button>
         {busy && <CircularProgress size={18} />}
       </Stack>
-      {error && <Alert severity="info">{t('import.catalog.offline')}</Alert>}
+      {error !== undefined && (
+        <Alert severity="info">
+          {t(
+            knownError
+              ? `import.catalog.errors.${knownError}`
+              : 'import.catalog.offline',
+          )}
+        </Alert>
+      )}
       {catalog?.profiles.length === 0 && (
         <Typography variant="body2">{t('import.catalog.empty')}</Typography>
       )}

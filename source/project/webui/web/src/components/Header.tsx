@@ -483,9 +483,8 @@ export const Header = () => {
           }}
         />
       )}
-      {auth && authenticated && csrfToken && scheduleOpen && (
+      {scheduleOpen && (
         <RestartScheduleDialog
-          key={csrfToken}
           csrfToken={csrfToken}
           onClose={() => setScheduleOpen(false)}
         />

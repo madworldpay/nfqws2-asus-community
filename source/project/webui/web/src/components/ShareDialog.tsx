@@ -177,6 +177,7 @@ export const ShareDialog = ({
   const [phase, setPhase] = useState('');
   const [error, setError] = useState<ShareErrorCode | ''>('');
   const [help, setHelp] = useState(false);
+  const [previewNotice, setPreviewNotice] = useState(false);
   const [saved, setSaved] = useState<'native' | 'browser'>();
   const revision = useRef({ value: 0 });
   const pending = useRef(false);
@@ -381,6 +382,28 @@ export const ShareDialog = ({
     files.selected.every((id) => !!files.copies[id]) &&
     (!reportSelected || !!report?.proof) &&
     validStrategy;
+  const previewGuidance = [
+    !token && t('share.preview_guidance.session'),
+    !(reportSelected || dpi || hasContributions) &&
+      t('share.preview_guidance.selection'),
+    hasContributions &&
+      !form.context.purpose.trim() &&
+      t('share.preview_guidance.purpose'),
+    hasContributions &&
+      !form.context.operator.trim() &&
+      t('share.preview_guidance.operator'),
+    strategySelected && !form.draft && t('share.preview_guidance.draft'),
+    strategySelected &&
+      !form.full &&
+      !form.selected.length &&
+      t('share.preview_guidance.strategy'),
+    files.selected.some((id) => !files.copies[id]) &&
+      t('share.preview_guidance.files'),
+    reportSelected && !report?.proof && t('share.preview_guidance.report'),
+    t('share.preview_guidance.download'),
+  ]
+    .filter(Boolean)
+    .join(' ');
   const prepare = () =>
     perform('prepare', async () => {
       // Retain the previous download and receipt if replacement preparation
@@ -664,6 +687,11 @@ export const ShareDialog = ({
         >
           {t('share.preview_steps')}
         </Typography>
+        {previewNotice && (
+          <Alert severity="info" role="status" sx={{ width: '100%' }}>
+            {previewGuidance}
+          </Alert>
+        )}
         {busy && (
           <Stack
             direction="row"
@@ -706,14 +734,31 @@ export const ShareDialog = ({
         <Button disabled={busy} onClick={onClose}>
           {t('common.close')}
         </Button>
-        <Button
-          disabled={disabled || !canPrepare}
-          onClick={() => void prepare()}
+        <Tooltip
+          title={previewGuidance}
+          describeChild
+          disableTouchListener
+          disableHoverListener={disabled}
+          disableFocusListener={disabled}
         >
-          {t('share.preview')}
-        </Button>
+          <span>
+            <Button
+              disabled={disabled}
+              onClick={() => {
+                if (!canPrepare) {
+                  setPreviewNotice(true);
+                  return;
+                }
+                setPreviewNotice(false);
+                void prepare();
+              }}
+            >
+              {t('share.preview')}
+            </Button>
+          </span>
+        </Tooltip>
         <InlineHelp title={t('share.preview')}>
-          <Typography>{t('share.preview_help')}</Typography>
+          <Typography>{previewGuidance}</Typography>
         </InlineHelp>
         <ShareDeliveryButtons
           mail={state?.mail}

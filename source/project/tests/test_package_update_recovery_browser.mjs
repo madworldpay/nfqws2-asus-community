@@ -70,6 +70,7 @@ try {
       res.end(JSON.stringify(value));
     };
     if (cmd === 'packageupdatestatus') {
+      if (fixture.statusBusy) return respond({ error: 'busy' }, 409);
       if (fixture.holdStatus) { fixture.heldStatus.push(respond); return; }
       return respond(fixture.overview);
     }
@@ -121,6 +122,8 @@ try {
 
     // Keeping a check error after a later successful status is the reported bug.
     await run('busy-status-recovery', { check: 'busy', overview: { check: { ...current, state: 'checking' }, operation: null } }, async (page, fixture) => {
+      await waitFor(page, '!s.pending && s.data');
+      await page.evaluate(() => window.fixture.refresh());
       await page.getByText(pack.busy, { exact: true }).waitFor();
       await waitFor(page, '!s.pending');
       const checks = count(fixture, 'packageupdatecheck');
@@ -132,8 +135,28 @@ try {
       assert.equal(await page.getByRole('button', { name: pack.check, exact: true }).isEnabled(), true);
       assert.equal(await page.getByRole('button', { name: pack.prepare, exact: true }).isEnabled(), true);
       assert.equal(count(fixture, 'packageupdatecheck'), checks, 'status recovery must not trigger another background check');
-      assert.ok(checks <= 3, 'read-check busy retries must stop');
+      assert.ok(checks <= 6, 'initial and explicit checks each have at most three attempts');
       assert.equal(count(fixture, 'packageupdateprepare') + count(fixture, 'packageupdateapply'), 0);
+    });
+    await run('passive-busy-keeps-valid-overview', { check: 'busy', overview: { check: current, operation: null } }, async (page, fixture) => {
+      await waitFor(page, '!s.pending && s.data');
+      assert.equal((await snapshot(page)).error, null, 'background check contention must not turn a valid overview into an update failure');
+      assert.equal(await page.getByText(pack.busy, { exact: true }).count(), 0);
+      fixture.statusBusy = true;
+      await page.evaluate(() => window.fixture.refetch());
+      assert.equal((await snapshot(page)).error, null, 'a busy background status poll keeps the last validated overview');
+      assert.equal(count(fixture, 'packageupdateprepare') + count(fixture, 'packageupdateapply'), 0);
+      fixture.statusBusy = false;
+      await page.evaluate(() => window.fixture.refresh());
+      assert.equal((await snapshot(page)).error, 'busy', 'an explicit check still reports persistent contention');
+    });
+    await run('manual-joins-background-busy', { check: 'held', overview: { check: current, operation: null } }, async (page, fixture) => {
+      await waitFor(page, 's.pending && s.data');
+      await page.evaluate(() => { void window.fixture.refresh(); });
+      fixture.check = 'busy';
+      fixture.held.splice(0).forEach(held => held.respond({ error: 'busy' }, 409));
+      await waitFor(page, '!s.pending');
+      assert.equal((await snapshot(page)).error, 'busy', 'manual intent must survive joining an existing background check');
     });
     await run('transient-busy-retry', { check: 'transient', overview: { check: current, operation: null } }, async (page, fixture) => {
       await waitFor(page, 's.data?.check.state === "available" && !s.pending');

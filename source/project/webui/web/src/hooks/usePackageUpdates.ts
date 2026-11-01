@@ -30,6 +30,7 @@ export function usePackageUpdates(
   const generation = useRef(0);
   const refreshRequest = useRef<Promise<void> | null>(null);
   const mutating = useRef(false);
+  const explicitRefresh = useRef(false);
   const checked = useRef(false);
   const prepareRequest = useRef<{
     revision: string;
@@ -89,7 +90,9 @@ export function usePackageUpdates(
           client.getQueryData<PackageOverview>(key)?.operation?.state ?? '',
         );
       if (!enabled || mutating.current || active()) return Promise.resolve();
+      if (force) explicitRefresh.current = true;
       if (refreshRequest.current) return refreshRequest.current;
+      explicitRefresh.current = force;
       checked.current = true;
       const epoch = generation.current;
       const snapshot = client.getQueryState(key)?.dataUpdateCount;
@@ -122,6 +125,14 @@ export function usePackageUpdates(
                 await new Promise((resolve) => setTimeout(resolve, 250));
                 continue;
               }
+              // Background lock contention is not an installation failure.
+              // A manual check joining this request must still get its result.
+              if (
+                code === 'busy' &&
+                !explicitRefresh.current &&
+                client.getQueryData(key)
+              )
+                return;
               setError((old) =>
                 old?.source === 'operation'
                   ? old
@@ -218,7 +229,8 @@ export function usePackageUpdates(
     notesLoading: notesEnabled && notesQuery.isFetching,
     error:
       error?.code ??
-      (query.error instanceof PackageUpdateError
+      (query.error instanceof PackageUpdateError &&
+      !(query.error.code === 'busy' && query.data)
         ? query.error.code
         : undefined),
     refresh,

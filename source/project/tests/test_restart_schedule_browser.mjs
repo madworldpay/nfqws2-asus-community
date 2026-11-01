@@ -7,6 +7,7 @@ import { build } from '../webui/web/node_modules/esbuild/lib/main.js';
 
 const { chromium } = await import(process.env.NFQWS_PLAYWRIGHT_MODULE || 'playwright');
 const web = fileURLToPath(new URL('../webui/web/', import.meta.url));
+const locales = Object.fromEntries(await Promise.all(['ru', 'en'].map(async lang => [lang, JSON.parse(await readFile(join(web, `src/translations/${lang}.json`), 'utf8'))])));
 const fixtures = new Map();
 const failures = [];
 let server, browser;
@@ -25,7 +26,9 @@ try {
     import {createRootRoute,createRouter,RouterProvider} from '@tanstack/react-router';
     import {queryClient,API} from './src/api/client';
     import {Header} from './src/components/Header'; import {Layout} from './src/components/Layout';
-    const route=createRootRoute({component:()=> <Layout><Header/></Layout>});
+    import {LoginDialog} from './src/components/LoginDialog'; import {useAppStore} from './src/store/useAppStore';
+    const Fixture=()=> { const {auth}=useAppStore(); return <Layout><Header/>{auth===false&&<LoginDialog/>}</Layout>; };
+    const route=createRootRoute({component:Fixture});
     const router=createRouter({routeTree:route}); window.fixture={refresh:()=>API.invalidateStatus()};
     createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>);
   ` }, bundle: true, platform: 'browser', format: 'iife', write: false, jsx: 'automatic',
@@ -51,7 +54,21 @@ try {
     const cmd = params.get('cmd');
     fixture.calls.push(Object.fromEntries(params));
     const respond = (value, status = 200) => { res.statusCode = status; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
-    if (cmd === 'status') return respond({ status: 0, platform: 'asus-entware', nfqws2: true, service: fixture.running ?? true, anonym: !fixture.auth, authenticated: fixture.auth, csrf_token: fixture.csrf, version: '1.3.2-asus6+b81', ark_loaded: false });
+    if (cmd === 'status') {
+      if (fixture.statusUnauthorized) { res.statusCode = 401; res.end(); return; }
+      const finish = () => respond({ status: 0, platform: 'asus-entware', nfqws2: true, service: fixture.running ?? true, anonym: !fixture.auth, authenticated: fixture.auth, csrf_token: fixture.csrf, version: '1.3.2-asus6+b81', ark_loaded: false });
+      if (fixture.holdStatus) { fixture.held.push({ cmd, respond: finish }); return; }
+      return finish();
+    }
+    if (cmd === 'login') {
+      if (fixture.loginFailures) { fixture.loginFailures--; return respond({ error: 'auth_required' }, 401); }
+      const finish = () => {
+        fixture.auth = true; fixture.csrf = 'session-b'; fixture.readUnauthorized = false; fixture.saveUnauthorized = false; fixture.statusUnauthorized = false;
+        respond({ status: 0 });
+      };
+      if (fixture.holdLogin) { fixture.held.push({ cmd, respond: finish }); return; }
+      return finish();
+    }
     if (cmd === 'packageupdatestatus') return respond({ check: { state: 'current', candidate: null, code: null, installed_version: '1.3.2-asus6+b81' }, operation: null });
     if (cmd === 'restartschedule') {
       if (fixture.readUnauthorized) { res.statusCode = 401; res.end(); return; }
@@ -60,7 +77,7 @@ try {
       return respond(fixture.schedule);
     }
     if (cmd === 'restartschedulesave') {
-      if (fixture.saveUnauthorized) { res.statusCode = 403; res.end(); return; }
+      if (fixture.saveUnauthorized) { res.statusCode = typeof fixture.saveUnauthorized === 'number' ? fixture.saveUnauthorized : 403; res.end(); return; }
       if (fixture.holdSave) { fixture.held.push({ cmd, respond }); return; }
       if (fixture.saveError) return respond({ error: fixture.saveError }, fixture.saveError === 'busy' ? 409 : 503);
       if (fixture.schedule.scheduler_available === false && (params.get('enabled') === '1' || params.get('watchdog_enabled') === '1')) return respond({ error: 'unsupported_scheduler' }, 503);
@@ -79,7 +96,7 @@ try {
   const count = (f, cmd) => f.calls.filter(call => call.cmd === cmd).length;
   const settle = page => page.evaluate(() => new Promise(resolve => setTimeout(resolve, 80)));
   for (const lang of ['ru', 'en']) {
-    const p = texts[lang];
+    const p = { ...texts[lang], session: locales[lang].restart_schedule.session, csrf: locales[lang].restart_schedule.csrf, recover: locales[lang].restart_schedule.recover ?? 'Refresh session', ...locales[lang].auth };
     const run = async (name, settings, test) => {
       if (process.env.NFQWS_RESTART_CASE_FILTER && !`${lang}-${name}`.includes(process.env.NFQWS_RESTART_CASE_FILTER)) return;
       const fixture = { auth: true, csrf: 'session-a', schedule: schedule(), calls: [], held: [], ...settings };
@@ -156,6 +173,9 @@ try {
       await dialog.getByRole('button', { name: p.save, exact: true }).evaluate(button => { button.click(); button.click(); });
       await settle(page); assert.equal(count(f, 'restartschedulesave'), 2, 'pending save must coalesce repeated clicks');
       assert.equal(await input.isDisabled(), true);
+      assert.equal(await dialog.getByRole('button', { name: p.cancel, exact: true }).isDisabled(), true, 'an active Save mutation must still prevent dismissal');
+      await page.keyboard.press('Escape'); await settle(page);
+      assert.equal(await dialog.isVisible(), true, 'Escape must not dismiss an active Save mutation');
       f.schedule = schedule({ enabled: true, interval_hours: 7 }); f.held.splice(0).forEach(held => held.respond(f.schedule));
       await dialog.waitFor({ state: 'hidden' });
       f.holdSave = false;
@@ -179,6 +199,170 @@ try {
       await settle(page);
       assert.equal(await dialog.getByRole('radio', { name: p.every(12), exact: true }).isChecked(), true, 'old session replies must not replace current choices');
       assert.equal(count(f, 'restartschedulesave'), 0);
+    });
+    await run('session-recovery-held-status-cancel', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      f.saveUnauthorized = 403;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      f.holdStatus = true;
+      const sent = page.waitForRequest(request => request.postData()?.includes('name="cmd"\r\n\r\nstatus\r\n'));
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await sent; await settle(page);
+      assert.equal(await dialog.getByRole('button', { name: p.cancel, exact: true }).isEnabled(), true, 'a stalled session read must not trap the timer modal');
+      await dialog.getByRole('button', { name: p.cancel, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      const reads = count(f, 'restartschedule');
+      f.holdStatus = false; f.csrf = 'session-b';
+      f.held.splice(f.held.findIndex(held => held.cmd === 'status'), 1)[0].respond();
+      await settle(page);
+      assert.equal(await page.getByRole('dialog').count(), 0, 'a late status response cannot reopen the dismissed dialog');
+      assert.equal(count(f, 'restartschedule'), reads, 'a dismissed recovery cannot continue its schedule read');
+      assert.equal(count(f, 'restartschedulesave'), 1, 'cancel and the late response must not replay Save');
+    });
+    await run('session-recovery-held-local-login-cancel', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      f.auth = false; f.saveUnauthorized = 401;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      const login = page.getByRole('dialog').filter({ has: page.getByLabel(p.password, { exact: true }) });
+      await login.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
+      await login.getByLabel(p.password, { exact: true }).fill('fixture-password');
+      f.holdLogin = true;
+      const sent = page.waitForRequest(request => request.postData()?.includes('name="cmd"\r\n\r\nlogin\r\n'));
+      await login.getByRole('button', { name: p.login, exact: true }).click();
+      await sent; await settle(page);
+      assert.equal(await login.getByRole('button', { name: p.cancel, exact: true }).isEnabled(), true, 'a stalled local sign-in must remain cancellable');
+      await login.getByRole('button', { name: p.cancel, exact: true }).click();
+      await login.waitFor({ state: 'hidden' });
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7', 'canceling sign-in preserves the timer draft');
+      await dialog.getByRole('button', { name: p.cancel, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      const statuses = count(f, 'status'), reads = count(f, 'restartschedule');
+      f.holdLogin = false;
+      f.held.splice(f.held.findIndex(held => held.cmd === 'login'), 1)[0].respond();
+      await settle(page);
+      assert.equal(await page.getByRole('dialog').count(), 0, 'late sign-in success cannot reopen either dismissed dialog');
+      assert.equal(count(f, 'status'), statuses, 'an unmounted sign-in must not invoke its recovery callback');
+      assert.equal(count(f, 'restartschedule'), reads);
+      assert.equal(count(f, 'restartschedulesave'), 1, 'late sign-in success must not replay Save');
+    });
+    await run('session-recovery-expired-save-keeps-draft', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.auth = false; f.saveUnauthorized = 401;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
+      await page.getByLabel(p.password, { exact: true }).fill('fixture-password');
+      await page.getByRole('button', { name: p.login, exact: true }).click();
+      await page.getByLabel(p.password, { exact: true }).waitFor({ state: 'hidden' });
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 1, 'sign-in must not replay the failed save');
+      assert.ok(f.calls.slice(f.calls.findIndex(call => call.cmd === 'login') + 1).filter(call => call.cmd === 'restartschedule').every(call => call.csrf_token === 'session-b'), 'post-login reads must use the refreshed token');
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.deepEqual(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1), { cmd: 'restartschedulesave', csrf_token: 'session-b', enabled: '1', interval_hours: '7', watchdog_enabled: '1' });
+    });
+    await run('session-recovery-rotated-token-keeps-draft', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.saveUnauthorized = 403; f.csrf = 'session-b';
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await settle(page);
+      assert.equal(await page.getByLabel(p.password, { exact: true }).count(), 0, 'a rotated CSRF token does not require another login');
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 1, 'refreshing a token must not replay the failed save');
+      f.saveUnauthorized = false;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.equal(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1).csrf_token, 'session-b');
+    });
+    await run('session-refresh-read-cannot-overwrite-dirty-draft', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.holdRead = true; f.csrf = 'session-b';
+      await page.evaluate(() => window.fixture.refresh());
+      await settle(page);
+      f.held.splice(0).forEach(held => held.respond(schedule({ enabled: true, interval_hours: 12 })));
+      await settle(page);
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7', 'fresh server metadata must not replace a dirty draft');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 0);
+    });
+    await run('session-recovery-global-login-keeps-draft', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.saveUnauthorized = 401; f.statusUnauthorized = true;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
+      assert.equal(await page.getByLabel(p.password, { exact: true }).count(), 1, 'the existing global login must not compete with a second modal');
+      await page.getByLabel(p.password, { exact: true }).fill('fixture-password');
+      await page.getByRole('button', { name: p.login, exact: true }).click();
+      await page.getByLabel(p.password, { exact: true }).waitFor({ state: 'hidden' });
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 1);
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.equal(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1).csrf_token, 'session-b');
+    });
+    await run('session-recovery-rejected-login-hands-off-once', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.auth = false; f.saveUnauthorized = 401; f.loginFailures = 1;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
+      await page.getByLabel(p.password, { exact: true }).fill('incorrect-fixture-password');
+      await page.getByRole('button', { name: p.login, exact: true }).click();
+      await settle(page);
+      assert.equal(await page.getByLabel(p.password, { exact: true }).count(), 1);
+      await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
+      await page.getByLabel(p.password, { exact: true }).fill('fixture-password');
+      await page.getByRole('button', { name: p.login, exact: true }).click();
+      await page.getByLabel(p.password, { exact: true }).waitFor({ state: 'hidden' });
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 1);
+    });
+    await run('session-refresh-old-save-cannot-close-draft', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.holdSave = true;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await settle(page);
+      f.csrf = 'session-b'; await page.evaluate(() => window.fixture.refresh());
+      await settle(page);
+      f.held.splice(0).forEach(held => held.respond(schedule({ enabled: true, interval_hours: 12 })));
+      await settle(page);
+      assert.equal(await dialog.isVisible(), true, 'a success from the old token must not close the current draft');
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 1);
+      f.holdSave = false;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.equal(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1).csrf_token, 'session-b');
     });
     await run('watchdog-explicit-save-and-locked-state', {}, async (page, f) => {
       let dialog = await open(page);
@@ -250,7 +434,7 @@ try {
           f.saveUnauthorized = true;
           await dialog.getByRole('button', { name: p.save, exact: true }).click();
         }
-        await dialog.getByText(lang === 'ru' ? 'Сессия истекла. Обновите страницу и войдите в панель.' : 'Your session has expired. Reload the page and sign in.', { exact: true }).waitFor();
+        await dialog.getByText(stage === 'read' ? p.session : p.csrf, { exact: true }).waitFor();
         assert.equal(count(f, 'restartschedulesave'), stage === 'save' ? 1 : 0, 'auth failures must never replay writes');
         if (stage === 'save') assert.equal(await dialog.getByRole('radio', { name: p.every(4), exact: true }).isChecked(), true, 'session errors preserve the failed draft');
         else assert.equal(await dialog.getByRole('button', { name: p.save, exact: true }).isDisabled(), true);

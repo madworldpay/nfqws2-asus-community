@@ -31,18 +31,36 @@ final class AsusProfileCatalogTransport
         return preg_match('/^[1-9][0-9]{0,8}$/D',$raw)?(int)$raw:0;
     }
     public function build(): int {return $this->build;}
+    /** Project PHP/provider warnings to fixed codes; never return their text. */
+    private static function connectionError(string $warning): string
+    {
+        if(preg_match('/php_network_getaddresses|getaddrinfo|name resolution/i',$warning))return 'catalog_dns';
+        if(preg_match('/Unable to find the wrapper/i',$warning))return 'catalog_runtime';
+        if(preg_match('/SSL|TLS|certificate|cafile/i',$warning))return 'catalog_tls';
+        if(preg_match('/timed out|timeout/i',$warning))return 'catalog_timeout';
+        if(preg_match('/Connection refused|Network is unreachable|No route to host|Unable to connect/i',$warning))return 'catalog_connect';
+        return 'catalog_unavailable';
+    }
     private static function https(string $url,int $cap,float $deadline,string $ca): string
     {
         $remaining=$deadline-microtime(true);
         if($remaining<=0)throw new RuntimeException('catalog_timeout');
-        if(!extension_loaded('openssl')||!is_readable($ca))throw new RuntimeException('catalog_unavailable');
+        if(!extension_loaded('openssl')||!in_array('https',stream_get_wrappers(),true))throw new RuntimeException('catalog_runtime');
+        if(!is_readable($ca))throw new RuntimeException('catalog_tls');
         $context=stream_context_create(['ssl'=>['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false,'cafile'=>$ca],
             'http'=>['timeout'=>$remaining,'follow_location'=>0,'max_redirects'=>0,'ignore_errors'=>true,'protocol_version'=>1.1,
             'header'=>"Accept: application/json\r\nAccept-Encoding: identity\r\nConnection: close\r\nUser-Agent: NFQWS2-ASUS-Catalog/1\r\n"]]);
-        // The resolver is system-owned. This timeout bounds connect/TLS/reads;
-        // never accept a response after the total deadline, including DNS time.
-        $f=@fopen($url,'rb',false,$context);
-        if(!$f)throw new RuntimeException(microtime(true)>=$deadline?'catalog_timeout':'catalog_unavailable');
+        // The system resolver may outlive PHP's stream timeout. Do not accept
+        // a response after the total deadline, including time spent in DNS.
+        $warning='';
+        set_error_handler(static function(int $severity,string $message)use(&$warning):bool{
+            // fopen may emit a useful cause followed by a generic failure.
+            // Keep a bounded local copy only until it has been classified.
+            if(strlen($warning)<8192)$warning.=substr($message,0,1024)."\n";
+            return true;
+        },E_WARNING);
+        try{$f=fopen($url,'rb',false,$context);}finally{restore_error_handler();}
+        if(!$f)throw new RuntimeException(microtime(true)>=$deadline?'catalog_timeout':self::connectionError($warning));
         try {
             $status=0;$length=null;$encoding=null;
             foreach(stream_get_meta_data($f)['wrapper_data']??[] as $h) {
@@ -50,7 +68,7 @@ final class AsusProfileCatalogTransport
                 elseif(stripos($h,'Content-Length:')===0){$v=trim(substr($h,15));if($length!==null||!preg_match('/^[0-9]{1,10}$/D',$v)||(float)$v>$cap)throw new RuntimeException('catalog_limit');$length=(int)$v;}
                 elseif(stripos($h,'Content-Encoding:')===0){if($encoding!==null)throw new RuntimeException('catalog_limit');$encoding=strtolower(trim(substr($h,17)));}
             }
-            if($status!==200)throw new RuntimeException('catalog_unavailable');
+            if($status!==200)throw new RuntimeException('catalog_http');
             if($encoding!==null&&$encoding!=='identity')throw new RuntimeException('catalog_limit');
             $raw='';
             while(!feof($f)) {
