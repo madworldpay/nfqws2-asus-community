@@ -38,6 +38,12 @@ this step, rerun the usual installer command below once. It uses the corrected
 standalone worker and preserves settings. An already installed old worker does
 not change before the new package is installed.
 
+The current installer also handles older Entware configurations with an 8 MiB
+PHP limit. Only the validated background bootstrap receives a 32 MiB allowance
+and releases extracted buffers before package inspection. The global `php.ini`
+and web-panel limits are unchanged. Build 84 packages have not been replaced
+for this installer repair; rerunning the command fetches the corrected script.
+
 ## Interrupted ASUS installation
 
 From Build 81, the installer can finish an interrupted NFQWS2 ASUS installation.
