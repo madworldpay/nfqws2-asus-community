@@ -104,7 +104,7 @@ Updates preserve settings and the previous service state.
 
 ## What the panel looks like
 
-Settings, strategies and service controls in one panel.
+Settings, strategies and service controls in one panel. The [annotated gallery](SCREENSHOTS.en.md) also covers unavailable IPs, scheduled restart and recovery, blobs, Keenetic import, SmartDNS, export and MTProto installation.
 
 [![NFQWS2 main panel](images/screenshots/panel-overview-en.jpg)](images/screenshots/panel-overview-en.jpg)
 
