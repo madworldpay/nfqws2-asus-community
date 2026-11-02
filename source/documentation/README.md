@@ -16,7 +16,7 @@ NFQWS2 помогает обходить DPI-блокировки провайд
 
 💬 **[Чат сообщества в Telegram](https://t.me/nfqws2AsusCommunityChat)** — помощь с настройкой и обсуждение стратегий.
 
-**Build 83:** [скачать выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build83) · [история изменений](CHANGELOG.md). Возвращены кнопки службы для панели без пароля. Возможности Build 82 — список недоступных IP и возврат пакета на ASUS — сохранены.
+**Build 83:** [скачать выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build83) · [история изменений](CHANGELOG.md). Кнопки службы, таймер и восстановление работают также в панели без пароля. Возможности Build 82 — список недоступных IP и возврат пакета на ASUS — сохранены.
 
 ## Что вы получаете
 

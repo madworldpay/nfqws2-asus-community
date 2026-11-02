@@ -71,7 +71,7 @@ export const Header = () => {
   const { auth, needSave, onSave, needReload, setNeedReload } = useAppStore();
 
   // Basic service actions also work in the intentionally password-free panel.
-  // Scheduling keeps its authenticated-session requirement below.
+  // Session CSRF protection also applies in the intentionally password-free mode.
   const canControlService = auth && isReady && (authenticated || anonym);
 
   const [output, setOutput] = useState<boolean | string>(false);
@@ -349,7 +349,7 @@ export const Header = () => {
                       </IconButton>
                     </span>
                   </Tooltip>
-                  {authenticated && csrfToken && (
+                  {csrfToken && (
                     <Tooltip
                       title={t('restart_schedule.title')}
                       enterTouchDelay={0}

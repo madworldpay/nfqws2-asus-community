@@ -371,11 +371,53 @@ class RestartScheduleHttpTests(unittest.TestCase):
         for path in PUBLIC.glob('*.php'):
             if not (self.base/path.name).exists():shutil.copyfile(path,self.base/path.name)
         self.config=self.base/'config';self.config.mkdir(mode=0o700)
+        self.imports=self.base/'imports';self.imports.mkdir(mode=0o700)
+        store=self.base/'import-store.php'
+        store.write_text(store.read_text().replace('private int $owner=0','private int $owner='+str(os.getuid())).replace("AsusDpiStore::optPath('/var/lib/nfqws2-asus/import')",repr(str(self.imports))))
         if (self.base/'restart-schedule.php').exists():
             path=self.base/'restart-schedule.php'
             path.write_text(path.read_text().replace("NfqwsPlatform::settings()['config']",repr(str(self.config))).replace('private int $owner=0','private int $owner='+str(os.getuid())))
         # Keep the real origin validator; only ambient request headers are fixture input.
-        index=self.base/'index.php';index.write_text(index.read_text().replace("function main(): void\n{", "function main(): void\n{\n$_SERVER['HTTP_HOST']='router.lan';$_SERVER['HTTP_ORIGIN']=$_POST['origin_fixture']??'http://router.lan';unset($_POST['origin_fixture']);"))
+        index=self.base/'index.php';index.write_text(index.read_text().replace("function main(): void\n{", "function main(): void\n{\n$_SERVER['HTTP_HOST']='router.lan';$_SERVER['HTTP_ORIGIN']=$_POST['origin_fixture']??'http://router.lan';unset($_POST['origin_fixture']);").replace('new AsusImportStore()', 'new AsusImportStore('+repr(str(self.imports))+','+str(os.getuid())+')'))
+
+    def anonymous_scheduler(self):
+        # Only substitute hardware scheduler availability. Keep the actual
+        # authentication, session cookie/token, origin and settings/lock code.
+        index=self.base/'index.php';index.write_text(index.read_text().replace('new NfqwsRestartSchedule()', 'new NfqwsRestartSchedule(null,'+str(os.getuid())+',fn()=>true,'+repr(str(self.base/'runtime'))+')'))
+        token=self.fixture.login();self.assertEqual(self.fixture.change('',token)[0],200)
+        # In the deliberately password-free panel this creates a CSRF-bearing
+        # anonymous session; no username/password or authenticated login exists.
+        code,value=self.fixture.request({'cmd':'login'},'anonymous-timer')
+        self.assertEqual(code,200);return value['csrf_token']
+
+    def test_anonymous_session_can_read_and_save_timer_and_watchdog_without_auth_change(self):
+        token=self.anonymous_scheduler();auth_before=self.fixture.auth.read_bytes()
+        code,initial=self.fixture.request({'cmd':'restartschedule','csrf_token':token},'anonymous-timer')
+        self.assertEqual(code,200);self.assertFalse(initial['enabled']);self.assertFalse(initial['watchdog_enabled']);self.assertTrue(initial['scheduler_available'])
+        for timer,watchdog in [('1','0'),('0','1'),('1','1')]:
+            with self.subTest(timer=timer,watchdog=watchdog):
+                request={'cmd':'restartschedulesave','csrf_token':token,'enabled':timer,'interval_hours':'7','watchdog_enabled':watchdog}
+                code,saved=self.fixture.request(request,'anonymous-timer')
+                self.assertEqual(code,200,saved);self.assertEqual((saved['enabled'],saved['interval_hours'],saved['watchdog_enabled']),(timer=='1',7,watchdog=='1'))
+                self.assertEqual(self.fixture.request({'cmd':'restartschedule','csrf_token':token},'anonymous-timer'),(200,saved))
+                self.assertEqual(self.fixture.auth.read_bytes(),auth_before)
+        path=self.config/'restart-schedule.conf';self.assertEqual(path.stat().st_mode&0o777,0o600)
+        self.assertIn('enabled=1\ninterval_hours=7\nwatchdog_enabled=1\n',path.read_text())
+
+    def test_anonymous_csrf_origin_and_session_fail_before_settings_or_auth_changes(self):
+        token=self.anonymous_scheduler();save={'cmd':'restartschedulesave','csrf_token':token,'enabled':'0','interval_hours':'7','watchdog_enabled':'0'}
+        self.assertEqual(self.fixture.request(save,'anonymous-timer')[0],200)
+        path=self.config/'restart-schedule.conf';settings_before=path.read_bytes();auth_before=self.fixture.auth.read_bytes()
+        for command in [save,{'cmd':'restartschedule','csrf_token':token}]:
+            missing={k:v for k,v in command.items() if k!='csrf_token'}
+            cases=[(missing,'anonymous-timer',400),({**command,'csrf_token':'wrong'},'anonymous-timer',403),({**command,'origin_fixture':'http://evil.test'},'anonymous-timer',403),(command,'different-anonymous-session',403)]
+            for request,session,expected in cases:
+                with self.subTest(command=command['cmd'],session=session,expected=expected):
+                    self.assertEqual(self.fixture.request(request,session)[0],expected)
+                    self.assertEqual(path.read_bytes(),settings_before);self.assertEqual(self.fixture.auth.read_bytes(),auth_before)
+        (self.base/'update-busy').touch()
+        self.assertEqual(self.fixture.request({**save,'enabled':'1','watchdog_enabled':'1'},'anonymous-timer'),(409,{'error':'busy'}))
+        self.assertEqual(path.read_bytes(),settings_before);self.assertEqual(self.fixture.auth.read_bytes(),auth_before)
 
     def test_auth_csrf_origin_and_strict_fields_are_required_before_settings_write(self):
         p={'cmd':'restartschedulesave','csrf_token':'invalid','enabled':'1','interval_hours':'4','watchdog_enabled':'0'}

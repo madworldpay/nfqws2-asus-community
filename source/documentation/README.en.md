@@ -16,7 +16,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 83:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build83) · [release history](CHANGELOG.md). Service controls are restored for the password-free panel. The Build 82 unavailable-IP list and verified ASUS package recovery remain available.
+**Build 83:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build83) · [release history](CHANGELOG.md). Service controls, scheduling and recovery also work in the password-free panel. The Build 82 unavailable-IP list and verified ASUS package recovery remain available.
 
 ## What you get
 

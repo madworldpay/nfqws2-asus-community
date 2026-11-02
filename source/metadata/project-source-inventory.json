@@ -2426,13 +2426,13 @@
   },
   {
     "path": "tests/test_restart_schedule.py",
-    "bytes": 35919,
-    "sha256": "148107c38f4a195177c9701d292bb482cdea2069213ab0bb2528211d8b25a384"
+    "bytes": 39969,
+    "sha256": "8876efe6aa5189b8ac17a0e1c16bd61fc309f0f3f907102257baffc27481d6e6"
   },
   {
     "path": "tests/test_restart_schedule_browser.mjs",
-    "bytes": 43306,
-    "sha256": "804de87bdfc2b2029a1b5a2174f00904f5af5959f1666942a69ce3ab64bc9c50"
+    "bytes": 46388,
+    "sha256": "c42551da46b1bfdc041f3708234a8a6425449e1397af003682eb83c0ccbe0cf1"
   },
   {
     "path": "tests/test_restart_schedule_permissions.py",
@@ -4126,8 +4126,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 17669,
-    "sha256": "1b22fe4569b47646e36862f05c981101b5d89b1b3bf6f0832d2d061043fca481"
+    "bytes": 17668,
+    "sha256": "945ad11000eac1d0f1cf725fcb35af7260b43e9e4b226bda35d75c0100feeb0c"
   },
   {
     "path": "webui/web/src/components/ImportCatalog.tsx",
@@ -4206,8 +4206,8 @@
   },
   {
     "path": "webui/web/src/components/RestartScheduleDialog.tsx",
-    "bytes": 12783,
-    "sha256": "f51996789c73d5b85d72caa52a7697b9e36ad29395e19fda06db70a589c3263e"
+    "bytes": 12967,
+    "sha256": "e07fdf695e9a11402ae0f1b863c7836515469cd325fe90d52f00f8a3b2667926"
   },
   {
     "path": "webui/web/src/components/RouterCheckup.tsx",
