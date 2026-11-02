@@ -1,4 +1,4 @@
-import { DpiError, request } from '@/api/dpiClient';
+import { DpiError } from '@/api/dpiClient';
 
 export type IpHealthEntry = {
   id: string;
@@ -78,8 +78,80 @@ function status(value: unknown): IpHealthStatus {
     throw new DpiError('invalid_response');
   return v;
 }
+// IP Health distinguishes an expired session even when PHP exits before JSON.
+async function request(
+  csrf: string,
+  cmd: string,
+  params: Record<string, string> = {},
+) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch('/index.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      redirect: 'error',
+      cache: 'no-store',
+      body: new URLSearchParams({ cmd, csrf_token: csrf, ...params }),
+      signal: controller.signal,
+    });
+    if (response.status === 401) throw new DpiError('unauthorized');
+    if (response.status === 403) throw new DpiError('forbidden');
+    if (
+      !/^application\/json(?:;|$)/i.test(
+        response.headers.get('Content-Type') ?? '',
+      )
+    )
+      throw new DpiError('invalid_response');
+    const reader = response.body?.getReader();
+    if (!reader) throw new DpiError('invalid_response');
+    const chunks: Uint8Array<ArrayBuffer>[] = [];
+    let size = 0;
+    try {
+      while (true) {
+        const result = await reader.read();
+        if (result.done) break;
+        size += result.value.byteLength;
+        if (size > 524288) throw new DpiError('invalid_response');
+        chunks.push(new Uint8Array(result.value));
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+    let value: unknown;
+    try {
+      value = JSON.parse(
+        new TextDecoder('utf-8', { fatal: true }).decode(
+          await new Blob(chunks).arrayBuffer(),
+        ),
+      );
+    } catch {
+      throw new DpiError('invalid_response');
+    }
+    if (!response.ok) {
+      const code =
+        typeof value === 'object' && value !== null && 'error' in value
+          ? value.error
+          : null;
+      throw new DpiError(
+        typeof code === 'string' && /^[a-z_]{1,40}$/.test(code)
+          ? code
+          : 'request_failed',
+      );
+    }
+    return value;
+  } catch (error) {
+    if (error instanceof DpiError) throw error;
+    throw new DpiError(
+      controller.signal.aborted ? 'timeout' : 'request_failed',
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
 export async function getIpHealthStatus(csrf: string): Promise<IpHealthStatus> {
-  return status((await request(csrf, 'iphealthstatus', {}, 524288)).value);
+  return status(await request(csrf, 'iphealthstatus'));
 }
 async function mutate(
   csrf: string,
@@ -88,9 +160,7 @@ async function mutate(
   params: Record<string, string> = {},
 ) {
   if (!REVISION.test(revision)) throw new DpiError('invalid_request');
-  return status(
-    (await request(csrf, cmd, { ...params, revision }, 524288)).value,
-  );
+  return status(await request(csrf, cmd, { ...params, revision }));
 }
 export function configureIpHealth(
   csrf: string,

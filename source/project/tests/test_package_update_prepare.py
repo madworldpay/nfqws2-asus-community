@@ -202,6 +202,17 @@ class PackageUpdatePrepareTests(unittest.TestCase):
                 with self.subTest(state=state,flag=flag):
                     self.assertIn('value',self.call(status=self.status(other=self.foreign_record(flag,state))))
 
+    def test_installed_community_entware_package_with_underscore_does_not_block_update(self):
+        record='Package: tailscale_nohf\nVersion: 1.90.6-1\nStatus: install user installed\nArchitecture: armv7-2.6\n\n'
+        self.assertIn('value',self.call(status=self.status(other=record)))
+        self.assertEqual(self.call(status=self.status(other=record.replace('user installed','user unpacked'))),{'error':'pending_packages'})
+        self.assertEqual(self.call(status=self.status(other=record+record)),{'error':'pending_packages'})
+
+    def test_foreign_package_name_cannot_contain_path_or_command_characters(self):
+        for name in ['../tailscale_nohf','tailscale/nohf','tailscale nohf','tailscale;nohf','tailscale$(id)','_tailscale']:
+            with self.subTest(name=name):
+                self.assertEqual(self.call(status=self.status(other=self.foreign_record('user').replace('Package: foreign','Package: '+name))),{'error':'pending_packages'})
+
     def test_held_or_preferred_dependency_is_still_installed(self):
         for flag in self.OPKG_POLICY_FLAGS:
             with self.subTest(flag=flag):

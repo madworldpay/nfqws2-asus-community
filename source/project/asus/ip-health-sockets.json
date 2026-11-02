@@ -66,6 +66,28 @@
           "mode": 493
         }
       }
+    },
+    {
+      "abi": "armv7-2.6",
+      "php_version": "8.4.7",
+      "php_package_version": "8.4.7-1",
+      "version": "8.4.7-1",
+      "architecture": "armv7-2.6",
+      "filename": "php8-mod-sockets_8.4.7-1_armv7-2.6.ipk",
+      "size": 34796,
+      "sha256": "5b71231a3ca28f697342262627848a3b49bf41ee4e772ccf9d272c320870a9e4",
+      "files": {
+        "opt/etc/php8/20_sockets.ini": {
+          "size": 21,
+          "sha256": "587cefd856e6159855674b2bc344b15c2787dfda02240f1509728bd53cf1e8d8",
+          "mode": 420
+        },
+        "opt/lib/php8/sockets.so": {
+          "size": 79864,
+          "sha256": "81d32c2344edd48fab73a3bd7ea4a36c774bd0c5798589a75e71e4fdda944ba1",
+          "mode": 493
+        }
+      }
     }
   ]
 }

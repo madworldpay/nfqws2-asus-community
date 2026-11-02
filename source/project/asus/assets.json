@@ -54,5 +54,9 @@
   "php8-mod-sockets_8.4.16-4_aarch64-3.10.ipk": {
     "url": "https://bin.entware.net/aarch64-k3.10/php8-mod-sockets_8.4.16-4_aarch64-3.10.ipk",
     "sha256": "c9f6ea5ba2894fd3cb978d8594a7518ee914d73478d3010ca8fb7c533d1b0027"
+  },
+  "php8-mod-sockets_8.4.7-1_armv7-2.6.ipk": {
+    "url": "https://raw.githubusercontent.com/garycnew/garycnew.github.io/2dc411761722a37daa4eeda24e8208938b15feba/Entware/armv7sf-k2.6/php8-mod-sockets_8.4.7-1_armv7-2.6.ipk",
+    "sha256": "5b71231a3ca28f697342262627848a3b49bf41ee4e772ccf9d272c320870a9e4"
   }
 }

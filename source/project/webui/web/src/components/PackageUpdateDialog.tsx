@@ -69,11 +69,19 @@ export function PackageUpdateDialog({
   onClose,
   updates,
   installed,
+  onCheck,
+  onRecover,
+  recovering = false,
+  sessionError,
 }: {
   open: boolean;
   onClose: () => void;
   updates: ReturnType<typeof usePackageUpdates>;
   installed?: string;
+  onCheck?: VoidFunction;
+  onRecover?: VoidFunction;
+  recovering?: boolean;
+  sessionError?: string;
 }) {
   const { t } = useTranslation();
   const check = updates.data?.check;
@@ -87,15 +95,24 @@ export function PackageUpdateDialog({
       : null;
   const working =
     operation?.state === 'preparing' || operation?.state === 'applying';
+  const showProgress =
+    updates.pending ||
+    working ||
+    recovering ||
+    updates.checking ||
+    check?.state === 'checking';
   const prepared =
     operation?.state === 'prepared' &&
     operation.revision === candidate?.revision;
   const failed =
     operation?.state === 'failed' || operation?.state === 'interrupted';
   const errorCode =
+    sessionError ??
     updates.error ??
     (check?.state === 'failed' ? check.code : failed ? operation?.code : null);
   const previousFailure = failed && check?.state !== 'failed' && !updates.error;
+  const needsSession =
+    errorCode === 'auth_required' || errorCode === 'csrf_failed';
   const knownErrors = [
     'pending_packages',
     'recovery_required',
@@ -117,9 +134,13 @@ export function PackageUpdateDialog({
     'rollback_failed',
   ] as const;
   const knownError = knownErrors.find((code) => code === errorCode);
-  const errorKey = knownError
-    ? (`package_update.${knownError}` as const)
-    : 'package_update.failed';
+  const errorKey = needsSession
+    ? errorCode === 'auth_required'
+      ? 'package_update.session'
+      : 'package_update.csrf'
+    : knownError
+      ? (`package_update.${knownError}` as const)
+      : 'package_update.failed';
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{t('package_update.title')}</DialogTitle>
@@ -130,9 +151,9 @@ export function PackageUpdateDialog({
               version: formatPackageVersion(installed) ?? '—',
             })}
           </Typography>
-          {(updates.pending || working || check?.state === 'checking') && (
-            <LinearProgress />
-          )}
+          <LinearProgress
+            sx={{ visibility: showProgress ? 'visible' : 'hidden' }}
+          />
           {errorCode && (
             <Alert severity="warning">
               {previousFailure && `${t('package_update.previous_attempt')} `}
@@ -235,15 +256,22 @@ export function PackageUpdateDialog({
       </DialogContent>
       <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
         <Button
-          disabled={updates.pending || working}
-          onClick={() => void updates.refresh(true)}
+          disabled={updates.pending || working || recovering}
+          onClick={onCheck ?? (() => void updates.refresh(true))}
         >
           {t('package_update.check')}
         </Button>
+        {needsSession && onRecover && (
+          <Button disabled={recovering || updates.pending} onClick={onRecover}>
+            {t('package_update.recover')}
+          </Button>
+        )}
         {candidate && !working && !prepared && (
           <Button
             variant="outlined"
-            disabled={updates.pending}
+            disabled={
+              updates.pending || updates.checking || recovering || needsSession
+            }
             onClick={() => void updates.prepare(candidate.revision)}
           >
             {t('package_update.prepare')}
@@ -252,7 +280,9 @@ export function PackageUpdateDialog({
         {prepared && operation && (
           <Button
             variant="contained"
-            disabled={updates.pending}
+            disabled={
+              updates.pending || updates.checking || recovering || needsSession
+            }
             onClick={() => void updates.apply(operation)}
           >
             {t(

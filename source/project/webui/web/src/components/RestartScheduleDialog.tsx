@@ -151,7 +151,12 @@ export const RestartScheduleDialog = ({
     try {
       const fresh = await status.refetch();
       if (!mounted.current) return;
-      if (fresh.error || !fresh.data || fresh.data.status !== 0) {
+      if (
+        !fresh.isSuccess ||
+        useAppStore.getState().auth === false ||
+        !fresh.data ||
+        fresh.data.status !== 0
+      ) {
         // The App already supplies its global login on an actual status401.
         setError(
           useAppStore.getState().auth === false

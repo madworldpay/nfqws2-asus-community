@@ -14,6 +14,7 @@ try {
   await build({
     stdin: { resolveDir: web, loader: 'tsx', contents: `
       import React, {useState} from 'react';import {createRoot} from 'react-dom/client';
+      import {QueryClientProvider} from '@tanstack/react-query';import {queryClient} from './src/api/client';import {createAPIClient} from './src/api/create-api-client';
       import {IpHealthPanel} from './src/components/IpHealthPanel';
       import {TranslationContext} from './src/context/TranslationContext';
       import en from './src/translations/en.json';
@@ -23,10 +24,11 @@ try {
         return <TranslationContext.Provider value={{t,langcode:'en'}}>
           <IpHealthPanel/>
         </TranslationContext.Provider>;}
-      createRoot(document.getElementById('root')).render(<Fixture/>);
+      queryClient.setQueryData(createAPIClient().indexPhp.postIndexCmd.getQueryKey({body:{cmd:'status'}}),{status:0,anonym:false,authenticated:true,csrf_token:'old-session'});
+      createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><Fixture/></QueryClientProvider>);
     ` },
     bundle: true, platform: 'browser', format: 'iife', outfile: join(dir, 'fixture.js'),
-    jsx: 'automatic', logLevel: 'silent', tsconfig: join(web, 'tsconfig.app.json'), plugins:[{name:'auth-fixture',setup(b){b.onResolve({filter:/hooks\/useStatus$/},()=>({path:'status',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`export const useStatus=()=>({csrfToken:window.fixtureCSRF,platform:'asus-entware'});`}));}}],
+    jsx: 'automatic', logLevel: 'silent', tsconfig: join(web, 'tsconfig.app.json'), plugins:[{name:'auth-fixture',setup(b){b.onResolve({filter:/hooks\/useStatus$/},()=>({path:'status',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`export const useStatus=()=>({csrfToken:window.fixtureCSRF,platform:'asus-entware',isReady:true,authenticated:true,anonym:false});`}));}}],
   });
   const script = await readFile(join(dir, 'fixture.js'));
   const en = JSON.parse(await readFile(join(web, 'src/translations/en.json'), 'utf8'));

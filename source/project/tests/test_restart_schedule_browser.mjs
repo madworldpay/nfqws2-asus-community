@@ -56,6 +56,7 @@ try {
     const respond = (value, status = 200) => { res.statusCode = status; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
     if (cmd === 'status') {
       if (fixture.statusUnauthorized) { res.statusCode = 401; res.end(); return; }
+      if (fixture.statusEmptyFailure) { res.statusCode = fixture.statusEmptyFailure; res.end(); return; }
       if (fixture.statusFailure) return respond({ status: 1 }, fixture.statusFailure);
       const finish = () => respond({ status: 0, platform: 'asus-entware', nfqws2: true, service: fixture.running ?? true, anonym: fixture.anonym ?? !fixture.auth, authenticated: fixture.auth, csrf_token: fixture.csrf, version: '1.3.2-asus6+b83', ark_loaded: false });
       if (fixture.holdStatus) { fixture.held.push({ cmd, respond: finish }); return; }
@@ -316,6 +317,7 @@ try {
       await dialog.getByRole('button', { name: p.save, exact: true }).click();
       await dialog.getByRole('button', { name: p.recover, exact: true }).click();
       await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
+      assert.equal(await page.getByText(p.session, { exact: true }).count(), 1, 'an empty status401 must not clear the timer error by accepting cached status');
       assert.equal(await page.getByLabel(p.password, { exact: true }).count(), 1, 'the existing global login must not compete with a second modal');
       await page.getByLabel(p.password, { exact: true }).fill('fixture-password');
       await page.getByRole('button', { name: p.login, exact: true }).click();
@@ -326,6 +328,22 @@ try {
       await dialog.getByRole('button', { name: p.save, exact: true }).click();
       await dialog.waitFor({ state: 'hidden' });
       assert.equal(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1).csrf_token, 'session-b');
+    });
+    await run('session-recovery-empty-status503-keeps-error-and-draft', {}, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.saveUnauthorized = 403;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      f.statusEmptyFailure = 503;
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await dialog.getByText(locales[lang].restart_schedule.request_failed, { exact: true }).waitFor();
+      assert.equal(await dialog.getByRole('button', { name: p.save, exact: true }).isDisabled(), true, 'cached success cannot validate a failed status refresh');
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(await page.getByLabel(p.password, { exact: true }).count(), 0, 'a transport failure does not request another password');
+      assert.equal(count(f, 'restartschedulesave'), 1, 'failed recovery never replays Save');
     });
     await run('session-recovery-rejected-login-hands-off-once', {}, async (page, f) => {
       const dialog = await open(page);

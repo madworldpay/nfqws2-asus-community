@@ -455,6 +455,9 @@
     "messages_truncated": "The report size limit was reached: some later messages were omitted. Completed test results remain available."
   },
   "package_update": {
+    "recover": "Refresh session",
+    "session": "Sign in again, then repeat the action you need. Installation is never retried automatically.",
+    "csrf": "Refresh the session, then repeat the action you need. Installation is never retried automatically.",
     "title": "NFQWS2 update",
     "installed": "Installed: {{version}}",
     "available": "Available: {{version}}",
@@ -1048,6 +1051,7 @@
     "address_detected": "Address filled in automatically. You can edit it."
   },
   "ip_health": {
+    "recover": "Refresh session",
     "title": "Unavailable IPs",
     "intro": "Temporarily skip independently confirmed unavailable IPs to reduce waiting.",
     "toggle": "Remember unavailable addresses",
@@ -1119,7 +1123,7 @@
       "timeout": "The router did not reply in time. Refresh status to try again.",
       "invalid_response": "The router returned an invalid IP status. Refresh status to try again.",
       "unauthorized": "Sign in to the panel again to load IP status.",
-      "forbidden": "Panel authorization expired. Reload the page and sign in again.",
+      "forbidden": "Refresh the session, then repeat the action you need. Actions are never retried automatically.",
       "stale_revision": "The list changed. Current status has been reloaded; review it before repeating the action.",
       "action_unknown": "The action result could not be confirmed. Status has been requested again; the action was not repeated."
     }
