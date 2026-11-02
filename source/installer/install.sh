@@ -489,6 +489,11 @@ try{
     // Bulk extraction and the included coordinator use their existing bounded
     // I/O/guardian deadlines, not the CGI interpreter's cumulative CPU timer.
     set_time_limit(0);
+    // Entware may configure CGI for tiny HTTP requests (for example 8M).
+    // Give only this validated root bootstrap a bounded allowance; retain
+    // larger/unlimited limits and leave php.ini and HTTP requests unchanged.
+    $memoryLimit=ini_parse_quantity((string)ini_get('memory_limit'));
+    if($memoryLimit>0&&$memoryLimit<33554432&&ini_set('memory_limit','32M')===false)throw new RuntimeException('unsupported_runtime');
     $files=json_decode(gzdecode(base64_decode(NFQWS_ASUS_INSTALL_FILES,true)),true,32,JSON_THROW_ON_ERROR);
     foreach($files as $name=>$item){
         if(!preg_match('~^(?:[a-zA-Z0-9_+.-]+/)*[a-zA-Z0-9_+.-]+$~D',$name)||in_array('..',explode('/',$name),true))throw new RuntimeException('invalid_state');
@@ -499,6 +504,8 @@ try{
         if(!$s){$f=fopen($path,'xb');if(!$f)throw new RuntimeException('invalid_state');try{if(fwrite($f,$data)!==strlen($data)||!fflush($f)||!chmod($path,$mode))throw new RuntimeException('invalid_state');}finally{fclose($f);}clearstatcache(true,$path);$s=lstat($path);}
         if(is_link($path)||!is_file($path)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0777)!==$mode||$s['size']!==strlen($data)||!hash_equals(hash('sha256',$data),(string)hash_file('sha256',$path)))throw new RuntimeException('runtime_changed');
     }
+    // Embedded copies are no longer needed once every extracted byte matches.
+    unset($files,$data,$item);
     if($nfqwsAsusMode==='extract')exit(0);
     require $nfqwsAsusWork.'/main.php';
 }catch(Throwable $e){file_put_contents('php://stderr','ASUS bootstrap: '.$e->getMessage()."\n");exit(1);}
