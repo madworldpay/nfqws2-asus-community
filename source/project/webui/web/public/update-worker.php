@@ -26,6 +26,15 @@ final class AsusUpdateWorker
     private function guard(): AsusUpdateGuard {return new AsusUpdateGuard($this->store,$this->owner(),$this->options['opkg']??'/opt/bin/opkg');}
     private function writeTicket(array $ticket): void
     {$this->store->writeFile('transaction.json',json_encode($ticket,JSON_THROW_ON_ERROR));}
+    private function guardianChild(mixed $child,array $worker):bool
+    {
+        if(!is_array($child)||count($child)!==5||array_diff(array_keys($child),['pid','start_ticks','boot_id','exe','uid'])!==[])return false;
+        if(!is_string($child['exe'])||!str_starts_with($child['exe'],'/')||strlen($child['exe'])>=4096||strpbrk($child['exe'],"\r\n\0")!==false)return false;
+        // context() already proves the live staged PHP/loader and ancestry.
+        // The guardian may have sampled this same child before its exec.
+        foreach(['pid','start_ticks','boot_id','uid'] as $key)if($child[$key]!==$worker[$key])return false;
+        return true;
+    }
     private function ticket(string $id,string $phase,array $patch=[]): array
     {return $this->store->withLock(function()use($id,$phase,$patch){$t=$this->guard()->context($id);$t=array_replace($t,$patch,['phase'=>$phase]);$this->writeTicket($t);return $t;});}
     private function validate(string $id,bool $fresh): array
@@ -99,7 +108,7 @@ final class AsusUpdateWorker
             if($t['phase']!=='validating'||$t['installer']!==null)throw new RuntimeException('invalid_state');
             if($this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             $raw=$this->store->readFile('operations/'.$id.'/guard.json',4096);$guard=$raw===null?null:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
-            if(!is_array($guard)||($guard['child']??null)!==$t['worker']||!is_numeric($guard['deadline']??null)||AsusUpdateStore::uptime()>=$guard['deadline'])throw new RuntimeException('timed_out');
+            if(!is_array($guard)||!$this->guardianChild($guard['child']??null,$t['worker'])||!is_numeric($guard['deadline']??null)||AsusUpdateStore::uptime()>=$guard['deadline'])throw new RuntimeException('timed_out');
             [$env,$candidate]=$this->validate($id,false);
             if(!in_array($action,['install','configure'],true)||$action!==($candidate['action']??'install'))throw new RuntimeException('invalid_state');
             $installer=$this->installer($id);$intent=$this->lifecycle->intent();

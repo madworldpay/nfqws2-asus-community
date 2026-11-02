@@ -117,13 +117,13 @@
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 8806,
-      "sha256": "01e1acb4425e203dd61c18a36a5fd58f4dabb59fe5631f2fa0049c1b20e0dffa"
+      "bytes": 9115,
+      "sha256": "cf2c8637bded4d8eb3616e478fce3e7c03d251d006c323c8fa1e28e28a26bafe"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 14704,
-      "sha256": "c206064c8aa4a01cb62532b0f959d74d011f7c4f9549ea3811d55d4807234452"
+      "bytes": 15283,
+      "sha256": "427f167bb602abedfbac8f6b8376b9a63bd1aec3d32d974189cdb1378aca60cb"
     },
     {
       "file": "PRESETS.en.md",

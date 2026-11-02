@@ -136,6 +136,49 @@ class PackageUpdateApplyTests(unittest.TestCase):
             else:self.service.identities.append((pid,start))
         return json.loads(r.stdout) if r.stdout else None
     def commands(self):return self.service.log.read_text().splitlines() if self.service.log.exists() else []
+    def guarded_exec(self,patch=None,remove=None):
+        """Real installed guardian samples external PHP, which then execs staged PHP."""
+        gate=self.base/'exec-gate.php';gate.write_text('''<?php require $argv[1].'/update-watchdog.php';
+        $s=new AsusUpdateStore($argv[2],(int)$argv[3]);$id=$argv[4];$path='operations/'.$id.'/guard.json';
+        $until=AsusUpdateStore::uptime()+2;do{$raw=$s->readFile($path,4096);if($raw!==null)break;usleep(1000);}while(AsusUpdateStore::uptime()<$until);
+        if($raw===null)exit(9);$guard=json_decode($raw,true);$patch=json_decode($argv[7],true);$guard['child']=array_replace($guard['child'],$patch);if($argv[8]!=='')unset($guard['child'][$argv[8]]);
+        $s->writeFile($path,json_encode($guard));file_put_contents($argv[9],json_encode(AsusUpdateLifecycle::identity(getmypid())));
+        usleep(80000);pcntl_exec($argv[5],['-n',$argv[6],'apply',$id]);exit(8);''')
+        driver=self.base/'exec-guardian.php';driver.write_text('''<?php require $argv[1].'/update-watchdog.php';
+        $s=new AsusUpdateStore($argv[2],(int)$argv[3]);
+        (new AsusUpdateWatchdog($s,(int)$argv[3]))->run($argv[4],[PHP_BINARY,'-n',$argv[5],$argv[1],$argv[2],$argv[3],$argv[4],$argv[6],$argv[7],$argv[8],$argv[9],$argv[10]],AsusUpdateStore::uptime()+10);
+        echo json_encode($s->readOperation($argv[4]));''')
+        r=subprocess.run([str(NATIVE),'-n',str(driver),str(PUBLIC),str(self.state),str(os.getuid()),self.id,str(gate),str(self.php),str(self.entry),json.dumps(patch or {}),remove or '',str(self.base/'birth.json')],capture_output=True,text=True,timeout=15)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'')
+        pidfile=self.service.run/'pid'
+        if pidfile.is_file():
+            pid=int(pidfile.read_text());stat=Path(f'/proc/{pid}/stat')
+            if stat.exists():self.service.identities.append((pid,stat.read_text().rsplit(') ',1)[1].split()[19]))
+        return json.loads(r.stdout)
+    def test_guard_preexec_identity_binds_same_owned_birth_after_exec(self):
+        self.service.running();result=self.guarded_exec()
+        birth=json.loads((self.base/'birth.json').read_text());ticket=json.loads((self.state/'transaction.json').read_text())
+        self.assertNotEqual(birth['exe'],ticket['worker']['exe'])
+        self.assertEqual({k:birth[k] for k in ['pid','start_ticks','boot_id','uid']},{k:ticket['worker'][k] for k in ['pid','start_ticks','boot_id','uid']})
+        self.assertEqual(result['state'],'succeeded',result);self.assertEqual(self.commands(),['stop','start'])
+    def test_guard_different_birth_or_owner_never_reaches_mutation(self):
+        for patch in [{'pid':os.getpid()},{'start_ticks':'1'},{'boot_id':'different-boot'},{'uid':os.getuid()+1}]:
+            with self.subTest(patch=patch):
+                case=type(self)(self._testMethodName);case.setUp()
+                try:
+                    case.service.running();result=case.guarded_exec(patch)
+                    self.assertEqual(result['state'],'failed',result);self.assertEqual(result['code'],'timed_out');self.assertEqual(case.commands(),[]);self.assertFalse((case.base/'installs').exists());self.assertFalse((case.op/'boundary.json').exists())
+                finally:case.doCleanups()
+    def test_guard_child_identity_requires_closed_shape_and_types(self):
+        for patch,remove in [({'pid':'123'},None),({'start_ticks':1},None),({'uid':str(os.getuid())},None),({'exe':None},None),({'exe':''},None),({'exe':'relative/php'},None),({'exe':'/php\n'},None),({'exe':'/'+('p'*4095)},None),({'extra':True},None),({},'exe')]:
+            with self.subTest(patch=patch,remove=remove):
+                case=type(self)(self._testMethodName);case.setUp()
+                try:
+                    result=case.guarded_exec(patch,remove)
+                    # An oversized executable also exceeds the guard file's preexisting cap.
+                    expected='invalid_state' if isinstance(patch.get('exe'),str) and len(patch['exe'])>=4096 else 'timed_out'
+                    self.assertEqual(result['state'],'failed',result);self.assertEqual(result['code'],expected);self.assertEqual(case.commands(),[]);self.assertFalse((case.base/'installs').exists());self.assertFalse((case.op/'boundary.json').exists())
+                finally:case.doCleanups()
     def test_running_stops_before_install_and_restores_once(self):
         self.service.running();r=self.execute();self.assertEqual(r['state'],'succeeded');self.assertEqual(r['core_state'],'running');self.assertEqual(self.commands(),['stop','start'])
     def test_resume_running_uses_only_configure_and_restores_after_verified_status(self):
