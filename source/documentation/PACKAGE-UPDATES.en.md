@@ -39,9 +39,28 @@ latest release. Other unfinished Entware packages and active operations still
 block the update; rebooting does not replace those checks.
 
 An SSH disconnect does not cancel an installation already running in the
-background. On failure, the installer shows the retained log path. A partially
-installed package can remain stopped after an error; check the result before
-starting it. Full rollback of all program files is not implemented.
+background. On failure, the installer shows the retained log path. Check the
+final status before starting the service manually.
+
+## ASUS snapshots and rollback in Build 82
+
+On ASUS/Entware, the Build 82 updater snapshots the installed package and settings
+before stopping services. After a caught installation or postflight failure,
+it restores the previous files through the package manager, verifies settings,
+and only then restores the original service state. A stopped service stays
+stopped. Custom login and submission settings are retained, and another update
+remains possible after successful rollback.
+
+If the prior state cannot be verified, the updater does not report success:
+the service may stay stopped, while the snapshot and logs remain for diagnosis.
+Power loss or forcibly terminating the package manager is a separate interrupted
+installation case; automatic rollback after reboot is not promised.
+
+This behavior belongs to the Build 82 updater. An older panel gains it after
+its own update; the current installation command downloads the new installer.
+A direct opkg command does not run this snapshot-and-rollback workflow. Native
+OpenWrt preserves settings and service intent, but the full automatic package
+version restoration described here currently applies only to ASUS/Entware.
 
 ## Through the panel
 
@@ -61,9 +80,9 @@ get the new interface only after they are updated.
 
 After reviewing the changes:
 
-1. **Prepare package** — download it, verify the signature, compatibility and free space,
-   and save a settings snapshot.
-2. **Install update** — replace the package and wait for the result.
+1. **Prepare package** — download it and verify the signature, compatibility and free space.
+2. **Install update** — replace the package and wait for the result. On ASUS,
+   the Build 82 updater first snapshots the installed program and settings.
 
 The panel may disconnect temporarily. Closing the tab does not cancel installation.
 The updater preserves settings, lists, login credentials and the chosen on/off service state.
@@ -145,7 +164,8 @@ The panel verifies the release signature with a pinned key, then the package siz
 and SHA256. Installation does not start if verification fails.
 An existing private channel configured by the operator remains in use.
 
-There is no automatic package version rollback.
+See **ASUS snapshots and rollback in Build 82** above for automatic restoration
+of the previous ASUS package.
 
 If package preparation is interrupted, you can retry installation.
 Custom submission channel settings are retained.

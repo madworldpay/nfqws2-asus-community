@@ -47,6 +47,7 @@ type UseStatusResult = {
   url?: string;
   webUrl?: string;
   isPending: boolean;
+  isReady: boolean;
 };
 
 export const useStatus = (): UseStatusResult => {
@@ -84,6 +85,7 @@ export const useStatus = (): UseStatusResult => {
         url: latest?.url,
         webUrl: latestWeb?.url,
         isPending,
+        isReady: true,
       };
     }
 
@@ -96,6 +98,7 @@ export const useStatus = (): UseStatusResult => {
       anonym: true,
       authenticated: false,
       isPending,
+      isReady: false,
     };
   }, [error, isError, isPending, latest, latestWeb, status]);
 };

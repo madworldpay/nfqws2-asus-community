@@ -55,12 +55,24 @@ export const Header = () => {
   const open = Boolean(anchorEl);
   const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
 
-  const { service, nfqws2, arkLoaded, platform, authenticated, csrfToken } =
-    useStatus();
+  const {
+    service,
+    nfqws2,
+    arkLoaded,
+    platform,
+    authenticated,
+    anonym,
+    csrfToken,
+    isReady,
+  } = useStatus();
 
   const config = useConfig(nfqws2);
 
   const { auth, needSave, onSave, needReload, setNeedReload } = useAppStore();
+
+  // Basic service actions also work in the intentionally password-free panel.
+  // Scheduling keeps its authenticated-session requirement below.
+  const canControlService = auth && isReady && (authenticated || anonym);
 
   const [output, setOutput] = useState<boolean | string>(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -83,7 +95,7 @@ export const Header = () => {
   };
 
   const handleMenuClick = async (command: ServiceActionRequest['cmd']) => {
-    if (!auth || !authenticated || actionInFlight.current) return;
+    if (!canControlService || actionInFlight.current) return;
     actionInFlight.current = true;
     setActionPending(true);
     handleMenuClose();
@@ -313,7 +325,7 @@ export const Header = () => {
               flexGrow={1}
               justifyContent="flex-end"
             >
-              {auth && authenticated && (
+              {canControlService && (
                 <>
                   <Tooltip
                     title={t('restart_schedule.restart')}
@@ -337,7 +349,7 @@ export const Header = () => {
                       </IconButton>
                     </span>
                   </Tooltip>
-                  {csrfToken && (
+                  {authenticated && csrfToken && (
                     <Tooltip
                       title={t('restart_schedule.title')}
                       enterTouchDelay={0}
@@ -408,7 +420,7 @@ export const Header = () => {
                   </ListItemIcon>
                   <Trans i18nKey="system.change_theme" />
                 </MenuItem>
-                {auth && authenticated && service && (
+                {canControlService && service && (
                   <MenuItem
                     onClick={() => handleMenuClick('restart')}
                     disabled={actionPending}
@@ -421,8 +433,7 @@ export const Header = () => {
                   </MenuItem>
                 )}
 
-                {auth &&
-                  authenticated &&
+                {canControlService &&
                   (service ? (
                     <MenuItem
                       onClick={() => handleMenuClick('stop')}
@@ -471,7 +482,7 @@ export const Header = () => {
       </Box>
 
       <ThemeMenu anchorEl={themeAnchor} onClose={() => setThemeAnchor(null)} />
-      {auth && authenticated && (
+      {canControlService && (
         <OutputLogDialog
           content={output}
           open={Boolean(output)}

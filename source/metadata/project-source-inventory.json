@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "6950980e3aca96f4dc400eb2e47cc5c343e0d3f483a4e70adcae1d7e6bb22d9c"
+    "sha256": "f1769867b0abc7068f5cb7dd41574a420b3cfa4553856f459857ff8e5a525b13"
   },
   {
     "path": "LICENSE",
@@ -2431,8 +2431,8 @@
   },
   {
     "path": "tests/test_restart_schedule_browser.mjs",
-    "bytes": 39534,
-    "sha256": "28736b731245117bfe6ac2d1151c02e074bd2f71e1a910b86d83048423cda502"
+    "bytes": 43306,
+    "sha256": "804de87bdfc2b2029a1b5a2174f00904f5af5959f1666942a69ce3ab64bc9c50"
   },
   {
     "path": "tests/test_restart_schedule_permissions.py",
@@ -4126,8 +4126,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 17422,
-    "sha256": "25f5b2c286e6eaa4ba853a852060581bd320ac2b35077ec7f6fe5cfd4174aea2"
+    "bytes": 17669,
+    "sha256": "1b22fe4569b47646e36862f05c981101b5d89b1b3bf6f0832d2d061043fca481"
   },
   {
     "path": "webui/web/src/components/ImportCatalog.tsx",
@@ -4331,8 +4331,8 @@
   },
   {
     "path": "webui/web/src/hooks/useStatus.tsx",
-    "bytes": 2866,
-    "sha256": "1093ac51219d42052b507551ea3bda57b341d26e2635338bfc2da6e31bd6d89d"
+    "bytes": 2931,
+    "sha256": "fb734954f5c1f050d1dbfed9365126370eecb87bd822a02b47db5f798883e893"
   },
   {
     "path": "webui/web/src/hooks/useStorage.ts",
