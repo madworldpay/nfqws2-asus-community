@@ -2256,8 +2256,8 @@
   },
   {
     "path": "tests/test_package_update_apply.py",
-    "bytes": 28806,
-    "sha256": "d4a6e8a10f267abebee143256e0b4af3501c926a8922cac65a51cf3cd60edd53"
+    "bytes": 33140,
+    "sha256": "b8dd7da2ee1c5a8b6c925fe051627c1713f879871d11baee647a0587210ba5e3"
   },
   {
     "path": "tests/test_package_update_check_recovery.py",
@@ -3891,8 +3891,8 @@
   },
   {
     "path": "webui/web/public/update-worker.php",
-    "bytes": 20469,
-    "sha256": "637deefc7c50476d7f01f70097132e04617ae4f6c51b828a8bd61db63503b066"
+    "bytes": 21149,
+    "sha256": "5c0add0ee7d68555583ff249739668b9dc7a3e1caf39c891850a4e69347cfc45"
   },
   {
     "path": "webui/web/src/api/.gitignore",
