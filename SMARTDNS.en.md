@@ -40,13 +40,19 @@ panel, not of the SmartDNS utility itself.
 3. Select DoT/DoH from the list or enter your own. Specify sites for a separate DNS server.
    **Default** means DNS for sites without a separate assignment.
 4. If needed, add a **fixed response** — a domain and a specific IP address.
-5. Click **Check profile**, then **Connect**.
+5. Click **Check profile**. Review the default resolvers, domain assignments and complete configuration, then click **Connect**.
 6. Check DNS from a device and click **DNS works — keep settings**.
+
+Select at least one **Default** resolver. A custom resolver hostname needs connection IPs in bootstrap; DoT/DoH need a certificate name, and DoH also needs its full HTTPS URL. Bootstrap contains resolver addresses rather than website addresses; certificate verification stays enabled.
+
+Fixed answers take priority over resolver selection for overlapping domains; the preview identifies these overlaps. Fixed IP records can include an optional last-checked date.
+
+Installing the engine and validating a profile do not switch DNS. Checkup reads router state without testing website access. If SmartDNS is already managed outside the wizard, drafts can be validated, but connection remains blocked until management is transferred.
 
 **Check profile** checks the settings and whether the configuration starts; it does not
 change the server selection. During connection, a general DNS response is checked. You then
 have **120 seconds** to check sites from a device and confirm the result.
-Without confirmation, the protection mechanism restores the previous DNS.
+Without confirmation, the protection mechanism restores the previous DNS. Protection continues on the router if the window closes; reopening shows the current state.
 
 You can use preset DoT/DoH settings or your own server. If an individual
 site does not open, check the response from its assigned DNS and the service itself:
@@ -74,6 +80,10 @@ The **SmartDNS connected** status checks both the process and dnsmasq query forw
 Click **Restore previous DNS**. First, the previous dnsmasq path is restored,
 then our SmartDNS process is stopped. The draft remains available for further configuration.
 Do not stop the only DNS server before restoring forwarding.
+
+Before replacing a connected profile, select **Restore previous DNS**, edit the retained draft, validate and connect it again. **Load last confirmed profile** helps recover the previous working profile.
+
+On ASUS, an administrator can check state over SSH with `/opt/bin/nfqws2-smartdns-control status` or restore DNS with `/opt/bin/nfqws2-smartdns-control rollback`.
 
 After an update, the package tries to restore the previously confirmed profile,
 even if the editor already contains a different draft. The draft is preserved.

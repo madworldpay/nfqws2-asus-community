@@ -48,6 +48,8 @@ Start processing in the panel after initial setup. Updates preserve settings
 and the chosen on/off service state. If the current version is already installed,
 running the command again only prints the panel address.
 
+To check without installing, run the already downloaded script with `sh install.sh --check`. This mode installs neither the package nor missing prerequisites.
+
 ### Install an IPK
 
 This is the manual installation method. Transfer the file using WinSCP/SCP

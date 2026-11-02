@@ -10,7 +10,7 @@ shows the contents and changes. The result depends on the network where the prof
 ## Import
 
 1. Save or discard your current edits. Click the import icon in the header.
-2. Select **From computer (JSON)** for your own file or **From cloud** for a preset from the catalog. From your computer, you can open one export or up to five JSON attachments from an email.
+2. Select **From computer (JSON)** for your own file or **From cloud** for a preset from the catalog. Select up to five JSON files totaling at most 4 MiB: a panel export or its strategy, resources and DNS attachments. Arbitrary JSON is not supported; diagnostics and DPI results are not applied as settings.
 3. Strategy blocks, lists, blobs, and SmartDNS from the JSON are already selected. Clear any
    unwanted checkboxes. Use **Select all** to select everything again, or select all blobs separately.
 4. Open **Preview**. Check replacements and missing dependencies.
@@ -29,10 +29,14 @@ SmartDNS is imported only into the draft. To apply DNS, open SmartDNS and click
 **Undo last import** restores the previous data if it has not been
 edited separately since the import.
 
+If the import save response is lost, use **Check result** or **Retry the same write**. Repeating that write does not create a second import. If recovery is required, preserve the error and import log before making further edits.
+
 ## Export and send
 
 **Download JSON** saves the selected materials to your computer or phone.
-**Send** submits them to the project. Neither action changes the router settings.
+**Send to developer** submits them to the project. Neither action changes the router settings.
+
+Export starts from the saved configuration, so save the required edits in the main editor first. **Select all** collects diagnostics and selects available materials, including an existing DPI result; it does not run a new DPI test.
 
 1. Open **Export / share** and select what you need: diagnostics,
    a DPI result, strategy, files, or SmartDNS. You can select just one item.
@@ -50,16 +54,15 @@ Start a new test in **DPI Detector** using the command shown, save
 the result with **S**, then click **Refresh results** in the panel
 and select the required file.
 
-If **Preview** is unavailable, check that the selected diagnostics have been collected,
+Hover over or tap **Preview** to see what is still required for a JSON download. Check that the selected diagnostics have been collected,
 strategy blocks or the entire configuration are selected, and the two required fields are filled in.
 After changing the selection or text, you need to preview again.
 **Send** becomes available after the preview; if the submission channel is not configured,
 click **Connect sending**. You can download JSON without a channel.
 
-To transfer a working profile, attach the files referenced by the strategy.
-**Select available dependencies** helps collect the dependencies found.
-You can also submit a single file or an incomplete set: if the panel finds missing
-dependencies, explain why in the field provided.
+If delivery confirmation is missing, prepare a fresh preview and send again. The earlier report may have arrived, so this can create a duplicate. Keep the submission ID to help trace the result.
+
+To transfer a working profile, select the required lists and blobs manually or use each section’s selection buttons. You can save or send a single file or an incomplete set. Review missing dependencies in the preview and explain omissions in the comment if needed.
 
 Lists, blobs, and DNS are selected separately. Text copies and DNS settings can be
 edited before sending; this does not change the source files or the active DNS.
@@ -87,6 +90,4 @@ the provider and result, check the preview, and click **Send**.
 In Import, select “Paste a Keenetic strategy”, paste the complete NFQWS2 strategy
 or configuration and choose “Convert for ASUS”. The panel adapts resource paths
 and previews changes before saving. The other router’s interface, account, queue
-and policy are not transferred. If a required list, Lua file or blob is missing,
-the panel names it. Add the file or correct its reference, then preview again.
-Referenced files are not downloaded automatically.
+and policy are not transferred. Paste NFQWS2 text up to 64 KiB without shell commands; strategies for the older NFQWS are not translated automatically. If a required file is missing, the panel names it. Add lists and blobs separately or correct their references, then preview again. A missing helper Lua requires a compatible package containing it: this import does not install arbitrary Lua files. Referenced files are not downloaded automatically.

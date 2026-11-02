@@ -16,6 +16,12 @@ Save your changes and restart NFQWS2 to apply the strategy.
 The saved configuration and the running process are separate states: after editing
 the strategy, use **Restart**. SmartDNS has its own connection wizard.
 
+## WAN and processing arguments
+
+Leave WAN empty to detect active interfaces automatically, or enter interface names separated by spaces. On OpenWrt use logical names such as `wan` and `wan6`.
+
+Startup arguments contain shared Lua and blob definitions; IPSET arguments reference IP lists. Separate TCP/UDP ports with commas and use a colon for ranges: `443,3478:3481`. A port must match both capture settings and the strategy filter.
+
 ## Editor and default strategies
 
 The editor supports visual line wrapping, which does not change the text;
@@ -28,6 +34,8 @@ the entire configuration can still be selected and copied at once.
 The **Default** button restores the default TCP, QUIC, and UDP strategies and clears
 the custom block. WAN and device selection are preserved. Review the result, click
 **Save**, then **Restart**. This restores strategies; it does not reset all router settings.
+
+In **Lists**, use **+** to create a `.list` file. Enter a name using Latin letters, digits, `-` or `_`, without the extension, then reference the new list in the strategy. Custom files can be deleted after confirmation; protected lists are not offered for deletion. The file editor supports removing duplicate lines, undoing an edit and saving with **Save** or **Ctrl+S / Cmd+S**.
 
 ## Mode: Auto, List, and All
 
@@ -45,7 +53,7 @@ the strategy itself must suit your connection. Automatic detection
 does not guarantee that every block will be recognized.
 
 The selected mode does not override TCP/UDP port settings, protocols, or strategy filters.
-Individual blocks in an imported profile may also contain their own filters.
+Mode supplies domain lists to the main TCP and QUIC blocks. Separate UDP blocks, the custom strategy and IP-list processing use their own filters and are not automatically restricted by this choice.
 **All does not mean all devices:** if only a TV is selected, this mode
 applies to the TV's matching traffic.
 
@@ -65,7 +73,7 @@ enables processing only for those two devices. In exclusion mode, the same
 addresses instead remain without NFQWS2 processing. This does not disable their internet access.
 
 IPv4 and IPv6 are selected separately; the package's IPv6 processing is enabled
-with its own checkbox and does not disable IPv6 in the firmware. NFQWS2 client selection does not define
+with its own checkbox and does not disable IPv6 in the firmware. In Only listed devices mode, an empty list for one address family leaves that family's traffic unprocessed. Adding a device's IPv4 address does not automatically select its IPv6 traffic. NFQWS2 client selection does not define
 the scope of SmartDNS: its profile is connected separately.
 
 In **Only listed devices** mode, enter, for example, the following in the IPv4 field:
@@ -84,7 +92,11 @@ which are not necessarily public IP addresses. In selected-client mode, you can 
 if you need to process the ASUS router's own traffic. Check VPNs and guest networks separately.
 
 EN / RU changes the language. Select the theme in the top menu. Changing the password applies
-to the separate WebUI account and does not change the ASUS password.
+to the separate WebUI account and does not change the ASUS password. Enter the new password twice; the limit is 72 bytes. Saving with both fields empty disables the login prompt. The technical channel still requires a configured panel password.
+
+For detailed logging, enable **Debug logging**, save and restart the service. **Logs** shows the newest lines first; clearing a selected log asks for confirmation. Save information needed for troubleshooting before clearing it.
+
+The **[restart timer and service recovery](README.en.md#service-restart)** settings are next to Restart. **[Unavailable IPs](README.en.md#unavailable-ips-on-asus)** is a separate ASUS tab.
 
 The project is free, and reports are voluntary. Save working profiles through
 **Export / share** so you can restore them yourself or share them with others.
