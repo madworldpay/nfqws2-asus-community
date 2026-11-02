@@ -16,7 +16,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 84:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build84) · [release history](CHANGELOG.md). Fixes false update blocking by third-party package names, update-dialog flicker and session recovery. Includes a matching IP-check module for AC68U running community PHP 8.4.7-1.
+**Build 85:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build85) · [change history](CHANGELOG.md). On ASUS, services stop before the backup and installation, then return to their previous state. Fixes cover growing automatic lists, legacy update workers and technical-channel cleanup. Fixes also prevent the unavailable-IP observer from bypassing YouTube processing on ASUS.
 
 ## What you get
 
@@ -28,7 +28,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 | **Ready-made catalog profiles** | Start with a provider profile or import your own JSON with its lists and required files |
 | **DNS for specific sites** | SmartDNS assigns separate DoT/DoH servers or fixed IP addresses to sites |
 | **Preview and undo** | See “before / after” before importing; undo the last import, while a trial DNS connection rolls back without confirmation |
-| **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, the Build 82 updater saves a snapshot and restores the verified prior version after a failure |
+| **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, services stop before the backup and installation, then return to their previous state |
 | **Less waiting for unavailable addresses on ASUS** | A confirmed unavailable IP is temporarily excluded, helping applications move to working alternatives when the site provides them |
 
 Compared with installing the engine manually, this package already integrates
@@ -169,7 +169,7 @@ VPN capabilities depend on your firmware and chosen client.
 | SmartDNS | Up to **32 DNS servers**, **256 domain → DNS bindings** and **64 fixed answers**; DoT/DoH and custom servers |
 | Diagnostics and DPI Detector | Checkup, packet delivery checks, logs and separate network tests from the router |
 | Profile sharing | Export individual blocks, lists, blobs and DNS; review and edit the copy to be sent |
-| Updates | Signature and SHA256 checks, retained settings; package snapshots and automatic rollback after a caught failure on ASUS |
+| Updates | Signature and SHA256 checks, retained settings; package backups and automatic rollback after a caught failure on ASUS |
 | Unavailable IPs (ASUS) | Address list with expiry, recheck and removal; ordinary UDP DNS filtering and fast failure on port 443 |
 | Restart and recovery | A ↻ button, a 4/12/24-hour or custom timer, and optional recovery after a crash |
 
@@ -197,7 +197,7 @@ The **MTProto for Telegram** button at the bottom of the panel prepares installa
 
 ## Updates and profile catalog
 
-**The Build 82 updater on ASUS/Entware** saves a package and settings snapshot before replacing the program. If installation or postflight verification fails, it restores the verified prior version and original service state. A stopped service stays stopped. Power loss and a direct opkg command require separate checks — [update and recovery details](PACKAGE-UPDATES.en.md).
+**The Build 85 updater on ASUS/Entware** stops services before creating a backup and installing the package. After verification, it restores their previous state; a stopped NFQWS2 stays stopped. On failure, it verifies the old installation before restoring services, or rolls back if package replacement has begun. Power loss and a direct opkg command require separate checks — [update and recovery details](PACKAGE-UPDATES.en.md).
 
 The strategy catalog is hosted on ASUS. User-submitted profiles and diagnostics
 are received on ASUS and delivered to the project's Gmail inbox; releases

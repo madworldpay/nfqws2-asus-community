@@ -36,7 +36,20 @@ final class AsusUpdateSnapshot
         }
         return ['files'=>$files,'total'=>$total,'package_resources'=>$resources];
     }
-    public static function estimate(string $opt,int $owner=0): int {return self::collect($opt,$owner)['total'];}
+    public static function estimate(string $opt,int $owner=0): int
+    {require_once __DIR__.'/ip-health-store.php';return (new NfqwsIpHealthStore($opt.'/etc/nfqws2/ip-health'))->withStableState(fn()=>self::collect($opt,$owner)['total']);}
+    /** Pre-stop configuration proof; autonomous learning is captured after Stop. */
+    public static function stable(string $opt,int $owner=0):array
+    {
+        require_once __DIR__.'/ip-health-store.php';
+        return (new NfqwsIpHealthStore($opt.'/etc/nfqws2/ip-health'))->withStableState(function(array $health)use($opt,$owner){
+            $all=self::collect($opt,$owner);$files=$all['files'];
+            unset($files['etc/nfqws2/lists/auto.list'],$files['etc/nfqws2/ip-health/bans.json'],$files['etc/nfqws2/ip-health/state.lock']);
+            // The journal schema/private-file guards stay held through collect,
+            // so an in-progress atomic .write-* is never mistaken for config.
+            return ['files'=>$files,'package_resources'=>$all['package_resources'],'ip_health_enabled'=>$health['enabled']];
+        });
+    }
     public static function capture(string $opt,string $destination,int $owner=0): array
     {
         $manifest=self::collect($opt,$owner);AsusUpdateStore::noLinks($destination);if(file_exists($destination)||is_link($destination))throw new RuntimeException('invalid_state');
@@ -154,7 +167,6 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
                 $path=$this->store->path($base.'/package.ipk');$this->deadline?->begin(180);try{$this->source()->download($candidate['package'],$path);}finally{$this->deadline?->end();}
                 AsusUpdatePackage::inspect($path,$candidate,$env['status'],$env['abi'],$env['machine'],$env['opt'],$env['owner']);
                 $free=$this->environment['free']??disk_free_space($this->store->path());AsusUpdatePackage::space($free,0,$estimate,$env['runtime_bytes']);
-                AsusUpdateSnapshot::capture($env['opt'],$this->store->path($base.'/backup'),$env['owner']);
                 $patch=['state'=>'prepared','prepared_uptime'=>AsusUpdateStore::uptime(),'code'=>null];if($stage!==null){$runtime=$stage($id,$env);if(!is_array($runtime)||!preg_match('/^[a-f0-9]{64}$/D',$runtime['digest']??''))throw new RuntimeException('invalid_state');$patch['runtime_digest']=$runtime['digest'];}
                 return $this->store->update($id,$patch);
             }catch(Throwable $e){return $this->store->update($id,['state'=>'failed','code'=>self::code($e)]);}

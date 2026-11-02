@@ -414,6 +414,8 @@ class PackageUpdateCoordinatorTests(unittest.TestCase):
         r=self.call([['prepare',['REV','1'*32]],['prepare',['REV','1'*32]]]);self.assertIsInstance(r,list)
         self.assertEqual(r[0]['id'],r[1]['id']);self.assertEqual(r[0]['state'],'prepared')
         self.assertEqual((self.base/'state/operations'/r[0]['id']/'package.ipk').read_bytes(),self.fixture.pkg.read_bytes())
+        self.assertFalse((self.base/'state/operations'/r[0]['id']/'backup').exists(),'live preparation must not capture authoritative settings')
+        self.assertFalse((self.base/'opt/etc/nfqws2/ip-health').exists(),'preparation must not create an incident journal or lock directory')
     def test_cached_reservation_does_not_contact_network_in_http_request(self):
         r=self.call([['check',[]],['reserveCached',['REV','1'*32]],['reserveCached',['REV','1'*32]]])
         self.assertIsInstance(r,list);self.assertEqual(r[1]['state'],'preparing');self.assertEqual(r[1]['id'],r[2]['id'])

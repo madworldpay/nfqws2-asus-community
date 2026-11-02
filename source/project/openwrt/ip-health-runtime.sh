@@ -131,7 +131,7 @@ nfqws_health_start() {
         chown "$uid:$gid" "$NFQWS_HEALTH_PUBLIC/events" || return 1
     fi
     rm -f "$NFQWS_HEALTH_PRIVATE/observer.pid"
-    "$NFQWS_BIN" --daemon --pidfile="$NFQWS_HEALTH_PRIVATE/observer.pid" --user="$USER" --qnum="$queue" --fwmark=0x40000000 \
+    "$NFQWS_BIN" --daemon --reasm-disable --pidfile="$NFQWS_HEALTH_PRIVATE/observer.pid" --user="$USER" --qnum="$queue" --fwmark=0x40000000 \
         --writable="$NFQWS_HEALTH_PUBLIC/events" --lua-init=@/etc/nfqws2/lua/zapret-lib.lua \
         --lua-init='IPHEALTH_MANIFEST="/tmp/nfqws2-native-ip-health/active.txt"' \
         --lua-init=@/usr/lib/nfqws2/ip-health/dns.lua --lua-init=@/usr/lib/nfqws2/ip-health/monitor.lua \

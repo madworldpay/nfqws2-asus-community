@@ -33,12 +33,12 @@ class IpHealthAsusTests(unittest.TestCase):
         self.assertIn('-A nfqh_local -o br0 -p udp --sport 53',p.stdout)
         with tempfile.TemporaryDirectory()as folder:
             p=self.run_sh(self.config()+f'ASUS_HEALTH_PRIVATE={shlex.quote(folder)}\n'+'''
-iptables() { printf '%s\n' "$*"; return 0; }
+iptables() { case "$*" in *' -S '*) for name; do :; done; printf -- '-P %s ACCEPT\n' "$name";; *) printf '%s\n' "$*";; esac; return 0; }
 asus_ip_health_firewall_family 4
 ''')
             self.assertEqual(p.returncode,0,p.stderr)
-            self.assertIn('-I FORWARD 1 -j nfqh_forward',p.stdout)
-            self.assertIn('-I OUTPUT 1 -j nfqh_local',p.stdout)
+            self.assertIn('-A FORWARD -j nfqh_forward',p.stdout)
+            self.assertIn('-A OUTPUT -j nfqh_local',p.stdout)
 
     def test_real_renderer_forward_dns_is_limited_to_generation_wan_and_cleanup_ignores_current_wan(self):
         import ipaddress
@@ -46,14 +46,14 @@ asus_ip_health_firewall_family 4
             with self.subTest(mode=mode),tempfile.TemporaryDirectory()as folder:
                 configured=self.config("ASUS_CLIENT_MODE="+mode+"; ASUS_CLIENTS4='192.168.1.3'")
                 p=self.run_sh(configured+f'ASUS_HEALTH_PRIVATE={shlex.quote(folder)}\n'+'''
-iptables() { printf '%s\n' "$*"; return 0; }
+iptables() { case "$*" in *' -S '*) for name; do :; done; printf -- '-P %s ACCEPT\n' "$name";; *) printf '%s\n' "$*";; esac; return 0; }
 asus_ip_health_firewall_family 4
 ''')
                 self.assertEqual(p.returncode,0,p.stderr)
                 hooks={};rules={}
                 for line in p.stdout.splitlines():
                     args=shlex.split(line)
-                    if '-I'in args:hooks[args[args.index('-I')+1]]=args[args.index('-j')+1]
+                    if '-A'in args and args[args.index('-A')+1]in ['FORWARD','OUTPUT'] and '--mark'not in args:hooks[args[args.index('-A')+1]]=args[args.index('-j')+1]
                     if '-A'in args:rules.setdefault(args[args.index('-A')+1],[]).append(args[args.index('-A')+2:])
                 def queued(chain,interface,destination):
                     for args in rules.get(chain,[]):
@@ -97,7 +97,7 @@ asus_ip_health_firewall_stop
     def test_foreign_chain_creation_failure_is_never_claimed_or_flushed(self):
         with tempfile.TemporaryDirectory() as folder:
             p=self.run_sh(self.config()+f'ASUS_HEALTH_PRIVATE={shlex.quote(folder)}\n'+'''
-iptables() { printf '%s\n' "$*"; return 1; }
+iptables() { case "$*" in *' -S '*) for name; do :; done; printf -- '-P %s ACCEPT\n' "$name"; return 0;; *) printf '%s\n' "$*"; return 1;; esac; }
 asus_ip_health_firewall_family 4
 ''')
             self.assertNotEqual(p.returncode,0);self.assertIn('-N nfqh_pre',p.stdout)

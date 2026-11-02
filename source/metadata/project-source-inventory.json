@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "4b9258d432ecb4511cfe5471a58f3feea9e8aa513e1d32294894693827d3b0d4"
+    "sha256": "ff393127b5a059b172af9b9eed820368071cf24d46df1b8326623c8e79178379"
   },
   {
     "path": "LICENSE",
@@ -211,8 +211,8 @@
   },
   {
     "path": "asus/install-worker.php",
-    "bytes": 2313,
-    "sha256": "3cb83b8b4bc7c2ad9a435de60427ef53162becf853511fc3a7f56add07edb02a"
+    "bytes": 2744,
+    "sha256": "b581c686d1f6f971f7c3e9dbbe36b4605539a57a3eba99b3e976dbedcf378c01"
   },
   {
     "path": "asus/ip-health-sockets/control.sh",
@@ -606,8 +606,8 @@
   },
   {
     "path": "asus/update/worker.php",
-    "bytes": 3876,
-    "sha256": "f1968720281adb823592477ceafb8fea2491e3cbefbd2caafeed05a4e369fb7d"
+    "bytes": 4223,
+    "sha256": "c7d3a8b168d992bb105f88f9f3291adaadc42290ff8b370f0e39660a0d673bd0"
   },
   {
     "path": "asus/update/worker.sh",
@@ -836,8 +836,8 @@
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
-    "bytes": 11168,
-    "sha256": "e698334195fa1d84a62781530a0a1967568605ae2f227d5b162b1e09356ce7ac"
+    "bytes": 16483,
+    "sha256": "0d0bbad02963d0e12e9d3abd16add7fb7ddcb3c5643451100696eaf298347a58"
   },
   {
     "path": "docs/USAGE.md",
@@ -861,8 +861,8 @@
   },
   {
     "path": "ip-health/runtime.sh",
-    "bytes": 11030,
-    "sha256": "201c494eeee21b0635930648fde21a974ff9459bd5703fe8d60b2228e1e4942a"
+    "bytes": 12248,
+    "sha256": "a24737916757dbd73f59e4255fd848bfd09701f932159f822e099f6085f614ae"
   },
   {
     "path": "ip-health/worker.php",
@@ -1026,8 +1026,8 @@
   },
   {
     "path": "openwrt/ip-health-runtime.sh",
-    "bytes": 8205,
-    "sha256": "da0379da8ae6fd093b1129c8a001d593dcad5cdf1063a843536bc791552a5d78"
+    "bytes": 8221,
+    "sha256": "1e385d2baa70207231871111351032176c656819879e652c22d1eaa1c46e385f"
   },
   {
     "path": "openwrt/ip-health-service.sh",
@@ -1801,8 +1801,8 @@
   },
   {
     "path": "tests/test_ip_health_asus.py",
-    "bytes": 9542,
-    "sha256": "22da2c568b88ac1bf6cd827938b962862a023ae6808885ce29e360b9ba76fc6e"
+    "bytes": 9900,
+    "sha256": "21dfb0d9785ec42062b33e26c3ffdd49da133ef8ee4223fd23d32f915acee9d9"
   },
   {
     "path": "tests/test_ip_health_auth_browser.mjs",
@@ -1828,6 +1828,11 @@
     "path": "tests/test_ip_health_control.py",
     "bytes": 3247,
     "sha256": "4390de710b50c09ae2bf8474b520fe3f24e3602d1e92a43eb4270abfe1bac3f4"
+  },
+  {
+    "path": "tests/test_ip_health_hook_coexistence.py",
+    "bytes": 12812,
+    "sha256": "076436f9e823e255043e54e6c92439386716012cc119934f23573a1f15a5ac3d"
   },
   {
     "path": "tests/test_ip_health_lua.py",
@@ -2256,8 +2261,8 @@
   },
   {
     "path": "tests/test_package_update_apply.py",
-    "bytes": 33140,
-    "sha256": "b8dd7da2ee1c5a8b6c925fe051627c1713f879871d11baee647a0587210ba5e3"
+    "bytes": 33641,
+    "sha256": "9b14d0da37e3a6ae12c7091e0cdda11fa543fdb70709bd31de66744569445285"
   },
   {
     "path": "tests/test_package_update_check_recovery.py",
@@ -2306,8 +2311,13 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 37102,
-    "sha256": "7e78d927c319e3c92361d6dfd6d5dbda8e16c6469d2f5f6d216ae6a4e9c7755a"
+    "bytes": 37389,
+    "sha256": "3ac6c09eab8e0bb87ba48130ae282e4b2e9b3273abeaa5c15feed8226f5d8dbb"
+  },
+  {
+    "path": "tests/test_package_update_quiesce.py",
+    "bytes": 33324,
+    "sha256": "8d23db33722d01e265438a666471455079e3429940a3d5c49360ce92509a0d89"
   },
   {
     "path": "tests/test_package_update_recovery_artifact.py",
@@ -2326,8 +2336,8 @@
   },
   {
     "path": "tests/test_package_update_rollback.py",
-    "bytes": 47909,
-    "sha256": "b5b9f059512c3e86c0f723f1ff285e5df4d3b0d28630656fed8807844963e2e4"
+    "bytes": 47915,
+    "sha256": "67cc1d02190358c9cca5dcc37e4e608434b05b5f04c2e364e0c5250eb9bb2c51"
   },
   {
     "path": "tests/test_package_update_runtime.py",
@@ -2346,8 +2356,8 @@
   },
   {
     "path": "tests/test_package_update_store.py",
-    "bytes": 16887,
-    "sha256": "9f9969dea184f26619954381c49e07e0995e6eea15dbb90d6b61bafe106e56fd"
+    "bytes": 18995,
+    "sha256": "416e4f43c95253b21ebc30760f07126e549155dc9b09d63c0853ef9ab35f375b"
   },
   {
     "path": "tests/test_package_update_transport.py",
@@ -2361,8 +2371,8 @@
   },
   {
     "path": "tests/test_package_update_worker.py",
-    "bytes": 7223,
-    "sha256": "3822eb028a272453c17753b4a0208a370ad5ff476770bee8bf97895ea1a570e2"
+    "bytes": 7740,
+    "sha256": "a3ce0733fa2f78da4a8ea23eacfc3a7f79c1fe0b0cfc5ff9792730ba5d147c34"
   },
   {
     "path": "tests/test_package_updates_ui.mjs",
@@ -2971,8 +2981,8 @@
   },
   {
     "path": "tests/test_update_postinst_compat.py",
-    "bytes": 10277,
-    "sha256": "7c739db2343d8b3d3162a3fbc338b42610a182a1c1182f56121aed2661fa55c7"
+    "bytes": 10725,
+    "sha256": "cf257a55de6bdf4eb4cf930b80d56ee90b12f9da6f9a86de6ce36637642626cb"
   },
   {
     "path": "tests/test_update_postinst_resume.py",
@@ -2980,9 +2990,19 @@
     "sha256": "60760fe18553c04d8c8bb9b1674e3d47083ee2df38e722240d002412325a1b6c"
   },
   {
+    "path": "tests/test_update_recovery_entrypoints.py",
+    "bytes": 4120,
+    "sha256": "53654c502d21457c9dcde9e0df0ffed860aa4c7f38cc7947decf73b33e29da4a"
+  },
+  {
     "path": "tests/test_update_smartdns_resume.py",
     "bytes": 5722,
     "sha256": "ac6e533bea9e17b12d3bfd9ee09f7ea764de9ba700a364cbcf7d3569aec8b75d"
+  },
+  {
+    "path": "tests/test_update_web_intent.py",
+    "bytes": 3421,
+    "sha256": "40b53bfa3be1c8d311278bdbf35ca5acdeb3a81529177b0d7367f9bb31267080"
   },
   {
     "path": "tests/test_web.php",
@@ -3391,8 +3411,8 @@
   },
   {
     "path": "webui/web/public/ip-health-store.php",
-    "bytes": 19388,
-    "sha256": "c90a77f157f5b4dd4a6a6a8edcdf30b41083cccc1a33003fc4aeed2e571d1c20"
+    "bytes": 19865,
+    "sha256": "ed27056760dc896fb1bb3f5ffa2a1e1077bc495b999f7076bb34f900cded0ea4"
   },
   {
     "path": "webui/web/public/logo.woff2",
@@ -3821,8 +3841,8 @@
   },
   {
     "path": "webui/web/public/update-dispatch.php",
-    "bytes": 4734,
-    "sha256": "e5c9fa5ed740b03ac6b8382c53cc2fd0bce7b43a483dd5772fd4ded5361d1b12"
+    "bytes": 4912,
+    "sha256": "d2b91f3833c2335d0fe3111b612eacac205678e1e4b0928b16159edd655269ae"
   },
   {
     "path": "webui/web/public/update-github.php",
@@ -3831,13 +3851,13 @@
   },
   {
     "path": "webui/web/public/update-guard.php",
-    "bytes": 7661,
-    "sha256": "04ce200ec06eb0ba97b5686c17d235bbc79e5934791ac20b8b33962dfa3c649c"
+    "bytes": 10440,
+    "sha256": "b17738b86f06c9591dd34f2ed73035f4bb74bd2458dc8749baeb35046fab3454"
   },
   {
     "path": "webui/web/public/update-lifecycle.php",
-    "bytes": 5882,
-    "sha256": "11d8d6cbd0ebc709830980e0e00a28b02f78062d9f77e202341e82ce46c883da"
+    "bytes": 15997,
+    "sha256": "9c48f07deb8e0843587d59a7a8f94b8635830becfbdf37f2033045e92830383e"
   },
   {
     "path": "webui/web/public/update-manifest.php",
@@ -3851,18 +3871,18 @@
   },
   {
     "path": "webui/web/public/update-postinst-resume.php",
-    "bytes": 10402,
-    "sha256": "ff4f57271e9b20f222968a9bab0b2c3721aa852230456549485b9e7fe340e4a5"
+    "bytes": 10457,
+    "sha256": "03ca5feeeb8c5f04bf365c028a450133d9f94e4a9c82d57a0ade3006a6952b55"
   },
   {
     "path": "webui/web/public/update-prepare.php",
-    "bytes": 17854,
-    "sha256": "35549e80b448919b119c1b33850ecb8679ddf845140022adeca3ed34db43bde2"
+    "bytes": 18720,
+    "sha256": "04e917e10f33cac1a4d7e6441c57664b7b4ef84c66565a6bedf742ed8653a742"
   },
   {
     "path": "webui/web/public/update-rollback.php",
-    "bytes": 49156,
-    "sha256": "7c0a0d9b37526d39e6c81efe8cbd51dc5c885de265bb37ad40fd4192f302de2a"
+    "bytes": 50384,
+    "sha256": "178020183cbaecf1e846223cfe7a20f3deb498d89a47d637838fd0c822419130"
   },
   {
     "path": "webui/web/public/update-runtime.php",
@@ -3876,8 +3896,8 @@
   },
   {
     "path": "webui/web/public/update-store.php",
-    "bytes": 17197,
-    "sha256": "b6cbcd02f28f916e1cc818bca830f097ff72a85d4d5e2b22a5a4e941fe14b508"
+    "bytes": 18153,
+    "sha256": "1e825f4565a64f6f3b2248c604a75388f10c4cbbf3a59f7519f8c0d24c1ee01e"
   },
   {
     "path": "webui/web/public/update-transport.php",
@@ -3886,13 +3906,13 @@
   },
   {
     "path": "webui/web/public/update-watchdog.php",
-    "bytes": 4631,
-    "sha256": "c4152d7f3f9a8415414ab2afd3a98b44760563c8cb3e96dabc84666e74367e95"
+    "bytes": 6686,
+    "sha256": "abffaaa883160b966dda4a9fdf9ccf639ca3f81ff8bf8ed76a673b4b6cbe8a30"
   },
   {
     "path": "webui/web/public/update-worker.php",
-    "bytes": 21149,
-    "sha256": "5c0add0ee7d68555583ff249739668b9dc7a3e1caf39c891850a4e69347cfc45"
+    "bytes": 31297,
+    "sha256": "fad6fb7403002e34f668581c057d12c2d3607e0cf70f37ceb3d0a417e46cdec1"
   },
   {
     "path": "webui/web/src/api/.gitignore",
@@ -4441,13 +4461,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 82775,
-    "sha256": "503d51399dc89f0681a5572b0ebd59189dc554b576a4cb3dd3ad2c10c6da94e9"
+    "bytes": 82790,
+    "sha256": "f37e6f1c7a9e112f5589300ae07280d7cb175b9a6982a91ed4ecb5af6c494865"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 133854,
-    "sha256": "09d74b9074cae64626e097e3ff4c5131af3a5be62c07921054b603bb56d68da0"
+    "bytes": 133949,
+    "sha256": "3ea63d8902189152709e6ab8fed249e41bca94612b0066ac5f278ed42784b1f0"
   },
   {
     "path": "webui/web/src/types/types.ts",

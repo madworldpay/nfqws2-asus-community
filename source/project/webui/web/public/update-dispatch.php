@@ -54,6 +54,7 @@ final class AsusUpdateDispatch
         foreach([$job['identity']??null,$guard['guardian']??null,$guard['child']??null] as $identity)if(is_array($identity)&&AsusUpdateLifecycle::alive($identity))return $job;
         $since=$job['state']==='preparing'?($job['prepare_launch_uptime']??$job['created_uptime']):($job['apply_uptime']??$job['created_uptime']);
         if(AsusUpdateStore::uptime()-$since<15&&!isset($job['identity']))return $job;
-        return $this->store->update($id,['state'=>'interrupted','code'=>'interrupted']);
+        $code=$this->store->readFile('operations/'.$id.'/quiesce.json')!==null&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null?'recovery_required':'interrupted';
+        return $this->store->update($id,['state'=>'interrupted','code'=>$code]);
     }
 }

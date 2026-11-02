@@ -18,13 +18,15 @@ class PackageUpdateLifecycleTests(unittest.TestCase):
         self.run=self.base/'run';self.run.mkdir(mode=0o700);self.log=self.base/'commands'
         self.core=self.base/'core';self.web=self.base/'web'
         q=shlex.quote
-        self.core.write_text('#!/bin/sh\numask 077\nprintf "%s\\n" "$1" >> '+q(str(self.log))+'\ncase "$1" in\n'
+        self.core.write_text('#!/bin/sh\numask 077\nCONFFILE=/opt/etc/nfqws2/nfqws2.conf\nprintf "%s\\n" "$1" >> '+q(str(self.log))+'\ncase "$1" in\n'
           'stop) if [ -f '+q(str(self.base/'stop-fails'))+' ]; then exit 1; fi\n'
           'if [ -f '+q(str(self.run/'pid'))+' ]; then kill -TERM "$(cat '+q(str(self.run/'pid'))+')" 2>/dev/null || :; fi\n'
-          'rm -f '+q(str(self.run/'pid'))+' '+q(str(self.run/'enabled'))+';;\n'
+          'rm -f '+q(str(self.run/'pid'))+' '+q(str(self.run/'enabled'))+' '+q(str(self.run/'runtime.conf'))+' '+q(str(self.run/'started'))+' '+q(str(self.run/'watchdog-state'))+';;\n'
           'start) : > '+q(str(self.run/'enabled'))+'\n'
+          'if [ -f "$CONFFILE" ]; then cp "$CONFFILE" '+q(str(self.run/'runtime.conf'))+'; else printf "# Active fixture\\n" > '+q(str(self.run/'runtime.conf'))+'; fi\n'
           'if [ ! -f '+q(str(self.base/'no-wan'))+' ]; then /bin/sleep 30 </dev/null >/dev/null 2>&1 & echo $! > '+q(str(self.run/'pid'))+'; fi;;\nesac\n')
         self.core.chmod(0o700);self.web.write_text('#!/bin/sh\nexit 0\n');self.web.chmod(0o700)
+        (self.run/'runtime.conf').write_text('# Active fixture\n');(self.run/'runtime.conf').chmod(0o600)
         self.options={'run':str(self.run),'engine':str(Path('/bin/sleep').resolve()),'core_init':str(self.core),'web_init':str(self.web),'owner':os.getuid()}
         self.children=[];self.identities=[];self.addCleanup(self.stop_children)
     def stop_children(self):
@@ -40,7 +42,7 @@ class PackageUpdateLifecycleTests(unittest.TestCase):
     def running(self):
         p=subprocess.Popen(['/bin/sleep','30']);self.children.append(p)
         (self.run/'pid').write_text(str(p.pid));(self.run/'pid').chmod(0o600)
-        (self.run/'enabled').touch(mode=0o600);return p
+        (self.run/'enabled').touch(mode=0o600);(self.run/'runtime.conf').write_text('# Active fixture\n');(self.run/'runtime.conf').chmod(0o600);return p
     def call(self,commands):
         code='''if(!is_file($argv[1].'/update-lifecycle.php')){echo json_encode(['error'=>'missing_lifecycle']);exit;}
         require $argv[1].'/update-lifecycle.php';$p=json_decode(stream_get_contents(STDIN),true);

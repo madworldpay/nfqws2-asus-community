@@ -125,6 +125,10 @@ final class NfqwsIpHealthStore
         $now??=time();return $this->locked($this->directory,true,function()use($fn,$now){$old=$this->state();$v=$old;self::prune($v,$now);$result=$fn($v);self::prune($v,$now);if($v!==$old)$this->write($this->directory.'/bans.json',$v,524288);return $result;});
     }
     public function view(?int $now=null):array{$now??=time();return $this->locked($this->directory,false,function()use($now){$v=$this->state();self::prune($v,$now);return $v;});}
+    /** Trusted update attestation: hold the writer lock through its full scan.
+     * Ensures only the private lock inode; never changes the incident journal. */
+    public function withStableState(callable $fn):mixed
+    {clearstatcache(true,$this->directory);if(@lstat($this->directory)===false)return $fn(self::emptyState());if(!$this->directory($this->directory,false))return $fn(self::emptyState());return $this->locked($this->directory,true,fn()=>$fn($this->state()));}
     /** A separate RAM journal prevents flash writes for each flow observation. */
     public function evidence(callable $fn):mixed
     {return $this->locked($this->runtimeDir,true,function()use($fn){$v=$this->read($this->runtimeDir.'/evidence.json',262144)??[];$result=$fn($v);$this->write($this->runtimeDir.'/evidence.json',$v,262144);return $result;},true);}

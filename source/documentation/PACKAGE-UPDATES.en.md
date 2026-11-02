@@ -47,7 +47,7 @@ for this installer repair; rerunning the command fetches the corrected script.
 The installer also fixes a false `timed_out` during worker startup on older
 ASUS routers. An exec transition within the same process is now recognized.
 Live-worker, deadline and package-manager checks remain enforced. The standalone
-installer includes this repair; the panel receives it with the next build.
+installer includes this repair; the panel includes it from Build 85.
 
 ## Interrupted ASUS installation
 
@@ -61,25 +61,34 @@ An SSH disconnect does not cancel an installation already running in the
 background. On failure, the installer shows the retained log path. Check the
 final status before starting the service manually.
 
-## ASUS snapshots and rollback in Build 82
+## Backup and service restoration on ASUS in Build 85
 
-On ASUS/Entware, the Build 82 updater snapshots the installed package and settings
-before stopping services. After a caught installation or postflight failure,
-it restores the previous files through the package manager, verifies settings,
-and only then restores the original service state. A stopped service stays
-stopped. Custom login and submission settings are retained, and another update
-remains possible after successful rollback.
+Checking a release, downloading and preparing the package leave services running.
+When you click **Install update**, the updater records their state and stops
+NFQWS2 and its related writers. It then saves the final settings, lists and old
+package for recovery, installs the new package and verifies the result.
+Services return to their previous state: a stopped NFQWS2 stays stopped.
+The active strategy is preserved even if the saved editor draft differs.
 
-If the prior state cannot be verified, the updater does not report success:
-the service may stay stopped, while the snapshot and logs remain for diagnosis.
-Power loss or forcibly terminating the package manager is a separate interrupted
-installation case; automatic rollback after reboot is not promised.
+If a failure occurs before package replacement, the updater verifies the old
+installation before restoring its services. After replacement has begun, a
+verified rollback restores the previous package and settings. If restoration
+cannot be verified, the updater keeps the backup and log and reports the reason.
+It does not start an unverified or partly installed version.
 
-This behavior belongs to the Build 82 updater. An older panel gains it after
-its own update; the current installation command downloads the new installer.
-A direct opkg command does not run this snapshot-and-rollback workflow. Native
-OpenWrt preserves settings and service intent, but the full automatic package
-version restoration described here currently applies only to ASUS/Entware.
+The panel and temporary technical access may disconnect during replacement.
+The technical-channel expiry is never extended automatically. Losing power or
+all update controllers does not justify replaying an old start request after a
+reboot; such an interrupted operation requires a new verified recovery.
+
+**First transition from an older panel:** if it fails before installation, rerun
+the usual installation command below once. The old installed worker cannot gain
+this fix before package replacement; the current command runs the corrected
+standalone coordinator. Settings and the chosen service state are preserved.
+
+A direct `opkg install` does not run this backup-and-rollback workflow. Native
+OpenWrt retains its own package verification and service-state restoration;
+full automatic package rollback in this section applies to ASUS / Entware.
 
 ## Through the panel
 
@@ -100,8 +109,8 @@ get the new interface only after they are updated.
 After reviewing the changes:
 
 1. **Prepare package** — download it and verify the signature, compatibility and free space.
-2. **Install update** — replace the package and wait for the result. On ASUS,
-   the Build 82 updater first snapshots the installed program and settings.
+2. **Install update** — wait for the result. On ASUS, services are stopped,
+   a backup is created, the package is replaced and the previous service state is restored.
 
 The panel may disconnect temporarily. Closing the tab does not cancel installation.
 The updater preserves settings, lists, login credentials and the chosen on/off service state.
@@ -183,7 +192,7 @@ The panel verifies the release signature with a pinned key, then the package siz
 and SHA256. Installation does not start if verification fails.
 An existing private channel configured by the operator remains in use.
 
-See **ASUS snapshots and rollback in Build 82** above for automatic restoration
+See **Backup and service restoration on ASUS in Build 85** above for automatic restoration
 of the previous ASUS package.
 
 If package preparation is interrupted, you can retry installation.

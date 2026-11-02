@@ -25,11 +25,18 @@ final class AsusUpdateWatchdog
         return $value['deadline']===null?$overall:min($overall,(float)$value['deadline']);
     }
     /** argv is produced by trusted installed/staged code, never from HTTP. */
-    public function run(string $id,array $argv,float $deadline): void
+    public function run(string $id,array $argv,float $deadline,?array $recovery=null): void
     {
         $job=$this->store->readOperation($id);if(!in_array($job['state'],['preparing','applying'],true)||$job['boot_id']!==AsusUpdateStore::boot())throw new RuntimeException('invalid_state');
         if(!is_finite($deadline)||$deadline<AsusUpdateStore::uptime()||$deadline>AsusUpdateStore::uptime()+300||count($argv)<1||count($argv)>64)throw new RuntimeException('invalid_state');
         foreach($argv as $arg)if(!is_string($arg)||strlen($arg)>8192||strpbrk($arg,"\r\n\0")!==false)throw new RuntimeException('invalid_state');
+        if($recovery!==null){if($job['state']!=='applying'||count($recovery)<1||count($recovery)>64)throw new RuntimeException('invalid_state');foreach($recovery as $arg)if(!is_string($arg)||strlen($arg)>8192||strpbrk($arg,"\r\n\0")!==false)throw new RuntimeException('invalid_state');}
+        if($job['state']==='applying'&&!NfqwsPlatform::native()){
+            $guardian=AsusUpdateLifecycle::identity(getmypid());if($guardian===null||$guardian['uid']!==$this->owner)throw new RuntimeException('invalid_state');
+            // Existing installed guards already block mutations for a live
+            // applying job identity, including the child-to-recovery interval.
+            $this->store->update($id,['identity'=>$guardian]);
+        }
         $p=@proc_open($argv,[0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$pipes,'/',
             ['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','LC_ALL'=>'C','HOME'=>'/']);
         if(!is_resource($p))throw new RuntimeException('launch_failed');$status=proc_get_status($p);$pid=(int)$status['pid'];$identity=AsusUpdateLifecycle::identity($pid);$reason='interrupted';
@@ -57,6 +64,19 @@ final class AsusUpdateWatchdog
                 }
                 usleep(20000);$status=proc_get_status($p);
             }
-        }finally{proc_close($p);$this->interrupt($id,$reason);}
+        }finally{
+            proc_close($p);
+            // Keep this genuine applying guardian alive until the verified
+            // restore-only child finishes. Installed82/84 guards recognize it.
+            try{if($recovery!==null&&$this->store->readOperation($id)['state']==='applying'&&!$this->boundary($id)&&$this->store->readFile('operations/'.$id.'/quiesce.json')!==null){
+                $path='operations/'.$id.'/quiesce-guardian.log';$this->store->writeFile($path,'');
+                $restore=@proc_open($recovery,[0=>['file','/dev/null','r'],1=>['file',$this->store->path($path),'a'],2=>['file',$this->store->path($path),'a']],$pipes,'/',
+                    ['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C','LC_ALL'=>'C','HOME'=>'/']);
+                if(!is_resource($restore))throw new RuntimeException('launch_failed');
+                try{do{$status=proc_get_status($restore);if(!$status['running'])break;usleep(20000);}while(true);}finally{proc_close($restore);}
+                if($this->store->readOperation($id)['state']==='applying')$this->store->update($id,['state'=>'failed','code'=>'recovery_required']);
+            }}catch(Throwable $e){if($this->store->readOperation($id)['state']==='applying')$this->store->update($id,['state'=>'failed','code'=>'recovery_required']);}
+            $this->interrupt($id,$reason);
+        }
     }
 }

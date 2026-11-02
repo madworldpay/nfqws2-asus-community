@@ -38,8 +38,9 @@ final class AsusUpdatePostinstResume
     public function schedule():array
     {
         $guard=new AsusUpdateGuard($this->store,$this->owner,$this->options['opkg']??'/opt/bin/opkg');if(!$guard->authorize('hook-postinst'))throw new RuntimeException('invalid_state');$ticket=$this->json('transaction.json',16384);$id=$ticket['id'];$ticket=$guard->context($id);$job=$this->store->readOperation($id);
-        if($ticket['phase']!=='installing'||$job['state']!=='applying'||($job['phase']??null)!=='installing'||($job['identity']??null)!==$ticket['worker']||$job['boot_id']!==AsusUpdateStore::boot())throw new RuntimeException('invalid_state');
-        $legacy=$this->seal($job);if($legacy===null)return ['state'=>'coordinator_owned'];$intent=$this->intent();if($intent===null)return ['state'=>'skipped'];
+        if($ticket['phase']!=='installing'||$job['state']!=='applying'||($job['phase']??null)!=='installing'||$job['boot_id']!==AsusUpdateStore::boot())throw new RuntimeException('invalid_state');
+        $legacy=$this->seal($job);if($legacy===null)return ['state'=>'coordinator_owned'];
+        if(($job['identity']??null)!==$ticket['worker'])throw new RuntimeException('invalid_state');$intent=$this->intent();if($intent===null)return ['state'=>'skipped'];
         $proof=['schema'=>1,'id'=>$id,'runtime_digest'=>$job['runtime_digest'],'worker'=>$ticket['worker'],'version'=>$job['package_version'],'legacy'=>$legacy,'intent_sha256'=>$intent,'state'=>'scheduled','code'=>null];$this->write($id,$proof);
         $entry=$this->options['entry']??[$this->opt.'/bin/php-cgi','-n','-d','register_argc_argv=1','-q','-f',$this->opt.'/share/nfqws-asus-web/update-postinst-resume.php','--'];$busybox=$this->options['busybox']??$this->opt.'/libexec/nfqws2-asus/busybox';
         $ok=$this->command(array_merge([$busybox,'start-stop-daemon','-S','-b','-p',$this->opt.'/var/run/nfqws2-legacy-dns-resume.pid','-x',$entry[0],'--'],array_slice($entry,1),['resume',$id]));

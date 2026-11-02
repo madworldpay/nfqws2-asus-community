@@ -100,14 +100,21 @@ final class AsusUpdateStore
             require_once __DIR__.'/openwrt-apk-commit.php';
             if(!NfqwsOpenWrtApkCommit::prune($this,$id))return;
         }
+        // Preserve unresolved pre-install intent/backups after all blockers
+        // were lost. Rotation must not erase the only diagnostic checkpoint.
+        $q=$this->readFile('operations/'.$id.'/quiesce.json');
+        if($q!==null&&$this->readFile('operations/'.$id.'/boundary.json',1024)===null){$v=json_decode($q,true);if(!is_array($v)||($v['phase']??null)!=='restored')return;}
         // Unknown operator files and links are deliberately left alone.
         $this->pruneTree('operations/'.$id.'/backup','snapshot.json');
+        $this->pruneTree('operations/'.$id.'/quiesced-backup','snapshot.json');
+        if($this->readFile('operations/'.$id.'/service-state/staging.json')!==null)$this->pruneTree('operations/'.$id.'/service-state','staging.json',true);
+        $this->pruneTree('operations/'.$id.'/service-state','cleanup-index.json');
         if($this->readFile('operations/'.$id.'/rollback/staging.json')!==null)$this->pruneTree('operations/'.$id.'/rollback','staging.json',true,false,true);
         $this->pruneTree('operations/'.$id.'/rollback','cleanup-index.json',false,false,true);
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
         $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
         foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}
-        foreach(['package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','rollback-finalize-error.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
+        foreach(['quiesce.json','quiesce-result.json','quiesce-recovery-error.json','quiesce-guardian.log','package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','rollback-finalize-error.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
         @rmdir($dir);
     }
     private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false,bool $rollback=false): void
@@ -174,5 +181,5 @@ final class AsusUpdateStore
     public function status(): array
     {return $this->withRetryLock(function(){$db=$this->db();$active=null;$history=[];foreach($db['operations'] as $job)if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else $active=$job;if($this->readFile('operations.json')===null)$this->save($db);return ['active'=>$active,'history'=>array_reverse($history)];});}
     public function reconcile(string $boot,float $uptime): void
-    {$this->withLock(function()use($boot,$uptime){$db=$this->db();$before=$db;foreach($db['operations'] as &$job)if(!in_array($job['state'],self::TERMINAL,true)&&($job['boot_id']!==$boot||$uptime<$job['created_uptime'])){$job['state']='interrupted';$job['code']='interrupted';$job['finished_at']=time();}unset($job);$this->rotate($db);if($db!==$before)$this->save($db);});}
+    {$this->withLock(function()use($boot,$uptime){$db=$this->db();$before=$db;foreach($db['operations'] as &$job)if(!in_array($job['state'],self::TERMINAL,true)&&($job['boot_id']!==$boot||$uptime<$job['created_uptime'])){$job['state']='interrupted';$job['code']=$this->readFile('operations/'.$job['id'].'/quiesce.json')!==null&&$this->readFile('operations/'.$job['id'].'/boundary.json',1024)===null?'recovery_required':'interrupted';$job['finished_at']=time();}unset($job);$this->rotate($db);if($db!==$before)$this->save($db);});}
 }

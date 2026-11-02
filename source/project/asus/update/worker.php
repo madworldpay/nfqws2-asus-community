@@ -34,6 +34,10 @@ try{
     }
     if(count($arguments)!==1||!preg_match('/^[a-f0-9]{32}$/D',$arguments[0]))exit(1);$id=$arguments[0];
     if($mode==='rollback-finalize'){(new AsusUpdateWorker($store))->rollbackFinalize($id);exit(0);}
+    if($mode==='restore-before-install'){
+        $result=(new AsusUpdateWorker($store,new AsusUpdatePrepare($store,null,[],null,new AsusUpdateDeadline($store,$id))))->recoverBeforeInstall($id);
+        exit(in_array($result['state']??null,['restored','skipped'],true)?0:1);
+    }
     if($mode==='guard-check'){
         $command=[PHP_BINARY,'-n','-d','extension=/opt/lib/php8/openssl.so','-d','register_argc_argv=1','-q','-f',__FILE__,'--','check',$id];
         (new AsusUpdateCheck($store))->guard($id,$command);exit(0);
@@ -42,7 +46,7 @@ try{
     if($mode==='guard-apply'){
         $runtime=AsusUpdateRuntime::load($store->path('operations/'.$id.'/runtime'));
         $job=$store->readOperation($id);if(($job['runtime_digest']??null)!==$runtime['digest'])exit(1);
-        (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+240);exit(0);
+        (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+240,array_merge($runtime['argv'],['--','restore-before-install',$id]));exit(0);
     }
     if($mode==='guard-prepare'){
         $command=[PHP_BINARY,'-n','-d','extension=/opt/lib/php8/openssl.so','-d','register_argc_argv=1','-q','-f',__FILE__,'--','prepare',$id];
