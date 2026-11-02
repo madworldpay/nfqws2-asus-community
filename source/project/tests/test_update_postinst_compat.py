@@ -67,6 +67,11 @@ class LegacyPostinstResumeTests(unittest.TestCase):
     def test_modern82_coordinator_keeps_resume_ownership_and_does_not_schedule_bridge(self):
         self.seal(False);out=self.f.execute();self.assertEqual(out['state'],'succeeded',out)
         proof=self.f.op/'dns-resume.json';self.assertTrue(proof.is_file());self.assertNotIn('legacy',json.loads(proof.read_text()));self.assertIn('coordinator_owned',(self.f.op/'opkg.log').read_text())
+    def test_modern_guardian_job_identity_does_not_activate_the_legacy_bridge(self):
+        self.seal(False);self.f.execute('guard-apply')
+        out=json.loads((self.f.state/'operations.json').read_text())['operations'][self.f.id]
+        self.assertEqual(out['state'],'succeeded',out);self.assertIn('coordinator_owned',(self.f.op/'opkg.log').read_text())
+        self.assertNotIn('legacy',json.loads((self.f.op/'dns-resume.json').read_text()))
     def test_legacy_postflight_failure_never_dispatches_dns_resume(self):
         self.seal();self.f.service.web.write_text('#!/bin/sh\nexit 9\n');out=self.f.execute();self.assertEqual(out['state'],'failed',out);time.sleep(.3)
         self.assertFalse((self.base/'resumed-confirmed').exists());self.assertEqual(self.draft.read_text(),'OWNER NEW UNCONFIRMED DRAFT')

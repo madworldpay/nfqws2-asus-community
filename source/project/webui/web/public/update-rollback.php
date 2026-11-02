@@ -270,16 +270,33 @@ final class AsusUpdateRollback
             if(!isset($settings['files'][$name]))$out[$name]=$meta;
         }ksort($out);return $out;
     }
-    public static function capture(array $env,string $destination,string $settings,string $postinst): array
+    private static function installed(array $env):array
     {
         $opt=$env['opt'];$owner=$env['owner'];[$own,$foreign]=self::database($env['status']);
-        if($env['pending']||!preg_match('/^install (?:ok|user) installed$/D',$own['Status']??'')||($own['Version']??null)!==$env['installed']||!str_starts_with($postinst,"#!/bin/sh\nexec "))throw new RuntimeException('rollback_unavailable');
-        $metadata=[];$total=0;
+        if($env['pending']||!preg_match('/^install (?:ok|user) installed$/D',$own['Status']??'')||($own['Version']??null)!==$env['installed'])throw new RuntimeException('rollback_unavailable');
+        $metadata=[];
         foreach(self::META as $name){$p=$opt.'/lib/opkg/info/nfqws2-asus.'.$name;if(file_exists($p)||is_link($p))$metadata[$name]=self::file($p,$owner,str_starts_with($name,'busybox-migration-')?1048576:131072);}
         foreach(glob($opt.'/lib/opkg/info/nfqws2-asus.*')?:[] as $path)if(!in_array(substr(basename($path),12),array_merge(self::META,['list']),true))throw new RuntimeException('rollback_unavailable');
         if(!isset($metadata['control']))throw new RuntimeException('rollback_unavailable');$control=file_get_contents($opt.'/lib/opkg/info/nfqws2-asus.control');$controlFields=AsusUpdatePackage::fields($control);if(isset($controlFields['Status']))throw new RuntimeException('rollback_unavailable');
         foreach(['Package'=>'nfqws2-asus','Version'=>$own['Version'],'Architecture'=>$own['Architecture']??''] as $key=>$value)if(!preg_match('/^'.preg_quote($key,'/').': '.preg_quote($value,'/').'$/m',$control))throw new RuntimeException('rollback_unavailable');
         $conffiles=self::conffiles($own,$metadata,$opt);$files=self::listed($opt,$owner,$indexes,$conffiles);
+        return [$own,$foreign,$metadata,$conffiles,$files,$indexes];
+    }
+    /** Same closed installed collectors as rollback; no alternate status parser. */
+    public static function attest(array $env):array
+    {
+        [$own,$foreign,$metadata,$conffiles,$files,$indexes]=self::installed($env);
+        $aux=self::captureAux($env['opt'],'',$env['owner'],false);
+        // stop('upgrade') may create this consent-bound runtime intent. Its
+        // private file is validated above; owner draft/migration stay bound.
+        unset($aux['owners']['etc/nfqws-asus-web/smartdns/resume-intent.json']);
+        $proof=['own'=>$own,'foreign'=>$foreign,'metadata'=>$metadata,'conffiles'=>$conffiles,'payload'=>$files,'indexes'=>$indexes,'aux'=>$aux,'settings'=>AsusUpdateSnapshot::stable($env['opt'],$env['owner'])];
+        return ['schema'=>1,'version'=>$own['Version'],'architecture'=>$own['Architecture'],'sha256'=>hash('sha256',json_encode($proof,JSON_THROW_ON_ERROR))];
+    }
+    public static function capture(array $env,string $destination,string $settings,string $postinst): array
+    {
+        if(!str_starts_with($postinst,"#!/bin/sh\nexec "))throw new RuntimeException('rollback_unavailable');
+        $opt=$env['opt'];$owner=$env['owner'];[$own,$foreign,$metadata,$conffiles,$files,$indexes]=self::installed($env);$total=0;
         $aux=self::captureAux($opt,$destination,$owner,false);$auxBytes=0;foreach($aux['migration']['files'] as $meta)$auxBytes+=$meta['size'];foreach($aux['owners'] as $meta)if($meta!==null)$auxBytes+=$meta['size'];foreach($metadata as $meta)$auxBytes+=$meta['size'];
         foreach($files as $meta)$total+=$meta['size'];if($total+$auxBytes>self::CAP||disk_free_space(dirname($destination))<$total*2+$auxBytes+16777216)throw new RuntimeException('insufficient_space');
         AsusUpdateSnapshot::verify($opt,$settings,$owner);$defaults=self::defaults($env['defaults']??[],json_decode(file_get_contents($settings.'/snapshot.json'),true,32,JSON_THROW_ON_ERROR));AsusUpdateStore::noLinks($destination);if(file_exists($destination)||is_link($destination))throw new RuntimeException('rollback_unavailable');

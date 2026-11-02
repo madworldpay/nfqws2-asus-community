@@ -78,6 +78,25 @@ class PackageUpdateStoreTests(unittest.TestCase):
         for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
         self.assertFalse(own.exists());self.assertEqual(unknown.read_text(),'KEEP')
 
+    def test_rotation_retains_unresolved_preinstall_checkpoint_and_final_settings(self):
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        for relative in ['quiesce.json','service-state/runtime.conf','quiesced-backup/etc/nfqws2/nfqws2.conf']:
+            path=folder/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('{"phase":"stopped"}' if relative=='quiesce.json' else 'PRESERVE');path.chmod(0o600)
+        self.call([['update',[job,{'state':'interrupted','code':'recovery_required'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertTrue((folder/'quiesce.json').exists());self.assertEqual((folder/'service-state/runtime.conf').read_text(),'PRESERVE');self.assertEqual((folder/'quiesced-backup/etc/nfqws2/nfqws2.conf').read_text(),'PRESERVE')
+    def test_rotation_prunes_only_indexed_restored_checkpoint_and_quiesced_backup(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        for directory,index in [('service-state','cleanup-index.json'),('quiesced-backup','snapshot.json')]:
+            path=folder/directory;path.mkdir(mode=0o700);file=path/'runtime.conf';file.write_bytes(b'ACTIVE');file.chmod(0o600);(path/'operator-note').write_text('KEEP')
+            raw={'files':{'runtime.conf':{'mode':0o600,'size':6,'sha256':hashlib.sha256(b'ACTIVE').hexdigest()}}};file=path/index;file.write_text(json.dumps(raw));file.chmod(0o600)
+        file=folder/'quiesce.json';file.write_text('{"phase":"restored"}');file.chmod(0o600)
+        self.call([['update',[job,{'state':'failed','code':'insufficient_space'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        for directory in ['service-state','quiesced-backup']:
+            self.assertFalse((folder/directory/'runtime.conf').exists());self.assertEqual((folder/directory/'operator-note').read_text(),'KEEP')
+        self.assertFalse((folder/'quiesce.json').exists())
     def test_rotation_reclaims_only_predeclared_partial_rollback_snapshot(self):
         import hashlib
         job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job

@@ -35,6 +35,39 @@ final class AsusUpdateWorker
         foreach(['pid','start_ticks','boot_id','uid'] as $key)if($child[$key]!==$worker[$key])return false;
         return true;
     }
+    private function settings(string $id):string{return $this->store->path('operations/'.$id.'/quiesced-backup');}
+    private function original(array $env,array $candidate,string $id):array
+    {
+        if(!$env['pending'])return ['kind'=>'installed']+AsusUpdateRollback::attest($env);
+        if(($candidate['action']??null)!=='configure')throw new RuntimeException('recovery_required');
+        AsusUpdatePackage::inspect($this->store->path('operations/'.$id.'/package.ipk'),$candidate,$env['status'],$env['abi'],$env['machine'],$env['opt'],$env['owner']);
+        $db=AsusUpdatePackage::database($env['status'],true);ksort($db);foreach($db as &$row)ksort($row);unset($row);
+        return ['kind'=>'configure','schema'=>1,'version'=>$env['installed'],'architecture'=>$db['nfqws2-asus']['Architecture'],
+            'sha256'=>hash('sha256',json_encode([$db,$candidate['package']['sha256'],AsusUpdateSnapshot::stable($env['opt'],$env['owner'])],JSON_THROW_ON_ERROR))];
+    }
+    private function quiesce(string $id):?array
+    {
+        $raw=$this->store->readFile('operations/'.$id.'/quiesce.json');if($raw===null)return null;$v=json_decode($raw,true,24,JSON_THROW_ON_ERROR);
+        if(!is_array($v)||array_keys($v)!==['schema','id','boot_id','worker','installer','attestation','checkpoint_sha256','intent','web_running','phase']||$v['schema']!==1||$v['id']!==$id||$v['boot_id']!==AsusUpdateStore::boot()||!is_array($v['worker'])||!is_array($v['installer'])||!is_array($v['attestation'])||!is_string($v['checkpoint_sha256'])||!preg_match('/^[a-f0-9]{64}$/D',$v['checkpoint_sha256'])||!is_bool($v['web_running'])||!in_array($v['phase'],['stop-requested','stopped','captured','web-stopped','restoring','restored'],true))throw new RuntimeException('recovery_required');
+        $directory=$this->store->path('operations/'.$id.'/service-state');$checkpoint=$this->lifecycle->checkpointState($directory);
+        if($checkpoint['intent']!==$v['intent']||!hash_equals($v['checkpoint_sha256'],hash_file('sha256',$directory.'/snapshot.json')))throw new RuntimeException('recovery_required');return $v;
+    }
+    private function quiescePhase(string $id,array $v,string $phase):array
+    {$v['phase']=$phase;$this->store->writeFile('operations/'.$id.'/quiesce.json',json_encode($v,JSON_THROW_ON_ERROR));return $v;}
+    private function restoreQuiesced(string $id,array $ticket):void
+    {
+        if($this->store->readFile('operations/'.$id.'/boundary.json',1024)!==null||$this->store->readFile('operations/'.$id.'/rollback-finalized.json',1024)!==null)throw new RuntimeException('recovery_required');
+        $v=$this->quiesce($id);if($v===null)throw new RuntimeException('recovery_required');$this->runtime($id);
+        $env=$this->prepare->environment();$candidate=json_decode($this->store->readFile('operations/'.$id.'/candidate.json')??'',true,32,JSON_THROW_ON_ERROR);
+        if($this->original($env,$candidate,$id)!==$v['attestation'])throw new RuntimeException('recovery_required');
+        $installer=$this->installer($id);$this->ticket($id,'stopping',['installer'=>$installer,'intent'=>$v['intent']]);
+        $this->lifecycle->stop(true);if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('core_stop_failed');
+        $verified=is_file($this->settings($id).'/snapshot.json')&&AsusUpdateSnapshot::verify($env['opt'],$this->settings($id),$this->owner());
+        $this->quiescePhase($id,$v,'restoring');$this->ticket($id,'starting');
+        $core=$this->lifecycle->restoreCheckpoint($this->store->path('operations/'.$id.'/service-state'));
+        if($v['web_running']){$this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');}
+        $this->store->writeFile('operations/'.$id.'/quiesce-result.json',json_encode(['core_state'=>$core,'version'=>$env['installed'],'restored'=>true,'settings_verified'=>$verified],JSON_THROW_ON_ERROR));$this->quiescePhase($id,$v,'restored');
+    }
     private function ticket(string $id,string $phase,array $patch=[]): array
     {return $this->store->withLock(function()use($id,$phase,$patch){$t=$this->guard()->context($id);$t=array_replace($t,$patch,['phase'=>$phase]);$this->writeTicket($t);return $t;});}
     private function validate(string $id,bool $fresh): array
@@ -49,7 +82,7 @@ final class AsusUpdateWorker
         if($candidate===null||$candidate!==$saved||$candidate['revision']!==$job['revision'])throw new RuntimeException('stale_revision');
         if($fresh){$check=$this->prepare->check(true);if($check['state']!=='available'||$check['candidate']!==$candidate)throw new RuntimeException('stale_revision');}
         AsusUpdatePackage::inspect($this->store->path($base.'/package.ipk'),$candidate,$env['status'],$env['abi'],$env['machine'],$env['opt'],$env['owner']);
-        AsusUpdateSnapshot::verify($env['opt'],$this->store->path($base.'/backup'),$this->owner());
+        AsusUpdateSnapshot::estimate($env['opt'],$this->owner());
         AsusUpdatePackage::space($env['free'],0,0,0);return [$env,$candidate];
     }
     private function runtime(string $id):array
@@ -68,16 +101,16 @@ final class AsusUpdateWorker
     private function rollbackPreflight(string $id,string $action,array $t):void
     {
         $this->runtime($id);if(!in_array($t['phase'],['stopping','installing','starting'],true)||$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null)throw new RuntimeException('rollback_failed');
-        $env=$this->rollbackEnvironment($id);$directory=$this->store->path('operations/'.$id.'/rollback');$settings=$this->store->path('operations/'.$id.'/backup');
+        $env=$this->rollbackEnvironment($id);$directory=$this->store->path('operations/'.$id.'/rollback');$settings=$this->settings($id);
         $m=AsusUpdateRollback::load($directory,$this->owner());AsusUpdateRollback::assertForeign($env,$m);$installer=$this->installer($id);
         if($action==='rollback-verify'){
             if($this->store->readFile('operations/'.$id.'/rollback-finalized.json',1024)===null)throw new RuntimeException('rollback_failed');
             $verified=AsusUpdateRollback::verifyInstalled($env,$directory,$settings);$this->quiesceDns($id,'after');
-            $this->ticket($id,'starting',['installer'=>$installer]);$this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');
+            $this->ticket($id,'starting',['installer'=>$installer]);$q=$this->quiesce($id);if($q===null||$q['web_running']){$this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');}
             // A completed stop and a fresh start are required. Never accept the
             // old daemon's already-running shortcut after detached firewall.
             if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('rollback_failed');
-            $core=$this->lifecycle->restore($t['intent']);$this->store->writeFile('operations/'.$id.'/rollback-result.json',json_encode(['version'=>$verified['version'],'core_state'=>$core,'settings_verified'=>true],JSON_THROW_ON_ERROR));return;
+            $core=$q===null?$this->lifecycle->restore($t['intent']):$this->lifecycle->restoreCheckpoint($this->store->path('operations/'.$id.'/service-state'));$this->store->writeFile('operations/'.$id.'/rollback-result.json',json_encode(['version'=>$verified['version'],'core_state'=>$core,'settings_verified'=>true],JSON_THROW_ON_ERROR));return;
         }
         $this->ticket($id,'stopping',['installer'=>$installer]);$this->store->update($id,['phase'=>'stopping']);
         if($this->store->readFile('operations/'.$id.'/services-stopped.json',1024)===null)throw new RuntimeException('rollback_failed');
@@ -92,7 +125,7 @@ final class AsusUpdateWorker
             $this->runtime($id);$stage='context';$t=$this->guard()->context($id);$stage='authorization';
             if($t['phase']!=='installing'||!$this->guard()->authorize('hook-postinst'))throw new RuntimeException('rollback_failed');
             $stage='environment';$env=$this->rollbackEnvironment($id);
-            $stage='restore';AsusUpdateRollback::finalize($env,$this->store->path('operations/'.$id.'/rollback'),$this->store->path('operations/'.$id.'/backup'));
+            $stage='restore';AsusUpdateRollback::finalize($env,$this->store->path('operations/'.$id.'/rollback'),$this->settings($id));
             $stage='receipt';$this->store->writeFile('operations/'.$id.'/rollback-finalized.json',json_encode(['restored'=>true],JSON_THROW_ON_ERROR));
         }catch(Throwable $e){
             try{$this->store->writeFile('operations/'.$id.'/rollback-finalize-error.json',json_encode(['schema'=>1,'stage'=>$stage,'code'=>AsusUpdatePrepare::code($e),'guard'=>$this->guard()->diagnostic($id)],JSON_THROW_ON_ERROR));}catch(Throwable $ignored){}
@@ -104,32 +137,40 @@ final class AsusUpdateWorker
     {
         $f=$this->store->lease('operations/'.$id.'/critical.lock');
         try{
-            $t=$this->guard()->context($id);if(in_array($action,['rollback','rollback-verify'],true)){$this->rollbackPreflight($id,$action,$t);return;}
+            $t=$this->guard()->context($id);if($action==='rollback-verify'&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null){$this->restoreQuiesced($id,$t);return;}
+            if(in_array($action,['rollback','rollback-verify'],true)){$this->rollbackPreflight($id,$action,$t);return;}
             if($t['phase']!=='validating'||$t['installer']!==null)throw new RuntimeException('invalid_state');
             if($this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             $raw=$this->store->readFile('operations/'.$id.'/guard.json',4096);$guard=$raw===null?null:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
             if(!is_array($guard)||!$this->guardianChild($guard['child']??null,$t['worker'])||!is_numeric($guard['deadline']??null)||AsusUpdateStore::uptime()>=$guard['deadline'])throw new RuntimeException('timed_out');
             [$env,$candidate]=$this->validate($id,false);
             if(!in_array($action,['install','configure'],true)||$action!==($candidate['action']??'install'))throw new RuntimeException('invalid_state');
-            $installer=$this->installer($id);$intent=$this->lifecycle->intent();
+            $installer=$this->installer($id);
+            $checkpoint=$this->lifecycle->checkpoint($this->store->path('operations/'.$id.'/service-state'));
+            $q=['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>$t['worker'],'installer'=>$installer,'attestation'=>$this->original($env,$candidate,$id),
+                'checkpoint_sha256'=>hash_file('sha256',$this->store->path('operations/'.$id.'/service-state/snapshot.json')),'intent'=>$checkpoint['intent'],'web_running'=>$this->lifecycle->webRunning(),'phase'=>'stop-requested'];
+            $this->store->writeFile('operations/'.$id.'/quiesce.json',json_encode($q,JSON_THROW_ON_ERROR));
+            $this->ticket($id,'stopping',['installer'=>$installer,'intent'=>$checkpoint['intent']]);$this->store->update($id,['intent'=>$checkpoint['intent'],'phase'=>'stopping']);
+            $this->quiesceDns($id,'before');$this->assertDnsUpdateReady();(new AsusSmartDnsLifecycle(new AsusSmartDnsStore()))->stop('upgrade');
+            $this->lifecycle->stop(true);if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('core_stop_failed');$q=$this->quiescePhase($id,$q,'stopped');
+            if($this->original($this->prepare->environment(),$candidate,$id)!==$q['attestation'])throw new RuntimeException('settings_changed');
+            AsusUpdateSnapshot::capture($env['opt'],$this->settings($id),$this->owner());
             if($action==='install'){
                 $argv=array_merge($this->runtime($id)['argv'],['--','rollback-finalize',$id]);
                 $postinst="#!/bin/sh\nexec ".implode(' ',array_map('escapeshellarg',$argv))."\n";
                 $env['defaults']=AsusUpdatePackage::stockDefaults($this->store->path('operations/'.$id.'/package.ipk'),$env['opt'],$this->owner());
-                AsusUpdateRollback::capture($env,$this->store->path('operations/'.$id.'/rollback'),$this->store->path('operations/'.$id.'/backup'),$postinst);
+                AsusUpdateRollback::capture($env,$this->store->path('operations/'.$id.'/rollback'),$this->settings($id),$postinst);
             }
-            $this->quiesceDns($id,'before');
+            $q=$this->quiescePhase($id,$q,'captured');
+            // Published guards permit the installer's web-stop only in this
+            // phase. The absent sticky boundary still forbids any opkg exec.
+            $this->ticket($id,'installing');if($q['web_running'])$this->lifecycle->webStop();$this->quiescePhase($id,$q,'web-stopped');
+            $this->store->writeFile('operations/'.$id.'/services-stopped.json',json_encode(['stopped'=>true],JSON_THROW_ON_ERROR));
+            $this->ticket($id,'installing');$this->store->update($id,['phase'=>'installing']);
             if(AsusUpdateStore::uptime()>=$guard['deadline']||$this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             // Sticky boundary is serialized with guardian cancellation. From
             // here neither the worker nor opkg may be killed by that deadline.
             $this->store->writeFile('operations/'.$id.'/boundary.json',json_encode(['phase'=>'installing'],JSON_THROW_ON_ERROR));
-            $this->ticket($id,'stopping',['installer'=>$installer,'intent'=>$intent]);
-            $this->store->update($id,['intent'=>$intent,'phase'=>'stopping']);
-            $this->assertDnsUpdateReady();
-            (new AsusSmartDnsLifecycle(new AsusSmartDnsStore()))->stop('upgrade');
-            $this->lifecycle->stop();$this->ticket($id,'installing');$this->lifecycle->webStop();
-            $this->store->writeFile('operations/'.$id.'/services-stopped.json',json_encode(['stopped'=>true],JSON_THROW_ON_ERROR));
-            $this->ticket($id,'installing');$this->store->update($id,['phase'=>'installing']);
         }finally{flock($f,LOCK_UN);fclose($f);}
     }
     private function install(string $id,array $candidate): void
@@ -191,6 +232,42 @@ final class AsusUpdateWorker
         finally{if(is_resource($process))proc_close($process);}
         $this->store->writeFile('operations/'.$id.'/dns-resume.json',json_encode($result,JSON_THROW_ON_ERROR));
     }
+    /** Fixed guardian callback: verifies/restores only; never applies a package. */
+    public function recoverBeforeInstall(string $id):array
+    {
+        $apply=null;$work=null;$critical=null;$claimed=false;
+        try{
+            $job=$this->store->readOperation($id);
+            if($job['state']!=='applying'||$this->store->readFile('operations/'.$id.'/boundary.json',1024)!==null||$this->store->readFile('operations/'.$id.'/quiesce.json')===null)return ['state'=>'skipped'];
+            $this->runtime($id);$q=$this->quiesce($id);
+            if($q===null||in_array($q['phase'],['restoring','restored'],true))throw new RuntimeException('recovery_required');
+            $apply=$this->store->lease('apply.lock');$work=$this->store->lease('operations/'.$id.'/work.lock');
+            // A killed apply child does not own its native installer's POSIX
+            // mutex. Wait for that exact descendant to finish; never kill it.
+            $until=AsusUpdateStore::uptime()+60;
+            do{
+                try{$critical=$this->store->lease('operations/'.$id.'/critical.lock');$this->guard()->recover($id,$q['worker'],$q['installer']);$claimed=true;break;}
+                catch(RuntimeException $e){if($critical!==null){flock($critical,LOCK_UN);fclose($critical);$critical=null;}if($e->getMessage()!=='busy'||AsusUpdateStore::uptime()>=$until)throw $e;usleep(20000);}
+            }while(true);
+            flock($critical,LOCK_UN);fclose($critical);$critical=null;
+            // Native rollback-verify is a no-opkg action. Its dedicated absent-
+            // boundary branch reattests old payload/settings under the mutex.
+            $this->install($id,['action'=>'rollback-verify']);
+            $r=json_decode($this->store->readFile('operations/'.$id.'/quiesce-result.json',1024)??'',true,8,JSON_THROW_ON_ERROR);
+            if(!is_array($r)||($r['restored']??null)!==true)throw new RuntimeException('recovery_required');
+            $failure=$this->store->readFile('operations/'.$id.'/update-failure.json',1024);$cancel=$this->store->readFile('operations/'.$id.'/cancel.json',1024);
+            $code=$cancel!==null?'timed_out':($failure===null?'interrupted':(json_decode($failure,true,4,JSON_THROW_ON_ERROR)['code']??'interrupted'));
+            $this->resumeDns($id);$this->ticket($id,'finished');
+            $this->store->update($id,['state'=>'failed','code'=>$code,'core_state'=>$r['core_state'],'installed_version'=>$r['version'],'settings_verified'=>$r['settings_verified'],'phase'=>'finished']);return ['state'=>'restored'];
+        }catch(Throwable $e){
+            // Rejected/duplicate entrypoints have no authority to terminalize
+            // the genuine apply or a different recovery still holding leases.
+            if(!$claimed)return ['state'=>'failed'];
+            $this->store->writeFile('operations/'.$id.'/quiesce-recovery-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)],JSON_THROW_ON_ERROR));
+            try{$this->ticket($id,'finished');}catch(Throwable $ignored){}
+            $job=$this->store->readOperation($id);if($job['state']==='applying')$this->store->update($id,['state'=>'failed','code'=>'recovery_required','settings_verified'=>false]);return ['state'=>'failed'];
+        }finally{foreach([$critical,$work,$apply] as $f)if(is_resource($f)){flock($f,LOCK_UN);fclose($f);}}
+    }
     public function apply(string $id): array
     {
         $apply=$this->store->lease('apply.lock');
@@ -201,18 +278,26 @@ final class AsusUpdateWorker
                 $identity=AsusUpdateLifecycle::identity(getmypid());$runtime=$this->store->path('operations/'.$id.'/runtime').'/';
                 if($identity===null||$identity['uid']!==$this->owner()||!str_starts_with($identity['exe'],$runtime)||($identity['exe']!==$runtime.'php'&&!preg_match('~^lib/ld[a-zA-Z0-9_.-]+$~D',substr($identity['exe'],strlen($runtime)))))throw new RuntimeException('invalid_state');
                 $this->writeTicket(['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>$identity,'installer'=>null,'phase'=>'validating','intent'=>['mode'=>'stopped']]);$ticket=true;
-                $this->store->update($id,['identity'=>$identity,'phase'=>'validating']);
+                $blocker=$job['identity']??null;
+                if(!is_array($blocker)||($blocker['uid']??null)!==$this->owner()||!AsusUpdateLifecycle::alive($blocker)||!AsusUpdateGuard::ancestor($blocker['pid']))$blocker=$identity;
+                $this->store->update($id,['identity'=>$blocker,'phase'=>'validating']);
                 [$env,$candidate]=$this->validate($id,true);
                 $this->install($id,$candidate);
                 $after=$this->prepare->environment();if($after['installed']!==$candidate['package_version']||$after['pending'])throw new RuntimeException('version_mismatch');
-                AsusUpdateSnapshot::verify($env['opt'],$this->store->path('operations/'.$id.'/backup'),$this->owner(),true);
+                AsusUpdateSnapshot::verify($env['opt'],$this->settings($id),$this->owner(),true);
                 $t=$this->ticket($id,'starting');$this->store->update($id,['phase'=>'verifying','installed_version'=>$after['installed'],'settings_verified'=>true]);
-                $this->store->writeFile('operations/'.$id.'/web-started.json',json_encode(['started'=>true],JSON_THROW_ON_ERROR));
-                $this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');
-                $core=$this->lifecycle->restore($t['intent']);
+                $q=$this->quiesce($id);if($q===null)throw new RuntimeException('recovery_required');
+                if($q['web_running']){$this->store->writeFile('operations/'.$id.'/web-started.json',json_encode(['started'=>true],JSON_THROW_ON_ERROR));$this->lifecycle->web();if(!$this->webHealth())throw new RuntimeException('web_health_failed');}
+                $core=$this->lifecycle->restoreCheckpoint($this->store->path('operations/'.$id.'/service-state'));
                 $this->quiesceDns($id,'after');$this->resumeDns($id);$this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
             }catch(Throwable $e){
                 $code=AsusUpdatePrepare::code($e);$patch=[];
+                if($ticket&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null&&$this->store->readFile('operations/'.$id.'/quiesce.json')!==null){
+                    $this->store->writeFile('operations/'.$id.'/update-failure.json',json_encode(['code'=>$code],JSON_THROW_ON_ERROR));
+                    try{$this->install($id,['action'=>'rollback-verify']);$r=json_decode($this->store->readFile('operations/'.$id.'/quiesce-result.json',1024)??'',true,8,JSON_THROW_ON_ERROR);
+                        if(($r['restored']??null)!==true)throw new RuntimeException('recovery_required');$patch=['core_state'=>$r['core_state'],'installed_version'=>$r['version'],'settings_verified'=>$r['settings_verified'],'phase'=>'finished'];$this->resumeDns($id);
+                    }catch(Throwable $restore){$this->store->writeFile('operations/'.$id.'/quiesce-recovery-error.json',json_encode(['code'=>AsusUpdatePrepare::code($restore)],JSON_THROW_ON_ERROR));$code='recovery_required';$patch=['settings_verified'=>false];}
+                }
                 if($ticket&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)!==null&&is_dir($this->store->path('operations/'.$id.'/rollback'))){
                     $this->store->writeFile('operations/'.$id.'/update-failure.json',json_encode(['code'=>$code],JSON_THROW_ON_ERROR));
                     try{

@@ -104,11 +104,12 @@ class PackageUpdateApplyTests(unittest.TestCase):
         $worker=new AsusUpdateWorker($s,$prepare,new AsusUpdateLifecycle($c['service']),array_merge(['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'dns_resume_options'=>['php'=>PHP_BINARY,'script'=>$c['env']['opt'].'/lib/nfqws2-asus/smartdns/control.php','owner'=>$c['env']['owner']]],$health));
         if($argv[1]==='authorize'){exit((new AsusUpdateGuard($s,$c['env']['owner'],$c['opkg']))->authorize($argv[2])?0:1);}
         if($argv[1]==='client-apply'){require __DIR__.'/app/update-dispatch.php';$j=$s->readOperation($argv[2]);echo json_encode((new AsusUpdateDispatch($s,$prepare,['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'busybox'=>'/usr/bin/busybox']))->apply($j['id'],$j['revision'],str_repeat('e',32)));exit;}
-        if($argv[1]==='guard-apply'){require __DIR__.'/app/update-watchdog.php';(new AsusUpdateWatchdog($s,$c['env']['owner']))->run($argv[2],[PHP_BINARY,'-n',__FILE__,'apply',$argv[2]],AsusUpdateStore::uptime()+10);exit;}
+        if($argv[1]==='guard-apply'){require __DIR__.'/app/update-watchdog.php';(new AsusUpdateWatchdog($s,$c['env']['owner']))->run($argv[2],[PHP_BINARY,'-n',__FILE__,'apply',$argv[2]],AsusUpdateStore::uptime()+(float)($c['deadline']??10),[PHP_BINARY,'-n',__FILE__,'restore-before-install',$argv[2]]);exit;}
         if($argv[1]==='setup'){$j=$s->reserve('''+json.dumps(revision)+''',str_repeat('b',32),json_decode(file_get_contents($base.'/state/operations/'''+self.id+'''/candidate.json'),true));
             // reserve generated an id; replace it with this protected native fixture id.
             $db=json_decode($s->readFile('operations.json'),true);$j['id']='''+json.dumps(self.id)+''';$j['state']='applying';$j['runtime_digest']=hash_file('sha256',__DIR__.'/closure.json');$db['operations']=[$j['id']=>$j];$s->writeFile('operations.json',json_encode($db));
             AsusUpdateSnapshot::capture($c['env']['opt'],__DIR__.'/../backup',$c['env']['owner']);exit;}
+        if($argv[1]==='restore-before-install'){$r=$worker->recoverBeforeInstall($argv[2]);exit(in_array($r['state'],['restored','skipped'],true)?0:1);}
         if($argv[1]==='rollback-finalize'){$worker->rollbackFinalize($argv[2]);exit(0);}
         if($argv[1]==='preflight'){try{$worker->preflight($argv[2],$argv[3]??'install');exit(0);}catch(Throwable $e){$s->writeFile('operations/'.$argv[2].'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)]));exit(1);}}
         if($s->readFile('operations/'.$argv[2].'/guard.json')===null)$s->writeFile('operations/'.$argv[2].'/guard.json',json_encode(['schema'=>1,'guardian'=>AsusUpdateLifecycle::identity(getmypid()),'child'=>AsusUpdateLifecycle::identity(getmypid()),'deadline'=>AsusUpdateStore::uptime()+10]));
@@ -188,7 +189,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.assertEqual((self.opt/'etc/nfqws2/nfqws2.conf').read_text(),'PRIVATE_CONFIG')
     def test_resume_stopped_core_never_starts_and_leaves_snapshot_and_log(self):
         result=self.execute();self.assertEqual(result['state'],'succeeded',result);self.assertEqual(result['core_state'],'stopped')
-        self.assertEqual(self.commands(),[]);self.assertTrue((self.op/'backup/snapshot.json').is_file());self.assertTrue((self.op/'opkg.log').is_file())
+        self.assertEqual(self.commands(),['stop']);self.assertTrue((self.op/'quiesced-backup/snapshot.json').is_file());self.assertTrue((self.op/'opkg.log').is_file())
     def test_resume_waiting_intent_survives_configuration(self):
         (self.service.run/'enabled').touch(mode=0o600);(self.service.base/'no-wan').touch()
         result=self.execute();self.assertEqual(result['state'],'succeeded',result);self.assertEqual(result['core_state'],'waiting_for_wan');self.assertEqual(self.commands(),['stop','start'])
@@ -205,7 +206,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.service.running();result=self.execute();self.assertEqual(result['state'],'failed');self.assertEqual(result['code'],'version_mismatch')
         self.assertEqual(self.commands(),['stop']);self.assertTrue((self.op/'opkg.log').is_file())
     def test_stopped_service_never_starts_even_temporarily(self):
-        r=self.execute();self.assertEqual(r['state'],'succeeded');self.assertEqual(r['core_state'],'stopped');self.assertEqual(self.commands(),[])
+        r=self.execute();self.assertEqual(r['state'],'succeeded');self.assertEqual(r['core_state'],'stopped');self.assertEqual(self.commands(),['stop'])
     def test_waiting_for_wan_is_preserved_without_claiming_running(self):
         (self.service.run/'enabled').touch(mode=0o600);(self.service.base/'no-wan').touch()
         r=self.execute();self.assertEqual(r['state'],'succeeded');self.assertEqual(r['core_state'],'waiting_for_wan');self.assertEqual(self.commands(),['stop','start'])
@@ -217,12 +218,15 @@ class PackageUpdateApplyTests(unittest.TestCase):
     def test_failed_installer_does_not_restart_or_claim_success(self):
         self.service.running();(self.base/'install-fails').touch();r=self.execute()
         self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'rollback_failed');self.assertEqual(self.commands(),['stop']);self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'install_failed')
-    def test_changed_snapshot_refuses_before_stop(self):
-        self.service.running();(self.opt/'etc/nfqws2/nfqws2.conf').write_text('changed');r=self.execute()
-        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'settings_changed');self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())
+    def test_saved_draft_changed_after_prepare_is_preserved_by_final_snapshot(self):
+        self.service.running();(self.opt/'etc/nfqws2/nfqws2.conf').write_text('CHANGED')
+        r=self.execute();self.assertEqual(r['state'],'succeeded',r);self.assertEqual(self.commands(),['stop','start'])
+        self.assertEqual((self.opt/'etc/nfqws2/nfqws2.conf').read_text(),'CHANGED')
+        self.assertEqual((self.op/'quiesced-backup/etc/nfqws2/nfqws2.conf').read_text(),'CHANGED')
+        self.assertEqual((self.service.run/'runtime.conf').read_text(),'# Active fixture\n')
     def test_failed_stop_never_reaches_installer(self):
         self.service.running();(self.service.base/'stop-fails').touch();r=self.execute()
-        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'rollback_failed');self.assertEqual(self.commands(),['stop']);self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'core_stop_failed');self.assertFalse((self.base/'installs').exists())
+        self.assertEqual(r['state'],'failed');self.assertEqual(r['code'],'recovery_required');self.assertEqual(self.commands(),['stop','stop']);self.assertEqual(json.loads((self.op/'update-failure.json').read_text())['code'],'core_stop_failed');self.assertFalse((self.base/'installs').exists())
     def test_own_web_health_uses_its_actual_bind_address(self):
         class Handler(http.server.BaseHTTPRequestHandler):
             def do_GET(self):self.send_response(200);self.end_headers()
@@ -259,7 +263,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.assertEqual(result['state'],'succeeded',result);self.assertEqual(self.commands(),['stop','start'])
     def test_verified_postinst_keeps_initially_stopped_service_stopped(self):
         self.install_hooks();result=self.execute()
-        self.assertEqual(result['state'],'succeeded',result);self.assertEqual(self.commands(),[])
+        self.assertEqual(result['state'],'succeeded',result);self.assertEqual(self.commands(),['stop'])
     def test_pending_package_race_is_rechecked_under_native_opkg_mutex(self):
         self.service.running();(self.base/'inject-pending').touch();result=self.execute()
         self.assertEqual(result['state'],'failed',result);self.assertEqual(result['code'],'pending_packages');self.assertEqual(self.commands(),[]);self.assertFalse((self.base/'installs').exists())

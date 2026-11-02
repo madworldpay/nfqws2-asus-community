@@ -9,7 +9,7 @@ final class AsusUpdateGuard
     {$keys=array_keys($value);sort($keys);sort($expected);return $keys===$expected;}
     private function identityShape(mixed $value,string $boot): bool
     {
-        return is_array($value)&&self::keys($value,['pid','start_ticks','boot_id','exe','uid'])&&is_int($value['pid'])&&$value['pid']>1&&$value['pid']<=2147483647&&is_string($value['start_ticks'])&&preg_match('/^[1-9][0-9]{0,19}$/D',$value['start_ticks'])&&$value['boot_id']===$boot&&is_string($value['exe'])&&strlen($value['exe'])<4096&&$value['uid']===$this->owner;
+        return is_array($value)&&self::keys($value,['pid','start_ticks','boot_id','exe','uid'])&&is_int($value['pid'])&&$value['pid']>1&&$value['pid']<=2147483647&&is_string($value['start_ticks'])&&preg_match('/^[1-9][0-9]{0,19}$/D',$value['start_ticks'])&&$value['boot_id']===$boot&&is_string($value['exe'])&&str_starts_with($value['exe'],'/')&&strlen($value['exe'])<4096&&strpbrk($value['exe'],"\r\n\0")===false&&$value['uid']===$this->owner;
     }
     private function ticket(): ?array
     {
@@ -30,7 +30,7 @@ final class AsusUpdateGuard
         $allowed=[$this->store->path('operations/'.$ticket['id'].'/runtime/update-launch')];$opkg=realpath($this->opkg);if($opkg!==false)$allowed[]=$opkg;
         return in_array($now['exe'],$allowed,true)&&in_array($old['exe'],$allowed,true);
     }
-    private static function ancestor(int $wanted): bool
+    public static function ancestor(int $wanted): bool
     {
         $pid=getmypid();$seen=[];for($i=0;$i<16&&$pid>1;$i++){if($pid===$wanted)return true;if(isset($seen[$pid]))return false;$seen[$pid]=true;
             $s=@file_get_contents('/proc/'.$pid.'/status');if(!is_string($s)||!preg_match('/^PPid:\s+([0-9]+)/m',$s,$m))return false;$pid=(int)$m[1];
@@ -56,6 +56,25 @@ final class AsusUpdateGuard
     {
         if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-update-guard.php';return (new NfqwsOpenWrtUpdateGuard($this->store,$this->owner))->context($id);}
         $t=$this->ticket();if($t===null||$t['id']!==$id||$t['boot_id']!==AsusUpdateStore::boot()||!$this->worker($t)||!self::ancestor($t['worker']['pid']))throw new RuntimeException('invalid_state');return $t;
+    }
+    /** Caller holds exclusive apply/work/critical leases. No orphan ON replay. */
+    public function recover(string $id,array $original,array $installer):array
+    {
+        return $this->store->withRetryLock(function()use($id,$original,$installer){
+            $boot=AsusUpdateStore::boot();$t=$this->ticket();$job=$this->store->readOperation($id);
+            $raw=$this->store->readFile('operations/'.$id.'/guard.json',4096);$g=$raw===null?null:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
+            $current=AsusUpdateLifecycle::identity(getmypid());
+            if($t===null||$t['id']!==$id||$t['boot_id']!==$boot||$job['state']!=='applying'||$job['boot_id']!==$boot||!in_array($t['phase'],['validating','stopping','installing'],true)||
+                !$this->identityShape($original,$boot)||!$this->identityShape($installer,$boot)||$t['worker']!==$original||($t['installer']!==null&&$t['installer']!==$installer)||
+                !is_array($g)||!self::keys($g,['schema','guardian','child','deadline'])||$g['schema']!==1||!is_numeric($g['deadline'])||!is_finite((float)$g['deadline'])||$g['deadline']<0||!$this->identityShape($g['guardian'],$boot)||!$this->identityShape($g['child'],$boot)||
+                ($job['identity']??null)!==$g['guardian']||!$this->worker(['id'=>$id,'worker'=>$g['guardian']])||!self::ancestor($g['guardian']['pid'])||$g['guardian']['pid']===getmypid()||
+                $current===null||!$this->identityShape($current,$boot)||!$this->worker(['id'=>$id,'worker'=>$current])||
+                $installer['exe']!==$this->store->path('operations/'.$id.'/runtime/update-launch'))throw new RuntimeException('recovery_required');
+            foreach(['pid','start_ticks','boot_id','uid'] as $key)if($g['child'][$key]!==$original[$key])throw new RuntimeException('recovery_required');
+            foreach([$original,$installer] as $old){$now=AsusUpdateLifecycle::identity($old['pid']);if($now!==null){$same=true;foreach(['pid','start_ticks','boot_id','uid'] as $key)if($now[$key]!==$old[$key])$same=false;if($same)throw new RuntimeException('busy');}}
+            if($this->store->readFile('operations/'.$id.'/boundary.json',1024)!==null||$this->store->readFile('operations/'.$id.'/rollback-finalized.json',1024)!==null)throw new RuntimeException('recovery_required');
+            $t=array_replace($t,['worker'=>$current,'installer'=>null,'phase'=>'stopping']);$this->store->writeFile('transaction.json',json_encode($t,JSON_THROW_ON_ERROR));return $t;
+        });
     }
     /** Private failure journal only: closed proof states, never process details. */
     public function diagnostic(string $id):array
@@ -87,7 +106,8 @@ final class AsusUpdateGuard
             $job=$this->store->status()['active'];if(($job['state']??null)==='applying'){
                 $identity=$job['identity']??null;
                 if(is_array($identity)&&AsusUpdateLifecycle::alive($identity)||$identity===null&&AsusUpdateStore::uptime()-($job['apply_uptime']??$job['created_uptime'])<15)throw new RuntimeException('busy');
-                $this->store->update($job['id'],['state'=>'interrupted','code'=>'interrupted']);
+                $code=$this->store->readFile('operations/'.$job['id'].'/quiesce.json')!==null&&$this->store->readFile('operations/'.$job['id'].'/boundary.json',1024)===null?'recovery_required':'interrupted';
+                $this->store->update($job['id'],['state'=>'interrupted','code'=>$code]);
             }return $f;
         }catch(Throwable $e){flock($f,LOCK_UN);fclose($f);throw $e;}
     }

@@ -476,7 +476,7 @@ class PackageRollbackApplyTests(unittest.TestCase):
         c=self.case;result=c.execute()
         self.assertEqual(result['code'],'update_rolled_back',result)
         self.assertEqual(result['core_state'],'stopped',result)
-        self.assertEqual(c.commands(),[])
+        self.assertEqual(c.commands(),['stop'])
 
     def test_real_rollback_hook_persists_closed_context_failure_diagnostic(self):
         c=self.case
