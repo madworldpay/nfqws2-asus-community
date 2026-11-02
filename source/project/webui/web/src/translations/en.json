@@ -272,8 +272,11 @@
       "ark": "ARK presence: a loaded module can interfere with NFQWS2 traffic processing. “Not loaded” is favorable for the queue. Presence depends on firmware and settings. An unknown internal flag does not prove it is enabled. Do not disable absent features. If preparation is needed, back up first and reboot ASUS manually after changing settings; restore is available in the same place.",
       "traffic": "Clients: select the actual WAN and test client IP. DPI running on the router tests its own traffic, not the phone. An outgoing router request normally uses its WAN address, not LAN. VPNs or another NFQWS2 on the path can change results. Preserve a working communication fallback. IPv6 passes separately unless processing is enabled.",
       "verify": "Result: process → queue binding → packet reception → complete service response. Test new connections. HTTP 200 with a truncated body is insufficient; redirects and expected API 401 responses do not inherently indicate blocking. An HTTPS page does not prove video, voice or QUIC. On the old 87U the official DPI binary needs a separate compatible build; its ordinary DPI installer is not yet validated.",
-      "updates": "Updates: the new NFQWS2 config and lists are placed alongside as *.notactive. Active files are preserved; merge desired changes manually. Only the initial clean installation creates active files from templates.",
-      "storage": "RAM and USB: RT-AC87U was tested with 256 MiB RAM; this is not a proven minimum. Installation and updates need space for dependencies, packages and backup files. /tmp consumes RAM. Preserve existing Entware installations and storage data."
+      "updates": "Updates: Prepare package → Install update. Settings and the selected service state are preserved; new *.notactive templates do not replace active configuration or lists. Before replacing the package on ASUS, a snapshot is prepared for recovery if installation fails. Wait for the final status; an incomplete recovery keeps its snapshot and log for review.",
+      "storage": "RAM and USB: RT-AC87U was tested with 256 MiB RAM; this is not a proven minimum. Installation and updates need space for dependencies, packages and backup files. /tmp consumes RAM. Preserve existing Entware installations and storage data.",
+      "access": "In a panel intentionally configured without a password, ordinary controls, settings and updates work without signing in. If a password is configured, sign in first.",
+      "health": "“Unavailable IPs” (ASUS): temporarily excludes confirmed unreachable addresses so the application can try another address. Observation requires NFQWS2 to be running. The DNS filter covers ordinary UDP DNS for selected devices; DoH, DoT and TCP DNS bypass it.",
+      "schedule": "On devices with limited RAM, you can optionally enable “Scheduled restart”. It restarts only a running NFQWS2, without rebooting the router. “Recover the service” is a separate option: up to three attempts after a crash. A manually stopped service stays stopped."
     },
     "sources": "Instructions and projects",
     "quick": {
@@ -455,6 +458,9 @@
     "messages_truncated": "The report size limit was reached: some later messages were omitted. Completed test results remain available."
   },
   "package_update": {
+    "recover": "Refresh session",
+    "session": "Sign in again, then repeat the action you need. Installation is never retried automatically.",
+    "csrf": "Refresh the session, then repeat the action you need. Installation is never retried automatically.",
     "title": "NFQWS2 update",
     "installed": "Installed: {{version}}",
     "available": "Available: {{version}}",
@@ -931,7 +937,7 @@
     "storage": "Memory and storage: allow space for the package, dependencies and backups. Jobs and temporary files in /tmp use RAM. Configuration is stored in /etc/nfqws2.",
     "transit": "SmartDNS integrates through native OpenWrt facilities. Existing DHCP settings, local names and rules owned by other DNS services are preserved. Use “Restore previous DNS” to undo. A browser or VPN may use its own DNS.",
     "verify": "Check the process, queue binding, packet delivery and a complete service response from the selected device. New connections and actual video or voice matter more than one successful HTTPS request. A VPN or another NFQWS2 on the path may affect the result.",
-    "updates": "Updates preserve the active settings. First installation creates the initial configuration with processing disabled. Updates restore the previous service state.",
+    "updates": "Updates: Prepare package → Install update. Active settings and the selected service state are preserved; wait for the final status. The first installation creates a configuration with processing disabled.",
     "auth_required": "Set a root password in the OpenWrt administration panel, then reload this page. If a separate panel password is already configured, check its authorization file at /etc/nfqws2-web/auth.json."
   },
   "technical": {
@@ -1048,6 +1054,7 @@
     "address_detected": "Address filled in automatically. You can edit it."
   },
   "ip_health": {
+    "recover": "Refresh session",
     "title": "Unavailable IPs",
     "intro": "Temporarily skip independently confirmed unavailable IPs to reduce waiting.",
     "toggle": "Remember unavailable addresses",
@@ -1119,7 +1126,7 @@
       "timeout": "The router did not reply in time. Refresh status to try again.",
       "invalid_response": "The router returned an invalid IP status. Refresh status to try again.",
       "unauthorized": "Sign in to the panel again to load IP status.",
-      "forbidden": "Panel authorization expired. Reload the page and sign in again.",
+      "forbidden": "Refresh the session, then repeat the action you need. Actions are never retried automatically.",
       "stale_revision": "The list changed. Current status has been reloaded; review it before repeating the action.",
       "action_unknown": "The action result could not be confirmed. Status has been requested again; the action was not repeated."
     }

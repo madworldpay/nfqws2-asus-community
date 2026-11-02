@@ -10,6 +10,7 @@ import {
   PackageUpdateError,
   packageUpdateRequestId,
   preparePackageUpdate,
+  type PackageCheck,
   type PackageOperation,
   type PackageOverview,
 } from '@/api/packageUpdates';
@@ -18,6 +19,7 @@ export function usePackageUpdates(
   csrf: string | undefined,
   allowed: boolean,
   open: boolean,
+  deferCheck = false,
 ) {
   const client = useQueryClient();
   const enabled = allowed && !!csrf;
@@ -45,6 +47,9 @@ export function usePackageUpdates(
   } | null>(null);
   const applyRequest = useRef<{ operation: string; id: string } | null>(null);
   const initiated = useRef<string | null>(null);
+  const settledCheck = useRef<
+    { csrf: string | undefined; check: PackageCheck } | undefined
+  >(undefined);
   useEffect(() => {
     const epoch = generation.current;
     setPending(false);
@@ -75,9 +80,25 @@ export function usePackageUpdates(
         ? 2000
         : false,
   });
+  if (settledCheck.current?.csrf !== csrf) settledCheck.current = undefined;
+  const checking =
+    query.data?.check.state === 'checking' ||
+    (query.data?.check.state === 'failed' &&
+      query.data.check.code === 'check_required');
+  if (query.data && !checking)
+    settledCheck.current = { csrf, check: query.data.check };
+  // Checking is transient. Keep the last result, but never carry a candidate
+  // across an observed package-version change (for example a manual IPK).
+  const data =
+    query.data &&
+    checking &&
+    settledCheck.current?.check.installed_version ===
+      query.data.check.installed_version
+      ? { ...query.data, check: settledCheck.current.check }
+      : query.data;
   const candidate =
-    query.data?.check.state === 'available' ? query.data.check.candidate : null;
-  const installed = query.data?.check.installed_version;
+    data?.check.state === 'available' ? data.check.candidate : null;
+  const installed = data?.check.installed_version;
   const notesEnabled = enabled && open && !!candidate && !!installed;
   const notesQuery = useQuery({
     queryKey: ['package-update-notes', installed, candidate?.revision],
@@ -107,7 +128,8 @@ export function usePackageUpdates(
         client.getQueryState(key)?.dataUpdateCount === snapshot;
       const run = async () => {
         setPending(true);
-        setError((old) => (old?.source === 'check' ? undefined : old));
+        if (force)
+          setError((old) => (old?.source === 'check' ? undefined : old));
         try {
           for (let attempt = 0; attempt < 3; attempt++) {
             if (!current() || active() || !unchanged()) return;
@@ -160,7 +182,7 @@ export function usePackageUpdates(
     [enabled, csrf, client],
   );
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || deferCheck) return;
     // Read the operation first so reopening a panel during installation only polls.
     if (query.isSuccess && !checked.current) {
       checked.current = true;
@@ -168,7 +190,7 @@ export function usePackageUpdates(
     }
     const timer = setInterval(() => void refresh(), 300000);
     return () => clearInterval(timer);
-  }, [enabled, query.isSuccess, refresh]);
+  }, [enabled, deferCheck, query.isSuccess, refresh]);
   useEffect(() => {
     if (
       error?.source === 'check' &&
@@ -270,8 +292,18 @@ export function usePackageUpdates(
       }
     }
   };
+  const { refetch: refetchOverview } = query;
+  const recoverSession = useCallback(async () => {
+    setError((old) =>
+      old?.code === 'auth_required' || old?.code === 'csrf_failed'
+        ? undefined
+        : old,
+    );
+    await refetchOverview();
+  }, [refetchOverview]);
   return {
-    data: enabled ? query.data : undefined,
+    data: enabled ? data : undefined,
+    checking: enabled && checking,
     pending,
     notes: candidate ? notesQuery.data : undefined,
     notesLoading: notesEnabled && notesQuery.isFetching,
@@ -283,6 +315,7 @@ export function usePackageUpdates(
         ? overviewError
         : undefined),
     refresh,
+    recoverSession,
     prepare: async (revision: string) => {
       if (!csrf || !enabled) return;
       if (

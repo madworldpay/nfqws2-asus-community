@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from test_dpi_normalize import PHP, PUBLIC, ROOT
+from test_worker_execution_limits import BURN
 
 ABI=os.environ.get('UPDATE_RUNTIME_ABI','aarch64')
 AUDIT=ROOT/'.work/packaging-audit-20261012'
@@ -58,6 +59,16 @@ class PackageUpdateRuntimeTests(unittest.TestCase):
         for file,record in before['files'].items():
             p=self.runtime/file;self.assertEqual(p.stat().st_mode&0o777,record['mode']);self.assertFalse(p.is_symlink())
             self.assertEqual(hashlib.sha256(p.read_bytes()).hexdigest(),record['sha256'])
+    def test_sealed_runtime_overrides_cgi_cpu_timer_before_loading_entry(self):
+        self.entry.write_text('<?php '+BURN)
+        result=self.call();self.assertIn('value',result)
+        argv=result['value']['argv'];php=argv.index(str(self.runtime/'php'))
+        # Model a configured short CGI default. The sealed policy must override it.
+        argv=argv[:php+1]+['-d','max_execution_time=1']+argv[php+1:]
+        runner=AUDIT/('qemu-aarch64' if ABI=='aarch64' else 'qemu-arm')
+        r=subprocess.run([str(runner),'-L',str(self.system),*argv,'--','noop','a'*32],capture_output=True,text=True,timeout=8)
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'')
+        self.assertEqual(json.loads(r.stdout),{'complete':True,'limit':0})
     def test_all_installed_defaults_resolve_the_supported_opt_alias(self):
         alias=self.base/'opt-alias';alias.symlink_to(self.opt,target_is_directory=True)
         app=self.opt/'share/nfqws-asus-web';shutil.copytree(self.application,app)

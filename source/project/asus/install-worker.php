@@ -1,6 +1,9 @@
 <?php
 // The installer stages this fixed entry with its own source, key and verifier.
 if(!in_array(PHP_SAPI,['cli','cgi-fcgi'],true)||isset($_SERVER['REQUEST_METHOD'])||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',(string)@file_get_contents('/proc/self/status')))exit(2);
+// Only this root, non-HTTP worker opts out of CGI CPU time; the guardian still
+// bounds pre-install work and respects the native manager critical boundary.
+set_time_limit(0);
 $args=$argv??[];array_shift($args);if(($args[0]??null)==='--')array_shift($args);$mode=array_shift($args);
 require_once __DIR__.'/app/update-worker.php';
 require_once __DIR__.'/app/update-watchdog.php';

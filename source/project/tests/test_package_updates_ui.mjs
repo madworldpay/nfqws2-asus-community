@@ -63,6 +63,11 @@ for(const [version,installed,family,format]of [
 
 globalThis.fetch = async () => Response.json({ error: 'busy' }, { status: 409 });
 await assert.rejects(api.checkPackageUpdate('csrf', false), error => error.code === 'busy');
+// The protected PHP entry rejects an expired session before emitting JSON.
+globalThis.fetch = async () => new Response(null, { status: 401 });
+await assert.rejects(api.checkPackageUpdate('csrf'), error => error.code === 'auth_required');
+globalThis.fetch = async () => Response.json({ error: 'csrf_failed' }, { status: 403 });
+await assert.rejects(api.checkPackageUpdate('csrf'), error => error.code === 'csrf_failed');
 globalThis.fetch = async () => Response.json({ ...available, token: 'PRIVATE_CANARY' });
 await assert.rejects(api.checkPackageUpdate('csrf', false), error => error.code === 'invalid_response');
 globalThis.fetch = async () => Response.json({ state: 'current', candidate: null, code: null, installed_version: null });

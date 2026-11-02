@@ -116,6 +116,20 @@ class PackageRollbackTests(unittest.TestCase):
         self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
         self.assertFalse(self.snapshot.exists());self.assertEqual(path.read_text(),'FOREIGN')
 
+    def test_foreign_package_with_underscore_keeps_ownership_protection(self):
+        foreign=self.opt/'lib/opkg/info/tailscale_nohf.list'
+        foreign.write_text('/opt/bin/tailscale_nohf\n');foreign.chmod(0o666)
+        self.status.write_text(self.status.read_text().rstrip()+'\n\nPackage: tailscale_nohf\nVersion: 1.0\nStatus: install user installed\nArchitecture: all\n')
+        before=(foreign.read_bytes(),foreign.stat().st_ino,self.status.read_bytes())
+        self.assertIn('value',self.call('capture'))
+        self.assertEqual((foreign.read_bytes(),foreign.stat().st_ino,self.status.read_bytes()),before)
+        self.assertIn('value',self.call('verify'))
+        # A valid underscore name still cannot claim any of our files.
+        shutil.rmtree(self.snapshot)
+        foreign.write_text('/opt/usr/bin/nfqws2\n')
+        self.assertEqual(self.call('capture'),{'error':'rollback_unavailable'})
+        self.assertFalse(self.snapshot.exists())
+
     def test_legacy_index_and_foreign_index_links_are_never_followed(self):
         index=self.opt/'lib/opkg/info/nfqws2-asus.list';raw=index.read_bytes()
         outside=self.base/'outside-index';outside.write_bytes(raw);outside.chmod(0o666)

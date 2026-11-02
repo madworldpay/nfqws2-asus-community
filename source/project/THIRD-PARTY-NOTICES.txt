@@ -84098,3 +84098,18 @@ Bundled packet templates (blobs): bol-van/zapret2 v1.0.6, commit
 Exact file provenance and hashes: asus/blobs/sources.json.
 License: licenses/zapret2-MIT.txt. Template names describe payload contents;
 network effectiveness is not certified by the structural/load checks.
+
+Optional legacy PHP sockets module: PHP 8.4.7 / PHP License 3.01.
+This product includes PHP software, freely available from
+<http://www.php.net/software/>. Full license: licenses/php-PHP-3.01.txt.
+PHP source: https://github.com/php/php-src/tree/php-8.4.7
+The armv7-2.6 IPK is published by Gary C. New's community Entware feed,
+not the frozen official Entware feed. Publication repository:
+https://github.com/garycnew/garycnew.github.io
+Immutable commit: 2dc411761722a37daa4eeda24e8208938b15feba.
+Artifact: php8-mod-sockets_8.4.7-1_armv7-2.6.ipk
+SHA256: 5b71231a3ca28f697342262627848a3b49bf41ee4e772ccf9d272c320870a9e4.
+The publication commit is unsigned; no detached index signature was verified.
+The exact IPK is pinned by SHA256 and bundled as inert data inside the project package.
+Selection requires the exact installed PHP package version and Entware ABI;
+this optional module does not upgrade PHP or unrelated packages.

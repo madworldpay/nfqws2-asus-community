@@ -1,7 +1,10 @@
 <?php
 /** Fixed root-only CLI/CGI entry; no environment-selected paths or HTTP mode. */
 declare(strict_types=1);
-if(!in_array(PHP_SAPI,['cli','cgi-fcgi'],true)||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',(string)@file_get_contents('/proc/self/status')))exit(1);
+if(!in_array(PHP_SAPI,['cli','cgi-fcgi'],true)||isset($_SERVER['REQUEST_METHOD'])||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',(string)@file_get_contents('/proc/self/status')))exit(1);
+// The registered loop is persistent; CGI's default 30 CPU seconds are not its
+// lifetime. Per-probe deadlines and the owned lifecycle lease remain in force.
+set_time_limit(0);
 require_once '/opt/share/nfqws-asus-web/ip-health-runtime.php';
 $args=$argv;array_shift($args);if(($args[0]??null)==='--')array_shift($args);$mode=array_shift($args);
 $private='/tmp/nfqws2-asus/ip-health-private';$public='/tmp/nfqws2-asus-ip-health';

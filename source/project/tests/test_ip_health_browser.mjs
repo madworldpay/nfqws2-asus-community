@@ -79,9 +79,12 @@ try {
       loader: "tsx",
       contents: `
     import React from 'react'; import {createRoot} from 'react-dom/client';
+    import {QueryClientProvider} from '@tanstack/react-query';
+    import {queryClient} from './src/api/client';import {createAPIClient} from './src/api/create-api-client';
     import {Box} from '@mui/material'; import {Layout} from './src/components/Layout';
     import {IpHealthPanel} from './src/components/IpHealthPanel';
-    createRoot(document.getElementById('root')).render(<Layout><Box sx={{position:'relative',height:'100svh'}}><IpHealthPanel/></Box></Layout>);
+    queryClient.setQueryData(createAPIClient().indexPhp.postIndexCmd.getQueryKey({body:{cmd:'status'}}),{status:0,anonym:false,authenticated:true,csrf_token:'fixture'});
+    createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><Layout><Box sx={{position:'relative',height:'100svh'}}><IpHealthPanel/></Box></Layout></QueryClientProvider>);
   `,
     },
     bundle: true,
@@ -101,7 +104,7 @@ try {
             namespace: "fixture",
           }));
           b.onLoad({ filter: /.*/, namespace: "fixture" }, () => ({
-            contents: `export const useStatus=()=>({csrfToken:'fixture',platform:'asus-entware',isPending:false});`,
+            contents: `export const useStatus=()=>({csrfToken:'fixture',platform:'asus-entware',isPending:false,isReady:true,authenticated:true,anonym:false});`,
           }));
         },
       },
@@ -123,8 +126,10 @@ try {
     }
     let raw = "";
     for await (const chunk of req) raw += chunk;
-    const p = new URLSearchParams(raw),
+    const p = req.headers['content-type']?.startsWith('multipart/form-data')
+      ? new URLSearchParams([...await new Response(raw,{headers:{'Content-Type':req.headers['content-type']}}).formData()].map(([k,v])=>[k,String(v)])) : new URLSearchParams(raw),
       cmd = p.get("cmd");
+    if (cmd === 'status') { res.setHeader('Content-Type','application/json');res.end(JSON.stringify({status:0,anonym:false,authenticated:true,csrf_token:'fixture'}));return; }
     assert.equal(p.get("csrf_token"), "fixture");
     assert.equal(req.url, "/index.php");
     activeRequests++;

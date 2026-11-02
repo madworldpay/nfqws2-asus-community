@@ -285,6 +285,33 @@ class IpHealthHttpTests(unittest.TestCase):
         api=self.root/'ip-health-api.php'
         api.write_text(api.read_text().replace('new NfqwsIpHealthStore()',"new NfqwsIpHealthStore(__DIR__.'/state',__DIR__.'/run')"))
         index=self.root/'index.php';index.write_text(index.read_text().replace('function main(): void\n{',"function main(): void\n{\n$_SERVER['HTTP_HOST']='router.lan';$_SERVER['HTTP_ORIGIN']=$_POST['origin_fixture']??'http://router.lan';unset($_POST['origin_fixture']);"))
+        index.write_text(index.read_text().replace('new NfqwsIpHealthApi()', "new NfqwsIpHealthApi(null,null,fn()=>false,fn()=>['state'=>'unavailable'])"))
+
+    def test_password_free_session_can_read_and_explicitly_configure_without_auth_change(self):
+        token=self.fixture.login();self.assertEqual(self.fixture.change('',token)[0],200)
+        code,login=self.fixture.request({'cmd':'login'},'anonymous-health');self.assertEqual(code,200)
+        token=login['csrf_token'];auth_before=self.fixture.auth.read_bytes()
+        status={'cmd':'iphealthstatus','csrf_token':token}
+        code,value=self.fixture.request(status,'anonymous-health');self.assertEqual(code,200)
+        self.assertFalse((self.root/'state').exists(),'anonymous status remains read only')
+        for enabled in ['0','1']:
+            code,value=self.fixture.request({'cmd':'iphealthconfigure','csrf_token':token,'revision':value['revision'],'enabled':enabled},'anonymous-health')
+            self.assertEqual(code,200);self.assertEqual(value['enabled'],enabled=='1')
+            self.assertEqual(self.fixture.auth.read_bytes(),auth_before)
+        for command,extra in [('iphealthrecheck',{'id':'all'}),('iphealthclear',{})]:
+            code,value=self.fixture.request({'cmd':command,'csrf_token':token,'revision':value['revision'],**extra},'anonymous-health')
+            self.assertEqual(code,200);self.assertEqual(self.fixture.auth.read_bytes(),auth_before)
+        self.assertEqual(self.fixture.request({'cmd':'iphealthremove','csrf_token':token,'revision':value['revision'],'id':'a'*32},'anonymous-health'),(409,{'error':'not_found'}))
+        journal=(self.root/'state/bans.json').read_bytes()
+        commands=[status]+[{'cmd':command,'csrf_token':token,'revision':value['revision'],**extra} for command,extra in [('iphealthconfigure',{'enabled':'0'}),('iphealthclear',{}),('iphealthrecheck',{'id':'all'}),('iphealthremove',{'id':'a'*32})]]
+        for command in commands:
+            for invalid,session,want in [({**command,'csrf_token':'wrong'},'anonymous-health',403),({**command,'origin_fixture':'http://evil.test'},'anonymous-health',403),(command,'different-anonymous-session',403),({k:v for k,v in command.items() if k!='csrf_token'},'anonymous-health',400)]:
+                self.assertEqual(self.fixture.request(invalid,session)[0],want)
+                self.assertEqual((self.root/'state/bans.json').read_bytes(),journal)
+                self.assertEqual(self.fixture.auth.read_bytes(),auth_before)
+        (self.root/'update-busy').touch()
+        self.assertEqual(self.fixture.request({'cmd':'iphealthconfigure','csrf_token':token,'revision':value['revision'],'enabled':'0'},'anonymous-health'),(409,{'error':'busy'}))
+        self.assertEqual((self.root/'state/bans.json').read_bytes(),journal)
 
     def test_real_route_requires_auth_csrf_origin_and_strict_fields(self):
         p={'cmd':'iphealthstatus','csrf_token':'wrong'}

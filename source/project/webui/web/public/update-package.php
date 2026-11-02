@@ -17,7 +17,7 @@ final class AsusUpdatePackage
     public static function database(string $raw,bool $allowOwnUnpacked=false): array
     {
         if(strlen($raw)>2097152)throw new RuntimeException('pending_packages');$db=[];
-        foreach(preg_split('/\n[ \t]*\n/',trim($raw)) as $section){$p=self::fields($section);$name=$p['Package']??'';if(!preg_match('/^[a-z0-9][a-z0-9+.-]{0,80}$/D',$name))throw new RuntimeException('pending_packages');
+        foreach(preg_split('/\n[ \t]*\n/',trim($raw)) as $section){$p=self::fields($section);$name=$p['Package']??'';if(!preg_match('/^[a-z0-9][a-z0-9+._-]{0,80}$/D',$name))throw new RuntimeException('pending_packages');
             $own=$name==='nfqws2-asus';$status=preg_split('/\s+/',trim($p['Status']??''));$ownPending=$allowOwnUnpacked&&$own&&preg_match('/^install (?:ok|user) unpacked$/D',$p['Status']??'');
             if(count($status)!==3||!in_array($status[0],['unknown','install','deinstall','purge'],true)||!in_array($status[2],['installed','not-installed','config-files'],true)&&!$ownPending)throw new RuntimeException('pending_packages');
             $flags=explode(',',$status[1]);$allowed=$own?['prefer','user']:self::POLICY_FLAGS;

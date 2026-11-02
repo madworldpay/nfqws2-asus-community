@@ -295,7 +295,7 @@ function main(): void
 
   if (in_array($_POST['cmd'], ['iphealthstatus','iphealthconfigure','iphealthremove','iphealthclear','iphealthrecheck'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
-    if(!$authEnabled||!$sessionValid){http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
+    if($authEnabled&&!$sessionValid){http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
     require_once __DIR__.'/ip-health-api.php';require_once __DIR__.'/support-report.php';
     try {
       NfqwsIpHealthApi::validate($_POST);

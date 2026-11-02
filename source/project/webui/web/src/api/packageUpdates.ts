@@ -237,6 +237,8 @@ async function request(
       body: new URLSearchParams({ cmd, csrf_token: csrf, ...params }),
       signal: controller.signal,
     });
+    // PHP rejects an expired protected session before sending a JSON body.
+    if (response.status === 401) throw new PackageUpdateError('auth_required');
     if (
       !/^application\/json(?:;|$)/i.test(
         response.headers.get('Content-Type') ?? '',

@@ -186,7 +186,7 @@ final class AsusUpdateRollback
         $info=self::indexDirectory($opt,$owner);$names=@scandir($info);if(!is_array($names))throw new RuntimeException('rollback_unavailable');$count=0;$total=0;
         foreach($names as $index){
             if(!str_ends_with($index,'.list'))continue;
-            if(++$count>2048||!preg_match('/^[a-z0-9][a-z0-9+.-]{0,80}\.list$/D',$index))throw new RuntimeException('rollback_unavailable');
+            if(++$count>2048||!preg_match('/^[a-z0-9][a-z0-9+._-]{0,80}\.list$/D',$index))throw new RuntimeException('rollback_unavailable');
             $record=self::indexFile($info.'/'.$index,$owner);$total+=strlen($record['raw']);if($total>8388608)throw new RuntimeException('rollback_unavailable');
             yield $index=>['lines'=>self::indexLines($record['raw']),'identity'=>$record['identity'],'sha256'=>$record['sha256']];
         }

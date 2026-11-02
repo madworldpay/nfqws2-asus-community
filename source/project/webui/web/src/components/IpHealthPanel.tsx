@@ -23,6 +23,7 @@ import {
   Typography,
 } from '@mui/material';
 
+import { API } from '@/api/client';
 import { DpiError } from '@/api/dpiClient';
 import {
   clearIpHealth,
@@ -32,6 +33,10 @@ import {
   removeIpHealth,
   type IpHealthStatus,
 } from '@/api/ipHealthClient';
+
+import { LoginDialog } from '@/components/LoginDialog';
+
+import { useAppStore } from '@/store/useAppStore';
 
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -55,20 +60,33 @@ const knownErrors = new Set([
 ]);
 
 export const IpHealthPanel = () => {
-  const { csrfToken } = useStatus();
+  const { csrfToken, authenticated, anonym, isReady } = useStatus();
+  const sessionAvailable = isReady && (authenticated || anonym);
+  const { refetch: refreshStatus } = API.status();
   const { t, langcode } = useTranslation();
   const [data, setData] = useState<IpHealthStatus>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [stale, setStale] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const recoveryInFlight = useRef(false);
+  const recoveryRequest = useRef(0);
+  const blockedSession = useRef<string | undefined>(undefined);
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const sessionGeneration = useRef(0);
 
   const load = useCallback(
     async (manual = false) => {
-      if (!csrfToken || inFlight.current) return;
+      if (
+        !csrfToken ||
+        !sessionAvailable ||
+        inFlight.current ||
+        (!manual && blockedSession.current === csrfToken)
+      )
+        return;
       const epoch = sessionGeneration.current;
       const current = () =>
         mounted.current && sessionGeneration.current === epoch;
@@ -79,6 +97,7 @@ export const IpHealthPanel = () => {
         if (current()) {
           setData(next);
           setStale(false);
+          blockedSession.current = undefined;
           // Polling must not erase a lost-action or stale-revision explanation.
           setError((previous) =>
             manual || !['action_unknown', 'stale_revision'].includes(previous)
@@ -88,6 +107,11 @@ export const IpHealthPanel = () => {
         }
       } catch (e) {
         if (current()) {
+          if (
+            e instanceof DpiError &&
+            ['unauthorized', 'forbidden'].includes(e.code)
+          )
+            blockedSession.current = csrfToken;
           setError(
             e instanceof DpiError && knownErrors.has(e.code)
               ? e.code
@@ -102,16 +126,78 @@ export const IpHealthPanel = () => {
         }
       }
     },
-    [csrfToken],
+    [csrfToken, sessionAvailable],
+  );
+
+  const recoverSession = async () => {
+    if (recoveryInFlight.current) return;
+    const request = ++recoveryRequest.current;
+    const current = () =>
+      mounted.current && recoveryRequest.current === request;
+    recoveryInFlight.current = true;
+    setRecovering(true);
+    try {
+      const fresh = await refreshStatus();
+      if (!current()) return;
+      if (
+        !fresh.isSuccess ||
+        useAppStore.getState().auth === false ||
+        !fresh.data ||
+        fresh.data.status !== 0
+      ) {
+        setError(
+          useAppStore.getState().auth === false
+            ? 'unauthorized'
+            : 'request_failed',
+        );
+        setStale(true);
+        return;
+      }
+      if (
+        !(fresh.data.authenticated ?? !fresh.data.anonym) &&
+        !fresh.data.anonym
+      ) {
+        setError('unauthorized');
+        setLoginOpen(true);
+        return;
+      }
+      if (!fresh.data.csrf_token) {
+        setError('request_failed');
+        return;
+      }
+      setLoginOpen(false);
+      // A changed nonce starts the normal read effect after it is rendered.
+      // Never replay configure/remove/clear/recheck during session recovery.
+      if (fresh.data.csrf_token === csrfToken) await load(true);
+    } catch {
+      if (current()) setError('request_failed');
+    } finally {
+      if (recoveryRequest.current === request) {
+        recoveryInFlight.current = false;
+        if (mounted.current) setRecovering(false);
+      }
+    }
+  };
+  const cancelLogin = () => {
+    recoveryRequest.current++;
+    recoveryInFlight.current = false;
+    setRecovering(false);
+    setLoginOpen(false);
+  };
+  useEffect(
+    () => () => {
+      recoveryRequest.current++;
+    },
+    [],
   );
 
   useEffect(() => {
     mounted.current = true;
-    sessionGeneration.current++;
+    const epoch = ++sessionGeneration.current;
     inFlight.current = false;
+    blockedSession.current = undefined;
     setBusy(false);
     setData(undefined);
-    setError('');
     setStale(false);
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
@@ -141,7 +227,7 @@ export const IpHealthPanel = () => {
     return () => {
       stopped = true;
       mounted.current = false;
-      sessionGeneration.current++;
+      sessionGeneration.current = epoch + 1;
       clearTimeout(timer);
       document.removeEventListener('visibilitychange', visibility);
     };
@@ -150,7 +236,14 @@ export const IpHealthPanel = () => {
   const action = async (
     operation: (csrf: string, revision: string) => Promise<IpHealthStatus>,
   ) => {
-    if (!csrfToken || !data || inFlight.current) return;
+    if (
+      !csrfToken ||
+      !sessionAvailable ||
+      !data ||
+      inFlight.current ||
+      recovering
+    )
+      return;
     const epoch = sessionGeneration.current;
     const current = () =>
       mounted.current && sessionGeneration.current === epoch;
@@ -201,7 +294,8 @@ export const IpHealthPanel = () => {
       : data?.runtime.code && runtimeCodes.has(data.runtime.code)
         ? data.runtime.code
         : runtime;
-  const disabled = busy || !data || !csrfToken || stale;
+  const disabled =
+    busy || recovering || !data || !csrfToken || !sessionAvailable || stale;
   const dnsActive =
     data?.enabled &&
     data.runtime.state === 'active' &&
@@ -233,7 +327,7 @@ export const IpHealthPanel = () => {
   return (
     <Box
       component="main"
-      aria-busy={busy}
+      aria-busy={busy || recovering}
       sx={{
         position: 'absolute',
         inset: 0,
@@ -241,6 +335,9 @@ export const IpHealthPanel = () => {
         p: { xs: 2, sm: 3 },
       }}
     >
+      {loginOpen && (
+        <LoginDialog onSuccess={recoverSession} onCancel={cancelLogin} />
+      )}
       <Stack spacing={2} sx={{ maxWidth: 1000, mx: 'auto', minWidth: 0 }}>
         <Box>
           <Stack
@@ -263,8 +360,8 @@ export const IpHealthPanel = () => {
             <Button
               size="small"
               startIcon={<RefreshIcon />}
-              disabled={busy || !csrfToken}
-              onClick={() => void load(true)}
+              disabled={busy || recovering}
+              onClick={() => void recoverSession()}
             >
               {t('ip_health.refresh')}
             </Button>
@@ -278,7 +375,20 @@ export const IpHealthPanel = () => {
           </Typography>
         </Box>
         {error && (
-          <Alert severity="warning">
+          <Alert
+            severity="warning"
+            action={
+              ['unauthorized', 'forbidden'].includes(error) && (
+                <Button
+                  color="inherit"
+                  disabled={busy || recovering}
+                  onClick={() => void recoverSession()}
+                >
+                  {t('ip_health.recover')}
+                </Button>
+              )
+            }
+          >
             {t(`ip_health.errors.${error}` as TranslationKey)}
           </Alert>
         )}

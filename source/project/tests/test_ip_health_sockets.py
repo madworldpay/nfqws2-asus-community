@@ -263,6 +263,12 @@ function hash_file($algorithm,$path){
         self.status.write_text(self.status.read_text().replace('Architecture: all\nStatus: install hold installed','Architecture: all\nStatus: install ok installed',1))
         self.prepare();self.status.write_text(before.rstrip()+'\n\n'+self.row('foreign','1','install user unpacked')+'\n\n')
         self.assertEqual(self.call('prepare'),{'error':'pending_packages'});self.assertFalse(self.installed())
+    def test_installed_community_package_with_underscore_does_not_block_socket_preparation(self):
+        self.status.write_text(self.status.read_text().rstrip()+'\n\n'+self.row('tailscale_nohf','1.90.6-1','install user installed')+'\n\n')
+        index=self.opt/'lib/opkg/info/tailscale_nohf.list';index.write_text('/opt/usr/bin/tailscale\n');index.chmod(0o644)
+        job=self.prepare();self.assertEqual(self.call('apply',job),{'value':{'state':'ready','code':None}})
+        self.assertIn('Package: tailscale_nohf\n',self.status.read_text())
+        self.assertEqual(index.read_text(),'/opt/usr/bin/tailscale\n')
     def test_owner_files_existing_module_and_unknown_pending_are_never_overwritten(self):
         file=self.opt/'lib/php8/sockets.so';file.write_text('OWNER')
         self.assertEqual(self.call('prepare'),{'error':'sockets_path_conflict'});self.assertEqual(file.read_text(),'OWNER');file.unlink()
@@ -360,3 +366,27 @@ function hash_file($algorithm,$path){
     def test_status_is_passive_and_does_not_prepare_or_create_state(self):
         self.assertEqual(self.call('status'),{'value':{'state':'unavailable','code':'sockets_unprepared'}})
         self.assertFalse(self.state.exists());self.assertFalse(self.installed())
+    @unittest.skipUnless((FIXTURES/'php8-cgi_8.4.7-1_armv7-2.6.ipk').is_file(),'verified Gary legacy PHP8.4.7 CGI fixture required')
+    def test_legacy_php847_installs_its_matching_module_without_changing_php_or_foreign_packages(self):
+        with tarfile.open(FIXTURES/'php8-cgi_8.4.7-1_armv7-2.6.ipk') as outer:
+            parts={m.name.removeprefix('./'):outer.extractfile(m).read() for m in outer if m.isfile()}
+        with tarfile.open(fileobj=io.BytesIO(parts['data.tar.gz'])) as archive:
+            elf=next(archive.extractfile(m).read() for m in archive if m.name.removeprefix('./')=='opt/bin/php8-cgi')
+        self.assertEqual(hashlib.sha256(elf).hexdigest(),'05d90879eacd2fc7e958bdfe119d3f8b1d3cecca5e60d6e6eefcdeecf03a55ea')
+        php=self.opt/'bin/php8-cgi';php.write_bytes(elf);php.chmod(0o755)
+        self.options['php']=[str(TOOLS/'qemu-arm'),'-L',str(TOOLS/'armv7-legacy-sysroot'),str(php)]
+        self.status.write_text(self.status.read_text().replace('Version: 8.2.8-1','Version: 8.4.7-1')+self.row('php8-cgi','8.4.7-1')+'\n\n')
+        index=self.opt/'lib/opkg/info/php8-cgi.list';index.write_text('/opt/bin/php8-cgi\n');index.chmod(0o644)
+        before=self.foreign();job=self.prepare()
+        self.assertEqual(self.call('apply',job),{'value':{'state':'ready','code':None}})
+        self.assertEqual(self.foreign(),before)
+        self.assertEqual(hashlib.sha256(php.read_bytes()).hexdigest(),'05d90879eacd2fc7e958bdfe119d3f8b1d3cecca5e60d6e6eefcdeecf03a55ea')
+        self.assertEqual(index.read_text(),'/opt/bin/php8-cgi\n')
+        self.assertEqual(hashlib.sha256((self.opt/'lib/php8/sockets.so').read_bytes()).hexdigest(),'81d32c2344edd48fab73a3bd7ea4a36c774bd0c5798589a75e71e4fdda944ba1')
+    def test_duplicate_abi_and_php_version_pair_is_refused_before_installation(self):
+        catalog=copy.deepcopy(self.catalog);catalog['entries'][1]=copy.deepcopy(catalog['entries'][0])
+        (self.resources/'catalog.json').write_text(json.dumps(catalog))
+        self.assertEqual(self.call('prepare'),{'error':'sockets_artifact_invalid'});self.assertFalse(self.installed())
+    def test_unknown_legacy_php847_package_release_is_not_a_version_fallback(self):
+        self.status.write_text(self.status.read_text().replace('Version: 8.2.8-1','Version: 8.4.7-2'))
+        self.assertEqual(self.call('prepare'),{'error':'sockets_php_unsupported'});self.assertFalse(self.installed())

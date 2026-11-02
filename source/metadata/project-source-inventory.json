@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "f1769867b0abc7068f5cb7dd41574a420b3cfa4553856f459857ff8e5a525b13"
+    "sha256": "4b9258d432ecb4511cfe5471a58f3feea9e8aa513e1d32294894693827d3b0d4"
   },
   {
     "path": "LICENSE",
@@ -16,8 +16,8 @@
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
-    "bytes": 4151578,
-    "sha256": "c3efefceb5050a2034a5284d75cea863e34ba741f452e72b3c8773df84791243"
+    "bytes": 4152505,
+    "sha256": "f7e38a2508f2861981548177b4583c7f74e64b67de2b3ea3a18eb8eace822609"
   },
   {
     "path": "UPSTREAM.md",
@@ -46,8 +46,8 @@
   },
   {
     "path": "asus/assets.json",
-    "bytes": 3117,
-    "sha256": "85bc157c78b012bf16b955118ab0e5bb8d3f22e2aba09a030a354b3c26cd82f4"
+    "bytes": 3426,
+    "sha256": "2d0429ebeb5c5a3b2ffe32bb4de30b440bb73fb1127e22b30b2128d7cc983fb7"
   },
   {
     "path": "asus/blob_bundle.py",
@@ -201,8 +201,8 @@
   },
   {
     "path": "asus/install-extract.php",
-    "bytes": 2326,
-    "sha256": "3068c78e8aff6f0b4ffc349774a408c308df83081b6bed7764bde0330a945078"
+    "bytes": 2507,
+    "sha256": "d5ca6129b11388e50d131741c597b26e2b953c461c85d6fc9c9e6cbe05127ca7"
   },
   {
     "path": "asus/install-main.php",
@@ -211,8 +211,8 @@
   },
   {
     "path": "asus/install-worker.php",
-    "bytes": 2136,
-    "sha256": "720e6cb88eb8bf66469ba4297331e444037d0c9f5ab5e9b6492585377d468a12"
+    "bytes": 2313,
+    "sha256": "3cb83b8b4bc7c2ad9a435de60427ef53162becf853511fc3a7f56add07edb02a"
   },
   {
     "path": "asus/ip-health-sockets/control.sh",
@@ -226,8 +226,8 @@
   },
   {
     "path": "asus/ip-health-sockets.json",
-    "bytes": 2247,
-    "sha256": "6e40d7a2932419b9e4e236f2effabac7f37f3a5ab075a10fd6268da888aa5178"
+    "bytes": 2975,
+    "sha256": "c9cfc537c0cc7713aa13f943b4ac379866479f88a55f7095a363ed3b9cb3f4fb"
   },
   {
     "path": "asus/ipk/core-postinst",
@@ -546,8 +546,8 @@
   },
   {
     "path": "asus/technical-channel/worker.php",
-    "bytes": 579,
-    "sha256": "83f88877edb2351391807edb5066a7d5e894508da8cc6fbff7a3a6b2d768e011"
+    "bytes": 853,
+    "sha256": "8fad686d4dbbd77bada22d0b26570b207ef9b01e9fcd68981076e5cb9a3afc38"
   },
   {
     "path": "asus/update/README.md",
@@ -606,8 +606,8 @@
   },
   {
     "path": "asus/update/worker.php",
-    "bytes": 3669,
-    "sha256": "94f9e3a2eb829f446e3756e748776a1be6d6c0411664c078eefd862eed5cd299"
+    "bytes": 3876,
+    "sha256": "f1968720281adb823592477ceafb8fea2491e3cbefbd2caafeed05a4e369fb7d"
   },
   {
     "path": "asus/update/worker.sh",
@@ -866,8 +866,8 @@
   },
   {
     "path": "ip-health/worker.php",
-    "bytes": 3724,
-    "sha256": "95532ad1c21a0c8a7232bc496fd667068cd0803ccc835c2bc26ef996b50aea49"
+    "bytes": 3937,
+    "sha256": "a51096123dca16837f3249bb984e3b9b7c915bba85c279f421f9356d83d6d826"
   },
   {
     "path": "licenses/busybox-GPL2.txt",
@@ -1805,6 +1805,11 @@
     "sha256": "22da2c568b88ac1bf6cd827938b962862a023ae6808885ce29e360b9ba76fc6e"
   },
   {
+    "path": "tests/test_ip_health_auth_browser.mjs",
+    "bytes": 10687,
+    "sha256": "a763a26caf82378c2570e50faa01625927b0c482bef71e20a0799ef340c76eab"
+  },
+  {
     "path": "tests/test_ip_health_backend.php",
     "bytes": 25955,
     "sha256": "2cd411c0bbe7a1acede9833ffee8f0ca41725ade4d01b0746cf2ac908a18a9ab"
@@ -1816,8 +1821,8 @@
   },
   {
     "path": "tests/test_ip_health_browser.mjs",
-    "bytes": 17859,
-    "sha256": "408875b6ab3c7e5bedfcc7e92cf82f3c49eff3b992fdf9d2d32cc1302155f8a5"
+    "bytes": 18704,
+    "sha256": "a1113b0c565526c3cd6ef401ed33cdf1df01d1b5f63f25f17dc3c06376348c5e"
   },
   {
     "path": "tests/test_ip_health_control.py",
@@ -1846,18 +1851,23 @@
   },
   {
     "path": "tests/test_ip_health_runtime.py",
-    "bytes": 23308,
-    "sha256": "e70b3b1067c7008fca7a51a3e94a119330b3e0d64e6eca340c7208d07746e439"
+    "bytes": 26106,
+    "sha256": "076cf117b3dbb9b8d1d6659a446294dd0ceedf8d5e5b69623de1598a8cd01b40"
   },
   {
     "path": "tests/test_ip_health_session_browser.mjs",
-    "bytes": 6649,
-    "sha256": "963943f3b1ca3b7366e5e4dbd4a7d977120bf95b958f422a1c7d18420728bbdc"
+    "bytes": 7104,
+    "sha256": "d6512ce7aa80a28725b03d86ce157274475739d62eb010249e2d086ab0353cf4"
   },
   {
     "path": "tests/test_ip_health_sockets.py",
-    "bytes": 33456,
-    "sha256": "54ce807a2e72377f4879eee413d4949a3d2f709f703dec2848db5434e80448e6"
+    "bytes": 36484,
+    "sha256": "ff260dd081ff3731c3b7c362283eb74d50a862b61ef59f1f0b6c9c23834628bf"
+  },
+  {
+    "path": "tests/test_ip_health_sockets_catalog.py",
+    "bytes": 1698,
+    "sha256": "d8428cf1ac364e1cd46010011b26e468736f492fe59d7eadd91bb57cba86b75b"
   },
   {
     "path": "tests/test_ip_health_sockets_lock.py",
@@ -2296,8 +2306,8 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 36141,
-    "sha256": "f0e5e22cc96bfafde1ef0f14ac8e83eb28ddecd7bbee018fc62efa09ee42f23b"
+    "bytes": 37102,
+    "sha256": "7e78d927c319e3c92361d6dfd6d5dbda8e16c6469d2f5f6d216ae6a4e9c7755a"
   },
   {
     "path": "tests/test_package_update_recovery_artifact.py",
@@ -2316,13 +2326,18 @@
   },
   {
     "path": "tests/test_package_update_rollback.py",
-    "bytes": 46949,
-    "sha256": "61d26dfb0953c2132687e9a203871b7824d22f429423fa337e815dcaa97b2903"
+    "bytes": 47909,
+    "sha256": "b5b9f059512c3e86c0f723f1ff285e5df4d3b0d28630656fed8807844963e2e4"
   },
   {
     "path": "tests/test_package_update_runtime.py",
-    "bytes": 7292,
-    "sha256": "ff20c0c13aad57cdb879f5129708fad57cc1042df8ef4244b7ccbd8e87a8cc51"
+    "bytes": 8113,
+    "sha256": "f73c4c552f54a8a39171b5cfe4dc4791ba144ef7d20e519f3a7e4b656db022bb"
+  },
+  {
+    "path": "tests/test_package_update_session_browser.mjs",
+    "bytes": 15088,
+    "sha256": "206469b32a5b8f3df86eae652d2edbea6748ae3853de42b60da630505ffd2a63"
   },
   {
     "path": "tests/test_package_update_shell.py",
@@ -2351,8 +2366,8 @@
   },
   {
     "path": "tests/test_package_updates_ui.mjs",
-    "bytes": 10508,
-    "sha256": "36c131ee0c3ff41370bfe6aa81aed30c91c6f226656c42ee1375eb6f81476c6e"
+    "bytes": 10929,
+    "sha256": "a18a496047c040f2e54f642a3d4b970c5f9fc3b54e522fed103d8caa2e97e18d"
   },
   {
     "path": "tests/test_package_version.mjs",
@@ -2425,14 +2440,19 @@
     "sha256": "65c1fd2ad6d5d151a9a4d54101432b9753b8b62734a33e0197cd6eaed1f1fc39"
   },
   {
+    "path": "tests/test_requirements_browser.mjs",
+    "bytes": 5052,
+    "sha256": "e658667f3751e9486366ae465dd791623a48728445c4bc886648e529ac827954"
+  },
+  {
     "path": "tests/test_restart_schedule.py",
     "bytes": 39969,
     "sha256": "8876efe6aa5189b8ac17a0e1c16bd61fc309f0f3f907102257baffc27481d6e6"
   },
   {
     "path": "tests/test_restart_schedule_browser.mjs",
-    "bytes": 46388,
-    "sha256": "c42551da46b1bfdc041f3708234a8a6425449e1397af003682eb83c0ccbe0cf1"
+    "bytes": 47990,
+    "sha256": "7424e25201a6ad2779e67cf3f739e4bb814dd617727ede075b60c4bdc86b172f"
   },
   {
     "path": "tests/test_restart_schedule_permissions.py",
@@ -2970,6 +2990,11 @@
     "sha256": "7da9a98c1773414c21cc8e979a9aaeed6b38ae3d8aa4c885dab56d1f22f060fd"
   },
   {
+    "path": "tests/test_worker_execution_limits.py",
+    "bytes": 9450,
+    "sha256": "43464dfbed6067999c4d9389dd732bad9cf72862fa37e79f12c3da7cb55abbd6"
+  },
+  {
     "path": "updates/openwrt-package-manifest.schema.json",
     "bytes": 2523,
     "sha256": "dc4de6f2bf4ca52c4830997cf6066f504f8fc48b9fca9f05aacfb54a0908186a"
@@ -3326,8 +3351,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 36690,
-    "sha256": "6def31e78b2465b751dae48eb42b8a11e7f8b7156deb0c5e5f8a72fe2d020b3f"
+    "bytes": 36689,
+    "sha256": "449c57f1d3ac8881605b7c5cd1e4b86646ac18b0b67094aacb64b3d10ea163c2"
   },
   {
     "path": "webui/web/public/ip-health-api.php",
@@ -3351,8 +3376,8 @@
   },
   {
     "path": "webui/web/public/ip-health-sockets.php",
-    "bytes": 28367,
-    "sha256": "9c93dfae5ec85b4d3bb21aa527fa8e411b73882aa59e27bd822b1e966ff1f0c3"
+    "bytes": 28429,
+    "sha256": "b4486c109d347da9957b7074aa9a53f1e6d152a13699a9d228c2741108936d2c"
   },
   {
     "path": "webui/web/public/ip-health-store.php",
@@ -3811,8 +3836,8 @@
   },
   {
     "path": "webui/web/public/update-package.php",
-    "bytes": 18469,
-    "sha256": "7a87383d7e34741d2d3145f8ed435b4f4eb54f96af36e46013af7427a5f2e4d3"
+    "bytes": 18470,
+    "sha256": "32fbf95a4d82df48d213224bcf724981b3a2d52307e4faf548c3f486bfc8bc10"
   },
   {
     "path": "webui/web/public/update-postinst-resume.php",
@@ -3826,13 +3851,13 @@
   },
   {
     "path": "webui/web/public/update-rollback.php",
-    "bytes": 49155,
-    "sha256": "9a143274c7771ecb1b92fbd037f705e7906db8c85face6f4a977cda45c2a879d"
+    "bytes": 49156,
+    "sha256": "7c0a0d9b37526d39e6c81efe8cbd51dc5c885de265bb37ad40fd4192f302de2a"
   },
   {
     "path": "webui/web/public/update-runtime.php",
-    "bytes": 13335,
-    "sha256": "4bc78115eca55fde22b04349a64e41feef5b52ad481b9acf36cd8efd651d4e51"
+    "bytes": 13363,
+    "sha256": "e7df925f82e8302e0d446eb430c614b8c78bbf8e01e045d4c73e8b43b3524700"
   },
   {
     "path": "webui/web/public/update-smartdns-resume.php",
@@ -3931,8 +3956,8 @@
   },
   {
     "path": "webui/web/src/api/ipHealthClient.ts",
-    "bytes": 3520,
-    "sha256": "cee58e0a233df9ee363e56c90906922d91c3f95a3d52b3d1284b7fd197fbc226"
+    "bytes": 5649,
+    "sha256": "70f41a6e6005720d30c7202b053e77b794c27c2dbb9698b31171f8823f1cc584"
   },
   {
     "path": "webui/web/src/api/mtprotoAddresses.ts",
@@ -3946,8 +3971,8 @@
   },
   {
     "path": "webui/web/src/api/packageUpdates.ts",
-    "bytes": 10930,
-    "sha256": "dc9834148847813e8781f986588144d29afb75fa15b0eb3f78756021390f123c"
+    "bytes": 11086,
+    "sha256": "c992d7f0664f0b286dfe41be140db24752aa9d6a6aaf6a454b57bc6d7d1aebae"
   },
   {
     "path": "webui/web/src/api/profileCatalogClient.ts",
@@ -4091,8 +4116,8 @@
   },
   {
     "path": "webui/web/src/components/CurrentVersion.tsx",
-    "bytes": 2037,
-    "sha256": "fda9727e1770c4cba100f14c33ccf030a7761fffe8babf5692a0222f288cf667"
+    "bytes": 5826,
+    "sha256": "4af5124a0bf5ecf5e968460c9bfbe3640a343611c3c9f629025a11c858705772"
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
@@ -4156,8 +4181,8 @@
   },
   {
     "path": "webui/web/src/components/IpHealthPanel.tsx",
-    "bytes": 28484,
-    "sha256": "bb9fd088d89ceaede8a5cadf79b12ad3f88ba7695512b9e46e823e4d3e975f23"
+    "bytes": 31778,
+    "sha256": "e0f0bf22b4db5bcdc2fedec1efd0b9243fa8463db9b4704ac57f03c3ccbe1f3c"
   },
   {
     "path": "webui/web/src/components/Layout.tsx",
@@ -4186,8 +4211,8 @@
   },
   {
     "path": "webui/web/src/components/PackageUpdateDialog.tsx",
-    "bytes": 8905,
-    "sha256": "8927816880e99d76ad827375b9a929cc6e07a3d1818e5031fec30678d732e9ea"
+    "bytes": 9801,
+    "sha256": "63b91e84124d0ce89aa001468454b3efa1ffd95fa5c30fdacbfa4135550417a0"
   },
   {
     "path": "webui/web/src/components/PasswordDialog.tsx",
@@ -4201,13 +4226,13 @@
   },
   {
     "path": "webui/web/src/components/RequirementsDialog.tsx",
-    "bytes": 7227,
-    "sha256": "121d74f2dabfa50c9db0f476675240dd8cd73c1301bc29a5ceccf2727fb4c9c5"
+    "bytes": 7448,
+    "sha256": "ed9bb983bd72bb08a4a37b596ce95e699c13b44379acf35b2c3307c5bfb54c3e"
   },
   {
     "path": "webui/web/src/components/RestartScheduleDialog.tsx",
-    "bytes": 12967,
-    "sha256": "e07fdf695e9a11402ae0f1b863c7836515469cd325fe90d52f00f8a3b2667926"
+    "bytes": 13053,
+    "sha256": "f711a140a79c6e33275bbced6ae6fbad0452058bb8ca9fbf54d29014ad5d9078"
   },
   {
     "path": "webui/web/src/components/RouterCheckup.tsx",
@@ -4326,8 +4351,8 @@
   },
   {
     "path": "webui/web/src/hooks/usePackageUpdates.ts",
-    "bytes": 10757,
-    "sha256": "26a1c84a2b5b355b30e3334505a3d49763e440cfbe557a32ad2a5f1fc44dabdb"
+    "bytes": 11982,
+    "sha256": "078a188188c4023fa9940d4271c0265cde67688507d3fa490d278ce615c0abad"
   },
   {
     "path": "webui/web/src/hooks/useStatus.tsx",
@@ -4406,13 +4431,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 81500,
-    "sha256": "99d8a5dfd628147c7496aa36df4a780935bc38663b9b1d617e73af667e235fda"
+    "bytes": 82775,
+    "sha256": "503d51399dc89f0681a5572b0ebd59189dc554b576a4cb3dd3ad2c10c6da94e9"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 131695,
-    "sha256": "4d7cdef96a4893003891695cdfbde00ceae0ed1feb3e27c5f9fb49136269bf39"
+    "bytes": 133854,
+    "sha256": "09d74b9074cae64626e097e3ff4c5131af3a5be62c07921054b603bb56d68da0"
   },
   {
     "path": "webui/web/src/types/types.ts",

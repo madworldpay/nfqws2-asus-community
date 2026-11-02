@@ -8,6 +8,9 @@ try{
     umask(0077);
     for($p=$nfqwsAsusWork;$p!=='/'&&$p!=='.';$p=dirname($p))if(is_link($p))throw new RuntimeException('invalid_state');
     $s=@lstat($nfqwsAsusWork);if(!$s||!is_dir($nfqwsAsusWork)||$s['uid']!==0||($s['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
+    // Bulk extraction and the included coordinator use their existing bounded
+    // I/O/guardian deadlines, not the CGI interpreter's cumulative CPU timer.
+    set_time_limit(0);
     $files=json_decode(gzdecode(base64_decode(NFQWS_ASUS_INSTALL_FILES,true)),true,32,JSON_THROW_ON_ERROR);
     foreach($files as $name=>$item){
         if(!preg_match('~^(?:[a-zA-Z0-9_+.-]+/)*[a-zA-Z0-9_+.-]+$~D',$name)||in_array('..',explode('/',$name),true))throw new RuntimeException('invalid_state');

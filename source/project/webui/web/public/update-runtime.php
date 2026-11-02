@@ -107,6 +107,6 @@ final class AsusUpdateRuntime
     private static function arguments(string $runtime,string $loader,array $files): array
     {
         $inhibit=['',$runtime.'/php','php'];foreach($files as $name=>$_)if(str_starts_with($name,'lib/')){$inhibit[]=$runtime.'/'.$name;$inhibit[]=basename($name);}
-        return [$runtime.'/lib/'.$loader,'--inhibit-cache','--inhibit-rpath',implode(':',$inhibit),'--library-path',$runtime.'/lib',$runtime.'/php','-n','-d','extension='.$runtime.'/lib/openssl.so','-d','register_argc_argv=1','-q','-f',$runtime.'/worker.php'];
+        return [$runtime.'/lib/'.$loader,'--inhibit-cache','--inhibit-rpath',implode(':',$inhibit),'--library-path',$runtime.'/lib',$runtime.'/php','-n','-d','max_execution_time=0','-d','extension='.$runtime.'/lib/openssl.so','-d','register_argc_argv=1','-q','-f',$runtime.'/worker.php'];
     }
 }
