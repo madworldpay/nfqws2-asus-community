@@ -16,6 +16,8 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
+**Build 83:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build83) · [release history](CHANGELOG.md). Service controls, scheduling and recovery also work in the password-free panel. The Build 82 unavailable-IP list and verified ASUS package recovery remain available.
+
 ## What you get
 
 | Benefit | How it helps at home |
@@ -26,7 +28,8 @@ or a native OpenWrt package. Installing the application itself does not require 
 | **Ready-made catalog profiles** | Start with a provider profile or import your own JSON with its lists and required files |
 | **DNS for specific sites** | SmartDNS assigns separate DoT/DoH servers or fixed IP addresses to sites |
 | **Preview and undo** | See “before / after” before importing; undo the last import, while a trial DNS connection rolls back without confirmation |
-| **Diagnostics and updates in the panel** | Check packet delivery, collect error details and install updates with signature and SHA256 verification |
+| **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, the Build 82 updater saves a snapshot and restores the verified prior version after a failure |
+| **Less waiting for unavailable addresses on ASUS** | A confirmed unavailable IP is temporarily excluded, helping applications move to working alternatives when the site provides them |
 
 Compared with installing the engine manually, this package already integrates
 **NFQWS2, WebUI, Lua, service management and configuration tools**. Traffic processing
@@ -166,7 +169,8 @@ VPN capabilities depend on your firmware and chosen client.
 | SmartDNS | Up to **32 DNS servers**, **256 domain → DNS bindings** and **64 fixed answers**; DoT/DoH and custom servers |
 | Diagnostics and DPI Detector | Checkup, packet delivery checks, logs and separate network tests from the router |
 | Profile sharing | Export individual blocks, lists, blobs and DNS; review and edit the copy to be sent |
-| Updates | Install from the panel with signature and SHA256 verification while preserving settings |
+| Updates | Signature and SHA256 checks, retained settings; package snapshots and automatic rollback after a caught failure on ASUS |
+| Unavailable IPs (ASUS) | Address list with expiry, recheck and removal; ordinary UDP DNS filtering and fast failure on port 443 |
 | Restart and recovery | A ↻ button, a 4/12/24-hour or custom timer, and optional recovery after a crash |
 
 The package includes NFQWS2, WebUI, embedded Lua and service utilities.
@@ -179,11 +183,21 @@ The package includes NFQWS2, WebUI, embedded Lua and service utilities.
 
 Use **↻** to restart NFQWS2 or **⏱** to choose 4, 12, 24 hours or a custom interval from 1 to 168 hours. This can help devices with limited RAM. The timer restarts only a running service. **Recover the service** permits up to three recovery attempts after a crash, with 1, 5 and 15-minute delays; a manual start is then required. Both features default to off, and a manually stopped service stays stopped. OpenWrt requires a running system cron service.
 
+### Unavailable IPs on ASUS
+
+The **Unavailable IPs** tab helps reduce stalls when a service provides several addresses and some are unreachable. After independent confirmation, an address is excluded for **24 hours**, or **7 days** after a repeat incident. A single timeout or QUIC failure is insufficient. The feature defaults to on; **Remember unavailable addresses** lets you turn it off.
+
+When an ordinary UDP DNS answer contains working alternatives, the unavailable address is removed. New TCP/UDP connections to its port **443** fail promptly. The list shows remaining time and check results, with actions to recheck, remove an entry or clear the list. Automatic checks restore an address after three successful checks; a manual recheck queues a check.
+
+Excluded devices are unaffected. Restrictions stop taking effect when the worker stops. **TCP DNS, DoH and DoT are not filtered; simultaneous multiple WAN connections are unsupported.** This feature is not yet available on native OpenWrt. A suitable NFQWS2 strategy is still needed.
+
 ### Telegram proxy
 
-The **MTProto for Telegram** button at the bottom of the panel prepares installation with Docker, on ASUS with Entware, or on Linux with systemd. A `dd` secret, connection link and command are generated automatically, with copy buttons and a script download. Access away from home requires an externally reachable address and port. The installer preserves an existing proxy and NFQWS settings.
+The **MTProto for Telegram** button at the bottom of the panel prepares installation with Docker, on ASUS with Entware, or on Linux with systemd. A `dd` secret, connection link and command are generated automatically, with copy buttons and a script download. Access away from home requires an externally reachable address and port. Docker installation reports success after checking a real Telegram response. The installer preserves an existing proxy and NFQWS settings.
 
 ## Updates and profile catalog
+
+**The Build 82 updater on ASUS/Entware** saves a package and settings snapshot before replacing the program. If installation or postflight verification fails, it restores the verified prior version and original service state. A stopped service stays stopped. Power loss and a direct opkg command require separate checks — [update and recovery details](PACKAGE-UPDATES.en.md).
 
 The strategy catalog is hosted on ASUS. User-submitted profiles and diagnostics
 are received on ASUS and delivered to the project's Gmail inbox; releases
@@ -201,7 +215,7 @@ and expand the cloud catalog for different providers and regions.
 
 Select the strategy, required lists/blobs and DNS, enter your provider and test result,
 then open the preview. **Download JSON** saves a copy for you;
-**Send** submits it to the project. Participation is voluntary; submitting a profile
+**Send to developer** submits it to the project. JSON download needs no submission channel; hover over or tap **Preview** to see missing fields. If delivery confirmation is lost, a fresh preview prepares another attempt, which may create a duplicate. Participation is voluntary; submitting a profile
 does not publish it in the catalog automatically.
 
 ## Verification and support

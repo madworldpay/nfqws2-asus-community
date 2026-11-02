@@ -56,7 +56,8 @@ try {
     const respond = (value, status = 200) => { res.statusCode = status; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); };
     if (cmd === 'status') {
       if (fixture.statusUnauthorized) { res.statusCode = 401; res.end(); return; }
-      const finish = () => respond({ status: 0, platform: 'asus-entware', nfqws2: true, service: fixture.running ?? true, anonym: !fixture.auth, authenticated: fixture.auth, csrf_token: fixture.csrf, version: '1.3.2-asus6+b81', ark_loaded: false });
+      if (fixture.statusFailure) return respond({ status: 1 }, fixture.statusFailure);
+      const finish = () => respond({ status: 0, platform: 'asus-entware', nfqws2: true, service: fixture.running ?? true, anonym: fixture.anonym ?? !fixture.auth, authenticated: fixture.auth, csrf_token: fixture.csrf, version: '1.3.2-asus6+b83', ark_loaded: false });
       if (fixture.holdStatus) { fixture.held.push({ cmd, respond: finish }); return; }
       return finish();
     }
@@ -83,6 +84,10 @@ try {
       if (fixture.schedule.scheduler_available === false && (params.get('enabled') === '1' || params.get('watchdog_enabled') === '1')) return respond({ error: 'unsupported_scheduler' }, 503);
       fixture.schedule = schedule({ enabled: params.get('enabled') === '1', interval_hours: Number(params.get('interval_hours')), watchdog_enabled: params.get('watchdog_enabled') === '1', watchdog_state: params.get('watchdog_enabled') === '1' ? 'ready' : 'disabled', scheduler_available: fixture.schedule.scheduler_available });
       return respond(fixture.schedule);
+    }
+    if (cmd === 'start' || cmd === 'stop') {
+      fixture.running = cmd === 'start';
+      return respond({ status: 0, output: ['Done'] });
     }
     if (cmd === 'restart') {
       if (fixture.holdRestart) { fixture.held.push({ cmd, respond }); return; }
@@ -225,7 +230,7 @@ try {
       const dialog = await open(page);
       await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
       await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
-      f.auth = false; f.saveUnauthorized = 401;
+      f.auth = false; f.anonym = false; f.saveUnauthorized = 401;
       await dialog.getByRole('button', { name: p.save, exact: true }).click();
       await dialog.getByRole('button', { name: p.recover, exact: true }).click();
       const login = page.getByRole('dialog').filter({ has: page.getByLabel(p.password, { exact: true }) });
@@ -255,7 +260,7 @@ try {
       await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
       await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
       await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
-      f.auth = false; f.saveUnauthorized = 401;
+      f.auth = false; f.anonym = false; f.saveUnauthorized = 401;
       await dialog.getByRole('button', { name: p.save, exact: true }).click();
       await dialog.getByRole('button', { name: p.recover, exact: true }).click();
       await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
@@ -327,7 +332,7 @@ try {
       await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
       await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
       await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
-      f.auth = false; f.saveUnauthorized = 401; f.loginFailures = 1;
+      f.auth = false; f.anonym = false; f.saveUnauthorized = 401; f.loginFailures = 1;
       await dialog.getByRole('button', { name: p.save, exact: true }).click();
       await dialog.getByRole('button', { name: p.recover, exact: true }).click();
       await page.getByRole('textbox', { name: p.username, exact: true }).fill('fixture-user');
@@ -456,14 +461,97 @@ try {
     });
     await run('auth-and-stopped', { auth: false }, async (page, f) => {
       await settle(page);
-      assert.equal(await page.getByRole('button', { name: p.timer, exact: true }).count(), 0);
-      assert.equal(await page.getByRole('button', { name: p.restart, exact: true }).count(), 0);
+      assert.equal(await page.getByRole('button', { name: p.timer, exact: true }).isEnabled(), true, 'a password-free panel can configure the timer using its CSRF session');
+      assert.equal(await page.getByRole('button', { name: p.restart, exact: true }).isEnabled(), true, 'basic service restart remains available when the panel intentionally has no password');
       assert.equal(count(f, 'restartschedule') + count(f, 'restartschedulesave'), 0);
       f.auth = true; f.running = false;
       await page.evaluate(() => window.fixture.refresh());
       await page.getByRole('button', { name: p.timer, exact: true }).waitFor();
       assert.equal(await page.getByRole('button', { name: p.restart, exact: true }).isDisabled(), true);
     });
+    await run('anonymous-basic-service-controls', { auth: false, running: false }, async (page, f) => {
+      const common = locales[lang].common;
+      const menu = () => page.getByRole('button', { name: locales[lang].restart_schedule.menu, exact: true });
+      for (const width of [1280, 360]) {
+        await page.setViewportSize({ width, height: 800 });
+        await menu().click();
+        await page.getByRole('menuitem', { name: common.start, exact: true }).click();
+        await page.getByText('Done', { exact: true }).waitFor();
+        await page.getByRole('dialog').getByRole('button', { name: p.close, exact: true }).click();
+        await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && !b.disabled), p.restart);
+        const starts = count(f, 'start');
+        assert.equal(starts, width === 1280 ? 1 : 2, 'Start dispatches exactly once in the anonymous mode allowed by the router');
+        await page.getByRole('button', { name: p.restart, exact: true }).click();
+        await page.getByText('Done', { exact: true }).waitFor();
+        await page.getByRole('dialog').getByRole('button', { name: p.close, exact: true }).click();
+        await menu().click();
+        await page.getByRole('menuitem', { name: common.stop, exact: true }).click();
+        await page.getByText('Done', { exact: true }).waitFor();
+        await page.getByRole('dialog').getByRole('button', { name: p.close, exact: true }).click();
+        await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), p.restart);
+        assert.equal(await page.getByRole('button', { name: p.timer, exact: true }).isEnabled(), true);
+      }
+      assert.equal(count(f, 'stop'), 2);
+      assert.equal(count(f, 'restart'), 2);
+      assert.equal(count(f, 'restartschedule') + count(f, 'restartschedulesave'), 0);
+    });
+    await run('anonymous-timer-watchdog-explicit-save', { auth: false, running: false }, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.every(4), exact: true }).check();
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      assert.equal(count(f, 'restartschedulesave'), 0);
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.deepEqual(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1), { cmd: 'restartschedulesave', csrf_token: 'session-a', enabled: '1', interval_hours: '4', watchdog_enabled: '1' });
+      const reopened = await open(page);
+      assert.equal(await reopened.getByRole('radio', { name: p.every(4), exact: true }).isChecked(), true);
+      assert.equal(await reopened.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      await reopened.getByRole('radio', { name: p.off, exact: true }).check();
+      await reopened.getByRole('switch', { name: p.watchdog, exact: true }).uncheck();
+      await reopened.getByRole('button', { name: p.save, exact: true }).click();
+      await reopened.waitFor({ state: 'hidden' });
+      assert.deepEqual(f.schedule, schedule({ interval_hours: 4 }));
+      assert.equal(count(f, 'login'), 0, 'intentional anonymous mode never asks for an unnecessary password');
+      assert.equal(count(f, 'start') + count(f, 'restart'), 0, 'saving a schedule never starts a stopped service');
+    });
+    await run('anonymous-timer-refreshes-csrf-without-login', { auth: false }, async (page, f) => {
+      const dialog = await open(page);
+      await dialog.getByRole('radio', { name: p.custom, exact: true }).check();
+      await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).fill('7');
+      await dialog.getByRole('switch', { name: p.watchdog, exact: true }).check();
+      f.saveUnauthorized = 403;
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.getByText(p.csrf, { exact: true }).waitFor();
+      f.saveUnauthorized = false; f.csrf = 'anonymous-b';
+      await dialog.getByRole('button', { name: p.recover, exact: true }).click();
+      await page.waitForFunction(() => !document.querySelector('[role="dialog"] [role="progressbar"]'));
+      assert.equal(await dialog.getByRole('spinbutton', { name: p.hours, exact: true }).inputValue(), '7');
+      assert.equal(await dialog.getByRole('switch', { name: p.watchdog, exact: true }).isChecked(), true);
+      assert.equal(count(f, 'restartschedulesave'), 1, 'refreshing a session never replays Save');
+      await dialog.getByRole('button', { name: p.save, exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.equal(f.calls.filter(call => call.cmd === 'restartschedulesave').at(-1).csrf_token, 'anonymous-b');
+      assert.equal(count(f, 'login'), 0);
+    });
+    await run('expired-session-does-not-offer-service-actions', {}, async (page, f) => {
+      f.statusUnauthorized = true;
+      await page.evaluate(() => window.fixture.refresh());
+      await page.getByRole('dialog').getByRole('textbox', { name: p.username, exact: true }).waitFor();
+      assert.equal(await page.getByRole('button', { name: p.restart, exact: true, includeHidden: true }).count(), 0);
+      assert.equal(count(f, 'start') + count(f, 'stop') + count(f, 'restart'), 0);
+    });
+    for (const statusFailure of [200, 503]) {
+      await run(`failed-status-${statusFailure}-does-not-offer-service-actions`, { auth: false }, async (page, f) => {
+        f.statusFailure = statusFailure;
+        await page.evaluate(() => window.fixture.refresh());
+        assert.equal(await page.getByRole('button', { name: p.restart, exact: true, includeHidden: true }).count(), 0, 'an unknown service status is never treated as an intentionally password-free panel');
+        assert.equal(await page.getByRole('button', { name: p.timer, exact: true, includeHidden: true }).count(), 0);
+        assert.equal(count(f, 'start') + count(f, 'stop') + count(f, 'restart'), 0);
+        f.statusFailure = false;
+        await page.evaluate(() => window.fixture.refresh());
+        assert.equal(await page.getByRole('button', { name: p.restart, exact: true }).isEnabled(), true, 'a successful status restores ordinary controls');
+      });
+    }
     await run('mobile-and-preview', {}, async page => {
       if (process.env.NFQWS_RESTART_PREVIEW_DIR) {
         await mkdir(process.env.NFQWS_RESTART_PREVIEW_DIR, { recursive: true });

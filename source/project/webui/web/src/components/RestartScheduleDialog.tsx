@@ -59,9 +59,10 @@ export const RestartScheduleDialog = ({
   const dirty = useRef(false);
   const mounted = useRef(true);
   const recoveryInFlight = useRef(false);
-  const authenticated = status.data
-    ? (status.data.authenticated ?? !status.data.anonym)
-    : undefined;
+  const sessionAvailable =
+    !status.isError &&
+    status.data?.status === 0 &&
+    ((status.data.authenticated ?? !status.data.anonym) || status.data.anonym);
   const statusToken = status.data?.csrf_token;
   const sessionError = error === 'auth_required' || error === 'csrf_failed';
   const working = pending || recovering;
@@ -94,9 +95,8 @@ export const RestartScheduleDialog = ({
   useEffect(() => {
     setPending(false);
     setReading(false);
-    // A refreshed anonymous status must not read using its token before login.
-    if (!csrfToken || authenticated === false || statusToken !== csrfToken)
-      return;
+    // Both login modes use the token from a successful current status response.
+    if (!csrfToken || !sessionAvailable || statusToken !== csrfToken) return;
     const controller = new AbortController();
     request.current = controller;
     setReading(true);
@@ -142,7 +142,7 @@ export const RestartScheduleDialog = ({
       controller.abort();
       request.current?.abort();
     };
-  }, [csrfToken, authenticated, statusToken, attempt]);
+  }, [csrfToken, sessionAvailable, statusToken, attempt]);
 
   const recoverSession = async () => {
     if (recoveryInFlight.current) return;
@@ -151,7 +151,7 @@ export const RestartScheduleDialog = ({
     try {
       const fresh = await status.refetch();
       if (!mounted.current) return;
-      if (fresh.error || !fresh.data) {
+      if (fresh.error || !fresh.data || fresh.data.status !== 0) {
         // The App already supplies its global login on an actual status401.
         setError(
           useAppStore.getState().auth === false
@@ -160,7 +160,10 @@ export const RestartScheduleDialog = ({
         );
         return;
       }
-      if (!(fresh.data.authenticated ?? !fresh.data.anonym)) {
+      if (
+        !(fresh.data.authenticated ?? !fresh.data.anonym) &&
+        !fresh.data.anonym
+      ) {
         setError('auth_required');
         setLoginOpen(true);
         return;
@@ -187,7 +190,8 @@ export const RestartScheduleDialog = ({
       !valid ||
       sessionError ||
       recovering ||
-      authenticated === false
+      !sessionAvailable ||
+      statusToken !== csrfToken
     )
       return;
     const controller = new AbortController();
@@ -390,7 +394,8 @@ export const RestartScheduleDialog = ({
               !valid ||
               sessionError ||
               !csrfToken ||
-              authenticated === false
+              !sessionAvailable ||
+              statusToken !== csrfToken
             }
           >
             {t('common.save')}
