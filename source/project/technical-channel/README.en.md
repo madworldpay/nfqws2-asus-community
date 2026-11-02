@@ -10,6 +10,13 @@ sandbox. The owner sees the state, deadline and Disconnect button. Stop, expiry,
 worker failure and reboot invalidate access, including a running command.
 Configuration changes already made by the Administrator remain in effect.
 
+The controller checks both the outbound connection and its local SSH server.
+If either exits, the channel closes the remaining process and releases the
+reverse port. Stop and controller crash recovery use the same cleanup. It
+targets only the current connection's processes, preserving a replacement
+session and the router's normal SSH server. Reconnecting does not extend the
+invitation deadline.
+
 ## Administrator setup
 
 Run these tools on a trusted PC with Python 3 and `cryptography`. Use your normal,
