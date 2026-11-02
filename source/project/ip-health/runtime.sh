@@ -38,8 +38,12 @@ asus_ip_health_rules() {
             done
         fi
     done
-    # FORWARD sees transit replies from VPNs/other uplinks as well. Restrict
-    # only that hook to this generation's WAN; OUTPUT retains local DNS scope.
+    # A queued NF_ACCEPT skips the rest of this table's hook, not just the
+    # queue rule. Keep TLS observation in FORWARD/INPUT/OUTPUT: the core owns
+    # PREROUTING/POSTROUTING and must still see the same packets afterwards.
+    printf '%s\n' '-A nfqh_forward -j nfqh_pre'
+    printf '%s\n' '-A nfqh_forward -j nfqh_post'
+    # Only transit DNS replies from this generation's WAN are eligible.
     printf '%s\n' "-A nfqh_forward -i $ASUS_WAN -j nfqh_local"
     if [ "$ASUS_CLIENT_MODE" = include ]; then
         for addr in $clients; do
@@ -58,8 +62,14 @@ asus_ip_health_rules() {
 }
 
 asus_ip_health_firewall_family() {
-    local family=$1 cmd=iptables chain line
+    local family=$1 cmd=iptables chain line parent policy
     [ "$family" != 6 ] || cmd=ip6tables
+    # A queue's ACCEPT would bypass a non-ACCEPT mangle base policy too.
+    # Such custom tables are outside this adapter's supported topology.
+    for parent in FORWARD INPUT OUTPUT; do
+        policy=$("$cmd" -w -t mangle -S "$parent" | head -n 1) || return 1
+        [ "$policy" = "-P $parent ACCEPT" ] || return 1
+    done
     [ ! -e "$ASUS_HEALTH_PRIVATE/chains$family" ] && [ ! -L "$ASUS_HEALTH_PRIVATE/chains$family" ] || return 1
     (umask 077; set -C; : > "$ASUS_HEALTH_PRIVATE/chains$family") || return 1
     # Atomic -N refuses foreign chains. Record only successful creations; never
@@ -70,10 +80,13 @@ asus_ip_health_firewall_family() {
     done
     asus_ip_health_rules "$family" > "$ASUS_HEALTH_PRIVATE/rules$family" || return 1
     while IFS= read -r line; do set -- $line; "$cmd" -w -t mangle "$@" || return 1; done < "$ASUS_HEALTH_PRIVATE/rules$family"
-    "$cmd" -w -t mangle -I PREROUTING 1 -j nfqh_pre || return 1
-    "$cmd" -w -t mangle -I POSTROUTING 1 -j nfqh_post || return 1
-    "$cmd" -w -t mangle -I FORWARD 1 -j nfqh_forward || return 1
-    "$cmd" -w -t mangle -I OUTPUT 1 -j nfqh_local
+    # Append after foreign MSS/mark rules so our ACCEPT does not skip them.
+    "$cmd" -w -t mangle -A FORWARD -j nfqh_forward || return 1
+    "$cmd" -w -t mangle -A INPUT -j nfqh_pre || return 1
+    "$cmd" -w -t mangle -A OUTPUT -j nfqh_local || return 1
+    # OUTPUT's route may be recomputed after policy marks change. Observe
+    # only unmarked local TLS; probes/VPN-marked traffic stay fail-open.
+    "$cmd" -w -t mangle -A OUTPUT -m mark --mark 0x0/0xffffffff -j nfqh_post
 }
 
 asus_ip_health_firewall_stop() {
@@ -84,18 +97,22 @@ asus_ip_health_firewall_stop() {
         [ "$(LC_ALL=C ls -ln "$marker" | awk '{print $1 ":" $2 ":" $3}')" = '-rw-------:1:0' ] || continue
         cmd=iptables; [ "$family" != 6 ] || cmd=ip6tables
         # Remove only jumps to successfully created, recorded chains.
-        for parent in PREROUTING POSTROUTING FORWARD OUTPUT; do
+        for parent in PREROUTING POSTROUTING FORWARD INPUT OUTPUT; do
             case "$parent" in
                 PREROUTING) chains=nfqh_pre;; POSTROUTING) chains=nfqh_post;;
                 # The second name cleans the prior unpublished test adapter.
                 # Both require recorded successful creation before any delete.
-                FORWARD) chains='nfqh_forward nfqh_local';; OUTPUT) chains=nfqh_local;;
+                FORWARD) chains='nfqh_forward nfqh_local';;
+                INPUT) chains=nfqh_pre;; OUTPUT) chains=nfqh_local;;
             esac
             for chain in $chains; do
                 grep -Fx "$chain" "$marker" >/dev/null || continue
                 while "$cmd" -w -t mangle -D "$parent" -j "$chain" >/dev/null 2>&1; do :; done
             done
         done
+        if grep -Fx nfqh_post "$marker" >/dev/null; then
+            while "$cmd" -w -t mangle -D OUTPUT -m mark --mark 0x0/0xffffffff -j nfqh_post >/dev/null 2>&1; do :; done
+        fi
         # Internal references must be flushed before deleting owned chains.
         for chain in nfqh_pre nfqh_post nfqh_forward nfqh_local nfqh_in nfqh_out; do
             grep -Fx "$chain" "$marker" >/dev/null || continue
@@ -163,7 +180,9 @@ asus_ip_health_start() {
         chown "$uid:$gid" "$ASUS_HEALTH_PUBLIC/events" || return 1
     fi
     rm -f "$ASUS_HEALTH_PRIVATE/observer.pid"
-    "$NFQWS_BIN" --daemon --pidfile="$ASUS_HEALTH_PRIVATE/observer.pid" --user="$USER" --qnum="$q" --fwmark=0x40000000 \
+    # Observation must never hold/replay segmented TLS/QUIC with the desync
+    # bypass mark: that would hide the replay from the real core queue.
+    "$NFQWS_BIN" --daemon --reasm-disable --pidfile="$ASUS_HEALTH_PRIVATE/observer.pid" --user="$USER" --qnum="$q" --fwmark=0x40000000 \
         --writable="$ASUS_HEALTH_PUBLIC/events" --lua-init=@/opt/etc/nfqws2/lua/zapret-lib.lua \
         --lua-init='IPHEALTH_MANIFEST="/tmp/nfqws2-asus-ip-health/active.txt"' \
         --lua-init=@/opt/lib/nfqws2-asus/ip-health/dns.lua --lua-init=@/opt/lib/nfqws2-asus/ip-health/monitor.lua \

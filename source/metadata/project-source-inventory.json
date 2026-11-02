@@ -861,8 +861,8 @@
   },
   {
     "path": "ip-health/runtime.sh",
-    "bytes": 11030,
-    "sha256": "201c494eeee21b0635930648fde21a974ff9459bd5703fe8d60b2228e1e4942a"
+    "bytes": 12248,
+    "sha256": "a24737916757dbd73f59e4255fd848bfd09701f932159f822e099f6085f614ae"
   },
   {
     "path": "ip-health/worker.php",
@@ -1026,8 +1026,8 @@
   },
   {
     "path": "openwrt/ip-health-runtime.sh",
-    "bytes": 8205,
-    "sha256": "da0379da8ae6fd093b1129c8a001d593dcad5cdf1063a843536bc791552a5d78"
+    "bytes": 8221,
+    "sha256": "1e385d2baa70207231871111351032176c656819879e652c22d1eaa1c46e385f"
   },
   {
     "path": "openwrt/ip-health-service.sh",
@@ -1801,8 +1801,8 @@
   },
   {
     "path": "tests/test_ip_health_asus.py",
-    "bytes": 9542,
-    "sha256": "22da2c568b88ac1bf6cd827938b962862a023ae6808885ce29e360b9ba76fc6e"
+    "bytes": 9900,
+    "sha256": "21dfb0d9785ec42062b33e26c3ffdd49da133ef8ee4223fd23d32f915acee9d9"
   },
   {
     "path": "tests/test_ip_health_auth_browser.mjs",
@@ -1828,6 +1828,11 @@
     "path": "tests/test_ip_health_control.py",
     "bytes": 3247,
     "sha256": "4390de710b50c09ae2bf8474b520fe3f24e3602d1e92a43eb4270abfe1bac3f4"
+  },
+  {
+    "path": "tests/test_ip_health_hook_coexistence.py",
+    "bytes": 12812,
+    "sha256": "076436f9e823e255043e54e6c92439386716012cc119934f23573a1f15a5ac3d"
   },
   {
     "path": "tests/test_ip_health_lua.py",

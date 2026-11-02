@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 28629,
-      "sha256": "69a4d5a2908ae92ae9681ac897651f58454cdca9d591ff56c861004574e5f533"
+      "bytes": 29222,
+      "sha256": "4ced393496972e81f93bc91175328e3cdb884a94f68264084d85f60867ef2840"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -147,13 +147,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 17219,
-      "sha256": "6363bbe3cc9962c98f6cae0aea62c1bddb524a1a22853ceed881a184396eb513"
+      "bytes": 17309,
+      "sha256": "29111efb4c4d6df9702fd23b548bad0d2d1a2c028537ecb423947847c9a9e8c0"
     },
     {
       "file": "README.md",
-      "bytes": 28980,
-      "sha256": "7ce7ab98fe28bceea83ad1b43887564bc62869f0e8c1d188105edec9226324fc"
+      "bytes": 29102,
+      "sha256": "4796f8fe5e38b4294dd18fae70045d816fe22fc18473338fe8d7952212b96970"
     },
     {
       "file": "ROADMAP.en.md",

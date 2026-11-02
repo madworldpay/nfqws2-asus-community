@@ -16,7 +16,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 85:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build85) · [change history](CHANGELOG.md). On ASUS, services stop before the backup and installation, then return to their previous state. Fixes cover growing automatic lists, legacy update workers and technical-channel cleanup.
+**Build 85:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build85) · [change history](CHANGELOG.md). On ASUS, services stop before the backup and installation, then return to their previous state. Fixes cover growing automatic lists, legacy update workers and technical-channel cleanup. Fixes also prevent the unavailable-IP observer from bypassing YouTube processing on ASUS.
 
 ## What you get
 
