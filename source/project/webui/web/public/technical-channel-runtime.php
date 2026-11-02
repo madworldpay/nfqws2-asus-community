@@ -45,6 +45,43 @@ final class AsusTechnicalChannel
     private function journal(): AsusTechnicalJournal{return new AsusTechnicalJournal($this->c['journal'],$this->c['owner']);}
     private static function display(?array $s): array
     {return ['state'=>$s['state']??'idle','session_id'=>$s['session_id']??null,'expires_at'=>$s['expires_at']??null,'code'=>$s['code']??null]+(isset($s['diagnostic'])?['diagnostic'=>$s['diagnostic']]:[]);}
+    private function childArguments(array $s,string $role):?array
+    {
+        $argv=$s['child_argv'][$role]??null;if(!is_array($argv)||!is_string($argv[0]??null))return null;
+        if($role==='transport'&&$argv[0]!==$this->c['ssh'])return null;
+        if($role==='server_process'&&!in_array(basename($argv[0]),['dropbear','dropbearmulti'],true))return null;
+        return $argv;
+    }
+    private function childrenAlive(array $s):bool
+    {
+        // Status must not tear down the lock-protected, partly registered start.
+        if(($s['stage']??null)!=='transport'||!is_array($s['transport']??null)||!is_array($s['server_process']??null))return true;
+        foreach(['transport','server_process'] as $role){
+            $argv=$this->childArguments($s,$role);
+            if(array_key_exists('child_argv',$s)){
+                if($argv===null||!AsusTechnicalProcess::childAlive($s[$role],$argv,$this->c['owner']))return false;
+            }elseif(AsusTechnicalProcess::identity($s[$role]['pid']??0)!==$s[$role])return false;
+        }return true;
+    }
+    /** Keep the runtime lock until a direct child has exec'd its planned command. */
+    private function awaitChild($process,?array $identity,array $argv):void
+    {
+        if($identity===null)throw new RuntimeException('launch_failed');$until=AsusTechnicalProcess::uptime()+1;
+        do{
+            if(AsusTechnicalProcess::childAlive($identity,$argv,$this->c['owner']))return;
+            $status=proc_get_status($process);$now=AsusTechnicalProcess::identity($identity['pid']);
+            if(!$status['running']||$now===null||$now['starttime']!==$identity['starttime']||$now['boot_id']!==$identity['boot_id'])break;
+            usleep(10000);
+        }while(AsusTechnicalProcess::uptime()<$until);
+        throw new RuntimeException('launch_failed');
+    }
+    private static function closeChild($process):void
+    {
+        if(!is_resource($process))return;
+        // proc_get_status can reap: never signal a cached PID after that child exited.
+        try{$status=proc_get_status($process);if($status['running']??false)proc_terminate($process,9);}
+        finally{proc_close($process);}
+    }
     private function clean(array $s,string $state,?string $code=null): array
     {
         $current=$this->read('state.json');
@@ -58,16 +95,21 @@ final class AsusTechnicalChannel
             $s['diagnostic']=['stage'=>$stage,'reason'=>$reason];
         }
         $s['state']=$state;$s['code']=$code;$this->save('state.json',$s);
-        AsusTechnicalProcess::kill($s['transport']??null);AsusTechnicalProcess::kill($s['server_process']??null);
+        foreach(['transport','server_process'] as $role){$argv=$this->childArguments($s,$role);if(array_key_exists('child_argv',$s)&&$argv===null)continue;AsusTechnicalProcess::kill($s[$role]??null,$argv,$this->c['owner']);}
         $this->journal()->restore();
         foreach(['invitation','tunnel.key','stop','ssh.log'] as $name){$path=$this->path($name);if(AsusTechnicalFiles::sample($path,$this->c['owner'])!==null&&!unlink($path))throw new RuntimeException('unsafe_key_file');}
+        if(isset($s['server_pidfile'])){
+            $stamp=$s['server_pidfile'];$path=$this->path('server.pid');$present=AsusTechnicalFiles::read($path,$this->c['owner'],32);
+            if(!is_array($stamp)||array_keys($stamp)!==['dev','ino']||!is_int($stamp['dev'])||!is_int($stamp['ino']))throw new RuntimeException('unsafe_key_file');
+            if($present!==null){$now=lstat($path);if($now['dev']!==$stamp['dev']||$now['ino']!==$stamp['ino']||$present['mode']!==0600||!unlink($path))throw new RuntimeException('unsafe_key_file');}
+        }
         return $s;
     }
     private function recover(?array $s): ?array
     {
         if($s&&in_array($s['state'],['connecting','connected'],true)){
             if(($s['identity']??null)===null&&time()-($s['started_at']??0)<12)return $s;
-            if(AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime()))return $s;
+            if(AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime()))return $this->childrenAlive($s)?$s:$this->clean($s,'failed','connection_failed');
             $expired=time()>=($s['expires_at']??0)||AsusTechnicalProcess::uptime()>=($s['uptime_deadline']??0);
             return $this->clean($s,$expired?'expired':'failed',$expired?'expired':'interrupted');
         }
@@ -145,17 +187,22 @@ final class AsusTechnicalChannel
             AsusTechnicalFiles::write($this->path('tunnel.key'),base64_decode($v['tunnel_key']),0600,$this->c['owner']);
             unlink($this->path('invitation'));unset($link);
             $s['stage']='local_server';$this->save('state.json',$s);
-            [$server,$port]=$this->localServer($id);$serverStatus=proc_get_status($server);$s['server_process']=AsusTechnicalProcess::identity($serverStatus['pid']);$this->save('state.json',$s);
+            $pidfile=$this->path('server.pid');if(AsusTechnicalFiles::read($pidfile,$this->c['owner'],32)!==null)throw new RuntimeException('unsafe_key_file');
+            AsusTechnicalFiles::write($pidfile,'',0600,$this->c['owner']);$pidstat=lstat($pidfile);$s['server_pidfile']=['dev'=>$pidstat['dev'],'ino'=>$pidstat['ino']];$this->save('state.json',$s);
+            [$server,$port,$serverArgs]=$this->localServer($id);$serverStatus=proc_get_status($server);$s['server_process']=AsusTechnicalProcess::identity($serverStatus['pid']);$s['child_argv']=['server_process'=>$serverArgs];$this->save('state.json',$s);
+            $this->awaitChild($server,$s['server_process'],$serverArgs);
             $s['stage']='transport';$this->save('state.json',$s);
             $args=[$this->c['ssh'],'-T','-N','-K','15','-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','ExitOnForwardFailure=yes','-o','PasswordAuthentication=no',
                 '-i',$this->path('tunnel.key'),'-R','127.0.0.1:'.$v['remote_port'].':127.0.0.1:'.$port,'-p',(string)$v['server_port'],$v['server_user'].'@'.$v['server']];
             AsusTechnicalFiles::write($this->path('ssh.log'),'',0600,$this->c['owner']);
             $p=@proc_open($args,[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file',$this->path('ssh.log'),'a']],$pipes,'/',['PATH'=>'/usr/sbin:/usr/bin:/sbin:/bin','LANG'=>'C']);
             if(!is_resource($p))throw new RuntimeException('launch_failed');$ps=proc_get_status($p);
-            $s['transport']=AsusTechnicalProcess::identity($ps['pid']);$s['login']=$login;$this->save('state.json',$s);
+            $s['transport']=AsusTechnicalProcess::identity($ps['pid']);$s['child_argv']['transport']=$args;$s['login']=$login;$this->save('state.json',$s);
+            $this->awaitChild($p,$s['transport'],$args);
         }catch(Throwable $e){
-            if(isset($s)&&($s['activation_id']??null)===$id)$this->clean($s,'failed',AsusTechnicalApi::error($e));
-            if(is_resource($p)){proc_terminate($p,9);proc_close($p);}if(is_resource($server)){proc_terminate($server,9);proc_close($server);}throw $e;
+            try{if(isset($s)&&($s['activation_id']??null)===$id)$this->clean($s,'failed',AsusTechnicalApi::error($e));}
+            finally{self::closeChild($p);self::closeChild($server);}
+            throw $e;
         }finally{$this->unlock($lock);}
         $begin=AsusTechnicalProcess::uptime();
         try{
@@ -164,14 +211,14 @@ final class AsusTechnicalChannel
                     $current=$this->read('state.json');if(($current['activation_id']??null)!==$id||!in_array($current['state']??null,['connecting','connected'],true))break;
                     $s=$current;
                     if(!AsusTechnicalProcess::active($s,time(),AsusTechnicalProcess::uptime())){$this->clean($s,'expired','expired');break;}
-                    $ps=proc_get_status($p);if(!$ps['running']){$this->clean($s,'failed','connection_failed');break;}
+                    $ps=proc_get_status($p);$ss=proc_get_status($server);if(!$ps['running']||!$ss['running']||!$this->childrenAlive($s)){$this->clean($s,'failed','connection_failed');break;}
                     $log=AsusTechnicalFiles::sample($this->path('ssh.log'),$this->c['owner']);if($log['truncated']??false){$this->clean($s,'failed','connection_failed');break;}
                     // Guard marks connected only after an operator actually reaches this router.
                     // Waiting for the arranged administrator is bounded by the signed deadline.
                 }finally{$this->unlock($lock);}
             }
         }finally{
-            if(is_resource($p)){proc_terminate($p,9);proc_close($p);}if(is_resource($server)){proc_terminate($server,9);proc_close($server);}
+            self::closeChild($p);self::closeChild($server);
             $lock=$this->lock();try{$s=$this->read('state.json');if(($s['activation_id']??null)===$id&&in_array($s['state'],['connecting','connected'],true))$this->clean($s,'failed','interrupted');}finally{$this->unlock($lock);}
         }
     }
@@ -196,7 +243,7 @@ final class AsusTechnicalChannel
         $keys=array_values(array_unique($keys));if(!$binary||!$keys)throw new RuntimeException('unsupported_runtime');
         $reserve=@stream_socket_server('tcp://127.0.0.1:0',$errno,$error);if(!$reserve)throw new RuntimeException('launch_failed');
         $address=stream_socket_get_name($reserve,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($reserve);
-        $args=array_merge(AsusTechnicalProcess::serverPrefix($binary),['-F','-E','-s','-j','-k','-p','127.0.0.1:'.$port,'-c',$this->c['library'].'/guard.sh '.$id]);
+        $args=array_merge(AsusTechnicalProcess::serverPrefix($binary),['-F','-E','-s','-j','-k','-P',$this->path('server.pid'),'-p','127.0.0.1:'.$port,'-c',$this->c['library'].'/guard.sh '.$id]);
         foreach($keys as $path){$resolved=realpath($path);$st=$resolved===false?false:@lstat($resolved);
             if(!$st||($st['mode']&0170000)!==0100000||$st['uid']!==0||($st['mode']&0077)!==0)throw new RuntimeException('unsafe_key_file');
             $args[]='-r';$args[]=$resolved;
@@ -204,8 +251,8 @@ final class AsusTechnicalChannel
         AsusTechnicalFiles::write($this->path('ssh.log'),'',0600,$this->c['owner']);
         $p=@proc_open($args,[0=>['file','/dev/null','r'],1=>['file','/dev/null','w'],2=>['file',$this->path('ssh.log'),'a']],$pipes,'/',['PATH'=>'/usr/sbin:/usr/bin:/sbin:/bin','LANG'=>'C']);
         if(!is_resource($p))throw new RuntimeException('launch_failed');
-        usleep(100000);if(!proc_get_status($p)['running']){proc_close($p);throw new RuntimeException('launch_failed');}
-        return [$p,$port];
+        if(!proc_get_status($p)['running']){proc_close($p);throw new RuntimeException('launch_failed');}
+        return [$p,$port,$args];
     }
     /** Called by a forced-command key. No command or session secret comes from the invitation. */
     public function command(string $id): int

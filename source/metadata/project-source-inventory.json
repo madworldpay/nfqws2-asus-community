@@ -1411,13 +1411,13 @@
   },
   {
     "path": "technical-channel/README.en.md",
-    "bytes": 3493,
-    "sha256": "d5e3dcdca3d5bb446aa812ef2cae8114f4eb36cdccf26207510cd4c7714c1aa3"
+    "bytes": 3892,
+    "sha256": "5736786521b2d76762c922ca482f7f93c61ed99e71e3ab8c305c24a10b02e71b"
   },
   {
     "path": "technical-channel/README.md",
-    "bytes": 6096,
-    "sha256": "6caa0754626c4400fba72f55d970fafe9efdc636c8446feef5efd015ef4e0bda"
+    "bytes": 6811,
+    "sha256": "3f6e6b7ac182edc18162e000967daf03c5cd7377363d1dae546ccd1b10defbb0"
   },
   {
     "path": "technical-channel/admin.py",
@@ -2955,6 +2955,11 @@
     "sha256": "8c0ec58abaf1a64c307b71062b3f059c674abcd601e35332d768c7c95f580588"
   },
   {
+    "path": "tests/test_technical_channel_children.py",
+    "bytes": 25923,
+    "sha256": "83321a17647c1d9eb63e8ccea03f6da41fb9dcf42a8d10a2ece9f9d0c29f3c57"
+  },
+  {
     "path": "tests/test_technical_channel_client.mjs",
     "bytes": 3760,
     "sha256": "b54be8240d5fdec3a2e384c833fa5fffb16fa6297bb16b2a4c838006264e0294"
@@ -3786,13 +3791,13 @@
   },
   {
     "path": "webui/web/public/technical-channel-process.php",
-    "bytes": 2733,
-    "sha256": "bb687bc1a875aa5afe28880b07944cd05720264c8cc2aa9c79f4d4e4fc17d8e2"
+    "bytes": 4659,
+    "sha256": "6f3a6c1ad19da032ef160581b89c928da4d2bf59419addea6661e48a72a88cbc"
   },
   {
     "path": "webui/web/public/technical-channel-runtime.php",
-    "bytes": 20916,
-    "sha256": "8c9dfef1a80f45055117af3947bdf9a84c87df1cc1df23578debfd7f534a2923"
+    "bytes": 24356,
+    "sha256": "64801a3888b627aa92532d8a8c6fbcce089641d17d1853cd2999b8d696045a37"
   },
   {
     "path": "webui/web/public/technical-channel.php",
