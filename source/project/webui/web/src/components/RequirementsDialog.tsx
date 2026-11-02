@@ -41,7 +41,7 @@ export const RequirementsDialog = ({
   onOpenArk?: VoidFunction;
 }) => {
   const { t } = useTranslation();
-  const { csrfToken, platform } = useStatus();
+  const { csrfToken, platform, isReady } = useStatus();
   const native = platform === 'openwrt';
   const dirty = useAppStore((s) => s.needSave);
   const pendingRestart = useAppStore((s) => s.needReload);
@@ -146,16 +146,23 @@ export const RequirementsDialog = ({
               {(
                 [
                   'platform',
+                  'access',
                   'storage',
                   'dns',
                   'transit',
                   'ark',
                   'traffic',
+                  'health',
                   'verify',
+                  'schedule',
                   'updates',
                 ] as const
               )
-                .filter((item) => item !== 'ark' || !arkAbsent)
+                .filter(
+                  (item) =>
+                    (item !== 'ark' || !arkAbsent) &&
+                    (item !== 'health' || (!native && isReady)),
+                )
                 .map((item) => (
                   <Typography variant="body2" key={item}>
                     {t(

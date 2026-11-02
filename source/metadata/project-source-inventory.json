@@ -201,8 +201,8 @@
   },
   {
     "path": "asus/install-extract.php",
-    "bytes": 2326,
-    "sha256": "3068c78e8aff6f0b4ffc349774a408c308df83081b6bed7764bde0330a945078"
+    "bytes": 2507,
+    "sha256": "d5ca6129b11388e50d131741c597b26e2b953c461c85d6fc9c9e6cbe05127ca7"
   },
   {
     "path": "asus/install-main.php",
@@ -211,8 +211,8 @@
   },
   {
     "path": "asus/install-worker.php",
-    "bytes": 2136,
-    "sha256": "720e6cb88eb8bf66469ba4297331e444037d0c9f5ab5e9b6492585377d468a12"
+    "bytes": 2313,
+    "sha256": "3cb83b8b4bc7c2ad9a435de60427ef53162becf853511fc3a7f56add07edb02a"
   },
   {
     "path": "asus/ip-health-sockets/control.sh",
@@ -546,8 +546,8 @@
   },
   {
     "path": "asus/technical-channel/worker.php",
-    "bytes": 579,
-    "sha256": "83f88877edb2351391807edb5066a7d5e894508da8cc6fbff7a3a6b2d768e011"
+    "bytes": 853,
+    "sha256": "8fad686d4dbbd77bada22d0b26570b207ef9b01e9fcd68981076e5cb9a3afc38"
   },
   {
     "path": "asus/update/README.md",
@@ -606,8 +606,8 @@
   },
   {
     "path": "asus/update/worker.php",
-    "bytes": 3669,
-    "sha256": "94f9e3a2eb829f446e3756e748776a1be6d6c0411664c078eefd862eed5cd299"
+    "bytes": 3876,
+    "sha256": "f1968720281adb823592477ceafb8fea2491e3cbefbd2caafeed05a4e369fb7d"
   },
   {
     "path": "asus/update/worker.sh",
@@ -866,8 +866,8 @@
   },
   {
     "path": "ip-health/worker.php",
-    "bytes": 3724,
-    "sha256": "95532ad1c21a0c8a7232bc496fd667068cd0803ccc835c2bc26ef996b50aea49"
+    "bytes": 3937,
+    "sha256": "a51096123dca16837f3249bb984e3b9b7c915bba85c279f421f9356d83d6d826"
   },
   {
     "path": "licenses/busybox-GPL2.txt",
@@ -2331,8 +2331,8 @@
   },
   {
     "path": "tests/test_package_update_runtime.py",
-    "bytes": 7292,
-    "sha256": "ff20c0c13aad57cdb879f5129708fad57cc1042df8ef4244b7ccbd8e87a8cc51"
+    "bytes": 8113,
+    "sha256": "f73c4c552f54a8a39171b5cfe4dc4791ba144ef7d20e519f3a7e4b656db022bb"
   },
   {
     "path": "tests/test_package_update_session_browser.mjs",
@@ -2438,6 +2438,11 @@
     "path": "tests/test_release_trust_migration.py",
     "bytes": 2517,
     "sha256": "65c1fd2ad6d5d151a9a4d54101432b9753b8b62734a33e0197cd6eaed1f1fc39"
+  },
+  {
+    "path": "tests/test_requirements_browser.mjs",
+    "bytes": 5052,
+    "sha256": "e658667f3751e9486366ae465dd791623a48728445c4bc886648e529ac827954"
   },
   {
     "path": "tests/test_restart_schedule.py",
@@ -2983,6 +2988,11 @@
     "path": "tests/test_web_server.py",
     "bytes": 9893,
     "sha256": "7da9a98c1773414c21cc8e979a9aaeed6b38ae3d8aa4c885dab56d1f22f060fd"
+  },
+  {
+    "path": "tests/test_worker_execution_limits.py",
+    "bytes": 9450,
+    "sha256": "43464dfbed6067999c4d9389dd732bad9cf72862fa37e79f12c3da7cb55abbd6"
   },
   {
     "path": "updates/openwrt-package-manifest.schema.json",
@@ -3846,8 +3856,8 @@
   },
   {
     "path": "webui/web/public/update-runtime.php",
-    "bytes": 13335,
-    "sha256": "4bc78115eca55fde22b04349a64e41feef5b52ad481b9acf36cd8efd651d4e51"
+    "bytes": 13363,
+    "sha256": "e7df925f82e8302e0d446eb430c614b8c78bbf8e01e045d4c73e8b43b3524700"
   },
   {
     "path": "webui/web/public/update-smartdns-resume.php",
@@ -4216,8 +4226,8 @@
   },
   {
     "path": "webui/web/src/components/RequirementsDialog.tsx",
-    "bytes": 7227,
-    "sha256": "121d74f2dabfa50c9db0f476675240dd8cd73c1301bc29a5ceccf2727fb4c9c5"
+    "bytes": 7448,
+    "sha256": "ed9bb983bd72bb08a4a37b596ce95e699c13b44379acf35b2c3307c5bfb54c3e"
   },
   {
     "path": "webui/web/src/components/RestartScheduleDialog.tsx",
@@ -4421,13 +4431,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 81824,
-    "sha256": "91f6f91951ee110093b80699fb43d82a392ae9e9ade3739f9ec0a5cf79e5283f"
+    "bytes": 82775,
+    "sha256": "503d51399dc89f0681a5572b0ebd59189dc554b576a4cb3dd3ad2c10c6da94e9"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 132192,
-    "sha256": "c21970c85b64457f4cc2cdc4698cf701886c069e95579b15d7021287032f01dd"
+    "bytes": 133854,
+    "sha256": "09d74b9074cae64626e097e3ff4c5131af3a5be62c07921054b603bb56d68da0"
   },
   {
     "path": "webui/web/src/types/types.ts",

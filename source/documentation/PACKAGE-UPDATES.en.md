@@ -30,6 +30,14 @@ The strategy catalog and submission receiver run on ASUS, submissions are delive
 to the project's Gmail inbox, and releases come from GitHub. Importing, submitting
 and updating do not require a VPS.
 
+## Snapshot preparation on older ASUS routers and Build 84
+
+Build 84 fixes a separate PHP CPU limit that could stop snapshot preparation
+on a slower ASUS before package replacement began. If the old panel fails at
+this step, rerun the usual installer command below once. It uses the corrected
+standalone worker and preserves settings. An already installed old worker does
+not change before the new package is installed.
+
 ## Interrupted ASUS installation
 
 From Build 81, the installer can finish an interrupted NFQWS2 ASUS installation.

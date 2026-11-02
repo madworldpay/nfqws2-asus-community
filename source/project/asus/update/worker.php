@@ -1,8 +1,11 @@
 <?php
 // CLI/CGI entry outside the document root. Arguments are fixed modes and IDs.
-if(!in_array(PHP_SAPI,['cli','cgi-fcgi'],true))exit(1);
+if(!in_array(PHP_SAPI,['cli','cgi-fcgi'],true)||isset($_SERVER['REQUEST_METHOD']))exit(1);
 $status=@file_get_contents('/proc/self/status');
 if(!is_string($status)||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',$status))exit(1);
+// The external guardian owns deadlines; CGI's cumulative CPU timer must not
+// interrupt a snapshot or a manager critical section after a valid launch.
+set_time_limit(0);
 $arguments=$argv;array_shift($arguments);if(($arguments[0]??null)==='--')array_shift($arguments);
 $mode=array_shift($arguments);
 $app=is_dir(__DIR__.'/app')?__DIR__.'/app':'/opt/share/nfqws-asus-web';
