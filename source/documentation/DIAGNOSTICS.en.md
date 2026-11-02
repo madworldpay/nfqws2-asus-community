@@ -26,6 +26,8 @@ An unknown internal flag alone does not prove a fault. A loaded
 ARK module is shown separately; if preparation has been completed, follow the guidance to
 reboot manually and check again.
 
+To restore the ARK settings changed during preparation, open **ARK check → Restore backup**, confirm and reboot ASUS manually. The backup survives updates. Restoration stops if affected settings were subsequently changed by the owner.
+
 | What you see | What to check |
 |---|---|
 | No process | Startup log, kernel capabilities, and selected WAN |
@@ -34,12 +36,27 @@ reboot manually and check again.
 | Results differ between the client and router | Different traffic sources and VPNs |
 | Names no longer resolve after DNS setup | SmartDNS status and restoring the previous DNS |
 | Panel shows regular DNS instead of SmartDNS | Whether the profile is connected and forwarding remains in place after a VPN or another service starts |
-| Update did not finish | Error text and `opkg status nfqws2-asus`; then the guidance on DNS restoration |
+| Update did not finish | Error text, logs and package status using the platform command below; then the guidance on DNS restoration |
 | Results did not change after import | Whether the selected items were saved and NFQWS2 was restarted; DNS is connected separately |
 
 The queue check confirms reception only when the counter grows within the same queue
 lifetime. Repeat the check after a service restart or when evidence is unavailable.
 This does not confirm that a site, video, or voice connection works; open the service itself.
+
+After an incomplete update, save the error and the installer’s reported log directory **before rebooting**: files in `/tmp` may disappear. Check the package status with:
+
+```sh
+# ASUS / Entware
+/opt/bin/opkg status nfqws2-asus
+
+# OpenWrt 24.10
+opkg status nfqws2-native
+
+# OpenWrt 25.12
+apk info -a nfqws2-native
+```
+
+Rerunning the standard installer checks whether continuing an incomplete installation is supported. Follow the [update recovery guide](PACKAGE-UPDATES.en.md); forced replacement bypasses those checks.
 
 ## Technical channel
 
@@ -47,7 +64,7 @@ After arranging a session with the Administrator, open **Technical channel** at 
 of the panel, paste the complete invitation link and click **Connect**. Wait for
 **Waiting for the Administrator**. Separate PowerShell or PuTTY commands are not needed.
 Sign in with a configured panel password. **Disconnect channel** closes access; access
-also ends at expiry and after a reboot.
+also ends at expiry and after a reboot. The Administrator can run commands as root. Expiry is set by the invitation and reconnection does not extend it. Completed configuration changes remain after disconnection.
 
 If connection fails, save the error text before retrying. Tell the Administrator whether
 a VPN runs on the computer or router; switching it during the session may interrupt access.

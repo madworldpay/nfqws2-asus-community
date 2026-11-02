@@ -16,9 +16,7 @@ OpenWrt repositories. If they require replacing existing system packages,
 the installer explains the issue; update those packages through OpenWrt first.
 
 Processing stays off after a first install. Updates preserve settings and the
-previous service state. Closing SSH after the background installation starts
-does not cancel it. If installation fails, keep the log directory reported
-by the installer.
+previous service state. After a failure, services are restored only after verifying that the previous installation is unchanged. Full automatic package rollback is unavailable; a partly replaced installation may require separate recovery. Closing SSH after background installation starts does not cancel it. Keep the reported log directory before rebooting.
 
 To check a downloaded installer without installing the package, run
 `sh install.sh --check`. If the required PHP runtime is absent, this mode lists
@@ -32,10 +30,7 @@ Check the router's exact release and architecture:
 cat /etc/openwrt_release
 ```
 
-Choose the file matching **both the OpenWrt series and `DISTRIB_ARCH`** and copy
-it to the router's `/tmp`. For 24.10, use `opkg install /tmp/package-name.ipk`.
-For 25.12, use the installer above: it prepares verification of our APK signature
-separately from the system key store. ASUS/Entware and native OpenWrt packages
+For manual 24.10 installation, choose the IPK matching **both the OpenWrt series and `DISTRIB_ARCH`**, compare its SHA256 with the matching entry in the release’s `SHA256SUMS`, and copy it to the router’s `/tmp`. Then use `opkg install /tmp/package-name.ipk`. For 25.12, use the shared installer: it selects and downloads the current APK and prepares signature verification separately from the system key store. The installer does not consume a manually copied APK. ASUS/Entware and native OpenWrt packages
 have different names and architectures; use the matching variant.
 
 ### Transfer a downloaded file
@@ -47,7 +42,7 @@ and destination directory `/tmp`. Or run this **on your computer**:
 scp -O "./package.ipk" root@192.168.1.1:/tmp/package.ipk
 ```
 
-Replace the package name and IP with yours. Then install the OpenWrt 24.10 IPK
+Replace the package name and IP with yours. After comparing SHA256 against the release’s `SHA256SUMS`, install the OpenWrt 24.10 IPK
 **in the router's SSH session**: `opkg install /tmp/package.ipk`.
 For OpenWrt 25.12, retain the APK signature verification procedure described above.
 

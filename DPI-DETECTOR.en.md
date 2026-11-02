@@ -13,12 +13,16 @@ and does not run DPI tests.
 2. Over SSH on the router, launch the original menu:
 
 ```sh
+# ASUS / Entware
 /opt/bin/nfqws2-dpi
+
+# OpenWrt
+/usr/bin/nfqws2-dpi
 ```
 
 3. Select the checks you need. In the original menu, press **S** to save a TXT file.
 4. Click **Refresh results** in the panel. You can view the result,
-   download it, or select it for sending through the preview.
+   download it, delete it after confirmation, or select it for sending through the preview.
 
 The original TXT stays local and may contain network information.
 A separate sanitized JSON is prepared for sending, containing recognized metrics;

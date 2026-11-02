@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 29222,
-      "sha256": "4ced393496972e81f93bc91175328e3cdb884a94f68264084d85f60867ef2840"
+      "bytes": 29257,
+      "sha256": "512c61e295fa6fad0e6fcbb42ea8d5cfb2a8bb5dc14e904d21d443f381da7e15"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -32,13 +32,13 @@
     },
     {
       "file": "DIAGNOSTICS.en.md",
-      "bytes": 4533,
-      "sha256": "263091e3b72c5358d42ed31df1cd8c65e53980f5153e3976fa9677a23a6310dd"
+      "bytes": 5494,
+      "sha256": "bda7ddf7c1c7e91e5de358a77e3c575a5cadd219dddc1a17f92a72e4f8589225"
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 7752,
-      "sha256": "0c607a9eb5440d75eaa7c2dfc0f2b103f192e5a1f7e1425b9094ffa315ce6a9d"
+      "bytes": 9455,
+      "sha256": "b4d3566f1b7eb8039a759887a436cb4d34d7aba21f7abe59f925b40f5615a1a0"
     },
     {
       "file": "DOMRU.en.md",
@@ -62,33 +62,33 @@
     },
     {
       "file": "DPI-DETECTOR.en.md",
-      "bytes": 2247,
-      "sha256": "3c049d133305e8b9b25824c780df82ddbd38d30fd1790b609405b90ef9d551f2"
+      "bytes": 2325,
+      "sha256": "63c88922f0620f3b4e606c40ac098566d0311440d44ea2b4c10833d11f248b0d"
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 3695,
-      "sha256": "f6d4588c78e19b7d3359fd79793b6ecbcf7f352e90cae22d36dc4e1993a760f1"
+      "bytes": 3791,
+      "sha256": "4fa5be47ea35d85a20304729ef5c10f7066df4022e509d0f8e1034068b9d5235"
     },
     {
       "file": "IMPORT.en.md",
-      "bytes": 5509,
-      "sha256": "5fc98a6a5444af2c59a42fb5ad1dcbf4be39f7bc8e739fcdda65aaf4c0738950"
+      "bytes": 6573,
+      "sha256": "c54ce928e2361751cd7182fa3c83590936cae3c8d8ecd96d092c01468da574fa"
     },
     {
       "file": "IMPORT.md",
-      "bytes": 9556,
-      "sha256": "0f2c78bdfc13fc941788d1518fe2948b6e08b66c3361f067bfc397f43a349c99"
+      "bytes": 11584,
+      "sha256": "463033fd66825db494c53304855ce3eecabbe00399f9d85eab4e721ee572bacb"
     },
     {
       "file": "INSTALL.en.md",
-      "bytes": 4664,
-      "sha256": "6f384f9a2c844c1c461cfa0db5a7d0865c85c22fcf9d6f0a778796813cb11245"
+      "bytes": 4824,
+      "sha256": "a1baf4d5f338590713fe027af6246e937536127e2fff0f8a4e02d07074b27ca6"
     },
     {
       "file": "INSTALL.md",
-      "bytes": 7655,
-      "sha256": "ddcf6f663cb72b50f9928fe3a70f298a8cebe8b641c4088264fac46abc39168a"
+      "bytes": 7907,
+      "sha256": "e3bf57ed03ed41eb5992d247c567bdc9d0a683419c7c78c277526e38df92ffad"
     },
     {
       "file": "LICENSE",
@@ -107,13 +107,13 @@
     },
     {
       "file": "OPENWRT.en.md",
-      "bytes": 7684,
-      "sha256": "e898ee42da67b97184c34dbe5f260bbe1e45b5ff341cfb8a5fa0c6b7c70438fc"
+      "bytes": 8117,
+      "sha256": "610c15987373ccbbbb01d551806ea3c7749cd71dbbc347efe0c7f4fd7d383961"
     },
     {
       "file": "OPENWRT.md",
-      "bytes": 12286,
-      "sha256": "78d456cc707526990230385826dc0c3a9d1b01e40964645a657bee2fd83855e5"
+      "bytes": 13004,
+      "sha256": "8973487ea361d98015b1b19a6c4ebde9193fd792f45112056183472bf02a5a83"
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
@@ -147,13 +147,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 17309,
-      "sha256": "29111efb4c4d6df9702fd23b548bad0d2d1a2c028537ecb423947847c9a9e8c0"
+      "bytes": 19761,
+      "sha256": "ad614e2aedad3de689f9994113d3d2c2f05bf8a3fa61cdce88e6d602447326ce"
     },
     {
       "file": "README.md",
-      "bytes": 29102,
-      "sha256": "4796f8fe5e38b4294dd18fae70045d816fe22fc18473338fe8d7952212b96970"
+      "bytes": 32769,
+      "sha256": "aa6813d3d855876a72d1e46cae9c437b7e249806adf5b5eff22b3af7c5ef05e2"
     },
     {
       "file": "ROADMAP.en.md",
@@ -177,13 +177,13 @@
     },
     {
       "file": "SMARTDNS.en.md",
-      "bytes": 4689,
-      "sha256": "9256f14bf556b9759b63ea25f23561470aadc87e9dc939c08b4853b4b20c56de"
+      "bytes": 5961,
+      "sha256": "c82931c21f362c2152cb62aa73e00a2e13574a88243a5498c04c1bc7c1cee210"
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 7790,
-      "sha256": "dce70d0749b35250eb734e27a381be55b9a6595b98be8c957855c006f3023822"
+      "bytes": 10014,
+      "sha256": "73821de5430ede0f2d5caff1dcf104e704b97ed424f30c74bf8804077977a184"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
@@ -202,13 +202,13 @@
     },
     {
       "file": "USAGE.en.md",
-      "bytes": 5476,
-      "sha256": "91495c031ae4064da7191fce21b038f818c5a2e1a85ffcf6fea84578cd9cf97e"
+      "bytes": 7197,
+      "sha256": "0416e02f93405f3fd7ab75621d3cda7cf5237ce25c36877fbc45557cbb40707a"
     },
     {
       "file": "USAGE.md",
-      "bytes": 9244,
-      "sha256": "6726c189f638aa5b5c3bb61da0a0c44469b4b5fef8bdcc6741c81c2638946a29"
+      "bytes": 12367,
+      "sha256": "c28352626f21947acae3a12d0ed31cff6a54cf88194b9255a0e9f4c6e2da7343"
     },
     {
       "file": "build.svg",

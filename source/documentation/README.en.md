@@ -16,7 +16,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 85:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build85) · [change history](CHANGELOG.md). On ASUS, services stop before the backup and installation, then return to their previous state. Fixes cover growing automatic lists, legacy update workers and technical-channel cleanup. Fixes also prevent the unavailable-IP observer from bypassing YouTube processing on ASUS.
+**Build 85:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build85) · [change history](CHANGELOG.md). On ASUS, services stop before the backup and installation, then return to their previous state. Fixes cover growing automatic lists, legacy update workers and technical-channel cleanup. The unavailable-IP observer no longer bypasses the main NFQWS2 processing on ASUS, a conflict that could disrupt HTTPS/QUIC connections across services.
 
 ## What you get
 
@@ -121,7 +121,7 @@ The panel has **two independent choices**: which sites to process and which devi
 | **All** | Process all traffic matching the settings, except domains in `exclude.list` |
 
 **Auto adds domains to the list; it does not automatically find a working strategy.**
-The selected strategy's ports, protocols and filters apply in every mode.
+Mode supplies domain lists to the main TCP and QUIC blocks. Separate UDP blocks, the custom strategy and IP-list processing use their own filters and are not automatically restricted by this choice. The selected ports and protocols still apply.
 
 | “Process traffic” | Devices covered |
 | --- | --- |
@@ -165,6 +165,8 @@ VPN capabilities depend on your firmware and chosen client.
 | Strategies and devices | Select WAN, process all or selected devices, configure IPv6 separately |
 | Strategy editor | Highlighting, quote checks, visual line wrapping and restoring default strategies |
 | Local JSON and cloud presets | Provider profiles and global strategies; all JSON contents are initially selected, and unwanted parts can be deselected |
+| Strategy from Keenetic | Paste NFQWS2 text, adapt paths and check missing files before saving — [guide](IMPORT.en.md#a-strategy-from-keenetic) |
+| Packet templates (blobs) | Choose another template without replacing the strategy or upload a `.bin` from your device — [guide](USAGE.en.md#packet-templates-blobs) |
 | Import preview and undo | Compare “before / after”, transfer required files and undo the last import |
 | SmartDNS | Up to **32 DNS servers**, **256 domain → DNS bindings** and **64 fixed answers**; DoT/DoH and custom servers |
 | Diagnostics and DPI Detector | Checkup, packet delivery checks, logs and separate network tests from the router |
@@ -172,6 +174,9 @@ VPN capabilities depend on your firmware and chosen client.
 | Updates | Signature and SHA256 checks, retained settings; package backups and automatic rollback after a caught failure on ASUS |
 | Unavailable IPs (ASUS) | Address list with expiry, recheck and removal; ordinary UDP DNS filtering and fast failure on port 443 |
 | Restart and recovery | A ↻ button, a 4/12/24-hour or custom timer, and optional recovery after a crash |
+| ARK check (ASUS) | Module checks, preparation with a backup and restoration of changed settings — [guide](DIAGNOSTICS.en.md) |
+| MTProto for Telegram | Docker, Entware or Linux installation; generated link, secret, script and Portainer stack — [guide](#telegram-proxy) |
+| Technical channel | Temporary Administrator access by invitation, expiry and disconnect — [guide](DIAGNOSTICS.en.md#technical-channel) |
 
 The package includes NFQWS2, WebUI, embedded Lua and service utilities.
 **SmartDNS and DPI Detector are installed separately using panel buttons**, when needed.
@@ -187,13 +192,17 @@ Use **↻** to restart NFQWS2 or **⏱** to choose 4, 12, 24 hours or a custom i
 
 The **Unavailable IPs** tab helps reduce stalls when a service provides several addresses and some are unreachable. After independent confirmation, an address is excluded for **24 hours**, or **7 days** after a repeat incident. A single timeout or QUIC failure is insufficient. The feature defaults to on; **Remember unavailable addresses** lets you turn it off.
 
-When an ordinary UDP DNS answer contains working alternatives, the unavailable address is removed. New TCP/UDP connections to its port **443** fail promptly. The list shows remaining time and check results, with actions to recheck, remove an entry or clear the list. Automatic checks restore an address after three successful checks; a manual recheck queues a check.
+When an ordinary UDP DNS answer contains working alternatives, the unavailable address is removed. New TCP/UDP connections to its port **443** fail promptly. The list shows remaining time and check results, with actions to recheck, remove an entry or clear the list. Automatic checks restore an address after three successful checks, checking each IP no more often than every 15 minutes in rotation. A manual recheck queues a check. The list is stored in `/opt/etc/nfqws2/ip-health/bans.json`; use the panel to view or clear it.
 
 Excluded devices are unaffected. Restrictions stop taking effect when the worker stops. **TCP DNS, DoH and DoT are not filtered; simultaneous multiple WAN connections are unsupported.** This feature is not yet available on native OpenWrt. A suitable NFQWS2 strategy is still needed.
 
 ### Telegram proxy
 
-The **MTProto for Telegram** button at the bottom of the panel prepares installation with Docker, on ASUS with Entware, or on Linux with systemd. A `dd` secret, connection link and command are generated automatically, with copy buttons and a script download. Access away from home requires an externally reachable address and port. Docker installation reports success after checking a real Telegram response. The installer preserves an existing proxy and NFQWS settings.
+The **MTProto for Telegram** button at the bottom of the panel prepares installation with Docker, on ASUS with Entware, or on Linux with systemd. Suggested ASUS or AI Board addresses remain editable. A `dd` secret, connection link and command are generated automatically, with copy buttons and a script download. Docker offers a Portainer stack (`compose.yaml`) or a terminal command, both using a pinned [LordArrin image based on Flowseal](https://github.com/LordArrin/tg-ws-proxy-docker) for x86-64 / ARM64. Access away from home requires an externally reachable address and port. The installer reports success after checking a real Telegram response and preserves an existing proxy and NFQWS settings.
+
+Run the command on the selected device. For Portainer choose **Docker → Portainer**, then **Stacks → Add stack → Web editor → Deploy the stack**; choose **Docker → Terminal** for the script. Without Docker, use a free TCP port from 1024–65535 and run as root: ASUS requires Entware, while Linux requires systemd, Python 3.8+ and python3-venv. The installer does not open the firewall; configure port access separately. A link using the router’s local IP works within its network; CGNAT prevents direct incoming access through the provider’s address without an additional solution.
+
+Save the link and configuration before closing the dialog: the panel does not retain the generated key. **Another secret** changes only the proposed installation text. Use the displayed diagnostic command for an installed proxy, and test messages and media in Telegram after installation.
 
 ## Updates and profile catalog
 
@@ -246,7 +255,7 @@ The **Technical channel** at the bottom of the panel provides temporary router
 access for diagnostics or configuration after prior arrangements with the
 Administrator. Paste the link they provide and connect. A panel password is
 required. You can disconnect at any time; access ends at expiry or reboot.
-This does not submit a request for permanent or 24/7 support.
+The channel lets the Administrator run commands as root. Its expiry is set by the invitation and reconnection does not extend it. Disconnecting ends access; completed configuration changes remain. This does not submit a request for permanent or 24/7 support.
 
 ## Documentation
 
