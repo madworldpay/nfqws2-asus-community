@@ -16,7 +16,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 85:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build85) · [change history](CHANGELOG.md). On ASUS, services stop before the backup and installation, then return to their previous state. Fixes cover growing automatic lists, legacy update workers and technical-channel cleanup. The unavailable-IP observer no longer bypasses the main NFQWS2 processing on ASUS, a conflict that could disrupt HTTPS/QUIC connections across services.
+**Build 86:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build86) · [change history](CHANGELOG.md). Updated hardcorp74 and the mobile layout. The bottom panel can be collapsed and starts collapsed on phones.
 
 ## What you get
 

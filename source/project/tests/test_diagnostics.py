@@ -103,7 +103,7 @@ class DiagnosticCliTests(unittest.TestCase):
  def test_cli_uses_runtime_queue_without_config_execution_or_mutations(self):
   with tempfile.TemporaryDirectory() as tmp:
    w=Path(tmp);lib=w/'opt/lib/nfqws2-asus';lib.mkdir(parents=True)
-   for name in ['platform.sh','lifecycle.sh','diagnostics.sh']:(lib/name).write_text((ROOT/'asus'/name).read_text())
+   for name in ['platform.sh','lifecycle.sh','restart-schedule.sh','diagnostics.sh']:(lib/name).write_text((ROOT/'asus'/name).read_text())
    conf=w/'opt/etc/nfqws2/nfqws2.conf';conf.parent.mkdir(parents=True)
    bad=w/'executed';conf.write_text(f'NFQUEUE_NUM=123\ntouch {bad}\n')
    run=w/'run';run.mkdir();(run/'pid').write_text(str(os.getpid()))

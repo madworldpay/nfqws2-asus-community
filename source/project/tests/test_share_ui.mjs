@@ -23,7 +23,7 @@ console.log('PASS one global entry, no ARK duplicates, original-only DPI and edi
 const dir=await mkdtemp(join(tmpdir(),'share-render-'));
 try {
 const outfile=join(dir,'render.cjs');
-await build({stdin:{resolveDir:fileURLToPath(new URL('../webui/web/',import.meta.url)),contents:`
+await build({external:['/community/*'],stdin:{resolveDir:fileURLToPath(new URL('../webui/web/',import.meta.url)),contents:`
 import {createElement as h} from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 import {QueryClientProvider} from '@tanstack/react-query';import {RouterContextProvider,createRouter,createRootRoute,createMemoryHistory} from '@tanstack/react-router';
 import {queryClient} from '@/api/client';import {createAPIClient} from '@/api/create-api-client';import {useAppStore} from '@/store/useAppStore';

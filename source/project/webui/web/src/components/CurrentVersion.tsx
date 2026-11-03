@@ -13,7 +13,12 @@ import { packageUpdateBadges } from '@/api/packageUpdates';
 
 import { LoginDialog } from '@/components/LoginDialog';
 import { PackageUpdateDialog } from '@/components/PackageUpdateDialog';
+import {
+  RabbitBuildBadge,
+  type RabbitBuildState,
+} from '@/components/RabbitBuildBadge';
 
+import { useAppearanceStore } from '@/store/useAppearanceStore';
 import { useAppStore } from '@/store/useAppStore';
 
 import { usePackageUpdates } from '@/hooks/usePackageUpdates';
@@ -30,11 +35,14 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
     csrfToken,
     anonym,
     authenticated,
+    service,
+    isReady,
   } = useStatus();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { refetch: refreshStatus } = API.status();
   const { auth } = useAppStore();
+  const { appearance } = useAppearanceStore();
   const [refreshingSession, setRefreshingSession] = useState(false);
   const [sessionError, setSessionError] = useState<string>();
   const [loginOpen, setLoginOpen] = useState(false);
@@ -142,24 +150,43 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
     web,
     buildNumber,
   );
-  const badge = (label: ReactNode, available: boolean) => (
-    <Tooltip
-      key={String(label)}
-      title={t(
-        available ? 'package_update.badge_available' : 'package_update.check',
-      )}
-      enterTouchDelay={0}
-    >
-      <Chip
-        label={label}
-        size="small"
-        variant="outlined"
-        color={available ? 'warning' : 'primary'}
-        onClick={() => setOpen(true)}
-        sx={{ cursor: 'pointer' }}
-      />
-    </Tooltip>
-  );
+  const rabbitState: RabbitBuildState =
+    badges.core || badges.web || badges.build
+      ? 'update'
+      : !isReady
+        ? 'unknown'
+        : !service
+          ? 'off'
+          : updates.data?.check.state === 'current'
+            ? 'idle'
+            : 'unknown';
+  const badge = (label: ReactNode, available: boolean) => {
+    const chip = (
+      <Tooltip
+        key={String(label)}
+        title={t(
+          available ? 'package_update.badge_available' : 'package_update.check',
+        )}
+        enterTouchDelay={0}
+      >
+        <Chip
+          label={label}
+          size="small"
+          variant="outlined"
+          color={available ? 'warning' : 'primary'}
+          onClick={() => setOpen(true)}
+          sx={{ cursor: 'pointer' }}
+        />
+      </Tooltip>
+    );
+    return appearance === 'rabbit' ? (
+      <RabbitBuildBadge key={String(label)} state={rabbitState}>
+        {chip}
+      </RabbitBuildBadge>
+    ) : (
+      chip
+    );
+  };
   return (
     <>
       <Stack

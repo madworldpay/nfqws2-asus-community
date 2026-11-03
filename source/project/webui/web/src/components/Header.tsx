@@ -3,11 +3,8 @@ import { useConfig } from '@/config/useConfig';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import MenuIcon from '@mui/icons-material/Menu';
-import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
 import PasswordIcon from '@mui/icons-material/Password';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
 import {
@@ -17,9 +14,6 @@ import {
   Button,
   IconButton,
   Link,
-  ListItemIcon,
-  Menu,
-  MenuItem,
   Stack,
   Tooltip,
   Typography,
@@ -39,7 +33,6 @@ import { RequirementsDialog } from '@/components/RequirementsDialog';
 import { RestartScheduleDialog } from '@/components/RestartScheduleDialog';
 import { ShareDialog } from '@/components/ShareDialog';
 import { ShareThanks } from '@/components/ShareThanks';
-import { ThemeMenu } from '@/components/ThemeMenu';
 import { Trans } from '@/components/Trans';
 
 import { useAppearanceStore } from '@/store/useAppearanceStore';
@@ -49,11 +42,8 @@ import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const Header = () => {
-  const { t, langcode, setLanguage } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const [themeAnchor, setThemeAnchor] = useState<HTMLElement | null>(null);
 
   const {
     service,
@@ -86,19 +76,10 @@ export const Header = () => {
   const actionInFlight = useRef(false);
   const { appearance } = useAppearanceStore();
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleMenuClick = async (command: ServiceActionRequest['cmd']) => {
     if (!canControlService || actionInFlight.current) return;
     actionInFlight.current = true;
     setActionPending(true);
-    handleMenuClose();
     setOutput(true);
     try {
       const { data, error } = await API.action(command);
@@ -126,6 +107,7 @@ export const Header = () => {
   return (
     <>
       <Box
+        component="header"
         sx={{
           px: 'max(15px, 1.6vh)',
           py: 'max(15px, 1.6vh)',
@@ -133,21 +115,33 @@ export const Header = () => {
           borderColor: 'divider',
           backgroundColor: 'background.paper',
           whiteSpace: 'nowrap',
+          '@media (max-width: 599.95px)': {
+            px: 1.25,
+            py: 1,
+            '& .MuiButton-root': {
+              fontSize: 12,
+              px: 0.75,
+              minHeight: 36,
+            },
+            '& .MuiButton-startIcon': { ml: 0, mr: 0.5 },
+            '& .MuiIconButton-root': { width: 36, height: 36 },
+            '& .MuiButton-root img': { width: 22, height: 22 },
+          },
         }}
       >
         <Box
           display="flex"
-          alignItems="baseline"
+          alignItems="center"
           justifyContent="space-between"
           flexWrap="wrap"
-          rowGap={2}
-          columnGap={1.7}
+          rowGap={{ xs: 1, sm: 2 }}
+          columnGap={1}
         >
           <Stack
             direction="row"
             spacing={1.3}
             alignItems="center"
-            flexGrow={1000}
+            flexGrow={0}
             useFlexGap
             flexWrap="wrap"
           >
@@ -232,18 +226,23 @@ export const Header = () => {
 
           <Stack
             direction="row"
-            spacing={{ xs: 0.5, sm: 1 }}
+            spacing={{ xs: 0.5, sm: 0.75 }}
             useFlexGap
             flexWrap="wrap"
             flexGrow={1}
             justifyContent="flex-end"
-            sx={{ rowGap: 1 }}
+            sx={{ rowGap: 1, flexBasis: { xs: '100%', lg: 0 }, minWidth: 0 }}
           >
             <Button
               variant="outlined"
               size="small"
               onClick={() => setRequirementsOpen(true)}
               startIcon={<HelpOutlineIcon />}
+              sx={{
+                borderWidth: 2,
+                borderColor: 'primary.main',
+                '&:hover': { borderWidth: 2 },
+              }}
             >
               <Trans i18nKey="requirements.title" />
             </Button>
@@ -266,30 +265,6 @@ export const Header = () => {
                 }}
               />
             )}
-            <Button
-              variant="text"
-              size="small"
-              title={
-                langcode === 'ru'
-                  ? t('system.change_lang_en')
-                  : t('system.change_lang_ru')
-              }
-              aria-label={
-                langcode === 'ru'
-                  ? t('system.change_lang_en')
-                  : t('system.change_lang_ru')
-              }
-              onClick={() => setLanguage(langcode === 'ru' ? 'en' : 'ru')}
-              sx={{ minWidth: 60, gap: 0.5 }}
-            >
-              <span style={{ fontWeight: langcode === 'en' ? 700 : 400 }}>
-                EN
-              </span>
-              /
-              <span style={{ fontWeight: langcode === 'ru' ? 700 : 400 }}>
-                RU
-              </span>
-            </Button>
             {auth && (
               <Tooltip title={t('auth.change_password')} enterTouchDelay={0}>
                 <IconButton
@@ -327,6 +302,19 @@ export const Header = () => {
             >
               {canControlService && (
                 <>
+                  <Tooltip title={t('common.start')} enterTouchDelay={0}>
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label={t('common.start')}
+                        disabled={service || actionPending}
+                        onClick={() => void handleMenuClick('start')}
+                        sx={{ width: 36, height: 36 }}
+                      >
+                        <PlayArrowIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                   <Tooltip
                     title={t('restart_schedule.restart')}
                     enterTouchDelay={0}
@@ -346,6 +334,19 @@ export const Header = () => {
                         >
                           ↻
                         </Box>
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title={t('common.stop')} enterTouchDelay={0}>
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label={t('common.stop')}
+                        disabled={!service || actionPending}
+                        onClick={() => void handleMenuClick('stop')}
+                        sx={{ width: 36, height: 36 }}
+                      >
+                        <StopCircleIcon fontSize="small" />
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -374,90 +375,6 @@ export const Header = () => {
                   )}
                 </>
               )}
-              <Button
-                variant="text"
-                size="small"
-                aria-label={t('restart_schedule.menu')}
-                onClick={handleMenuOpen}
-                sx={{
-                  color: 'text.secondary',
-                  transition: 'color 0.1s ease-in-out',
-                  minWidth: 0,
-                  '&:hover': {
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                <MenuIcon />
-              </Button>
-
-              <Menu
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                slotProps={{
-                  paper: {
-                    sx: {
-                      bgcolor: 'background.default',
-                      backgroundImage: 'none',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    },
-                  },
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    setThemeAnchor(anchorEl);
-                    handleMenuClose();
-                  }}
-                  sx={{ fontSize: 14 }}
-                >
-                  <ListItemIcon>
-                    <PaletteOutlinedIcon />
-                  </ListItemIcon>
-                  <Trans i18nKey="system.change_theme" />
-                </MenuItem>
-                {canControlService && service && (
-                  <MenuItem
-                    onClick={() => handleMenuClick('restart')}
-                    disabled={actionPending}
-                    sx={{ fontSize: 14 }}
-                  >
-                    <ListItemIcon>
-                      <ReplayIcon />
-                    </ListItemIcon>
-                    <Trans i18nKey="common.restart" />
-                  </MenuItem>
-                )}
-
-                {canControlService &&
-                  (service ? (
-                    <MenuItem
-                      onClick={() => handleMenuClick('stop')}
-                      disabled={actionPending}
-                      sx={{ fontSize: 14 }}
-                    >
-                      <ListItemIcon>
-                        <StopCircleIcon />
-                      </ListItemIcon>
-                      <Trans i18nKey="common.stop" />
-                    </MenuItem>
-                  ) : (
-                    <MenuItem
-                      onClick={() => handleMenuClick('start')}
-                      disabled={actionPending}
-                      sx={{ fontSize: 14 }}
-                    >
-                      <ListItemIcon>
-                        <PlayArrowIcon />
-                      </ListItemIcon>
-                      <Trans i18nKey="common.start" />
-                    </MenuItem>
-                  ))}
-              </Menu>
             </Stack>
           </Stack>
         </Box>
@@ -481,7 +398,6 @@ export const Header = () => {
         )}
       </Box>
 
-      <ThemeMenu anchorEl={themeAnchor} onClose={() => setThemeAnchor(null)} />
       {canControlService && (
         <OutputLogDialog
           content={output}

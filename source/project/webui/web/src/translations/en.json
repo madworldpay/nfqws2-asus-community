@@ -3,6 +3,8 @@
     "not_installed": "NFQWS is not installed",
     "not_found": "404: Page not found",
     "change_theme": "Change theme",
+    "footer_collapse": "Hide bottom panel",
+    "footer_expand": "Show bottom panel",
     "change_lang_en": "English",
     "change_lang_ru": "Russian",
     "thanks_projects": "Thanks to these projects:",
@@ -27,6 +29,7 @@
   },
   "community": {
     "chat": "Community chat",
+    "releases": "Releases",
     "copy_link": "Copy link",
     "copied": "Link copied",
     "copy_failed": "Could not copy. Copy the link address manually.",

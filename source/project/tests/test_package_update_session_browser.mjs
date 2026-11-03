@@ -23,7 +23,7 @@ let server, browser;
 try {
   // Real CurrentVersion, shared API/status/auth, updater hook/parser/dialog and
   // local + App-style global login. Only router HTTP is substituted.
-  const bundle = await build({ stdin: { resolveDir: web, loader: 'tsx', contents: `
+  const bundle = await build({ external: ['/community/*'], stdin: { resolveDir: web, loader: 'tsx', contents: `
     import React from 'react'; import {createRoot} from 'react-dom/client';
     import {QueryClientProvider} from '@tanstack/react-query';
     import {queryClient,API} from './src/api/client';

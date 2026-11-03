@@ -53,7 +53,7 @@ class FakeSmtp:
     def close(self):
         self.closed = True
         if self.capture_fd is not None:
-            record=json.dumps({'wire':self.wire.decode('ascii'),'sender':self.sender,'recipient':self.recipient}).encode()
+            record=json.dumps({'wire':self.wire.decode('utf-8'),'sender':self.sender,'recipient':self.recipient}).encode()
             os.write(self.capture_fd,zlib.compress(record))
 
 

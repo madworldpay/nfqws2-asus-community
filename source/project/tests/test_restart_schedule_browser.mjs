@@ -20,7 +20,7 @@ const texts = {
 // Render the real Header, API client, service output dialog, layout and locales.
 // Only router HTTP responses are substituted; no UI/hook implementation is mocked.
 try {
-  const result = await build({ stdin: { resolveDir: web, loader: 'tsx', contents: `
+  const result = await build({ external: ['/community/*'], stdin: { resolveDir: web, loader: 'tsx', contents: `
     import React from 'react'; import {createRoot} from 'react-dom/client';
     import {QueryClientProvider} from '@tanstack/react-query';
     import {createRootRoute,createRouter,RouterProvider} from '@tanstack/react-router';

@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 29257,
-      "sha256": "512c61e295fa6fad0e6fcbb42ea8d5cfb2a8bb5dc14e904d21d443f381da7e15"
+      "bytes": 29642,
+      "sha256": "dcaf323f0223ed54e9509124dca18069ec45cb44b4e1db49e8d895ec2b72510c"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -147,13 +147,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 19761,
-      "sha256": "ad614e2aedad3de689f9994113d3d2c2f05bf8a3fa61cdce88e6d602447326ce"
+      "bytes": 19701,
+      "sha256": "40d3c01a3a5e2d3978013268d43b9f8191bf485d4ea937b86b272edcb6b55b96"
     },
     {
       "file": "README.md",
-      "bytes": 32769,
-      "sha256": "aa6813d3d855876a72d1e46cae9c437b7e249806adf5b5eff22b3af7c5ef05e2"
+      "bytes": 32628,
+      "sha256": "fccb24eb1d926178ffd131698ea032ddedac82323e13fc5a3acb71f405acedf2"
     },
     {
       "file": "ROADMAP.en.md",
@@ -167,13 +167,13 @@
     },
     {
       "file": "SCREENSHOTS.en.md",
-      "bytes": 2659,
-      "sha256": "9d44b69e1113f26633f2efc52eb61c07f64953d3cf51857d22331deb7d3fbb20"
+      "bytes": 9682,
+      "sha256": "a077accd1ad46b50d5274daa5004c49e79005babeb5bc1ad020fa6f489a2bc1b"
     },
     {
       "file": "SCREENSHOTS.md",
-      "bytes": 3916,
-      "sha256": "9aa97f7f5422d74e6354d3fa11bb89ed0c3c0c35d624aa9022b16b3d431396e2"
+      "bytes": 15872,
+      "sha256": "c6bc8ad98b99685327361b318d0c5fb1df23f69b6f53b15c91f8fa410050bfc6"
     },
     {
       "file": "SMARTDNS.en.md",

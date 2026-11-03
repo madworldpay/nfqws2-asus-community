@@ -7,10 +7,28 @@
       "directory": "strategies/nfqws2",
       "api": "https://api.github.com/repos/rndnaame/nfqws-menu/contents/strategies/nfqws2",
       "pinned_commit": "8f78e35b8dff78ffbabd85c7de439380b3a83448",
+      "latest_reviewed_commit": "de74aaed77c995de95092837f5993427e9d10bd1",
+      "latest_reviewed_on": "2026-11-02",
       "attribution": "rndnaame/nfqws-menu; ports credited upstream to @Nare51; original Flowseal/zapret-discord-youtube",
       "original_project": "https://github.com/Flowseal/zapret-discord-youtube",
       "update_policy": "Manual pinned-source verification, adaptation and import/runtime review before cloud approval; no router snapshot or automatic replacement",
-      "held": ["MartinBacker"]
+      "original_release_reviewed": {
+        "tag": "1.10.4",
+        "commit": "176f56dc3f11ce5915c26abcdde903f93d835b64",
+        "scope": "Required fake bytes for the 21 existing Flowseal-derived NFQWS2 ports; Windows general.bat has no approved NFQWS2 catalog port"
+      },
+      "pending_updates": [
+        {
+          "strategy": "hardcorp74",
+          "source_commit": "de74aaed77c995de95092837f5993427e9d10bd1",
+          "source_blob_sha1": "9f29cc8bf15a1161ad97194cfcf4409cf5e1370a",
+          "status": "Prepared and engine-checked; unsigned and unpublished"
+        }
+      ],
+      "held": ["MartinBacker"],
+      "held_reasons": {
+        "MartinBacker": "Packaged Lua circular/per_instance_condition behavior fixture: selecting strategy 5 also executes strategy 6 conditional fakes and skips strategy 5 split; selecting strategy 6 skips its split. Historical legacy aliases are commented out and are not the current blocker. Requires a separately reviewed orchestration correction."
+      }
     }
   ]
 }

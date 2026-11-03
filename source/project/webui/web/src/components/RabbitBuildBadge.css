@@ -1,0 +1,128 @@
+.rabbit-build-stage {
+  --rabbit-button-top: calc(50% - 15px);
+  --rabbit-seat: calc(50% + 15px);
+  --rabbit-tone: grayscale(0.85);
+  position: relative;
+  width: 240px;
+  flex: 0 0 240px;
+  height: 203.2px;
+}
+.rabbit-build-native {
+  position: absolute;
+  top: var(--rabbit-button-top);
+  left: 0;
+  width: 240px;
+  z-index: 2;
+}
+.rabbit-build-native .MuiChip-root {
+  position: relative;
+  width: 240px;
+  height: 30px;
+  border-radius: 16px;
+  background: #182536;
+  border-color: #617a96;
+  color: #c5d3e4;
+}
+.rabbit-build-native .MuiChip-root::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.rabbit-build-native .MuiChip-label {
+  width: 100%;
+  text-align: left;
+  padding: 0 92px 0 12px;
+  font-size: 11px;
+}
+.rabbit-build-stage[data-state='update'] .rabbit-build-native .MuiChip-root {
+  color: #f3c778;
+  border-color: #b18c52;
+  background: #192532;
+}
+.rabbit-build-sprite {
+  position: absolute;
+  right: 9px;
+  pointer-events: none;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  filter: var(--rabbit-tone);
+  animation: rabbit-build-breathe 10s ease-in-out infinite;
+}
+.rabbit-build-off {
+  z-index: 3;
+  top: calc(var(--rabbit-seat) - 102.5024px);
+  right: 7.61568px;
+  width: 100.92544px;
+  height: 151.38816px;
+  background-image: url('/community/rabbit-build-off.webp');
+  transform-origin: 50% 102.5024px;
+}
+.rabbit-build-idle {
+  z-index: 3;
+  top: calc(var(--rabbit-seat) - 122.6016px);
+  right: 19.8px;
+  width: 86.4px;
+  height: 129.6px;
+  background-image: url('/community/rabbit-build-idle.webp');
+  transform-origin: 50% 122.6016px;
+}
+.rabbit-build-grip {
+  right: 6.43648px;
+  top: calc(var(--rabbit-seat) - 117.20576px);
+  width: 99.49184px;
+  height: 122.752px;
+  background-image: url('/community/rabbit-build-update.webp');
+  transform-origin: 50% 117.20576px;
+}
+.rabbit-build-back {
+  z-index: 3;
+}
+.rabbit-build-eye-left {
+  z-index: 4;
+  clip-path: ellipse(3.2% 1.6% at 42.8% 38.9%);
+  filter: var(--rabbit-tone) brightness(1.65);
+}
+.rabbit-build-eye-right {
+  z-index: 4;
+  clip-path: ellipse(3.2% 1.6% at 54.8% 39.3%);
+  filter: var(--rabbit-tone) brightness(1.65);
+}
+@keyframes rabbit-build-breathe {
+  0%,
+  20%,
+  80%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.996);
+  }
+}
+@media (max-width: 599.95px) {
+  .rabbit-build-stage {
+    display: contents;
+  }
+  .rabbit-build-native {
+    position: static;
+    width: auto;
+  }
+  .rabbit-build-native .MuiChip-root {
+    width: auto;
+  }
+  .rabbit-build-native .MuiChip-label {
+    padding: 0 10px;
+  }
+  .rabbit-build-sprite {
+    display: none;
+    animation: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rabbit-build-sprite {
+    animation: none;
+  }
+}
