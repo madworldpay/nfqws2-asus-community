@@ -62,7 +62,7 @@ assert.equal(compareVersions([2, 0, 0], [1, 99, 99]), false);
 const temporary = await mkdtemp(join(tmpdir(), 'nfqws-package-version-'));
 try {
   const outfile = join(temporary, 'render.cjs');
-  await build({
+  await build({external:['/community/*'],
     stdin: {
       resolveDir: fileURLToPath(new URL('../webui/web/', import.meta.url)),
       contents: String.raw`

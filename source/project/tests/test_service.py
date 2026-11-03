@@ -19,7 +19,7 @@ class ServiceTests(unittest.TestCase):
             (lib / 'lifecycle.sh').write_text('''asus_lock() { :; }
 asus_check() { asus_validate && printf '%s|%s|%s\\n' "$NFQUEUE_NUM" "$USER" "$LOG_LEVEL"; }
 ''')
-            for name in ['diagnostics.sh', 'legacy.sh', 'args.sh']:
+            for name in ['restart-schedule.sh', 'diagnostics.sh', 'legacy.sh', 'args.sh']:
                 (lib / name).write_text('')
             (lib / 'compatibility.sh').write_text('asus_read_compatibility() { :; }\n')
             conf = root / 'opt/etc/nfqws2/nfqws2.conf'

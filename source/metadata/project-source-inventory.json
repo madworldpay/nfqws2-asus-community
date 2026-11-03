@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "ff393127b5a059b172af9b9eed820368071cf24d46df1b8326623c8e79178379"
+    "sha256": "816c83d0ac08a94e91547a30df27dbbe88c7643cfa3c99d33120fd361173759a"
   },
   {
     "path": "LICENSE",
@@ -1186,8 +1186,8 @@
   },
   {
     "path": "profile-catalog/upstreams.json",
-    "bytes": 743,
-    "sha256": "3d915f70a3297be5cdc5ee6bd67b6c9e587645005431b0e859790e2567cd764e"
+    "bytes": 1839,
+    "sha256": "6b515c93b0474c0a408b51f8d519b054abeb0c887d5b87c55fb65d4582e6fbe7"
   },
   {
     "path": "support/dns-share.schema.json",
@@ -1386,8 +1386,8 @@
   },
   {
     "path": "support-relay/src/nfqws_support/share.py",
-    "bytes": 4309,
-    "sha256": "9dc2e4ad6fe6903443dc144428f4ab0249bccffb8a973f81b96fbcd61fa380f8"
+    "bytes": 6014,
+    "sha256": "aa2d47dedc2094b568b28174abfe9a2bfcb996ee0f1ff1e32ae07903755d8f50"
   },
   {
     "path": "support-relay/src/nfqws_support/share_v4.py",
@@ -1626,8 +1626,8 @@
   },
   {
     "path": "tests/test_diagnostics.py",
-    "bytes": 9995,
-    "sha256": "dc2996f33791b79261a85aacfde9f808c9cef3c1c9a907dd756b3a7752fac20f"
+    "bytes": 10017,
+    "sha256": "c00f5d348a837d76c8c1bdbb783aab23a6e25659bed5e9cf3657ba04a941de1a"
   },
   {
     "path": "tests/test_dpi_analysis.py",
@@ -2346,8 +2346,8 @@
   },
   {
     "path": "tests/test_package_update_session_browser.mjs",
-    "bytes": 15088,
-    "sha256": "206469b32a5b8f3df86eae652d2edbea6748ae3853de42b60da630505ffd2a63"
+    "bytes": 15116,
+    "sha256": "44570b53fc88524a60ad60507b2f5fa55021b7bd2883d515d88f9968e725fdbe"
   },
   {
     "path": "tests/test_package_update_shell.py",
@@ -2381,8 +2381,8 @@
   },
   {
     "path": "tests/test_package_version.mjs",
-    "bytes": 6658,
-    "sha256": "e178f3d8fcbb7b374f79114844e1380472c9898ffc28175e7e3e305567d1e5ec"
+    "bytes": 6684,
+    "sha256": "a5be459d6f228a7c700b606fede38476ca46a927b86482a68f9e6d5ef842f444"
   },
   {
     "path": "tests/test_packages.py",
@@ -2461,8 +2461,8 @@
   },
   {
     "path": "tests/test_restart_schedule_browser.mjs",
-    "bytes": 47990,
-    "sha256": "7424e25201a6ad2779e67cf3f739e4bb814dd617727ede075b60c4bdc86b172f"
+    "bytes": 48018,
+    "sha256": "4cbdfae1b8422d68dca429646f2343db8bfe94961aa7fc12a5627c045098b41b"
   },
   {
     "path": "tests/test_restart_schedule_permissions.py",
@@ -2491,13 +2491,18 @@
   },
   {
     "path": "tests/test_service.py",
-    "bytes": 9629,
-    "sha256": "696a2c7c05ebc182111dceddf1119e11ec93e0ac2a9ba8b88175f1883dfb68fc"
+    "bytes": 9652,
+    "sha256": "f02d2dff5caefeb6420c9eea5914f4afce8e47af98cce2beda3deabfa7bba4cd"
   },
   {
     "path": "tests/test_share_availability.mjs",
     "bytes": 4647,
     "sha256": "2ad7c927b10966cff10796f5f1a9c9cd42dc342654dd67e8a474da635ffc463a"
+  },
+  {
+    "path": "tests/test_share_body.py",
+    "bytes": 7468,
+    "sha256": "b1416194951462bb6565230d1aa90d1c90ca4e9a5705f5bf1d05cc9b0272c8d4"
   },
   {
     "path": "tests/test_share_bundle_api.py",
@@ -2561,8 +2566,8 @@
   },
   {
     "path": "tests/test_share_relay.py",
-    "bytes": 6303,
-    "sha256": "23c616632786cf0146b283f00068f87cc00cbab236eae82e6c29a50cbe3749b9"
+    "bytes": 6525,
+    "sha256": "8409b4407499945e03a25c5608c05b8c160ce801111458efb6c8db3872508c85"
   },
   {
     "path": "tests/test_share_resource_client.mjs",
@@ -2606,8 +2611,8 @@
   },
   {
     "path": "tests/test_share_ui.mjs",
-    "bytes": 9253,
-    "sha256": "02964a1f157d9b568375b1baeaf699d954c73b9181b2f06e8cc25b904b927a1f"
+    "bytes": 9279,
+    "sha256": "315876ae0ee6763593b52a9177dee6b25d1b94c2a20bb8b5c247eccd9effde48"
   },
   {
     "path": "tests/test_share_v4.py",
@@ -2892,7 +2897,7 @@
   {
     "path": "tests/test_support_relay_smtp.py",
     "bytes": 7603,
-    "sha256": "10538f3a18a3005997a19815a4dfdd2b10ff37665080d0618bced11ca216c519"
+    "sha256": "ab72a0de3c7ea31ac511312bb90abd5b28bae65f4fdc096ec205d7fc12856ff3"
   },
   {
     "path": "tests/test_support_relay_store.py",
@@ -3278,6 +3283,21 @@
     "path": "webui/web/public/community/import-937c2946.png",
     "bytes": 1999811,
     "sha256": "892eeb1e98e6764ef69c52af1eef585c7059e9533e945109b02e46d90fe33224"
+  },
+  {
+    "path": "webui/web/public/community/rabbit-build-idle.webp",
+    "bytes": 94008,
+    "sha256": "412543724a4d09abb8f48bfb1bc14201deb6ff277299abfdb7b1c0108d07b8b0"
+  },
+  {
+    "path": "webui/web/public/community/rabbit-build-off.webp",
+    "bytes": 55088,
+    "sha256": "1d32970f1c891a6c8ebb9c8654c0285c1982e5fa2cb8bdae8f71997a93a25d98"
+  },
+  {
+    "path": "webui/web/public/community/rabbit-build-update.webp",
+    "bytes": 79664,
+    "sha256": "62df16b9e7c3d12246e31716ed817a75d974b81931174fa5c3804be56c878c63"
   },
   {
     "path": "webui/web/public/community/rabbit-respect-once.gif",
@@ -4146,8 +4166,8 @@
   },
   {
     "path": "webui/web/src/components/CurrentVersion.tsx",
-    "bytes": 5826,
-    "sha256": "4af5124a0bf5ecf5e968460c9bfbe3640a343611c3c9f629025a11c858705772"
+    "bytes": 6564,
+    "sha256": "6e95650acbbceff01e14aab02d82d100d2db109a33bd0caa8b7cd925cff09487"
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
@@ -4171,8 +4191,8 @@
   },
   {
     "path": "webui/web/src/components/Footer.tsx",
-    "bytes": 7324,
-    "sha256": "9ef88275d169761836eb79be247cf980a32defaf7c1a6fb3c1e20353099dac11"
+    "bytes": 10466,
+    "sha256": "df3a42ce3b58243b91662273c0e1179c52baa0ac9631465072edfc283aa0e9ff"
   },
   {
     "path": "webui/web/src/components/FormEditor.tsx",
@@ -4181,8 +4201,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 17668,
-    "sha256": "945ad11000eac1d0f1cf725fcb35af7260b43e9e4b226bda35d75c0100feeb0c"
+    "bytes": 14962,
+    "sha256": "40a7d7464d94528a322dbe1a29c265c85f0a1c2d79e6f52afc68c643a1965e0b"
   },
   {
     "path": "webui/web/src/components/ImportCatalog.tsx",
@@ -4248,6 +4268,16 @@
     "path": "webui/web/src/components/PasswordDialog.tsx",
     "bytes": 3364,
     "sha256": "e2c0642ccb94e76614b9584f2086db5112dd3e43a3b33d47b07260c6e630285d"
+  },
+  {
+    "path": "webui/web/src/components/RabbitBuildBadge.css",
+    "bytes": 2779,
+    "sha256": "75be4614a0d9d7e26b9cefd26c9424148e51caa361e5721eeeb5669250490f83"
+  },
+  {
+    "path": "webui/web/src/components/RabbitBuildBadge.tsx",
+    "bytes": 1154,
+    "sha256": "037ef76407506ff7f127c8d7373303768deaa1f69ea87391f8e5dc04a20bd64d"
   },
   {
     "path": "webui/web/src/components/ReportPreview.tsx",
@@ -4348,6 +4378,11 @@
     "path": "webui/web/src/components/TechnicalChannel.tsx",
     "bytes": 6665,
     "sha256": "286615536a0770d64ae22f4f17e0e9a306b2efd665eaccbcf2681e9db302d79e"
+  },
+  {
+    "path": "webui/web/src/components/ThemeCycleButton.tsx",
+    "bytes": 1368,
+    "sha256": "26d4f67b58cd50d6ed14219b721cfbc7490c8c55c24957a65becedc69f0ef83e"
   },
   {
     "path": "webui/web/src/components/ThemeMenu.tsx",
@@ -4461,13 +4496,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 82790,
-    "sha256": "f37e6f1c7a9e112f5589300ae07280d7cb175b9a6982a91ed4ecb5af6c494865"
+    "bytes": 82904,
+    "sha256": "63f3e58b7ece8bc614337fdf91d51a65367080ed31f88b78cf4fc6cac099af00"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 133949,
-    "sha256": "3ea63d8902189152709e6ab8fed249e41bca94612b0066ac5f278ed42784b1f0"
+    "bytes": 134117,
+    "sha256": "2435f8670c405b18a7b3e13619a59229265121884dce0687e0833c53bcfa5a7d"
   },
   {
     "path": "webui/web/src/types/types.ts",

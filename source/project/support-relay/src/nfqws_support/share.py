@@ -1,7 +1,7 @@
 """Closed v3 submissions; category labels and optional installation linkage."""
 from dataclasses import dataclass
 from hashlib import sha256
-import base64,binascii,hmac,json
+import base64,binascii,hmac,json,unicodedata
 from jsonschema import Draft202012Validator
 from .bundle import BundleFile
 from .validation import InvalidReport,SCHEMA_PATH,_pairs,_constant,_float,_bounded_depth,validate_report
@@ -64,8 +64,36 @@ def share_subject(files)->str:
     diagnostics=bool(kinds&{'report','dpi'});strategies=bool(kinds&{'strategy','resources','dns'})
     return 'NFQWS2 community'+(' [diagnostics]' if diagnostics else '')+(' [strategies]' if strategies else '')
 
+def _preview_value(value):
+    # Validated export headers are at most 120 characters. Keep each value on
+    # one visible line, including when it contains bidi/zero-width controls.
+    return ' '.join(''.join(' ' if unicodedata.category(c) in ('Cc','Cf','Cs') else c for c in value).split())[:120]
+
+def _preview_field(entries):
+    entries=[(label,_preview_value(value)) for label,value in entries]
+    entries=[(label,value) for label,value in entries if value]
+    values={value for _,value in entries}
+    if not values:return 'нет данных в экспорте'
+    if len(values)==1:return entries[0][1]
+    return 'различаются: '+'; '.join(label+': '+value for label,value in entries)
+
+def _share_preview(bundle,source):
+    fields={'model':[],'operator':[],'purpose':[]}
+    if source is not None:fields['model'].append(('источник',source['model']))
+    for f in bundle.files:
+        if f.type not in ('report','strategy','resources','dns'):continue
+        content=json.loads(f.raw)
+        if f.type=='report':fields['model'].append(('диагностика',content['model']))
+        else:
+            context=content if f.type=='strategy' else content['context']
+            label={'strategy':'стратегия','resources':'ресурсы','dns':'DNS'}[f.type]
+            for name in ('operator','purpose'):fields[name].append((label,context[name]))
+    return '\n'.join(label+': '+_preview_field(fields[name]) for name,label in
+                     (('model','Модель'),('operator','Оператор'),('purpose','Сервисы / назначение')))
+
 def share_body(bundle:ShareBundle)->str:
     value={'type':'nfqws2_submission','schema_version':1,'submission_id':bundle.submission_id,
            'categories':(['diagnostics'] if any(f.type in ('report','dpi') for f in bundle.files) else [])+(['strategies'] if any(f.type in ('strategy','resources','dns') for f in bundle.files) else [])}
-    if bundle.source_json is not None:value['source']=json.loads(bundle.source_json)
-    return json.dumps(value,ensure_ascii=False,indent=2)+'\n'
+    source=json.loads(bundle.source_json) if bundle.source_json is not None else None
+    if source is not None:value['source']=source
+    return _share_preview(bundle,source)+'\n\n'+json.dumps(value,ensure_ascii=False,indent=2)+'\n'
