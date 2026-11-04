@@ -293,6 +293,14 @@ final class AsusUpdateRollback
         $proof=['own'=>$own,'foreign'=>$foreign,'metadata'=>$metadata,'conffiles'=>$conffiles,'payload'=>$files,'indexes'=>$indexes,'aux'=>$aux,'settings'=>AsusUpdateSnapshot::stable($env['opt'],$env['owner'])];
         return ['schema'=>1,'version'=>$own['Version'],'architecture'=>$own['Architecture'],'sha256'=>hash('sha256',json_encode($proof,JSON_THROW_ON_ERROR))];
     }
+    /** Count the same validated files capture() will durably copy. */
+    public static function durableFileCount(array $env):int
+    {
+        if($env['pending'])return 16;
+        [,,$metadata,,$files]=self::installed($env);
+        $aux=self::captureAux($env['opt'],'',$env['owner'],false);
+        return count($files)+count($metadata)+count($aux['migration']['files'])+count(array_filter($aux['owners'],fn($v)=>$v!==null))+16;
+    }
     public static function capture(array $env,string $destination,string $settings,string $postinst): array
     {
         if(!str_starts_with($postinst,"#!/bin/sh\nexec "))throw new RuntimeException('rollback_unavailable');

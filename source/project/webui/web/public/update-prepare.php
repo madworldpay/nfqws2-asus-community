@@ -164,7 +164,9 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
             try{$base='operations/'.$id;$candidate=json_decode($this->store->readFile($base.'/candidate.json')??'',true,32,JSON_THROW_ON_ERROR);$env=$this->environment();$fresh=$this->check(true);
                 if($fresh['state']!=='available'||$fresh['candidate']!==$candidate)throw new RuntimeException('stale_revision');
                 $estimate=AsusUpdateSnapshot::estimate($env['opt'],$env['owner']);AsusUpdatePackage::space($env['free'],$candidate['package']['size'],$estimate,$env['runtime_bytes']);
+                $this->store->update($id,['phase'=>'downloading']);
                 $path=$this->store->path($base.'/package.ipk');$this->deadline?->begin(180);try{$this->source()->download($candidate['package'],$path);}finally{$this->deadline?->end();}
+                $this->store->update($id,['phase'=>'checking_package']);
                 AsusUpdatePackage::inspect($path,$candidate,$env['status'],$env['abi'],$env['machine'],$env['opt'],$env['owner']);
                 $free=$this->environment['free']??disk_free_space($this->store->path());AsusUpdatePackage::space($free,0,$estimate,$env['runtime_bytes']);
                 $patch=['state'=>'prepared','prepared_uptime'=>AsusUpdateStore::uptime(),'code'=>null];if($stage!==null){$runtime=$stage($id,$env);if(!is_array($runtime)||!preg_match('/^[a-f0-9]{64}$/D',$runtime['digest']??''))throw new RuntimeException('invalid_state');$patch['runtime_digest']=$runtime['digest'];}

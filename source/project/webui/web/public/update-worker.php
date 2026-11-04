@@ -154,6 +154,7 @@ final class AsusUpdateWorker
             $this->quiesceDns($id,'before');$this->assertDnsUpdateReady();(new AsusSmartDnsLifecycle(new AsusSmartDnsStore()))->stop('upgrade');
             $this->lifecycle->stop(true);if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('core_stop_failed');$q=$this->quiescePhase($id,$q,'stopped');
             if($this->original($this->prepare->environment(),$candidate,$id)!==$q['attestation'])throw new RuntimeException('settings_changed');
+            $this->store->update($id,['phase'=>'backing_up']);
             AsusUpdateSnapshot::capture($env['opt'],$this->settings($id),$this->owner());
             if($action==='install'){
                 $argv=array_merge($this->runtime($id)['argv'],['--','rollback-finalize',$id]);
@@ -292,6 +293,7 @@ final class AsusUpdateWorker
                 $this->quiesceDns($id,'after');$this->resumeDns($id);$this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
             }catch(Throwable $e){
                 $code=AsusUpdatePrepare::code($e);$patch=[];
+                try{$this->store->failure($id,$code);}catch(Throwable $ignored){}
                 if($ticket&&$this->store->readFile('operations/'.$id.'/boundary.json',1024)===null&&$this->store->readFile('operations/'.$id.'/quiesce.json')!==null){
                     $this->store->writeFile('operations/'.$id.'/update-failure.json',json_encode(['code'=>$code],JSON_THROW_ON_ERROR));
                     try{$this->install($id,['action'=>'rollback-verify']);$r=json_decode($this->store->readFile('operations/'.$id.'/quiesce-result.json',1024)??'',true,8,JSON_THROW_ON_ERROR);

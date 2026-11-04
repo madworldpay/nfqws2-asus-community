@@ -86,7 +86,9 @@ final class NfqwsOpenWrtUpdatePrepare implements NfqwsUpdatePreparation
                 $lease=$this->store->lease('apply.lock',true);
                 $candidate=$this->candidate($id,true);$env=$this->environment();$base='operations/'.$id;$snapshot=NfqwsOpenWrtUpdateSnapshot::estimate($env['root'],$env['owner']);
                 NfqwsOpenWrtUpdatePackage::space($env['overlay_free'],$env['ram_free'],$candidate['package'],$snapshot,$env['runtime_bytes']);
+                $this->store->update($id,['phase'=>'downloading']);
                 $this->deadline?->begin(180);try{$this->source()->download($candidate['package'],$this->archive($id,$candidate));}finally{$this->deadline?->end();}
+                $this->store->update($id,['phase'=>'checking_package']);
                 $preflight=$this->inspect($id,$candidate,'apk-keys-prepare');$this->store->writeFile($base.'/native-preflight.json',json_encode($preflight,JSON_THROW_ON_ERROR));
                 $patch=['state'=>'prepared','prepared_uptime'=>AsusUpdateStore::uptime(),'code'=>null];
                 if($stage!==null){$r=$stage($id,$env);if(!is_array($r)||!preg_match('/^[a-f0-9]{64}$/D',$r['digest']??''))throw new RuntimeException('invalid_state');$patch['runtime_digest']=$r['digest'];}

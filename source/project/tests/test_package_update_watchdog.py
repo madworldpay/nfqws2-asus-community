@@ -54,6 +54,12 @@ class PackageUpdateWatchdogTests(unittest.TestCase):
     def test_completed_failure_is_preserved(self):
         result=self.run_child("$s->update($id,['state'=>'failed','code'=>'core_stop_failed']);")
         self.assertEqual(result.get('state'),'failed');self.assertEqual(result.get('code'),'core_stop_failed')
+    def test_slow_storage_apply_budget_above_five_minutes_is_accepted(self):
+        result=self.run_child("$s->update($id,['state'=>'succeeded']);",seconds=900)
+        self.assertEqual(result.get('state'),'succeeded',result)
+    def test_apply_budget_still_has_a_hard_upper_bound(self):
+        result=self.run_child("$s->update($id,['state'=>'succeeded']);",seconds=1801)
+        self.assertEqual(result.get('error'),'invalid_state')
     def test_network_phase_deadline_bounds_a_stalled_lookup(self):
         result=self.run_child("$s->writeFile('operations/'.$id.'/network.json',json_encode(['deadline'=>AsusUpdateStore::uptime()+0.05]));usleep(700000);file_put_contents($argv[2].'/unexpected','finished');",seconds=2)
         self.assertEqual(result.get('code'),'timed_out');self.assertFalse((self.base/'unexpected').exists())

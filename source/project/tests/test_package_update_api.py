@@ -38,6 +38,11 @@ class PackageUpdateApiTests(unittest.TestCase):
             self.assertEqual(set(checked['candidate']['package']),{'family','filename','size','sha256'})
             self.assertNotIn('PRIVATE_INTERNAL',json.dumps(value))
 
+    def test_failure_stage_and_original_cause_are_exposed_without_private_record_fields(self):
+        path=self.base/'update-dispatch.php';path.write_text(path.read_text().replace("'state'=>'prepared'","'state'=>'failed','phase'=>'finished','failure_phase'=>'backing_up','failure_code'=>'insufficient_space','code'=>'recovery_required'"))
+        token=self.http.login();code,value=self.request({'cmd':'packageupdatestatus','csrf_token':token,'operation_id':'a'*32})
+        self.assertEqual(code,200,value);operation=value['operation'];self.assertEqual(operation.get('failure_phase'),'backing_up');self.assertEqual(operation.get('failure_code'),'insufficient_space');self.assertNotIn('PRIVATE_PATH',json.dumps(value))
+
     def test_new_commands_require_login(self):
         for cmd in ['packageupdatecheck','packageupdateprepare','packageupdateapply','packageupdatestatus']:
             self.assertEqual(self.request({'cmd':cmd,'csrf_token':'bad'})[0],401)

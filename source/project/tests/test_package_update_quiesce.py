@@ -43,6 +43,13 @@ class PackageUpdateQuiesceTests(unittest.TestCase):
         db=json.loads((c.state/'operations.json').read_text());db['operations'][c.id]['runtime_digest']=hashlib.sha256(closure.read_bytes()).hexdigest();(c.state/'operations.json').write_text(json.dumps(db))
     def inject(self,needle,extra):
         path=self.c.application/'update-worker.php';text=path.read_text();self.assertIn(needle,text);path.write_text(text.replace(needle,extra+needle,1));self.reseal()
+    def test_backup_failure_exposes_original_stage_after_successful_service_restore(self):
+        c=self.c;c.service.running()
+        self.inject("$argv=array_merge($this->runtime($id)['argv'],['--','rollback-finalize',$id]);",'throw new RuntimeException("insufficient_space");')
+        result=c.execute();self.assertEqual(result['state'],'failed',result)
+        self.assertEqual(result.get('failure_phase'),'backing_up');self.assertEqual(result.get('failure_code'),'insufficient_space');self.assertEqual(result['core_state'],'running')
+        self.assertFalse((c.base/'installs').exists())
+
     def test_unconsumed_auxiliary_state_refuses_before_any_service_stop(self):
         for relative in ['etc/nfqws2-asus-migration/snapshot','var/lib/nfqws2-asus/relay-config-preserve']:
             with self.subTest(relative=relative):

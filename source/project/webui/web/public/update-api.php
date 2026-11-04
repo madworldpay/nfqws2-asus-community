@@ -23,8 +23,9 @@ final class AsusUpdateApi
     public static function operation(?array $job): ?array
     {
         if($job===null)return null;$out=[];
-        foreach(['id','revision','state','phase','package_version','installed_version','core_state','settings_verified'] as $field)if(array_key_exists($field,$job))$out[$field]=$job[$field];
+        foreach(['id','revision','state','phase','package_version','installed_version','core_state','settings_verified','failure_phase'] as $field)if(array_key_exists($field,$job))$out[$field]=$job[$field];
         $out['code']=isset($job['code'])?AsusUpdatePrepare::code(new RuntimeException($job['code'])):null;
+        if(isset($job['failure_code']))$out['failure_code']=AsusUpdatePrepare::code(new RuntimeException($job['failure_code']));
         $out['service_intent']=in_array($job['intent']['mode']??null,['running','waiting_for_wan','stopped'],true)?$job['intent']['mode']:null;return $out;
     }
     private static function checkResult(array $value):array

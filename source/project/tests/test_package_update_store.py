@@ -66,6 +66,27 @@ class PackageUpdateStoreTests(unittest.TestCase):
         for p in self.root.glob('*.json'):self.assertEqual(p.stat().st_mode&0o777,0o600)
         self.assertEqual(folder.stat().st_mode&0o777,0o700)
 
+    def test_original_failure_survives_recovery_and_final_finished_phase(self):
+        job=self.call([self.reserve(),['update',['LAST',{'state':'prepared'}]],['update',['LAST',{'state':'applying','phase':'backing_up'}]]])[-1]['id']
+        self.assertIsInstance(self.call([['failure',[job,'insufficient_space']]]),list)
+        self.call([['update',[job,{'phase':'verifying'}]],['failure',[job,'core_start_failed']]])
+        value=self.call([['update',[job,{'state':'failed','code':'recovery_required','phase':'finished'}]]])[0]
+        self.assertEqual(value['failure_phase'],'backing_up');self.assertEqual(value['failure_code'],'insufficient_space');self.assertEqual(value['code'],'recovery_required')
+    def test_terminal_failure_captures_previous_step_before_finished_patch(self):
+        value=self.call([self.reserve(),['update',['LAST',{'phase':'checking_package'}]],['update',['LAST',{'state':'failed','phase':'finished','code':'download_hash'}]]])[-1]
+        self.assertEqual(value.get('failure_phase'),'checking_package');self.assertEqual(value.get('failure_code'),'download_hash')
+    def test_reboot_reconciliation_retains_the_last_known_failure_stage(self):
+        self.call([self.reserve(),['update',['LAST',{'phase':'downloading'}]],['reconcile',['different-boot',0]]])
+        value=self.call([['status',[]]])[0]['history'][0]
+        self.assertEqual(value.get('failure_phase'),'downloading');self.assertEqual(value.get('failure_code'),'interrupted')
+
+    def test_rotation_reclaims_the_own_apply_budget_record(self):
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        record=folder/'apply-budget.json';record.write_text('{"seconds":749,"durable_files":364,"fsync_seconds":0.863}');record.chmod(0o600)
+        self.call([['update',[job,{'state':'failed','code':'timed_out'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertFalse(record.exists());self.assertFalse(folder.exists())
+
     def test_rotation_removes_only_manifest_owned_backup_files(self):
         import hashlib
         first=self.call([self.reserve()]);self.assertIsInstance(first,list);job=first[0]['id']

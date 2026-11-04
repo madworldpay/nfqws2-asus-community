@@ -44,9 +44,11 @@ try{
     }
     if($mode==='check'){(new AsusUpdateCheck($store))->complete($id);exit(0);}
     if($mode==='guard-apply'){
+        $environment=(new AsusUpdatePrepare($store))->environment();
+        $seconds=(new AsusUpdateWatchdog($store))->applyBudget($id,$environment);
         $runtime=AsusUpdateRuntime::load($store->path('operations/'.$id.'/runtime'));
         $job=$store->readOperation($id);if(($job['runtime_digest']??null)!==$runtime['digest'])exit(1);
-        (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+240,array_merge($runtime['argv'],['--','restore-before-install',$id]));exit(0);
+        (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+$seconds,array_merge($runtime['argv'],['--','restore-before-install',$id]));exit(0);
     }
     if($mode==='guard-prepare'){
         $command=[PHP_BINARY,'-n','-d','extension=/opt/lib/php8/openssl.so','-d','register_argc_argv=1','-q','-f',__FILE__,'--','prepare',$id];

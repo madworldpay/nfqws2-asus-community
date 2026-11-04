@@ -39,7 +39,7 @@ try {
       status:()=>API.invalidateStatus(),
     };return <TranslationContext.Provider value={{t}}><CurrentVersion/>{auth===false&&<LoginDialog/>}</TranslationContext.Provider>}
     createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><App/></QueryClientProvider>);
-  ` }, bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic',
+  ` }, bundle: true, loader: { ".css": "empty" }, write: false, platform: 'browser', format: 'iife', jsx: 'automatic',
     tsconfig: join(web, 'tsconfig.app.json'), logLevel: 'silent', define: { 'process.env.APP_VERSION': '"0.1.4"' } });
   server = createServer(async (req, res) => {
     if (req.method !== 'POST') {
