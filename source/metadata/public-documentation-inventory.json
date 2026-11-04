@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 31428,
-      "sha256": "62077c319963a4345d68104620237a30b0751f0ecc020e372226e7af7e616eee"
+      "bytes": 33001,
+      "sha256": "506071ad27b3088f0f98f607a972a1f382e5337f4b82bdb24fc5588e8670fd8c"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -122,8 +122,8 @@
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 19842,
-      "sha256": "399835b4c8f5a5850c014e5f1def54dfc875337815e5538f184c89691603a8a8"
+      "bytes": 21762,
+      "sha256": "3c4f5ef2b1f7255956f76092dfec5b37deb7890de142e366ca2a4a9eebde0c94"
     },
     {
       "file": "PRESETS.en.md",
@@ -147,13 +147,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 19835,
-      "sha256": "2504b87033f05893e82a1463805eea3ce641aa7a0fb89a3b97b896718bbd204d"
+      "bytes": 19936,
+      "sha256": "0fb09b6d4a9cf7074819077874dd4406b4f7a1b1ad8c8b716f2949f34aadd545"
     },
     {
       "file": "README.md",
-      "bytes": 33361,
-      "sha256": "4c6618e6f3d60942e6b8ad0aaf513f224c10680abf5eb828e2e2b32d60a3b809"
+      "bytes": 33545,
+      "sha256": "239d203f0d1b7423a77435e477de441811c518d56feb4f4e80d399fe30683547"
     },
     {
       "file": "ROADMAP.en.md",

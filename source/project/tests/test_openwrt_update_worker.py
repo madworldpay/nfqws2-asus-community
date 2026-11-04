@@ -22,7 +22,7 @@ class NativeUpdateWorker(unittest.TestCase):
   worker='''<?php
 require __DIR__.'/app/openwrt-update-worker.php';$s=new AsusUpdateStore(dirname(__DIR__,3));$id=basename(dirname(__DIR__));$base=dirname(__DIR__,4);$mode=$argv[count($argv)-2];
 if($mode==='hook-apk-precommit'){require __DIR__.'/app/openwrt-package-quiesce.php';(new NfqwsOpenWrtPackageQuiesce($s))->run('upgrade');exit(0);}
-if(str_starts_with($mode,'hook-')){try{$active=(new NfqwsOpenWrtUpdateHook($s,['root'=>$base.'/system','journal'=>$base.'/pkgstate/state']))->run(substr($mode,5));exit($mode==='hook-postinstall'&&!$active?10:0);}catch(Throwable $e){file_put_contents($base.'/hook-error',$e->getMessage());exit(1);}}
+if(str_starts_with($mode,'hook-')){try{$active=(new NfqwsOpenWrtUpdateHook($s,['root'=>$base.'/system','journal'=>$base.'/pkgstate/state']))->run(substr($mode,5));exit($mode==='hook-postinstall'&&!$active?10:0);}catch(Throwable $e){file_put_contents($base.'/hook-error',$e->getMessage());$s->writeFile('operations/'.$id.'/preflight-error.json',json_encode(['code'=>AsusUpdatePrepare::code($e)]));exit(1);}}
 class WorkerFixtureSource implements AsusUpdateSource{public function __construct(public string $p){}public function manifest():array{return ['json'=>file_get_contents($this->p.'/manifest.json'),'signature'=>file_get_contents($this->p.'/manifest.sig')];}public function download(array $p,string $destination):void{copy($this->p.'/update.ipk',$destination);chmod($destination,0600);}}
 $env=['platform'=>'openwrt','series'=>'24.10','arch'=>'x86_64','format'=>'ipk','installed'=>'1.3.2-71','build'=>71,'root'=>$base.'/system','resources'=>__DIR__.'/resources','ram_free'=>1000000000,'overlay_free'=>1000000000];$prepare=new NfqwsOpenWrtUpdatePrepare($s,new WorkerFixtureSource($base),$env,file_get_contents(__DIR__.'/resources/update-release-key.pem'));
 $services=['root'=>$base.'/system','journal'=>$base.'/pkgstate/state','intent'=>fn()=>json_decode(file_get_contents($base.'/intent.json'),true),'restore'=>function($intent)use($base){file_put_contents($base.'/restored',json_encode($intent));return $intent['mode'];},'dns_resume'=>function()use($base){file_put_contents($base.'/dns-resumed','resumed');return ['state'=>'confirmed'];},'web_health'=>fn()=>true];
@@ -30,6 +30,16 @@ echo json_encode((new NfqwsOpenWrtUpdateWorker($s,$prepare,$services))->apply($i
 '''
   if fmt=='apk':worker=worker.replace("'series'=>'24.10'","'series'=>'25.12'").replace("'format'=>'ipk'","'format'=>'apk'").replace('1.3.2-71','1.3.2-r71').replace('update.ipk','update.apk')
   self.sh('cat > '+base+'/source/worker.php',worker)
+  if case.startswith('partial-backup'):
+   source=(ROOT/'webui/web/public/openwrt-update-snapshot.php').read_text()
+   needle='if(!copy($root.'
+   self.assertIn(needle,source)
+   injected="throw new RuntimeException('insufficient_space');"
+   if case=='partial-backup-drift':injected="file_put_contents(rtrim($root,'/').'/etc/nfqws2/nfqws2.conf','changed-during-copy');"+injected
+   if case=='partial-backup-tampered-identity':injected="file_put_contents(dirname($destination).'/quiesced-settings.json','{\"files\":[],\"bytes\":\"0\"}');"+injected
+   source=source.replace(needle,injected+needle,1)
+   self.sh('cat > '+base+'/source/app/openwrt-update-snapshot.php',source)
+
   with tempfile.TemporaryDirectory()as td:
    root=Path(td);out=root/'out';out.mkdir();key=root/'key.pem';pub=root/'pub.pem'
    subprocess.run(['openssl','genpkey','-algorithm','RSA','-pkeyopt','rsa_keygen_bits:3072','-out',str(key)],check=True,capture_output=True);key.chmod(0o600);subprocess.run(['openssl','pkey','-in',str(key),'-pubout','-out',str(pub)],check=True,capture_output=True)
@@ -39,6 +49,11 @@ echo json_encode((new NfqwsOpenWrtUpdateWorker($s,$prepare,$services))->apply($i
    library=(ROOT/'openwrt/package-lifecycle.sh').read_text().split('case "$NFQWS_PKG_ACTION" in')[0]
    hook='#!/bin/sh\numask 077\nNFQWS_PKG_FORMAT='+fmt+'\n'+library+'\nnfqws_package_updates_dir='+base+'/store\nnfqws_package_state_dir='+base+'/pkgstate\n'
    pre=hook+'\nnfqws_package_service_state() { printf "enabled='+('1'if mode!='stopped'else'0')+'\\nrunning='+('1'if mode!='stopped'else'0')+'\\nweb_present=1\\nweb_enabled=1\\nweb_running=1\\n"; }\nnfqws_package_service_owner() { return 0; }\nnfqws_package_dns_control() { return 0; }\nnfqws_package_service() { return 0; }\nnfqws_package_snapshot && nfqws_package_stop_services_internal upgrade || exit 1\n'
+   if case in ['before-copy-without-state','before-copy-settings-drift']:
+    pre=pre.replace('nfqws_package_snapshot && nfqws_package_stop_services_internal upgrade || exit 1', 'nfqws_package_snapshot && nfqws_package_native_update verify || exit 1\nmkdir -p '+base+'/store/operations/\"$NFQWS_FIXTURE_ID\"/backup\nexit 1')
+    # Resolve the active operation only from the fixture's protected ticket.
+    pre=pre.replace('mkdir -p '+base+'/store/operations/\"$NFQWS_FIXTURE_ID\"/backup', 'NFQWS_FIXTURE_ID=$(jsonfilter -i '+base+'/store/native-transaction.json -e @.id)\nmkdir -p '+base+'/store/operations/\"$NFQWS_FIXTURE_ID\"/backup')
+    if case=='before-copy-settings-drift':pre=pre.replace('\nexit 1','\nprintf %s changed-by-hook > '+base+'/system/etc/nfqws2/nfqws2.conf\nexit 1')
    if case=='before-write-settings':pre+='printf %s changed-by-hook > '+base+'/system/etc/nfqws2/nfqws2.conf\n'
    if case in ['before-write','before-write-settings']:pre+='exit 1\n'
    post=hook+'\nnfqws_package_native_update postinstall || exit 1\n'
@@ -102,4 +117,16 @@ $env=['platform'=>'openwrt','series'=>'24.10','arch'=>'x86_64','format'=>'ipk','
   r=self.run_case('after-write');self.assertEqual(r['state'],'failed',r);self.assertFalse(r['ordinary_start_allowed'],r);self.assertTrue(r['journal_retained'],r);self.assertEqual(r['payload'],'72');self.assertIsNone(r['restore']);self.assertFalse(r['dns_resumed']);self.assertEqual(r['config'],'latest-settings')
  def test_settings_change_is_reported_without_overwriting_it(self):
   r=self.run_case('settings-changed');self.assertEqual(r['state'],'failed',r);self.assertEqual(r['code'],'settings_changed');self.assertIsNone(r['restore']);self.assertEqual(r['config'],'changed-by-hook')
+ def test_partial_backup_copy_failure_restores_verified_original_service(self):
+  r=self.run_case('partial-backup');self.assertEqual(r['state'],'failed',r);self.assertEqual(r['payload'],'71');self.assertIsNotNone(r['restore'],r);self.assertEqual(r['restore']['mode'],'running');self.assertTrue(r['dns_resumed']);self.assertFalse(r['journal_retained']);self.assertEqual(r.get('failure_phase'),'backing_up');self.assertEqual(r.get('failure_code'),'insufficient_space')
+ def test_partial_backup_copy_failure_keeps_originally_stopped_service_off(self):
+  r=self.run_case('partial-backup','stopped');self.assertEqual(r['state'],'failed',r);self.assertEqual(r['payload'],'71');self.assertIsNotNone(r['restore'],r);self.assertEqual(r['restore']['mode'],'stopped');self.assertFalse(r['restore']['enabled']);self.assertEqual(r.get('failure_code'),'insufficient_space')
+ def test_missing_capture_identity_uses_pre_manager_state_without_trusting_partial_directory(self):
+  r=self.run_case('before-copy-without-state');self.assertEqual(r['state'],'failed',r);self.assertEqual(r['payload'],'71');self.assertIsNotNone(r['restore'],r);self.assertEqual(r['restore']['mode'],'running');self.assertEqual(r.get('failure_phase'),'stopping')
+ def test_pre_manager_identity_fallback_refuses_changed_live_settings(self):
+  r=self.run_case('before-copy-settings-drift');self.assertEqual(r['state'],'failed',r);self.assertEqual(r['payload'],'71');self.assertIsNone(r['restore'],r);self.assertEqual(r['code'],'settings_changed');self.assertEqual(r['config'],'changed-by-hook')
+ def test_partial_copy_recovery_refuses_live_settings_drift(self):
+  r=self.run_case('partial-backup-drift');self.assertEqual(r['state'],'failed',r);self.assertIsNone(r['restore'],r);self.assertEqual(r['code'],'settings_changed');self.assertEqual(r['config'],'changed-during-copy');self.assertEqual(r.get('failure_code'),'insufficient_space')
+ def test_invalid_existing_capture_identity_never_falls_back_to_older_state(self):
+  r=self.run_case('partial-backup-tampered-identity');self.assertEqual(r['state'],'failed',r);self.assertIsNone(r['restore'],r);self.assertEqual(r['code'],'invalid_state');self.assertEqual(r['config'],'latest-settings');self.assertEqual(r.get('failure_code'),'insufficient_space')
 if __name__=='__main__':unittest.main()

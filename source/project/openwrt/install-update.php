@@ -3,6 +3,9 @@
 // the installed coordinator owns its own class definitions and sealed runtime.
 if(isset($_SERVER['REQUEST_METHOD'])||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',(string)@file_get_contents('/proc/self/status')))exit(2);
 $args=$argv??[];array_shift($args);if(($args[0]??null)==='--')array_shift($args);if(count($args)!==1)exit(2);
+// The privileged transaction owns its deadline; CGI's cumulative CPU timer
+// must not interrupt a snapshot or native package-manager critical section.
+set_time_limit(0);
 umask(0077);require_once '/usr/share/nfqws2-web/openwrt-update-worker.php';require_once '/usr/share/nfqws2-web/openwrt-update-launch.php';require_once '/usr/share/nfqws2-web/update-dispatch.php';
 try{
     if(!NfqwsPlatform::native())throw new RuntimeException('unsupported_abi');$local=new AsusUpdateStore($args[0]);

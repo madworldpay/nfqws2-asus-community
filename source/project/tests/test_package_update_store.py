@@ -99,6 +99,63 @@ class PackageUpdateStoreTests(unittest.TestCase):
         for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
         self.assertFalse(own.exists());self.assertEqual(unknown.read_text(),'KEEP')
 
+    def test_rotation_reclaims_interrupted_native_copy_and_retains_unknown_files(self):
+        import resource
+        from test_package_update_guard import NATIVE
+        if not NATIVE.is_file():self.skipTest('native PHP fixture required')
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
+        system=self.base/'system';source=system/'etc/nfqws2/nfqws2.conf';source.parent.mkdir(parents=True)
+        source.write_bytes(b'private config\n'*32768);source.chmod(0o600)
+        # Exercise the full existing settings-file bound: its staging plan also
+        # owns the two final JSON manifests before either can be published.
+        for n in range(510):
+            extra=source.parent/f'small-{n:03}.conf';extra.write_bytes(b'x');extra.chmod(0o600)
+        backup=folder/'backup'
+        def short_file_limit():resource.setrlimit(resource.RLIMIT_FSIZE,(131072,131072))
+        code='require $argv[1]."/openwrt-update-snapshot.php";NfqwsOpenWrtUpdateSnapshot::capture($argv[2],$argv[3],(int)$argv[4]);'
+        interrupted=subprocess.run([str(NATIVE),'-n','-r',code,str(PUBLIC),str(backup),str(system),str(os.getuid())],capture_output=True,text=True,preexec_fn=short_file_limit,timeout=5)
+        self.assertNotEqual(interrupted.returncode,0)
+        partial=backup/'etc/nfqws2/nfqws2.conf';self.assertTrue(partial.exists());self.assertLess(partial.stat().st_size,source.stat().st_size)
+        staging=backup/'staging.json';self.assertTrue(staging.exists(),'interrupted copy must already have a protected cleanup index')
+        index=json.loads(staging.read_text());self.assertIn('etc/nfqws2/nfqws2.conf',index['files'])
+        self.assertEqual(len(index['files']),513)
+        note=backup/'operator-note';note.write_text('KEEP')
+        outside=self.base/'outside';outside.write_text('KEEP OUTSIDE');link=backup/'operator-link';link.symlink_to(outside)
+        self.call([['update',[job,{'state':'failed','code':'insufficient_space'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertFalse(partial.exists());self.assertFalse(staging.exists())
+        self.assertEqual(note.read_text(),'KEEP');self.assertTrue(link.is_symlink());self.assertEqual(outside.read_text(),'KEEP OUTSIDE')
+
+    def test_native_staging_cleanup_keeps_indexed_links_and_oversized_files(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];backup=self.root/'operations'/job/'backup';backup.mkdir(mode=0o700)
+        partial=backup/'partial.conf';partial.write_bytes(b'part');partial.chmod(0o600)
+        changed=backup/'too-large.conf';changed.write_bytes(b'longer owner data');changed.chmod(0o600)
+        outside=self.base/'outside';outside.write_text('KEEP');linked=backup/'linked.conf';linked.symlink_to(outside)
+        files={name:{'mode':0o600,'size':8,'sha256':hashlib.sha256(b'complete').hexdigest()}for name in ['partial.conf','too-large.conf','linked.conf']}
+        staging=backup/'staging.json';staging.write_text(json.dumps({'files':files}));staging.chmod(0o600)
+        self.call([['update',[job,{'state':'failed','code':'insufficient_space'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertFalse(partial.exists());self.assertEqual(changed.read_bytes(),b'longer owner data');self.assertTrue(linked.is_symlink());self.assertEqual(outside.read_text(),'KEEP')
+
+    def test_native_backup_cleanup_keeps_operation_root_and_backup_targets_distinct(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job;backup=folder/'backup';backup.mkdir(mode=0o700)
+        copied=backup/'owned.conf';copied.write_bytes(b'part');copied.chmod(0o600)
+        staging=backup/'staging.json';staging.write_text(json.dumps({'files':{'owned.conf':{'mode':0o600,'size':8,'sha256':hashlib.sha256(b'complete').hexdigest()}}}));staging.chmod(0o600)
+        # These are reserved operation-root names, but remain unknown operator
+        # files when placed inside the separate backup directory.
+        for name in ['manager.log','package.ipk']:
+            path=backup/name;path.write_text('KEEP BACKUP NOTE');path.chmod(0o600)
+        names=['package.ipk','manager.log','original-settings.json','quiesced-settings.json']
+        for name in names:
+            path=folder/name;path.write_text('private operation artifact');path.chmod(0o600)
+        self.call([['update',[job,{'state':'failed','code':'insufficient_space'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        for name in names:self.assertFalse((folder/name).exists(),name)
+        self.assertFalse((folder/'candidate.json').exists());self.assertFalse(copied.exists());self.assertFalse(staging.exists())
+        for name in ['manager.log','package.ipk']:self.assertEqual((backup/name).read_text(),'KEEP BACKUP NOTE')
+
     def test_rotation_retains_unresolved_preinstall_checkpoint_and_final_settings(self):
         job=self.call([self.reserve()])[0]['id'];folder=self.root/'operations'/job
         for relative in ['quiesce.json','service-state/runtime.conf','quiesced-backup/etc/nfqws2/nfqws2.conf']:

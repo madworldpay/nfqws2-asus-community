@@ -53,7 +53,7 @@ final class NfqwsOpenWrtUpdateGuard
         $manager=$this->managerAlive($t)&&self::ancestor($t['manager']['pid']);
         if($t['phase']==='installing')return $manager&&in_array($action,['core-stop','web-stop','hook-prerm','hook-postinst','dns-restore'],true);
         if($t['phase']!=='starting')return false;
-        return $action==='web-start'||($action==='core-start'&&$t['intent']['mode']!=='stopped');
+        return in_array($action,['web-start','core-stop'],true)||($action==='core-start'&&$t['intent']['mode']!=='stopped');
     }
     public function context(string $id):array
     {

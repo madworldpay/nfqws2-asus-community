@@ -3,6 +3,9 @@
 if(!in_array(PHP_SAPI,['cli','cgi-fcgi'],true)||isset($_SERVER['REQUEST_METHOD'])||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',(string)@file_get_contents('/proc/self/status')))exit(2);
 $args=$argv??[];array_shift($args);if(($args[0]??null)==='--')array_shift($args);
 if(count($args)!==2||!preg_match('/^[a-f0-9]{32}$/D',$args[1]??'')||!in_array($args[0],['check','prepare','apply','guard-check','guard-prepare','guard-apply','hook-verify','hook-capture','hook-postinstall','hook-apk-precommit'],true))exit(2);
+// The privileged transaction owns its deadline; CGI's cumulative CPU timer
+// must not interrupt a snapshot or native package-manager critical section.
+set_time_limit(0);
 [$mode,$id]=$args;umask(0077);$app=is_dir(__DIR__.'/app')?__DIR__.'/app':'/usr/share/nfqws2-web';
 require_once $app.'/openwrt-update-worker.php';require_once $app.'/openwrt-package-quiesce.php';require_once $app.'/openwrt-apk-command.php';require_once $app.'/update-watchdog.php';require_once $app.'/update-check.php';
 if(!NfqwsPlatform::native())exit(2);
