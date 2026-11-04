@@ -21,7 +21,7 @@ final class NfqwsOpenWrtUpdateWorker
     private function service(string $component,string $action):bool
     {
         $targets=['core'=>'/usr/lib/nfqws2/nfqws2-native','web'=>'/usr/lib/nfqws2-web/nfqws2-native-web'];
-        if(!isset($targets[$component])||!in_array($action,['start','enabled','enable','disable','running'],true))throw new RuntimeException('invalid_state');
+        if(!isset($targets[$component])||!in_array($action,['start','stop','enabled','enable','disable','running'],true))throw new RuntimeException('invalid_state');
         $target=$targets[$component];$path='/etc/init.d/'.basename($target);$s=@lstat($target);
         if(!is_link($path)||readlink($path)!==$target||!$s||!is_file($target)||is_link($target)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0022)!==0||!is_executable($target))throw new RuntimeException('invalid_state');
         AsusUpdateStore::noLinks($target);
@@ -47,9 +47,14 @@ final class NfqwsOpenWrtUpdateWorker
         if(isset($this->options['restore']))return ($this->options['restore'])($intent);
         foreach(['core'=>'enabled','web'=>'web_enabled']as $name=>$field)if(!$this->service($name,($intent[$field]??false)?'enable':'disable'))throw new RuntimeException('intent_mismatch');
         if($intent['web_running']){if(!$this->service('web','start'))throw new RuntimeException('web_start_failed');if(!$this->health())throw new RuntimeException('web_health_failed');}
+        // A failed stop may leave the daemon alive after capture/firewall was
+        // removed. Never treat that process or a stale capture marker as proof
+        // of restoration. Recreate only our own service from its saved intent.
+        if(!$this->service('core','stop'))throw new RuntimeException('core_stop_failed');
         $d=NfqwsOpenWrtWeb::diagnostics();
-        if($intent['mode']==='stopped'){if($d['process_running']??false)throw new RuntimeException('intent_mismatch');return 'stopped';}
-        if(!($d['process_running']??false)&&!$this->service('core','start'))throw new RuntimeException('core_start_failed');$d=NfqwsOpenWrtWeb::diagnostics();
+        if($d['process_running']??false)throw new RuntimeException('core_stop_failed');
+        if($intent['mode']==='stopped')return 'stopped';
+        if(!$this->service('core','start'))throw new RuntimeException('core_start_failed');$d=NfqwsOpenWrtWeb::diagnostics();
         if(!($d['process_running']??false)||($d['nfqueue']['state']??null)!=='bound')throw new RuntimeException('core_start_failed');
         return ($d['capture']??null)==='waiting_uplink'?'waiting_for_wan':'running';
     }
@@ -64,7 +69,7 @@ final class NfqwsOpenWrtUpdateWorker
         try{
             if($this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             $this->store->writeFile('operations/'.$id.'/boundary.json',json_encode(['phase'=>'installing'],JSON_THROW_ON_ERROR));
-            $this->ticket($id,'installing');$this->store->update($id,['phase'=>'installing']);
+            $this->ticket($id,'installing');$this->store->update($id,['phase'=>'stopping']);
             if($environment['format']==='apk')$gate=NfqwsOpenWrtApkCommit::install($this->store,$id);
         }finally{flock($critical,LOCK_UN);fclose($critical);}
         try{
@@ -79,7 +84,14 @@ final class NfqwsOpenWrtUpdateWorker
                 // manager can already be restoring DNS in its old hook.
                 while($status['running']){usleep(20000);$status=proc_get_status($p);}$exit=$status['exitcode'];
             }finally{$closed=proc_close($p);if($exit===null||$exit<0)$exit=$closed;}
-            if($exit!==0)throw new RuntimeException('install_failed');
+            if($exit!==0){
+                // Maintainer hooks publish the exact pre-mutation failure. Keep
+                // it distinct from the manager's generic nonzero exit.
+                $raw=$this->store->readFile('operations/'.$id.'/preflight-error.json',1024);
+                if($raw!==null){$v=json_decode($raw,true,4,JSON_THROW_ON_ERROR);
+                    if(is_array($v)&&array_keys($v)===['code']&&is_string($v['code'])&&preg_match('/^[a-z][a-z0-9_]{0,79}$/D',$v['code']))throw new RuntimeException($v['code']);}
+                throw new RuntimeException('install_failed');
+            }
         }finally{if($gate!==null&&!NfqwsOpenWrtApkCommit::remove($gate))throw new RuntimeException('invalid_state');}
     }
     private function recoveryEnvironment(array $before):array
@@ -114,6 +126,7 @@ final class NfqwsOpenWrtUpdateWorker
                 NfqwsOpenWrtUpdatePackage::space($environment['overlay_free'],$environment['ram_free'],$candidate['package'],NfqwsOpenWrtUpdateSnapshot::estimate($root),$environment['runtime_bytes']);
                 $this->store->writeFile($base.'/native-preflight.json',json_encode($preflight,JSON_THROW_ON_ERROR));
                 $original=NfqwsOpenWrtUpdatePayload::capture($environment['format']);$this->store->writeFile($base.'/original-payload.json',json_encode($original,JSON_THROW_ON_ERROR));
+                $this->store->writeFile($base.'/original-settings.json',json_encode(NfqwsOpenWrtUpdateSnapshot::state($root),JSON_THROW_ON_ERROR));
                 $args=NfqwsOpenWrtUpdateManager::argv($this->prepare->archive($id,$candidate),$environment,$preflight['installed'],$preflight['record'],$preflight['keys']);$managerStarted=true;$this->install($id,$args,$environment);
                 $after=NfqwsOpenWrtUpdateEnvironment::collect();if($after['installed']!==$candidate['package_version']||$after['build']!==$candidate['build'])throw new RuntimeException('version_mismatch');
                 $db=NfqwsOpenWrtUpdateManager::installed($after);$expected=$preflight['installed'];unset($db['nfqws2-native'],$expected['nfqws2-native']);if($db!==$expected)throw new RuntimeException('dependency_change');
@@ -129,7 +142,14 @@ final class NfqwsOpenWrtUpdateWorker
                 $patch=['state'=>'failed','code'=>AsusUpdatePrepare::code($e)];
                 try{$this->store->failure($id,$patch['code']);}catch(Throwable $ignored){}
                 if($ticket&&$managerStarted&&$original!==null&&NfqwsOpenWrtUpdatePayload::unchanged($original)){
-                    try{if(is_dir($this->store->path($base.'/backup')))NfqwsOpenWrtUpdateSnapshot::verify($this->store->path($base.'/backup'),$root);$after=$this->recoveryEnvironment($environment);if($after['installed']!==$environment['installed'])throw new RuntimeException('version_mismatch');
+                    try{
+                        // A partial backup is not a partial installed package.
+                        // Use protected identities, not incomplete copied bytes,
+                        // only after the entire old payload is proven unchanged.
+                        $raw=$this->store->readFile($base.'/quiesced-settings.json',131072)??$this->store->readFile($base.'/original-settings.json',131072);
+                        if($raw===null)throw new RuntimeException('invalid_state');
+                        NfqwsOpenWrtUpdateSnapshot::verifyState(json_decode($raw,true,32,JSON_THROW_ON_ERROR),$root);
+                        $after=$this->recoveryEnvironment($environment);if($after['installed']!==$environment['installed'])throw new RuntimeException('version_mismatch');
                         $current=NfqwsOpenWrtUpdateManager::installed($after,true);$old=json_decode($this->store->readFile($base.'/native-preflight.json')??'',true,32,JSON_THROW_ON_ERROR)['installed']??null;if(!is_array($old))throw new RuntimeException('invalid_state');unset($old['nfqws2-native']);if($current!==$old)throw new RuntimeException('dependency_change');if($after['recovery_pending']??false)$patch['code']='pending_packages';$t=$this->ticket($id,'starting');$patch['core_state']=$this->restore($t['intent']);
                         if(!flock($lease,LOCK_SH))throw new RuntimeException('busy');$this->resume();(new NfqwsOpenWrtUpdateHook($this->store,$this->options))->complete($t);$patch['installed_version']=$after['installed'];
                     }catch(Throwable $recovery){$patch['code']=AsusUpdatePrepare::code($recovery);}

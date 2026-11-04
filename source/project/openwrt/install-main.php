@@ -6,6 +6,9 @@ final class NfqwsOpenWrtInstallMain
     {
         if(isset($_SERVER['REQUEST_METHOD'])||!preg_match('/^Uid:\s+0\s+0\s+0\s+0\s*$/m',(string)@file_get_contents('/proc/self/status')))return 2;
         if(count($args)!==2||!in_array($args[0],['prepare','describe','run','status'],true))return 2;
+        // The privileged transaction owns its deadline; CGI's cumulative CPU timer
+        // must not interrupt a snapshot or native package-manager critical section.
+        set_time_limit(0);
         [$mode,$work]=$args;umask(0077);$local=new AsusUpdateStore($work);
         try{
             if($mode==='prepare'){$r=(new NfqwsOpenWrtInstallPrepare($work.'/work'))->run();$local->writeFile('plan.json',json_encode($r,JSON_THROW_ON_ERROR));return 0;}

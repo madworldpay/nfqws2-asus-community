@@ -26,7 +26,15 @@ nfqws_web_technical_channel() {
     /usr/bin/php-cgi -d register_argc_argv=1 -q -f /usr/lib/nfqws2/technical-channel/worker.php -- "$1" lifecycle
 }
 
-stop_service() { nfqws_web_technical_channel stop; }
+stop_service() {
+    # Preserve an existing support session only for the proven native package
+    # transaction. Ordinary Stop/restart/shutdown still revokes it; neither an
+    # environment flag nor an inherited lock FD grants this exception.
+    if /usr/bin/php8-cgi -d register_argc_argv=1 -q -f /usr/lib/nfqws2/update/service-guard.php -- authorize web-stop >/dev/null 2>&1; then
+        return 0
+    fi
+    nfqws_web_technical_channel stop
+}
 
 start_service() {
     nfqws_web_technical_channel recover || return 1

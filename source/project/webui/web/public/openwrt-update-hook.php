@@ -56,10 +56,17 @@ final class NfqwsOpenWrtUpdateHook
             $raw=$this->store->readFile($base.'/quiesced.json',1024);
             if($raw===null||json_decode($raw,true)!==['captured'=>true])throw new RuntimeException('invalid_state');
         }
+        if($action==='verify'&&$this->store->readFile($base.'/quiesced.json',1024)===null)$this->store->update($id,['phase'=>'stopping']);
         if($action==='capture'){
+            if($this->store->readFile($base.'/quiesced.json',1024)===null)$this->store->update($id,['phase'=>'backing_up']);
+            // Save the post-DNS-stop identity before any backup copy can fail.
+            $root=$this->options['root']??'/';$saved=$this->store->readFile($base.'/quiesced-settings.json',131072);
+            if($saved===null)$this->store->writeFile($base.'/quiesced-settings.json',json_encode(NfqwsOpenWrtUpdateSnapshot::state($root),JSON_THROW_ON_ERROR));
+            else NfqwsOpenWrtUpdateSnapshot::verifyState(json_decode($saved,true,32,JSON_THROW_ON_ERROR),$root);
             $backup=$this->store->path($base.'/backup');$root=$this->options['root']??'/';
             if(!is_dir($backup))NfqwsOpenWrtUpdateSnapshot::capture($backup,$root);else NfqwsOpenWrtUpdateSnapshot::verify($backup,$root);
             $this->store->writeFile($base.'/quiesced.json',json_encode(['captured'=>true],JSON_THROW_ON_ERROR));
+            $this->store->update($id,['phase'=>'installing']);
         }
         return true;
     }

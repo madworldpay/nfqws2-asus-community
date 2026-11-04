@@ -16,7 +16,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 87:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build87) · [change history](CHANGELOG.md). Fixed update preparation on ASUS routers with slow USB storage. If Build 85/86 fails with `timed_out`, run the installation command below once; settings are preserved. Update stages show completion percentages; failure details can be copied.
+**Build 87:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build87) · [change history](CHANGELOG.md). Fixed update preparation on ASUS routers with slow USB storage. If Build 85/86 fails with `timed_out`, run the installation command below once; settings are preserved. Update stages show completion percentages; failure details can be copied. Updated native OpenWrt service recovery and technical-channel continuity; all architectures rebuilt.
 
 ## What you get
 
