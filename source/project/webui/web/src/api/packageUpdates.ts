@@ -19,6 +19,16 @@ export type PackageCheck = {
   candidate: PackageCandidate | null;
   installed_version: string | null;
 };
+export type PackageOperationPhase =
+  | 'queued'
+  | 'downloading'
+  | 'checking_package'
+  | 'validating'
+  | 'stopping'
+  | 'backing_up'
+  | 'installing'
+  | 'verifying'
+  | 'finished';
 export type PackageOperation = {
   id: string;
   revision: string;
@@ -29,7 +39,9 @@ export type PackageOperation = {
     | 'succeeded'
     | 'failed'
     | 'interrupted';
-  phase?: string;
+  phase?: PackageOperationPhase;
+  failure_phase?: PackageOperationPhase;
+  failure_code?: string;
   package_version: string;
   installed_version?: string;
   core_state?: 'running' | 'waiting_for_wan' | 'stopped';
@@ -60,6 +72,19 @@ const keys = (v: Record<string, unknown>, expected: string[]) =>
   Object.keys(v).sort().join(',') === [...expected].sort().join(',');
 const code = (v: unknown) =>
   v === null || (typeof v === 'string' && /^[a-z_]{1,64}$/.test(v));
+const operationPhase = (v: unknown) =>
+  typeof v === 'string' &&
+  [
+    'queued',
+    'downloading',
+    'checking_package',
+    'validating',
+    'stopping',
+    'backing_up',
+    'installing',
+    'verifying',
+    'finished',
+  ].includes(v);
 const coreState = (v: unknown) =>
   v === 'running' || v === 'waiting_for_wan' || v === 'stopped';
 const invalid = (): never => {
@@ -166,6 +191,8 @@ function operation(value: unknown): PackageOperation {
   ];
   const optional = [
     'phase',
+    'failure_phase',
+    'failure_code',
     'installed_version',
     'core_state',
     'settings_verified',
@@ -195,15 +222,11 @@ function operation(value: unknown): PackageOperation {
   )
     return invalid();
   if (
-    value.phase !== undefined &&
-    ![
-      'queued',
-      'validating',
-      'stopping',
-      'installing',
-      'verifying',
-      'finished',
-    ].includes(String(value.phase))
+    (value.phase !== undefined && !operationPhase(value.phase)) ||
+    (value.failure_phase !== undefined &&
+      !operationPhase(value.failure_phase)) ||
+    (value.failure_code !== undefined &&
+      (typeof value.failure_code !== 'string' || !code(value.failure_code)))
   )
     return invalid();
   if (

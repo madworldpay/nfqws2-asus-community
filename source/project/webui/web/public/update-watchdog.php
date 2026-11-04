@@ -1,10 +1,22 @@
 <?php
 require_once __DIR__.'/update-lifecycle.php';
+require_once __DIR__.'/update-deadline.php';
 
 /** Owns only its direct worker child. Never terminates an installer or daemon. */
 final class AsusUpdateWatchdog
 {
     public function __construct(private AsusUpdateStore $store,private int $owner=0) {}
+    /** Protect the applying lease before sampling a potentially slow disk. */
+    public function applyBudget(string $id,array $environment):int
+    {
+        $job=$this->store->readOperation($id);$identity=AsusUpdateLifecycle::identity(getmypid());
+        if($job['state']!=='applying'||$job['boot_id']!==AsusUpdateStore::boot()||$identity===null||$identity['uid']!==$this->owner)throw new RuntimeException('invalid_state');
+        $this->store->update($id,['identity'=>$identity]);
+        require_once __DIR__.'/update-rollback.php';
+        $budget=AsusUpdateApplyBudget::measure($this->store->path('operations/'.$id),AsusUpdateRollback::durableFileCount($environment),$this->owner);
+        $this->store->writeFile('operations/'.$id.'/apply-budget.json',json_encode($budget,JSON_THROW_ON_ERROR));
+        return $budget['seconds'];
+    }
     private function interrupt(string $id,string $code): void
     {
         $this->store->withRetryLock(function()use($id,$code){$job=$this->store->readOperation($id);
@@ -28,7 +40,7 @@ final class AsusUpdateWatchdog
     public function run(string $id,array $argv,float $deadline,?array $recovery=null): void
     {
         $job=$this->store->readOperation($id);if(!in_array($job['state'],['preparing','applying'],true)||$job['boot_id']!==AsusUpdateStore::boot())throw new RuntimeException('invalid_state');
-        if(!is_finite($deadline)||$deadline<AsusUpdateStore::uptime()||$deadline>AsusUpdateStore::uptime()+300||count($argv)<1||count($argv)>64)throw new RuntimeException('invalid_state');
+        if(!is_finite($deadline)||$deadline<AsusUpdateStore::uptime()||$deadline>AsusUpdateStore::uptime()+($job['state']==='applying'?AsusUpdateApplyBudget::MAX_SECONDS:300)||count($argv)<1||count($argv)>64)throw new RuntimeException('invalid_state');
         foreach($argv as $arg)if(!is_string($arg)||strlen($arg)>8192||strpbrk($arg,"\r\n\0")!==false)throw new RuntimeException('invalid_state');
         if($recovery!==null){if($job['state']!=='applying'||count($recovery)<1||count($recovery)>64)throw new RuntimeException('invalid_state');foreach($recovery as $arg)if(!is_string($arg)||strlen($arg)>8192||strpbrk($arg,"\r\n\0")!==false)throw new RuntimeException('invalid_state');}
         if($job['state']==='applying'&&!NfqwsPlatform::native()){

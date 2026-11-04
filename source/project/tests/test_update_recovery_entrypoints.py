@@ -25,11 +25,11 @@ class RecoveryEntrypointTests(unittest.TestCase):
             (app/'update-worker.php').write_text('''<?php
 class AsusUpdateStore {public function path($p){return '/sealed/'.$p;}public function readOperation($id){return ['runtime_digest'=>'sealed'];}public static function uptime(){return 10;}}
 class AsusUpdateRuntime {public static function load($p){return ['digest'=>'sealed','argv'=>['sealed/php','-n','sealed/entry.php']];}}
-class AsusUpdatePrepare {public function __construct(...$args){}public static function code($e){return $e->getMessage();}}
+class AsusUpdatePrepare {public function __construct(...$args){}public function environment(){return ['pending'=>true];}public static function code($e){return $e->getMessage();}}
 class AsusGithubUpdateSource {}
 class AsusUpdateDeadline {public function __construct(...$args){}}
 class AsusUpdateWorker {public function __construct($s,$prepare=null){$GLOBALS['prepared']=$prepare instanceof AsusUpdatePrepare;}public function recoverBeforeInstall($id){echo json_encode(['id'=>$id,'prepare'=>$GLOBALS['prepared']]);return ['state'=>getenv('RECOVERY_RESULT')?:'restored'];}}
-class AsusUpdateWatchdog {public function __construct(...$args){}public function run(...$args){echo json_encode($args);}}
+class AsusUpdateWatchdog {public function __construct(...$args){}public function applyBudget(...$args){return 240;}public function run(...$args){echo json_encode($args);}}
 ''')
             for name in ['update-watchdog.php','update-check.php','update-github.php']:(app/name).write_text('<?php')
             self.entries.append(entry)

@@ -5,6 +5,7 @@ require_once __DIR__.'/dpi-store.php';
 final class AsusUpdateStore
 {
     public const TERMINAL=['succeeded','failed','interrupted'];
+    private const PHASES=['queued','downloading','checking_package','validating','stopping','backing_up','installing','verifying','finished'];
     private string $root;
     private bool $locked=false;
     public function __construct(?string $root=null,private int $owner=0)
@@ -114,7 +115,7 @@ final class AsusUpdateStore
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
         $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
         foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}
-        foreach(['quiesce.json','quiesce-result.json','quiesce-recovery-error.json','quiesce-guardian.log','package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','rollback-finalize-error.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
+        foreach(['quiesce.json','quiesce-result.json','quiesce-recovery-error.json','quiesce-guardian.log','package.ipk','package.apk','recovery-data.gz','native-preflight.json','quiesced.json','apk-commit.json','original-payload.json','manager.log','opkg.log','rollback-opkg.log','rollback-verify.log','rollback-finalized.json','rollback-result.json','rollback-failure.json','rollback-finalize-error.json','update-failure.json','web-started.json','services-stopped.json','dns-resume.json','dns-resume-quiesced-before.json','dns-resume-quiesced-after.json','snapshot.json','candidate.json','manifest.json','manifest.sig','apply.json','work.lock','critical.lock','guard.json','apply-budget.json','cancel.json','boundary.json','preflight-error.json','network.json'] as $name){$p=$dir.'/'.$name;$s=@lstat($p);if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1)@unlink($p);}
         @rmdir($dir);
     }
     private function pruneTree(string $name,string $index,bool $incomplete=false,bool $runtime=false,bool $rollback=false): void
@@ -145,13 +146,29 @@ final class AsusUpdateStore
             $db['operations'][$id]=$job;$this->rotate($db);$this->save($db);return $job;
         });
     }
+    private static function failurePatch(array $job,string $code):array
+    {
+        if(isset($job['failure_code']))return [];
+        $patch=['failure_code'=>preg_match('/^[a-z_]{1,64}$/D',$code)?$code:'update_failed'];
+        if(in_array($job['phase']??null,self::PHASES,true)&&$job['phase']!=='finished')$patch['failure_phase']=$job['phase'];
+        return $patch;
+    }
+    /** Record the first failure before a recovery can change the current step. */
+    public function failure(string $id,string $code):array
+    {
+        return $this->withRetryLock(function()use($id,$code){$job=$this->readOperation($id);
+            if(in_array($job['state'],self::TERMINAL,true))return $job;
+            $patch=self::failurePatch($job,$code);return $patch===[]?$job:$this->update($id,$patch);
+        });
+    }
     public function update(string $id,array $patch): array
     {
         self::id($id);return $this->withRetryLock(function()use($id,$patch){$db=$this->db();if(!isset($db['operations'][$id]))throw new RuntimeException('missing_operation');$job=$db['operations'][$id];
-            $allowed=['state','code','identity','prepared_uptime','apply_request_id','intent','installed_version','core_state','settings_verified','finished_at','phase','runtime_digest'];
+            $allowed=['state','code','identity','prepared_uptime','apply_request_id','intent','installed_version','core_state','settings_verified','finished_at','phase','runtime_digest','failure_phase','failure_code'];
             foreach($patch as $k=>$_)if(!in_array($k,$allowed,true))throw new RuntimeException('invalid_state');
             $next=$patch['state']??$job['state'];$transitions=['preparing'=>['preparing','prepared','failed','interrupted'],'prepared'=>['prepared','applying','failed','interrupted'],'applying'=>['applying','succeeded','failed','interrupted']];
             if(!in_array($next,$transitions[$job['state']]??[],true))throw new RuntimeException('invalid_transition');
+            if(in_array($next,['failed','interrupted'],true))$patch=array_merge(self::failurePatch($job,$patch['code']??'interrupted'),$patch);
             if(in_array($next,self::TERMINAL,true))$patch['finished_at']=time();$db['operations'][$id]=array_replace($job,$patch);$result=$db['operations'][$id];$this->rotate($db);$this->save($db);return $result;
         });
     }
@@ -181,5 +198,5 @@ final class AsusUpdateStore
     public function status(): array
     {return $this->withRetryLock(function(){$db=$this->db();$active=null;$history=[];foreach($db['operations'] as $job)if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else $active=$job;if($this->readFile('operations.json')===null)$this->save($db);return ['active'=>$active,'history'=>array_reverse($history)];});}
     public function reconcile(string $boot,float $uptime): void
-    {$this->withLock(function()use($boot,$uptime){$db=$this->db();$before=$db;foreach($db['operations'] as &$job)if(!in_array($job['state'],self::TERMINAL,true)&&($job['boot_id']!==$boot||$uptime<$job['created_uptime'])){$job['state']='interrupted';$job['code']=$this->readFile('operations/'.$job['id'].'/quiesce.json')!==null&&$this->readFile('operations/'.$job['id'].'/boundary.json',1024)===null?'recovery_required':'interrupted';$job['finished_at']=time();}unset($job);$this->rotate($db);if($db!==$before)$this->save($db);});}
+    {$this->withLock(function()use($boot,$uptime){$db=$this->db();$before=$db;foreach($db['operations'] as &$job)if(!in_array($job['state'],self::TERMINAL,true)&&($job['boot_id']!==$boot||$uptime<$job['created_uptime'])){$job['state']='interrupted';$job['code']=$this->readFile('operations/'.$job['id'].'/quiesce.json')!==null&&$this->readFile('operations/'.$job['id'].'/boundary.json',1024)===null?'recovery_required':'interrupted';$job=array_replace($job,self::failurePatch($job,$job['code']));$job['finished_at']=time();}unset($job);$this->rotate($db);if($db!==$before)$this->save($db);});}
 }

@@ -127,6 +127,7 @@ final class NfqwsOpenWrtUpdateWorker
                 (new NfqwsOpenWrtUpdateHook($this->store,$this->options))->complete($t);$this->ticket($id,'finished');return $this->store->update($id,['state'=>'succeeded','code'=>null,'phase'=>'finished','core_state'=>$core]);
             }catch(Throwable $e){
                 $patch=['state'=>'failed','code'=>AsusUpdatePrepare::code($e)];
+                try{$this->store->failure($id,$patch['code']);}catch(Throwable $ignored){}
                 if($ticket&&$managerStarted&&$original!==null&&NfqwsOpenWrtUpdatePayload::unchanged($original)){
                     try{if(is_dir($this->store->path($base.'/backup')))NfqwsOpenWrtUpdateSnapshot::verify($this->store->path($base.'/backup'),$root);$after=$this->recoveryEnvironment($environment);if($after['installed']!==$environment['installed'])throw new RuntimeException('version_mismatch');
                         $current=NfqwsOpenWrtUpdateManager::installed($after,true);$old=json_decode($this->store->readFile($base.'/native-preflight.json')??'',true,32,JSON_THROW_ON_ERROR)['installed']??null;if(!is_array($old))throw new RuntimeException('invalid_state');unset($old['nfqws2-native']);if($current!==$old)throw new RuntimeException('dependency_change');if($after['recovery_pending']??false)$patch['code']='pending_packages';$t=$this->ticket($id,'starting');$patch['core_state']=$this->restore($t['intent']);

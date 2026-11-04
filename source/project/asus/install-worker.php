@@ -25,7 +25,9 @@ try{
         exit(in_array($result['state']??null,['restored','skipped'],true)?0:1);
     }
     if($mode==='guard-apply'){
-        (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+240,array_merge($runtime['argv'],['--','restore-before-install',$id]));exit(0);
+        $environment=(new AsusUpdatePrepare($store))->environment();
+        $seconds=(new AsusUpdateWatchdog($store))->applyBudget($id,$environment);
+        (new AsusUpdateWatchdog($store))->run($id,array_merge($runtime['argv'],['--','apply',$id]),AsusUpdateStore::uptime()+$seconds,array_merge($runtime['argv'],['--','restore-before-install',$id]));exit(0);
     }
     if($mode==='apply'){
         $prepare=new AsusUpdatePrepare($store,new AsusGithubUpdateSource(),['resources'=>__DIR__.'/resources'],$key,new AsusUpdateDeadline($store,$id));

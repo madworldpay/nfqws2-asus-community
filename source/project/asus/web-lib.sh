@@ -121,7 +121,11 @@ web_kill() {
 }
 
 web_stop() {
-    web_technical_channel stop || return 1
+    # Only the proven installer ancestry may preserve an existing support
+    # session. Ordinary Stop/restart still revokes it; no env flag grants this.
+    if ! command -v asus_update_transaction >/dev/null 2>&1 || ! asus_update_transaction web-stop; then
+        web_technical_channel stop || return 1
+    fi
     cru d nfqws_web_asus 8>&- 9>&- >/dev/null 2>&1
     rm -f "$WEB_RUN/enabled"
     web_kill

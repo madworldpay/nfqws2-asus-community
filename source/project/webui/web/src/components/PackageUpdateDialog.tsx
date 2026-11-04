@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {
   Alert,
   Button,
@@ -16,6 +18,11 @@ import { CommunityChatLink } from '@/components/CommunityChatLink';
 import type { usePackageUpdates } from '@/hooks/usePackageUpdates';
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { copyText } from '@/utils/copyText';
+import {
+  packageUpdateErrorText,
+  packageUpdateProgress,
+} from '@/utils/packageUpdateProgress';
 import { formatPackageVersion } from '@/utils/packageVersion';
 
 function ReleaseNotes({ text }: { text: string }) {
@@ -84,6 +91,7 @@ export function PackageUpdateDialog({
   sessionError?: string;
 }) {
   const { t } = useTranslation();
+  const [copyResult, setCopyResult] = useState<{ text: string; ok: boolean }>();
   const check = updates.data?.check;
   const candidate = check?.state === 'available' ? check.candidate : null;
   const operation = updates.data?.operation;
@@ -106,14 +114,23 @@ export function PackageUpdateDialog({
     operation.revision === candidate?.revision;
   const failed =
     operation?.state === 'failed' || operation?.state === 'interrupted';
+  const localError = sessionError ?? updates.error;
   const errorCode =
-    sessionError ??
-    updates.error ??
+    localError ??
     (check?.state === 'failed' ? check.code : failed ? operation?.code : null);
-  const previousFailure = failed && check?.state !== 'failed' && !updates.error;
+  const previousFailure = failed && check?.state !== 'failed' && !localError;
+  const progress = packageUpdateProgress(operation);
+  const stageLabel = t(`package_update.stage_${progress?.stage ?? 'unknown'}`);
   const needsSession =
     errorCode === 'auth_required' || errorCode === 'csrf_failed';
   const knownErrors = [
+    'timed_out',
+    'download_hash',
+    'download_failed',
+    'install_failed',
+    'web_start_failed',
+    'web_health_failed',
+    'version_mismatch',
     'pending_packages',
     'recovery_required',
     'missing_dependencies',
@@ -141,6 +158,37 @@ export function PackageUpdateDialog({
     : knownError
       ? (`package_update.${knownError}` as const)
       : 'package_update.failed';
+  const primaryKnownError = knownErrors.find(
+    (code) => code === operation?.failure_code,
+  );
+  const primaryFailureText =
+    failed && operation?.failure_code
+      ? String(
+          t('package_update.primary_failure', {
+            code: operation.failure_code,
+            reason: t(
+              primaryKnownError
+                ? `package_update.${primaryKnownError}`
+                : 'package_update.failed',
+            ),
+          }),
+        )
+      : '';
+  const errorText = packageUpdateErrorText({
+    installed: installed ?? check?.installed_version ?? undefined,
+    target: operation?.package_version ?? candidate?.package_version,
+    operation,
+    stage: stageLabel,
+    state: operation
+      ? t(`package_update.state_${operation.state}`)
+      : t('package_update.operation_unconfirmed'),
+    errorCode,
+    errorMessage: errorCode ? t(errorKey) : '',
+    template: primaryFailureText
+      ? `${primaryFailureText}\n${t('package_update.error_report')}`
+      : t('package_update.error_report'),
+  });
+  const showErrorDetails = !!errorCode || failed;
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{t('package_update.title')}</DialogTitle>
@@ -151,14 +199,94 @@ export function PackageUpdateDialog({
               version: formatPackageVersion(installed) ?? '—',
             })}
           </Typography>
-          <LinearProgress
-            sx={{ visibility: showProgress ? 'visible' : 'hidden' }}
-          />
+          <Stack spacing={0.5}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="flex-start"
+              justifyContent="space-between"
+              sx={{
+                minHeight: '2.86em',
+                visibility: progress ? 'visible' : 'hidden',
+              }}
+            >
+              <Typography variant="body2" role="status" aria-live="polite">
+                {progress?.failed
+                  ? t('package_update.failed_stage', { stage: stageLabel })
+                  : stageLabel}
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                {progress?.percent === null || !progress
+                  ? '—'
+                  : `${progress.percent}%`}
+              </Typography>
+            </Stack>
+            <LinearProgress
+              variant={progress ? 'determinate' : 'indeterminate'}
+              value={progress?.percent ?? 0}
+              color={progress?.failed ? 'error' : 'primary'}
+              aria-label={stageLabel}
+              aria-valuetext={
+                progress?.percent === null ? stageLabel : undefined
+              }
+              sx={{
+                visibility: showProgress || progress ? 'visible' : 'hidden',
+              }}
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                minHeight: '2.86em',
+                visibility: progress ? 'visible' : 'hidden',
+              }}
+            >
+              {t('package_update.progress_hint')}
+            </Typography>
+          </Stack>
           {errorCode && (
             <Alert severity="warning">
               {previousFailure && `${t('package_update.previous_attempt')} `}
               {t(errorKey)}
             </Alert>
+          )}
+          {showErrorDetails && (
+            <Stack spacing={0.5}>
+              {failed && operation?.failure_code && (
+                <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                  {primaryFailureText}
+                </Typography>
+              )}
+              {failed && operation?.code && (
+                <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                  {t('package_update.operation_error', {
+                    code: operation.code,
+                  })}
+                </Typography>
+              )}
+              <Button
+                size="small"
+                startIcon={<ContentCopyIcon />}
+                sx={{ alignSelf: 'flex-start' }}
+                onClick={() => {
+                  setCopyResult(undefined);
+                  void copyText(errorText)
+                    .then((ok) => setCopyResult({ text: errorText, ok }))
+                    .catch(() => setCopyResult({ text: errorText, ok: false }));
+                }}
+              >
+                {t('package_update.copy_error')}
+              </Button>
+              {copyResult?.text === errorText && (
+                <Typography variant="caption" role="status" aria-live="polite">
+                  {t(
+                    copyResult.ok
+                      ? 'package_update.error_copied'
+                      : 'package_update.error_copy_failed',
+                  )}
+                </Typography>
+              )}
+            </Stack>
           )}
           {check?.state === 'unconfigured' && (
             <Alert severity="info">{t('package_update.unconfigured')}</Alert>
