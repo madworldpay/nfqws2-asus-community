@@ -166,12 +166,24 @@ nfqws_package_stop_services_internal() {
     # Verify fallback DNS while the old engine and controller still exist.
     # A conflict aborts the package-manager pre-commit hook.
     nfqws_package_native_update verify &&
+    nfqws_package_stop_detector_terminal &&
     nfqws_package_dns_control "$1" &&
     nfqws_package_service nfqws2-native-dns stop &&
     nfqws_package_service nfqws2-native-dns-resume stop &&
     nfqws_package_service nfqws2-native stop &&
     nfqws_package_service nfqws2-native-web stop &&
     nfqws_package_native_update capture
+}
+
+nfqws_package_stop_detector_terminal() {
+    local path=/usr/share/nfqws2-web/dpi-terminal-lifecycle.php
+    if [ -e "$path" ] || [ -L "$path" ]; then
+        [ -f "$path" ] && [ ! -L "$path" ] || return 1
+        LC_ALL=C ls -ln "$path" | awk '{if($2!=1 || $3!=0 || substr($1,1,1)!="-" || substr($1,6,1)=="w" || substr($1,9,1)=="w")exit 1}' || return 1
+        /usr/bin/php-cgi -n -d register_argc_argv=1 -q -f "$path" -- stop
+    else
+        [ ! -e /tmp/nfqws2-dpi-terminal ] && [ ! -L /tmp/nfqws2-dpi-terminal ]
+    fi
 }
 
 nfqws_package_preinstall() {

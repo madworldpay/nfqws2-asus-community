@@ -26,7 +26,7 @@ final class NfqwsOpenWrtUpdateRuntime
             $s=self::regular($path,$owner,4194304);$s['mode']=$mode;$s['source']=$path;$total+=$s['size'];
             if($total>16777216||count($sources)>=192)throw new RuntimeException('runtime_limit');$sources[$name]=$s;
         };
-        $files=glob($app.'/*.php')?:[];if(count($files)<1||count($files)>128)throw new RuntimeException('runtime_limit');
+        $files=glob($app.'/*.php')?:[];if(count($files)<1||count($files)>160)throw new RuntimeException('runtime_limit');
         foreach($files as $file)$add('app/'.basename($file),$file);
         $add('app/platform-profile.json',$app.'/platform-profile.json');
         $add('worker.php',$options['entry']??'/usr/lib/nfqws2/update/worker.php');

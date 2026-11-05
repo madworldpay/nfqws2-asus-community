@@ -3,6 +3,9 @@ set -e
 asus_migration_restore || exit $?
 asus_install_defaults || exit $?
 asus_install_blob_defaults || exit $?
+if [ -e /opt/var/lib/nfqws2-asus/lua-upgrade/previous-baseline.json ] || [ -L /opt/var/lib/nfqws2-asus/lua-upgrade/previous-baseline.json ]; then
+    /opt/bin/php-cgi -n -d register_argc_argv=1 -q -f /opt/lib/nfqws2-asus/lua-upgrade.php -- || exit $?
+fi
 mkdir -p /opt/var/log /opt/var/run
 if [ -f /opt/lib/nfqws2-asus/update/lifecycle.sh ]; then
     . /opt/lib/nfqws2-asus/update/lifecycle.sh || exit $?

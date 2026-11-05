@@ -1,0 +1,120 @@
+{
+  "compiler": {
+    "name": "zig",
+    "sha256": "7f9e3a661e909d5188d1b8b14f082b98a19c323a30d43bfdd1b2893ed37273e0",
+    "version": "0.13.0"
+  },
+  "flags": [
+    "-std=c99",
+    "-O2",
+    "-static",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-Wl,--build-id=none",
+    "-s"
+  ],
+  "outputs": {
+    "arm": {
+      "cpu": "arm926ej_s",
+      "elf": [
+        1,
+        1,
+        40
+      ],
+      "name": "dpi-terminal-arm",
+      "options": [
+        "-mfloat-abi=soft"
+      ],
+      "sha256": "4e652e07a51638c91db06d33986ed46fd2975ea26ec3a37eba20969cfe440924",
+      "size": 54492,
+      "target": "arm-linux-musleabi"
+    },
+    "arm64": {
+      "cpu": "generic",
+      "elf": [
+        2,
+        1,
+        183
+      ],
+      "name": "dpi-terminal-arm64",
+      "options": [],
+      "sha256": "e62313c455863acd8ea983e0afbffc3dda1ba0adaf19920d8cea2a8494f94400",
+      "size": 49512,
+      "target": "aarch64-linux-musl"
+    },
+    "mips": {
+      "cpu": "mips32r2",
+      "elf": [
+        1,
+        2,
+        8
+      ],
+      "name": "dpi-terminal-mips",
+      "options": [
+        "-msoft-float"
+      ],
+      "sha256": "e8a9a7322fd4acfc22ebb1db0ebe2b1d6bf1487c850f3673b525e968273b4306",
+      "size": 85580,
+      "target": "mips-linux-musl"
+    },
+    "mips64": {
+      "cpu": "mips64r2",
+      "elf": [
+        2,
+        2,
+        8
+      ],
+      "name": "dpi-terminal-mips64",
+      "options": [
+        "-msoft-float"
+      ],
+      "sha256": "b7129a49d2c9b80ffef0d1f9b3487a3a321d6c71ea1c64f57d62ff0aa85de9b3",
+      "size": 90592,
+      "target": "mips64-linux-musl"
+    },
+    "mipsel": {
+      "cpu": "mips32r2",
+      "elf": [
+        1,
+        1,
+        8
+      ],
+      "name": "dpi-terminal-mipsel",
+      "options": [
+        "-msoft-float"
+      ],
+      "sha256": "ba8eb478e6c7c7610a4f526e35b158b2e1ff00af69a3828e5c47f93533a8082b",
+      "size": 85404,
+      "target": "mipsel-linux-musl"
+    },
+    "x86": {
+      "cpu": "pentium4",
+      "elf": [
+        1,
+        1,
+        3
+      ],
+      "name": "dpi-terminal-x86",
+      "options": [],
+      "sha256": "781a11b585418cdbdc8cdd1d9d9e037b999137bf2cf6fdc9e8faeb34a971a07f",
+      "size": 45996,
+      "target": "x86-linux-musl"
+    },
+    "x86_64": {
+      "cpu": "x86_64",
+      "elf": [
+        2,
+        1,
+        62
+      ],
+      "name": "dpi-terminal-x86_64",
+      "options": [],
+      "sha256": "0f2505d9b194b122e5234e85ad416274272bb10c4235f6f8ce1e0989888c4109",
+      "size": 44704,
+      "target": "x86_64-linux-musl"
+    }
+  },
+  "schema_version": 1,
+  "source_sha256": "f7ea8e3a5392de9a93d8827157ac3b3fcde09b32f2e2f5124dde69018ff23f23"
+}

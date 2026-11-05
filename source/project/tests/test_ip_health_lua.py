@@ -1,6 +1,6 @@
 """Exercise the observer in the pinned engine, retaining its C packet/checksum APIs.
 
-NFQWS_IP_HEALTH_TEST_ENGINE can select an unpacked 1.0.6 native binary.  The
+NFQWS_IP_HEALTH_TEST_ENGINE can select an unpacked 1.0.7 native binary.  The
 workspace's cached x86_64 IPK is otherwise extracted into a temporary directory.
 Only the external send, timer and wall-clock boundaries are replaced by Lua.
 """
@@ -39,7 +39,7 @@ class IpHealthLuaTests(unittest.TestCase):
             else:
                 engine = shutil.which("nfqws2")
         if not library:
-            candidates = list((WORKSPACE / "source/sources").glob("zapret2-221d7dff*.tar.gz"))
+            candidates = list((WORKSPACE / "source/sources").glob("zapret2-038c97e5*.tar.gz"))
             if candidates:
                 with tarfile.open(candidates[0]) as source:
                     name = next(n for n in source.getnames() if n.endswith("/lua/zapret-lib.lua"))
@@ -48,8 +48,8 @@ class IpHealthLuaTests(unittest.TestCase):
         if not engine or not library:
             raise unittest.SkipTest("pinned native engine unavailable; set NFQWS_IP_HEALTH_TEST_ENGINE and NFQWS_IP_HEALTH_TEST_LIB")
         version = subprocess.check_output([engine, "--version"], text=True)
-        if "v1.0.6 (221d7dff" not in version:
-            raise AssertionError("Lua packet tests require the pinned NFQWS2 1.0.6 engine")
+        if "v1.0.7 (038c97e5819df10f8e8c22a2f1fffe57f2f7379b)" not in version:
+            raise AssertionError("Lua packet tests require the pinned NFQWS2 1.0.7 engine")
         cls.command = [engine]
         if os.geteuid() != 0:
             ready = subprocess.run(["sudo", "-n", "true"], capture_output=True)

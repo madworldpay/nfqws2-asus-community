@@ -112,6 +112,7 @@ final class AsusUpdateLifecycle
     }
     public function stop(bool $always=false): void
     {
+        $this->stopTerminal();
         if(!$always&&$this->intent()['mode']==='stopped')return;
         if(!$this->command('core','stop')||$this->intent()['mode']!=='stopped')throw new RuntimeException('core_stop_failed');
     }
@@ -122,7 +123,12 @@ final class AsusUpdateLifecycle
         if(!$this->command('core','start'))throw new RuntimeException('core_start_failed');$state=$this->intent()['mode'];if($state==='stopped')throw new RuntimeException('core_start_failed');return $state;
     }
     public function webStop(): void
-    {if(!$this->command('web','stop'))throw new RuntimeException('web_stop_failed');}
+    {$this->stopTerminal();if(!$this->command('web','stop'))throw new RuntimeException('web_stop_failed');}
+    private function stopTerminal(): void
+    {
+        require_once __DIR__.'/dpi-terminal-lifecycle.php';
+        (new AsusDpiTerminalLifecycle($this->options['terminal_root']??null,$this->options['owner']??0))->stop();
+    }
     public function webRunning():bool
     {
         $status=$this->command('web','status',true);if($status===0)return true;

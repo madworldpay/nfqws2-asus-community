@@ -1,4 +1,4 @@
--- The actual 1.0.6 engine supplies parsing, address conversion, reconstruction
+-- The actual 1.0.7 engine supplies parsing, address conversion, reconstruction
 -- and checksums.  Only kernel sends and time scheduling are replaced here.
 now=1800000000
 sent={}

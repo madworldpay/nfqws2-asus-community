@@ -36,6 +36,7 @@ export type ImportSelection = {
   allow_shared_impact: boolean;
   allow_incomplete: boolean;
   trusted_lua: boolean;
+  torrent_sites?: false | { catalog_id: string; sha256: string };
 };
 export type ImportPlan = {
   ready: boolean;
@@ -62,6 +63,7 @@ export type ImportPlan = {
   old_draft: Profile | null;
   digest: string;
   proof: string | null;
+  torrent_sites?: { sites: string[]; block: string; key: 'NFQWS_ARGS_CUSTOM' };
 };
 export type ImportStatus = {
   state:
@@ -272,6 +274,23 @@ export async function prepareImport(
     (v.ready ? typeof v.proof !== 'string' : v.proof !== null)
   )
     return invalid();
+  if (v.torrent_sites !== undefined) {
+    const extra = v.torrent_sites;
+    if (
+      !obj(extra) ||
+      Object.keys(extra).length !== 3 ||
+      extra.key !== 'NFQWS_ARGS_CUSTOM' ||
+      !Array.isArray(extra.sites) ||
+      extra.sites.length !== 4 ||
+      extra.sites.some((site) => typeof site !== 'string') ||
+      extra.sites.join(',') !==
+        'nnmclub.to,rutracker.org,rutor.info,tapochek.net' ||
+      typeof extra.block !== 'string' ||
+      extra.block.length > 4096 ||
+      !extra.block.startsWith('--comment=nfqws2-community-torrent-sites-v1 ')
+    )
+      return invalid();
+  }
   for (const f of v.files) {
     if (
       !obj(f) ||
@@ -362,6 +381,7 @@ export function importOutcomeUnknown(error: unknown): boolean {
       'request_conflict',
       'invalid_request',
       'invalid_import',
+      'invalid_torrent_sites_source',
       'invalid_proof',
       'forbidden',
       'unauthorized',

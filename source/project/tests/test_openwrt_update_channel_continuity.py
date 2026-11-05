@@ -27,6 +27,7 @@ class NativeUpdateChannelContinuity(unittest.TestCase):
         if not CONTAINER.startswith('nfqws-openwrt') or spec['HostConfig']['NetworkMode'] != 'none':
             raise RuntimeError('Refusing a non-isolated test container')
         allowed = {'nfqws-update87-fixture:24', 'nfqws-update87-fixture:25',
+                   'nfqws-openwrt88-fixture:24', 'nfqws-openwrt88-fixture:25',
                    'nfqws-openwrt-test:24.10.8', 'nfqws-openwrt-test:25.12.6-php'}
         if spec['Config']['Image'] not in allowed:
             raise RuntimeError('Refusing an unrecognized native test image')

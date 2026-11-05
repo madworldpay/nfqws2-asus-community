@@ -129,6 +129,29 @@ final class AsusDpiInstaller
     {return $this->installedArtifact()===null?['installed'=>false,'version'=>null]:['installed'=>true,'version'=>AsusDpiCatalog::load()['version']];}
     public function binary(): string
     {$a=$this->installedArtifact();if($a===null)throw new RuntimeException('not_installed');return $this->root.'/'.$a['sha256'];}
+    /** Only pinned managed executables and their activation marker. Reports,
+     * preferences, packaged optional assets and manual files are retained. */
+    public function uninstall(): void
+    {
+        if(!$this->directory(false))return;
+        $artifact=$this->primaryArtifact();$candidates=array_merge([$artifact],$artifact['accepted_installed']??[]);$paths=[];
+        $marker=$this->root.'/active.json';clearstatcache(true,$marker);$s=@lstat($marker);
+        if($s){
+            if(($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||($s['mode']&0777)!==0600||$s['nlink']!==1||$s['size']>2048)throw new RuntimeException('invalid_state');
+            $meta=json_decode(file_get_contents($marker),true,8,JSON_THROW_ON_ERROR);$known=false;
+            foreach($candidates as $a)if($meta===['version'=>AsusDpiCatalog::load()['version'],'sha256'=>$a['sha256']])$known=true;
+            if(!$known)throw new RuntimeException('invalid_state');
+        }
+        // Validate every candidate before deleting the first file. A symlink
+        // or modified binary must never turn removal into arbitrary deletion.
+        foreach($candidates as $a){
+            $path=$this->root.'/'.$a['sha256'];clearstatcache(true,$path);$b=@lstat($path);if(!$b)continue;
+            if(($b['mode']&0170000)!==0100000||$b['uid']!==$this->owner||($b['mode']&0777)!==0755||$b['nlink']!==1||$b['size']!==$a['size']||!hash_equals($a['sha256'],hash_file('sha256',$path)))throw new RuntimeException('invalid_state');
+            $paths[]=$path;
+        }
+        foreach($paths as $path)if(!@unlink($path))throw new RuntimeException('remove_failed');
+        if($s&&!@unlink($marker))throw new RuntimeException('remove_failed');
+    }
     private function copyLegacyBundle(array $artifact,string $dest): void
     {
         if(($artifact['name']??null)!=='dpi-detector-armv5te')throw new RuntimeException('invalid_state');

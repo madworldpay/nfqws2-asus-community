@@ -1,0 +1,65 @@
+/* Keep the editor usable when a phone is turned sideways or uses desktop mode.
+   The shell selector also covers already installed builds without a main landmark. */
+@media (max-height: 600px) {
+  html body {
+    overflow-y: auto;
+  }
+
+  #root > .MuiContainer-root > .MuiBox-root {
+    height: auto;
+    min-height: 100svh;
+  }
+
+  #root > .MuiContainer-root > .MuiBox-root > div.MuiBox-root:last-of-type {
+    flex: 1 0 320px;
+    min-height: 320px;
+  }
+
+  #root header {
+    padding: 8px 10px;
+  }
+
+  #root header .MuiButton-root {
+    font-size: 12px;
+    padding-left: 6px;
+    padding-right: 6px;
+    min-height: 36px;
+  }
+
+  #root header .MuiIconButton-root {
+    width: 36px;
+    height: 36px;
+  }
+
+  #root header .MuiButton-root img {
+    width: 22px;
+    height: 22px;
+  }
+
+#root .rabbit-build-stage {
+    display: contents;
+  }
+
+#root .rabbit-build-native {
+    position: static;
+    width: auto;
+  }
+
+#root .rabbit-build-native .MuiChip-root {
+    width: auto;
+  }
+
+#root .rabbit-build-native .MuiChip-label {
+    padding: 0 10px;
+  }
+
+#root .rabbit-build-sprite {
+    display: none;
+    animation: none;
+  }
+
+  #root footer > .MuiCollapse-root {
+    max-height: min(35svh, 240px);
+    overflow-y: auto;
+  }
+}

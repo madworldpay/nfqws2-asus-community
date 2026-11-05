@@ -45,6 +45,17 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
             : p.key || p.name || p.field || p.alias || p.id || ''}
         </Alert>
       ))}
+      {plan.torrent_sites && (
+        <Stack spacing={0.5}>
+          <Typography variant="subtitle2">
+            {t('import.torrent_sites.preview')}
+          </Typography>
+          <Typography variant="body2">
+            {plan.torrent_sites.sites.join(', ')}
+          </Typography>
+          {text(plan.torrent_sites.block)}
+        </Stack>
+      )}
       {!!plan.affected_blocks.length && (
         <Alert severity="info">
           {t('import.affected')}: {plan.affected_blocks.join(', ')}

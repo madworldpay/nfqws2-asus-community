@@ -37,15 +37,15 @@ The corresponding sources and recipe snapshots are included in the release archi
 Native packages do not include the legacy ASUS kernel module or the private Entware runtime.
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — imported commit
-  `5d155f33ab00f3a4879c485c1094e8ec1e014586`, package v1.3.2; MIT, original attribution preserved.
+  `afd9f6a8a1be6b7ca28afc722a1be81946c41c6b`, package v1.3.3; MIT, original attribution preserved.
 - `webui/`: https://github.com/nfqws/nfqws-keenetic-web — imported commit
   `c225df3`; MIT, original attribution preserved. The interface has been adapted for ASUS.
 - NFQWS2 ARMv7/AArch64 and Lua come from the specified package. The AArch64 binary
   is preserved byte for byte; the ARMv7 binary was unpacked from UPX for compatible
   process checks on the legacy kernel. The engine's machine code and algorithms were not rewritten;
-  its zapret2 version is v1.0.6,
-  `221d7dff24bfec0cd5ac0a5070b8acef2008af3d`.
-  Sources: https://github.com/bol-van/zapret2/tree/221d7dff24bfec0cd5ac0a5070b8acef2008af3d
+  its zapret2 version is v1.0.7,
+  `038c97e5819df10f8e8c22a2f1fffe57f2f7379b`.
+  Sources: https://github.com/bol-van/zapret2/tree/038c97e5819df10f8e8c22a2f1fffe57f2f7379b
   The supplier's build recipe and patches are in `core/.github/workflows/`
   and `core/patches/`. The main project's license is MIT; third-party libraries
   retain their own licenses.
@@ -96,6 +96,12 @@ vermagic/MODVERSIONS checks have not been weakened. This module is not in the AA
 ASUS browser favicon: https://www.asus.com/favicon.ico (PNG supplied by ASUS; ASUS trademark belongs to ASUSTeK, no endorsement implied).
 
 DPI Detector: https://github.com/Runnin4ik/dpi-detector, MIT. Optional binaries are pinned to v5.0.0-alpha.21 / a09d03b58d452c71bd63a9b3d410713dd22049f6. The original notice is in support/dpi-detector-MIT.txt; the catalog of URLs, SHA256 checksums, and sizes is in support/dpi-catalog.json. For `armv7-2.6`, the ARM package contains a compatible ARMv5TE soft-float build of the same unchanged sources; the algorithms have not been changed. The file is supplied as non-executable data and activated after consent, with SHA256, ELF, and version checks. For `armv7-3.2` and AArch64, the official downloadable files are preserved; postinst does not run DPI. Recipe and tools: `asus/dpi/legacy/README.md` and `build.py`.
+
+Engine 1.0.7 and its Lua are shipped together on ASUS/Entware and native OpenWrt.
+The existing provider fastpath patch is rebased to 1.0.7; experimental partial-SNI changes are not included.
+Version 1.0.7 rejects repeated list-file references of the same type within one profile;
+verify saved configurations with the new engine before enabling the service.
+Public packet templates retain their separately reviewed 1.0.6 source attribution.
 
 ## Libraries and additional notices
 

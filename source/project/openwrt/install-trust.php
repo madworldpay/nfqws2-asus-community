@@ -6,7 +6,7 @@ final class NfqwsOpenWrtInstallTrust
     {
         $local->directory('coordinator');$app=$local->directory('coordinator/app');$resources=$local->directory('coordinator/resources');
         $files=glob($installed.'/*.php')?:[];
-        if(count($files)<1||count($files)>128)throw new RuntimeException('runtime_limit');
+        if(count($files)<1||count($files)>160)throw new RuntimeException('runtime_limit');
         $files[]=$installed.'/platform-profile.json';$bytes=0;
         foreach($files as $file){
             AsusUpdateStore::noLinks($file);clearstatcache(true,$file);$s=@lstat($file);

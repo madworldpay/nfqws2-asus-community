@@ -2,6 +2,7 @@
 require_once __DIR__.'/dpi-install.php';
 require_once __DIR__.'/dpi-normalize.php';
 require_once __DIR__.'/dpi-analysis.php';
+require_once __DIR__.'/dpi-terminal-lifecycle.php';
 /** All dependencies are internal; no browser-selected command, target, path or environment. */
 final class AsusDpiJobs
 {
@@ -14,12 +15,17 @@ final class AsusDpiJobs
     }
     private function start(string $request,string $kind,array $params): array
     {
+        return $this->store->mutation(function()use($request,$kind,$params){
+        $gate=$this->deps['terminal_gate']??new AsusDpiTerminalLifecycle();
+        return $gate->idle(function()use($request,$kind,$params){
         $this->available();$job=$this->store->reserve($request,$kind,$params);
         if($this->store->claimLaunch($job['id'])) {
             try{if(isset($this->deps['launch']))($this->deps['launch'])($job['id'],$kind);else (new AsusDpiRuntime())->launch($job['id'],$kind);}
             catch(Throwable $e){$this->store->update($job['id'],['state'=>'failed','finished_at'=>time(),'code'=>self::code($e->getMessage())]);throw new RuntimeException(self::code($e->getMessage()));}
         }
         return self::publicJob($job);
+        });
+        });
     }
     public static function code(string $code): string
     {
@@ -44,7 +50,8 @@ final class AsusDpiJobs
         return ['id'=>$job['id'],'kind'=>$job['kind'],'state'=>$job['state'],'started_at'=>$job['started_at'],'finished_at'=>$job['finished_at'],
             'code'=>$job['code'],'tests'=>$job['params']['tests']??[],'completed_tests'=>array_column($job['groups'],'group'),'current_group'=>$job['current_group']??null,'native_available'=>$job['native_available']??false];
     }
-    public function status(): array
+    public function active(): ?array{return $this->state()['active'];}
+    private function state(): array
     {
         $s=$this->store->status();$job=$s['active'];
         if($job!==null) {
@@ -69,7 +76,11 @@ final class AsusDpiJobs
                 $this->store->update($job['id'],$patch);$s=$this->store->status();
             }
         }
-        $installer=new AsusDpiInstaller();
+        return $s;
+    }
+    public function status(): array
+    {
+        $s=$this->state();$installer=new AsusDpiInstaller();
         $this->store->cleanupArtifacts(fn($active)=>$installer->cleanupStages($active));
         return ['available'=>$installer->availability(),'installed'=>$installer->installed(),'version'=>AsusDpiCatalog::load()['version'],'default_tests'=>[1,2],
             'active'=>$s['active']===null?null:self::publicJob($s['active']),'history'=>array_map([self::class,'publicJob'],$s['history'])];

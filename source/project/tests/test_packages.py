@@ -23,6 +23,16 @@ def read_ipk(path):
 
 
 class PackageTests(unittest.TestCase):
+    def test_local_tls13_predicate_is_packaged_baselined_and_preserves_owner_edits(self):
+        source=(ROOT/'asus/lua/local-tls13-stun.lua').read_bytes()
+        name='opt/etc/nfqws2/lua/local-tls13-stun.lua'
+        for package in self.packages().values():
+            data=package['data'];self.assertIn(name,list(data))
+            self.assertEqual(data[name][1],source)
+            self.assertIn(('/'+name+'\n').encode(),package['control']['conffiles'][1])
+            baseline=json.loads(data['opt/share/nfqws2-asus/report-baseline.json'][1])
+            self.assertEqual(baseline['resources']['lua/local-tls13-stun.lua'],{'bytes':len(source),'sha256':hashlib.sha256(source).hexdigest()})
+
     def test_full_component_notices_and_adaptation_license_are_installed_once(self):
         for package in self.packages().values():
             data = package['data']

@@ -4,12 +4,14 @@ import en from '@/translations/en.json';
 import {
   Alert,
   Button,
+  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Stack,
   Typography,
 } from '@mui/material';
@@ -33,7 +35,10 @@ import {
   type ImportSelection,
   type ImportStatus,
 } from '@/api/importClient';
-import { loadCatalogDocument } from '@/api/profileCatalogClient';
+import {
+  loadCatalogDocument,
+  type CatalogProfile,
+} from '@/api/profileCatalogClient';
 import { ShareError } from '@/api/shareClient';
 
 import { Editor } from '@/components/Editor';
@@ -53,6 +58,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const { needSave } = useAppStore();
   const [documents, setDocuments] = useState<string[]>([]);
   const [doc, setDoc] = useState<ImportDocument>();
+  const [catalogChoice, setCatalogChoice] = useState<CatalogProfile>();
   const [selection, setSelection] =
     useState<ImportSelection>(emptyImportSelection);
   const [plan, setPlan] = useState<ImportPlan>();
@@ -125,12 +131,14 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
     read: () => Promise<string[]>,
     files: File[] = [],
     autoPreview = false,
+    catalogProfile?: CatalogProfile,
   ) => {
     if (pending.current) return;
     source.current = autoPreview ? 'keenetic' : 'other';
     chosenFiles.current = files;
     revision.current++;
     setDoc(undefined);
+    setCatalogChoice(undefined);
     setDocuments([]);
     setPlan(undefined);
     // The explicit before/after preview and Save action approve the selected scope.
@@ -155,6 +163,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       if (mounted.current && rev === revision.current) {
         setDocuments(raw);
         setDoc(parsed);
+        setCatalogChoice(catalogProfile);
         setSelection(selected);
       }
       if (autoPreview && mounted.current && rev === revision.current) {
@@ -175,6 +184,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       source.current = null;
       setDocuments([]);
       setDoc(undefined);
+      setCatalogChoice(undefined);
       setPlan(undefined);
       setSelection(emptyImportSelection());
       requestId.current = '';
@@ -385,13 +395,18 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
               csrfToken={csrfToken}
               disabled={disabled || needSave}
               onSelect={(profile) =>
-                loadDocuments(async () => [
-                  await loadCatalogDocument(
-                    csrfToken,
-                    profile.id,
-                    profile.sha256,
-                  ),
-                ])
+                loadDocuments(
+                  async () => [
+                    await loadCatalogDocument(
+                      csrfToken,
+                      profile.id,
+                      profile.sha256,
+                    ),
+                  ],
+                  [],
+                  false,
+                  profile,
+                )
               }
             />
           )}
@@ -411,6 +426,32 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
               onChange={edit}
               onError={fail}
             />
+          )}
+          {doc && catalogChoice?.category === 'global' && (
+            <Stack spacing={0.5}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={Boolean(selection.torrent_sites)}
+                    disabled={disabled || needSave}
+                    onChange={(_, checked) => {
+                      const next = { ...selection };
+                      if (checked)
+                        next.torrent_sites = {
+                          catalog_id: catalogChoice.id,
+                          sha256: catalogChoice.sha256,
+                        };
+                      else delete next.torrent_sites;
+                      edit(next);
+                    }}
+                  />
+                }
+                label={t('import.torrent_sites.label')}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {t('import.torrent_sites.help')}
+              </Typography>
+            </Stack>
           )}
           {plan && (
             <>

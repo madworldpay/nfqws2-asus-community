@@ -2,6 +2,13 @@
 # Stop only guardians whose protected boot/start/executable identity still matches.
 set -f
 . "${0%/*}/paths.sh" || exit 1
+# A terminal is independent of the old per-job guardian tree. Stop it even
+# when there have never been standalone jobs, before any payload is replaced.
+if [ -f "$terminal_control" ] && [ ! -L "$terminal_control" ]; then
+    "$php" -n -d register_argc_argv=1 -q -f "$terminal_control" -- stop || exit $?
+elif [ -e /tmp/nfqws2-dpi-terminal ] || [ -L /tmp/nfqws2-dpi-terminal ]; then
+    exit 1
+fi
 root=$root/runs
 [ -d "$root" ] || exit 0
 [ ! -L "$root" ] || exit 1

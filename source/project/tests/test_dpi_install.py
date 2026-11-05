@@ -92,3 +92,29 @@ class DpiInstallTests(unittest.TestCase):
             self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'');self.assertEqual(r.stdout,'unsupported_binary')
             self.assertFalse(Path(directory+'/managed/active.json').exists())
             self.assertEqual(list(Path(directory+'/managed').iterdir()),[])
+
+    def test_uninstall_preserves_reports_manual_files_and_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory);root=p/'managed';root.mkdir(mode=0o711)
+            payload=b'owned detector';digest=hashlib.sha256(payload).hexdigest()
+            (root/digest).write_bytes(payload);(root/digest).chmod(0o755)
+            (root/'active.json').write_text(json.dumps({'version':'v5.0.0-alpha.21','sha256':digest}));(root/'active.json').chmod(0o600)
+            (root/'dpi_detector_results-20261105-130000.txt').write_text('keep report')
+            (root/'manual').write_text('keep manual')
+            code='''require $argv[1].'/dpi-install.php';$a=['size'=>14,'sha256'=>$argv[3]];$i=new AsusDpiInstaller($argv[2],(int)$argv[4],$a);
+            if(!method_exists($i,'uninstall')){echo json_encode(['missing'=>'uninstall']);exit;}
+            $i->uninstall();$i->uninstall();echo json_encode($i->installed());'''
+            out=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(root),digest,str(os.getuid())],capture_output=True,text=True)
+            self.assertEqual((out.returncode,out.stderr),(0,''));self.assertEqual(json.loads(out.stdout),{'installed':False,'version':None})
+            self.assertFalse((root/digest).exists());self.assertFalse((root/'active.json').exists())
+            self.assertEqual((root/'manual').read_text(),'keep manual');self.assertEqual((root/'dpi_detector_results-20261105-130000.txt').read_text(),'keep report')
+
+    def test_uninstall_refuses_binary_link_and_preserves_target(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory);root=p/'managed';root.mkdir(mode=0o711);payload=b'owned detector';digest=hashlib.sha256(payload).hexdigest()
+            outside=p/'outside';outside.write_bytes(payload);outside.chmod(0o755);(root/digest).symlink_to(outside)
+            (root/'active.json').write_text(json.dumps({'version':'v5.0.0-alpha.21','sha256':digest}));(root/'active.json').chmod(0o600)
+            code='''require $argv[1].'/dpi-install.php';$i=new AsusDpiInstaller($argv[2],(int)$argv[4],['size'=>14,'sha256'=>$argv[3]]);
+            try{$i->uninstall();echo '"removed"';}catch(Throwable $e){echo json_encode($e->getMessage());}'''
+            out=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(root),digest,str(os.getuid())],capture_output=True,text=True)
+            self.assertEqual((out.returncode,out.stderr),(0,''));self.assertEqual(json.loads(out.stdout),'invalid_state');self.assertEqual(outside.read_bytes(),payload)

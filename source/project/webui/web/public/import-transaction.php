@@ -25,10 +25,10 @@ final class AsusImportTransaction
     {if(!$this->reader->directory(dirname($path)))throw new RuntimeException('source_changed');clearstatcache(true,$path);if(@lstat($path)===false)return null;return $this->reader->bytes($path,262144);}
     private function hash(string $path): ?string {$v=$this->raw($path);return $v===null?null:hash('sha256',$v);}
     private function draftHash(): ?string {$d=$this->dns->draft();return $d===null?null:AsusSmartDnsProfile::hash($d);}
-    public function prepare(array $documents,array $selection): array
+    public function prepare(array $documents,array $selection,?array $catalogScope=null): array
     {
         $doc=AsusImportDocument::read($documents);$raw=$this->raw($this->config);if($raw===null)throw new RuntimeException('strategy_unavailable');
-        return AsusImportPlan::prepare($doc,$selection,$raw,$this->resources->inventory(),$this->dns->draft());
+        return AsusImportPlan::prepare($doc,$selection,$raw,$this->resources->inventory(),$this->dns->draft(),null,$catalogScope);
     }
     public function inspect(array $documents): array {return AsusImportDocument::read($documents);}
     private function publicJob(?array $j): array

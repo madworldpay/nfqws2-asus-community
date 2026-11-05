@@ -293,6 +293,26 @@ function main(): void
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+  if (in_array($_POST['cmd'], ['dpiterminalinfo','dpiterminalstart','dpiterminalpoll','dpiterminalinput','dpiterminalresize','dpiterminalstop','dpiterminalremove'], true)) {
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    require_once __DIR__.'/dpi-terminal.php';require_once __DIR__.'/support-report.php';
+    $terminalLease=null;
+    try {
+      AsusDpiTerminal::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      $terminalBrowser=hash('sha256',session_id());session_write_close();
+      if(in_array($_POST['cmd'],['dpiterminalstart','dpiterminalremove'],true)){
+        require_once __DIR__.'/update-guard.php';$terminalLease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
+        require_once __DIR__.'/dpi-jobs.php';
+        if((new AsusDpiJobs())->status()['active']!==null)throw new RuntimeException('busy');
+      }
+      $terminalValue=(new AsusDpiTerminal($terminalBrowser))->handle($_POST);
+      http_response_code(200);echo json_encode($terminalValue,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);
+    }catch(Throwable $e){$terminalCode=AsusDpiTerminal::error($e);http_response_code($terminalCode==='invalid_request'?400:(in_array($terminalCode,['busy','missing_terminal'],true)?409:503));echo json_encode(['error'=>$terminalCode]);}
+    finally{if(is_resource($terminalLease)){flock($terminalLease,LOCK_UN);fclose($terminalLease);}}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['iphealthstatus','iphealthconfigure','iphealthremove','iphealthclear','iphealthrecheck'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     if($authEnabled&&!$sessionValid){http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}

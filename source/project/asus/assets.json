@@ -35,14 +35,6 @@
     "url": "https://bin.entware.net/armv7sf-k2.6/lighttpd-mod-cgi_1.4.71-1_armv7-2.6.ipk",
     "sha256": "31e677e119d09a7cbde11b5f58838052ab8602704c2de4d26c69f4507a47cf47"
   },
-  "nfqws2-keenetic_1.3.2_aarch64-3.10.ipk": {
-    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.2/nfqws2-keenetic_1.3.2_aarch64-3.10.ipk",
-    "sha256": "f62c338d3e4abd7bb953c742a2e295fc58e21f19c9bfba296d857f9f9d365187"
-  },
-  "nfqws2-keenetic_1.3.2_all_entware.ipk": {
-    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.2/nfqws2-keenetic_1.3.2_all_entware.ipk",
-    "sha256": "6de14a39345e05c887cd0d9af573bf42b4a489773d36011079c6f5c2fe2a0dd9"
-  },
   "php8-mod-sockets_8.2.8-1_armv7-2.6.ipk": {
     "url": "https://bin.entware.net/armv7sf-k2.6/php8-mod-sockets_8.2.8-1_armv7-2.6.ipk",
     "sha256": "ca2b4baf82b6a370f65f3d651eedf7b7589760ef873e42ea29202aee8669ed43"
@@ -58,5 +50,13 @@
   "php8-mod-sockets_8.4.7-1_armv7-2.6.ipk": {
     "url": "https://raw.githubusercontent.com/garycnew/garycnew.github.io/2dc411761722a37daa4eeda24e8208938b15feba/Entware/armv7sf-k2.6/php8-mod-sockets_8.4.7-1_armv7-2.6.ipk",
     "sha256": "5b71231a3ca28f697342262627848a3b49bf41ee4e772ccf9d272c320870a9e4"
+  },
+  "nfqws2-keenetic_1.3.3_aarch64-3.10.ipk": {
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.3/nfqws2-keenetic_1.3.3_aarch64-3.10.ipk",
+    "sha256": "1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91"
+  },
+  "nfqws2-keenetic_1.3.3_all_entware.ipk": {
+    "url": "https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.3/nfqws2-keenetic_1.3.3_all_entware.ipk",
+    "sha256": "499258e8a32aaf407c8b57c24c44696a50edc776a35fb41a449283faaabd6c55"
   }
 }

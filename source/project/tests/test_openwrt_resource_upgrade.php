@@ -6,7 +6,8 @@ function rejects(callable $fn):void{try{$fn();}catch(RuntimeException $e){return
 $root=sys_get_temp_dir().'/nfqws-stock-'.bin2hex(random_bytes(8));mkdir($root,0700);
 foreach(['active','defaults']as $base)foreach(['lua','blobs']as $kind)mkdir($root.'/'.$base.'/'.$kind,0755,true);
 $baseline=['resources'=>[]];
-foreach(['lua/stock.lua'=>['old','new','old'],'lua/edited.lua'=>['original','updated','my edit'],'blob/test.bin'=>["old\0blob","new\0blob","old\0blob"]]as $key=>[$old,$new,$current]){
+$predicate=file_get_contents(__DIR__.'/../asus/lua/local-tls13-stun.lua');
+foreach(['lua/stock.lua'=>['old','new','old'],'lua/edited.lua'=>['original','updated','my edit'],'lua/local-tls13-stun.lua'=>['-- old packaged predicate',$predicate,'-- owner predicate edit'],'blob/test.bin'=>["old\0blob","new\0blob","old\0blob"]]as $key=>[$old,$new,$current]){
  $path=preg_replace('~^blob/~','blobs/',$key);
  file_put_contents($root.'/active/'.$path,$current);file_put_contents($root.'/defaults/'.$path,$new);
  $baseline['resources'][$key]=['bytes'=>strlen($old),'sha256'=>hash('sha256',$old)];
@@ -20,6 +21,10 @@ try{
  check(file_get_contents($root.'/active/blobs/test.bin')==="new\0blob",'binary blob did not update');
  check(file_get_contents($root.'/active/lua/edited.lua')==='my edit','custom edit overwritten');
  check(file_get_contents($root.'/active/lua/custom.lua')==='mine','custom file overwritten');
+ check(file_get_contents($root.'/active/lua/local-tls13-stun.lua')==='-- owner predicate edit','edited predicate overwritten');
+ file_put_contents($root.'/active/lua/local-tls13-stun.lua','-- old packaged predicate');
+ check($apply()===['lua/local-tls13-stun.lua'],'unchanged stock predicate did not migrate');
+ check(file_get_contents($root.'/active/lua/local-tls13-stun.lua')===$predicate,'wrong predicate migration bytes');
  check($apply()===[],'repeat must be inert');
  unlink($root.'/active/lua/stock.lua');symlink($root.'/active/lua/custom.lua',$root.'/active/lua/stock.lua');check($apply()===[],'operator links must be left alone');
  check(file_get_contents($root.'/active/lua/custom.lua')==='mine','link target changed');

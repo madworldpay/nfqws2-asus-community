@@ -16,15 +16,15 @@
 условия лицензии: [pymumu/smartdns](https://github.com/pymumu/smartdns/tree/Release48.4).
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — импорт коммита
-  `5d155f33ab00f3a4879c485c1094e8ec1e014586`, пакет v1.3.2; MIT, исходное авторство сохранено.
+  `afd9f6a8a1be6b7ca28afc722a1be81946c41c6b`, пакет v1.3.3; MIT, исходное авторство сохранено.
 - `webui/`: https://github.com/nfqws/nfqws-keenetic-web — импорт коммита
   `c225df3`; MIT, исходное авторство сохранено. Интерфейс адаптирован для ASUS.
 - NFQWS2 ARMv7/AArch64 и Lua взяты из указанного пакета. AArch64-бинарник
   сохранён побайтно; ARMv7-бинарник распакован из UPX для совместимой проверки
   процесса на старом ядре. Машинный код и алгоритмы движка не переписывались;
-  его версия zapret2 — v1.0.6,
-  `221d7dff24bfec0cd5ac0a5070b8acef2008af3d`.
-  Исходники: https://github.com/bol-van/zapret2/tree/221d7dff24bfec0cd5ac0a5070b8acef2008af3d
+  его версия zapret2 — v1.0.7,
+  `038c97e5819df10f8e8c22a2f1fffe57f2f7379b`.
+  Исходники: https://github.com/bol-van/zapret2/tree/038c97e5819df10f8e8c22a2f1fffe57f2f7379b
   Рецепт сборки и патчи поставщика находятся в `core/.github/workflows/`
   и `core/patches/`. Лицензия основного проекта MIT; сторонние библиотеки
   сохраняют собственные лицензии.
@@ -75,6 +75,12 @@
 ASUS browser favicon: https://www.asus.com/favicon.ico (PNG supplied by ASUS; ASUS trademark belongs to ASUSTeK, no endorsement implied).
 
 DPI Detector: https://github.com/Runnin4ik/dpi-detector, MIT. Необязательные бинарники закреплены на v5.0.0-alpha.21 / a09d03b58d452c71bd63a9b3d410713dd22049f6. Оригинальное уведомление — support/dpi-detector-MIT.txt; каталог URL, SHA256 и размеров — support/dpi-catalog.json. Для `armv7-2.6` ARM-пакет содержит совместимую ARMv5TE soft-float сборку тех же неизменённых исходников; алгоритмы не менялись. Файл поставляется неисполняемыми данными и активируется после согласия с проверкой SHA256, ELF и версии. Для `armv7-3.2` и AArch64 сохранены официальные скачиваемые файлы; postinst DPI не запускает. Рецепт и инструменты: `asus/dpi/legacy/README.md` и `build.py`.
+
+Движок 1.0.7 и Lua из той же ревизии поставляются для ASUS/Entware и нативного OpenWrt.
+Штатный fastpath-патч поставщика перенесён на 1.0.7; эксперимент partial-SNI не включён.
+В 1.0.7 повторное указание одного файла списков одного типа в одном профиле
+считается ошибкой; перед запуском нужна проверка сохранённой конфигурации новым движком.
+Публичные шаблоны пакетов сохраняют отдельно проверенное происхождение от 1.0.6.
 
 ## Библиотеки и дополнительные уведомления
 

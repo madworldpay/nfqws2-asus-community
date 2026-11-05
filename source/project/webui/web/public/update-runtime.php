@@ -58,7 +58,7 @@ final class AsusUpdateRuntime
             $source=$name==='openssl.so'?$opt.'/lib/php8/openssl.so':$opt.'/lib/'.$name;$add('lib/'.$name,$source,0700,$opt.'/lib');
             $elf=self::elf(file_get_contents($sources['lib/'.$name]['source']));if($elf['machine']!==$meta['machine'])throw new RuntimeException('unsupported_runtime');foreach($elf['needed'] as $needed)$queue[]=$needed;
         }
-        $app=$config['application']??$opt.'/share/nfqws-asus-web';AsusUpdateStore::noLinks($app);$php=glob($app.'/*.php')?:[];if(count($php)>128)throw new RuntimeException('runtime_limit');
+        $app=$config['application']??$opt.'/share/nfqws-asus-web';AsusUpdateStore::noLinks($app);$php=glob($app.'/*.php')?:[];if(count($php)>160)throw new RuntimeException('runtime_limit');
         foreach($php as $p)$add('app/'.basename($p),$p,0600);
         $add('worker.php',$config['entry']??$opt.'/lib/nfqws2-asus/update/worker.php',0600);
         $add('update-launch',$config['launcher']??$opt.'/libexec/nfqws2-asus/update-launch',0700);

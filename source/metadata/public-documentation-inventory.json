@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 33001,
-      "sha256": "506071ad27b3088f0f98f607a972a1f382e5337f4b82bdb24fc5588e8670fd8c"
+      "bytes": 37017,
+      "sha256": "3a1214a9a45be4a090c7ba0bb54a7dd418d207164a8da624046a0a35b2e6961a"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -62,13 +62,13 @@
     },
     {
       "file": "DPI-DETECTOR.en.md",
-      "bytes": 2325,
-      "sha256": "63c88922f0620f3b4e606c40ac098566d0311440d44ea2b4c10833d11f248b0d"
+      "bytes": 4616,
+      "sha256": "4b0f0bef941bc116ed91644d1a87255a5830f841c77f903cc6da4df24460cb67"
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 3791,
-      "sha256": "4fa5be47ea35d85a20304729ef5c10f7066df4022e509d0f8e1034068b9d5235"
+      "bytes": 7937,
+      "sha256": "31b64053d9e423f2976c9db14e80c0330c67d0a15c00eb54888d8f2ac9ef9a8b"
     },
     {
       "file": "IMPORT.en.md",
@@ -104,6 +104,11 @@
       "file": "MANUAL-INSTALL.md",
       "bytes": 9104,
       "sha256": "4253a7743a98d1a6c63ab4b92279f21b772a361d2f70eb6dba4dc545318389ac"
+    },
+    {
+      "file": "NEXT-BUILD.md",
+      "bytes": 10970,
+      "sha256": "2398e057867851dda65098b3aaa9fcda99c7c1a820a42bd0f42f5db087d38f1b"
     },
     {
       "file": "OPENWRT.en.md",
@@ -147,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 19936,
-      "sha256": "0fb09b6d4a9cf7074819077874dd4406b4f7a1b1ad8c8b716f2949f34aadd545"
+      "bytes": 23620,
+      "sha256": "9211f06d51996e00eea32990d2e484e8eef91275fdfa30454e8f004bda33f675"
     },
     {
       "file": "README.md",
-      "bytes": 33545,
-      "sha256": "239d203f0d1b7423a77435e477de441811c518d56feb4f4e80d399fe30683547"
+      "bytes": 39418,
+      "sha256": "06d2cd5da0a0b19588bf9fd3dc442a482deace0ad6733689ad5f36819398c9f2"
     },
     {
       "file": "ROADMAP.en.md",
@@ -187,18 +192,18 @@
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
-      "bytes": 4151578,
-      "sha256": "c3efefceb5050a2034a5284d75cea863e34ba741f452e72b3c8773df84791243"
+      "bytes": 4155293,
+      "sha256": "e2cdd17417cb301aa0e8f8203cd0173163ed5eb2f169ad5bbdbf5ceb1b15915e"
     },
     {
       "file": "UPSTREAM.en.md",
-      "bytes": 8302,
-      "sha256": "e9cca102518b4589500e8fefe4dc5fa40474259f19d21cf644c8086c44ebab27"
+      "bytes": 8743,
+      "sha256": "1f734cd0b5188cf3ec0a80e1d1c351011645f751ee263dcb30e38bd4672d8870"
     },
     {
       "file": "UPSTREAM.md",
-      "bytes": 11194,
-      "sha256": "4e441674e842a874dad99a9ef35181145efad4657c8e47729f8b002ea39d8e1f"
+      "bytes": 11918,
+      "sha256": "5f9dbca90563656b6eeeb0f4659e5f4082a60ab0f790fe1be22c81a2c60be433"
     },
     {
       "file": "USAGE.en.md",
@@ -216,6 +221,16 @@
       "sha256": "c286ee0f9d42004dc632f7b4c56d3a2cb36601d9ef9225242206301b1eb8714c"
     },
     {
+      "file": "docs/DETECTOR-COMPARISON.en.md",
+      "bytes": 4438,
+      "sha256": "2c363be8eb60b924cefd8caa0623266aaf648af2af44cb22bb88ba7ce6b17ccb"
+    },
+    {
+      "file": "docs/DETECTOR-COMPARISON.md",
+      "bytes": 7639,
+      "sha256": "689017e23f15170bbb3b194d3a4b4ba8f9342d979304a3634c5d0401aa2059e1"
+    },
+    {
       "file": "images/cloud-catalog.jpg",
       "bytes": 54787,
       "sha256": "891dd478c4f0b02158090d9c166df3db2158c8a4e4885f7dff1d0137ea944232"
@@ -224,6 +239,26 @@
       "file": "images/import-cloud.png",
       "bytes": 145534,
       "sha256": "f4c0ffdd2336b83bb58028766f5e4d0fe905593d141489d88857ab19adec9a8a"
+    },
+    {
+      "file": "images/more-screenshots-en.svg",
+      "bytes": 462,
+      "sha256": "4c7cfde8fab554ca97dd607803304f8ccb907ef6c3ad3ebcd0ae40b36f4b31b4"
+    },
+    {
+      "file": "images/more-screenshots-ru.svg",
+      "bytes": 513,
+      "sha256": "5c5355e28d9df9c9c46081ec3ead6bd2ab858613aec3c0c16f3b6bca01f0189e"
+    },
+    {
+      "file": "images/screenshots/panel-overview-en.jpg",
+      "bytes": 75552,
+      "sha256": "62afaca05ae922f427a79937d951fdaabbcabe178aca11640512acd8fea451cc"
+    },
+    {
+      "file": "images/screenshots/panel-overview-ru.jpg",
+      "bytes": 82534,
+      "sha256": "f1ff92339b0e4090c8bd7493ea8474856710f90e6e914a9030d0ee0188b3b5ff"
     },
     {
       "file": "images/smartdns.png",
@@ -249,5 +284,5 @@
   "excluded": [
     "SHA256SUMS"
   ],
-  "checksum_note": "Documentation checksum snapshot covers release IPK/APK packages. Canonical complete SHA256SUMS is a release asset. Operational presets are served only by the cloud catalog."
+  "checksum_note": "Documentation checksum snapshot covers all22release packages. Canonical complete SHA256SUMS is a release asset. Operational profiles are served only by the cloud catalog."
 }

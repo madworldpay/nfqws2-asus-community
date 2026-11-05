@@ -2,6 +2,7 @@
 require_once __DIR__.'/import-document.php';
 require_once __DIR__.'/share-dependencies.php';
 require_once __DIR__.'/smartdns-profile.php';
+require_once __DIR__.'/import-torrent-sites.php';
 /** Deterministic, read-only proposal. The transaction consumes the same bytes. */
 final class AsusImportPlan
 {
@@ -69,10 +70,11 @@ final class AsusImportPlan
         try{return AsusSmartDnsProfile::normalize(['schema_version'=>1,'upstreams'=>$servers,'records'=>$records]);}
         catch(AsusSmartDnsProfileError $e){$problems[]=['code'=>'invalid_dns_profile','field'=>$e->field];return null;}
     }
-    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null): array
+    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null): array
     {
         $profile??=NfqwsPlatform::current();NfqwsPlatform::settings($profile);
-        self::keys($selection,['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua']);
+        self::keys($selection,array_merge(['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua'],array_key_exists('torrent_sites',$selection)?['torrent_sites']:[]));
+        $torrentOption=AsusImportTorrentSites::requested($selection);$torrentPreview=null;
         foreach(['allow_shared_impact','allow_incomplete','trusted_lua']as $key)if(!is_bool($selection[$key]))throw new RuntimeException('invalid_import_selection');
         foreach(['blocks','shared','ports','files','dns']as $key)if(!is_array($selection[$key]))throw new RuntimeException('invalid_import_selection');
         $blocks=self::picks($selection['blocks'],AsusImportConfig::BLOCKS,$document['values']);$shared=self::picks($selection['shared'],AsusImportConfig::SHARED,$document['values']);$ports=self::picks($selection['ports'],AsusImportConfig::PORTS,$document['ports']);foreach($ports as $v)self::port($v);
@@ -102,6 +104,13 @@ final class AsusImportPlan
         foreach($targets as &$target)if(isset($selectedTargets[$target['path']])&&$selectedTargets[$target['path']]!==$target['sha256'])$target['reuse']=false;unset($target);
         $current=($blocks||$shared||$ports||$files)?AsusImportConfig::parse($currentConfig):[];$changes=[];
         foreach($blocks+$shared+$ports as $key=>$value)$changes[$key]=self::bind($value,$aliases,$problems,$profile);
+        if($torrentOption!==null){
+            try{
+                if(!$blocks)throw new RuntimeException('torrent_sites_incompatible');
+                $added=AsusImportTorrentSites::add($changes,$current,$inventory,$virtual,$files,$torrentOption,$catalogScope);
+                $changes=$added['changes'];$torrentPreview=$added['preview'];$blocks['NFQWS_ARGS_CUSTOM']=$changes['NFQWS_ARGS_CUSTOM'];
+            }catch(RuntimeException $e){if($e->getMessage()!=='torrent_sites_incompatible')throw $e;$problems[]=['code'=>'torrent_sites_incompatible'];}
+        }
         $hypothetical=$blocks+$shared;
         if($blocks)foreach(['NFQWS_BASE_ARGS','NFQWS_EXTRA_ARGS','NFQWS_ARGS_IPSET']as $key)if(isset($document['values'][$key])&&!isset($shared[$key])){
             $bound=self::bind($document['values'][$key],$aliases,$problems,$profile);$hypothetical[$key]=$document['values'][$key];
@@ -132,6 +141,7 @@ final class AsusImportPlan
                 foreach($audit['missing']as $row)$problems[]=['code'=>'unresolved_file','name'=>$row['name']];
                 foreach($audit['references']as $ref){if($ref['state']!=='available')$problems[]=['code'=>'unresolved_file','name'=>$ref['name']];foreach($verified as $row){$path='/opt/etc/nfqws2/'.$row['kind'].'/'.$row['name'];if(substr(hash('sha256',$path),0,32)===$ref['id']&&isset($local[$row['kind'].'/'.$row['name']])&&!array_key_exists($path,$fingerprints))$fingerprints[$path]=$row['sha256'];}}
                 foreach($audit['unresolved']as $row){if(in_array($row['kind'],['unbound_blob','duplicate_blob','unresolved_blob_definition'],true))$problems[]=['code'=>'unresolved_blob','detail'=>$row];else $warnings[]=$row;}
+                if($torrentPreview!==null&&!$audit['complete'])$problems[]=['code'=>'torrent_sites_incompatible'];
             }
         }
         $draft=self::dns($selection['dns'],$document['dns_sources'],$currentDraft,$problems,$warnings);
@@ -140,6 +150,7 @@ final class AsusImportPlan
         $diff=[];foreach($changes as $key=>$value)$diff[]=['key'=>$key,'before'=>$current[$key]??null,'after'=>$value];
         $out=['ready'=>$problems===[],'problems'=>$problems,'warnings'=>$warnings,'required'=>$required,'affected_blocks'=>$affected,
             'config'=>$newConfig,'changes'=>$diff,'files'=>$files,'draft'=>$draft,'old_draft'=>$currentDraft,'fingerprints'=>['config'=>hash('sha256',$currentConfig),'draft'=>$currentDraft===null?null:AsusSmartDnsProfile::hash($currentDraft),'files'=>$fingerprints],'input_sha256'=>$document['input_sha256']];
+        if($torrentPreview!==null)$out['torrent_sites']=$torrentPreview;
         $out['digest']=hash('sha256',json_encode($out,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));return $out;
     }
 }

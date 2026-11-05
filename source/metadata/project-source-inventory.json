@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "fe028cccfcfd1aadf0cae5cdadc9fdb1e93988c41b242b575cb45a3dd4b0c24c"
+    "sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
   },
   {
     "path": "LICENSE",
@@ -16,13 +16,13 @@
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
-    "bytes": 4152505,
-    "sha256": "f7e38a2508f2861981548177b4583c7f74e64b67de2b3ea3a18eb8eace822609"
+    "bytes": 4156220,
+    "sha256": "1ddf770e34f2cb16bf47e9e009b617a4ff980e78669777f0e6fa953fe5620c97"
   },
   {
     "path": "UPSTREAM.md",
-    "bytes": 10320,
-    "sha256": "0c6c8d3d66d15dd412fa69680a0bf248bd1dd073637e6d6b401675d587db7bd5"
+    "bytes": 11044,
+    "sha256": "823903e40c80efbf41fed19d45cfbf11ed2f179b0df6d714f452102a2416ec1e"
   },
   {
     "path": "VERSION",
@@ -47,7 +47,7 @@
   {
     "path": "asus/assets.json",
     "bytes": 3426,
-    "sha256": "2d0429ebeb5c5a3b2ffe32bb4de30b440bb73fb1127e22b30b2128d7cc983fb7"
+    "sha256": "1df687f2a0654458224da1ed083bf756bbc4a6e01f1c286c83f702c960a0d674"
   },
   {
     "path": "asus/blob_bundle.py",
@@ -126,8 +126,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 29972,
-    "sha256": "81e0f85c4767615ec63d7eacb1ad8bc9859eb1add2ef35b7e2f78c9f99796499"
+    "bytes": 31354,
+    "sha256": "bce7dd855c51bda3cf0158788cdff55f16ac275f81bc1d74fd74306eeda14193"
   },
   {
     "path": "asus/compatibility.sh",
@@ -138,6 +138,51 @@
     "path": "asus/diagnostics.sh",
     "bytes": 6366,
     "sha256": "9dedbe8e2fd799fd74402e42b035b33abcdfb35ab63451b180117fae6c8b2088"
+  },
+  {
+    "path": "asus/dpi/TERMINAL.md",
+    "bytes": 1932,
+    "sha256": "da1eb944a2192c73fb2edca1f7416dfc2ad2cd17036267237c1deef0e5be27c0"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-arm",
+    "bytes": 54492,
+    "sha256": "4e652e07a51638c91db06d33986ed46fd2975ea26ec3a37eba20969cfe440924"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-arm64",
+    "bytes": 49512,
+    "sha256": "e62313c455863acd8ea983e0afbffc3dda1ba0adaf19920d8cea2a8494f94400"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-mips",
+    "bytes": 85580,
+    "sha256": "e8a9a7322fd4acfc22ebb1db0ebe2b1d6bf1487c850f3673b525e968273b4306"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-mips64",
+    "bytes": 90592,
+    "sha256": "b7129a49d2c9b80ffef0d1f9b3487a3a321d6c71ea1c64f57d62ff0aa85de9b3"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-mipsel",
+    "bytes": 85404,
+    "sha256": "ba8eb478e6c7c7610a4f526e35b158b2e1ff00af69a3828e5c47f93533a8082b"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-x86",
+    "bytes": 45996,
+    "sha256": "781a11b585418cdbdc8cdd1d9d9e037b999137bf2cf6fdc9e8faeb34a971a07f"
+  },
+  {
+    "path": "asus/dpi/bin/dpi-terminal-x86_64",
+    "bytes": 44704,
+    "sha256": "0f2505d9b194b122e5234e85ad416274272bb10c4235f6f8ce1e0989888c4109"
+  },
+  {
+    "path": "asus/dpi/bin/terminals.json",
+    "bytes": 2644,
+    "sha256": "65854f5c207041d651951945621de41304c87374f2e0cd2aee688406445e169e"
   },
   {
     "path": "asus/dpi/cli.php",
@@ -175,9 +220,14 @@
     "sha256": "c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863"
   },
   {
+    "path": "asus/dpi/package_hook.py",
+    "bytes": 1497,
+    "sha256": "1e90fee102bb031cb8ca23fed47f82d6f51e5bc70019b875c264386c7c189791"
+  },
+  {
     "path": "asus/dpi/paths.sh",
-    "bytes": 528,
-    "sha256": "031d57384a16aa5aefb1bef4a1d0627c72ba8e211cdc13c2685d85941272340b"
+    "bytes": 598,
+    "sha256": "03680a406429bb6d3a4780d8e7735c7f9be93587d1787c3422994de3ad33a69f"
   },
   {
     "path": "asus/dpi/probe.sh",
@@ -186,8 +236,18 @@
   },
   {
     "path": "asus/dpi/stop.sh",
-    "bytes": 1242,
-    "sha256": "6f1c7d8e7b6d7bfc1eb647f8cbe63df3b95e680e154e15bf31af7e37a2fe7868"
+    "bytes": 1638,
+    "sha256": "9cf1ad71e401d46a01cd07287e816763b514d33fc9bad7f7b40730373148a43f"
+  },
+  {
+    "path": "asus/dpi/terminal.c",
+    "bytes": 13507,
+    "sha256": "f7ea8e3a5392de9a93d8827157ac3b3fcde09b32f2e2f5124dde69018ff23f23"
+  },
+  {
+    "path": "asus/dpi/terminal_build.py",
+    "bytes": 5004,
+    "sha256": "2bbfe635dd0385445ee3e01e1df2011cf54ee465c8bd39a3470b47d3bfa092f5"
   },
   {
     "path": "asus/dpi/worker.php",
@@ -245,6 +305,11 @@
     "sha256": "0bb191ec18bb2e94963eb30e62dc8785d81dd9f918ead1d1fe3ede4bc2998eef"
   },
   {
+    "path": "asus/ipk/lua-upgrade.sh",
+    "bytes": 2078,
+    "sha256": "569a74a636fbf429c4f68c7af2ea6a6e000888ac2cafcb676e38e79e9110c716"
+  },
+  {
     "path": "asus/ipk/migration.sh",
     "bytes": 17265,
     "sha256": "0543254087fab7cbc0f15392571875b444f2338d84edd4e493a860a35d5bd0f6"
@@ -266,8 +331,8 @@
   },
   {
     "path": "asus/ipk/unified-postinst",
-    "bytes": 1562,
-    "sha256": "8ccd978be028f3d3204c0dfb8ad1a0c2b35f804e6c1c1cf7f2586b50ff756148"
+    "bytes": 1816,
+    "sha256": "8e465dac572f3eda1b8d68ca26c1fb6b33587d22cbbca376fb2357074c7de980"
   },
   {
     "path": "asus/ipk/unified-prerm",
@@ -338,6 +403,16 @@
     "path": "asus/lua/local-guarded-ts.lua",
     "bytes": 268,
     "sha256": "a9c1b833a662e73dafffc26baed4f99e113acf45b82d664b89ac9eb2c10bd8ea"
+  },
+  {
+    "path": "asus/lua/local-tls13-stun.lua",
+    "bytes": 3490,
+    "sha256": "e77f9d5514469bec59d3ee74d90a83514c2408a4a410d7be7f3e1d42a0900791"
+  },
+  {
+    "path": "asus/lua-upgrade.php",
+    "bytes": 974,
+    "sha256": "258baec692cbebac22106ce0fc4f39e44874296420bd807c180e86c32542e562"
   },
   {
     "path": "asus/php-cgi.sh",
@@ -801,13 +876,13 @@
   },
   {
     "path": "core/patches/001-tls-reasm-fastpath.patch",
-    "bytes": 18855,
-    "sha256": "0931cfb0a334a0de61a8f4848ac0c5e38efc8d2aa3c3d9b0953b5ff2e9f94d4d"
+    "bytes": 18513,
+    "sha256": "35ae3f6fcf52def6478b85933302a71a6b75d39c0613a49d14e285b5b4fd4633"
   },
   {
     "path": "core/patches/README.md",
-    "bytes": 3887,
-    "sha256": "4f46b907d6919d3e690402c62d8caf816ba0c415f124676db37d792e6545c455"
+    "bytes": 4175,
+    "sha256": "36e1de2026a0023b30c9699ad77c3c35933510fc97c6c448e3a77405b3056aa2"
   },
   {
     "path": "core/repository.mk",
@@ -912,12 +987,12 @@
   {
     "path": "openwrt/assets.json",
     "bytes": 2656,
-    "sha256": "8ef43d8fb186120d365cb6b4a20819a68acfc5d7222e9080ebc8b3e98d4157ff"
+    "sha256": "05c65da1ceddf2582bda204c6dc019adc320ad7d9568c7ba36509d6690576ec4"
   },
   {
     "path": "openwrt/build.py",
-    "bytes": 28999,
-    "sha256": "fda7e3591f807d4135ace05169b7c4ddab8da1f32b2e48a43112d88ef9aff292"
+    "bytes": 30133,
+    "sha256": "3043655d64e08bce9164a0cc23af7551cebd47302ac3963ddfd8c9a10b33ce2d"
   },
   {
     "path": "openwrt/config-cli.php",
@@ -946,8 +1021,8 @@
   },
   {
     "path": "openwrt/dpi-paths.sh",
-    "bytes": 354,
-    "sha256": "b7097ad40b13905bdb782a40866984e3fce1dd2f633f5ec0163dac4b0282b01b"
+    "bytes": 420,
+    "sha256": "733fb1e1e53a76a88ef5fdbebc883874827aa45dad8859af71860af18baa1d22"
   },
   {
     "path": "openwrt/firewall-hook.sh",
@@ -1017,7 +1092,7 @@
   {
     "path": "openwrt/install-trust.php",
     "bytes": 1467,
-    "sha256": "0135179814e980fa4de2ca6f1bd7aca6e17d637813caeafa9caf91f0e0087de0"
+    "sha256": "5b9d35408d9feef5c645562129db0913cb3e9ae491941c5b4e64ab1dd1839d0a"
   },
   {
     "path": "openwrt/install-update.php",
@@ -1056,8 +1131,8 @@
   },
   {
     "path": "openwrt/package-lifecycle.sh",
-    "bytes": 27042,
-    "sha256": "68678519cd98ca65f3cb22ebe6fb0981b2cea6f40bd12bf7caee57d01128e401"
+    "bytes": 27612,
+    "sha256": "86e4f25401e9ef68f6564d52ce8e2ced300af0c896c17199e7f58f05856f1670"
   },
   {
     "path": "openwrt/php-cgi.sh",
@@ -1181,8 +1256,8 @@
   },
   {
     "path": "profile-catalog/publish.py",
-    "bytes": 12874,
-    "sha256": "55fcc0008dc739f741e27991423527d403a43c8eadd387eca7006be6f37e7cc5"
+    "bytes": 12898,
+    "sha256": "9032a1307b952c73120fec96653a4ff0ba16509e032eb8ab3678d8396ec66a00"
   },
   {
     "path": "profile-catalog/upstreams.json",
@@ -1477,7 +1552,7 @@
   {
     "path": "tests/fixtures/ip_health_harness.lua",
     "bytes": 4639,
-    "sha256": "9e6e9bcf0aa8992cf36e484f7ec5891ee0b28acd325c76b6cffa58bcd5b5c739"
+    "sha256": "140339abc370dec6978f80fad1d78468bce3284c0be870abfc8c75d461287ade"
   },
   {
     "path": "tests/fixtures/openwrt/fw4-offload.json",
@@ -1661,8 +1736,8 @@
   },
   {
     "path": "tests/test_dpi_install.py",
-    "bytes": 7733,
-    "sha256": "b44f9c0b04b83697a7b68a7bd121b78a4664a57ec4b479191413bb5a2a9f9e92"
+    "bytes": 10299,
+    "sha256": "70c8329e46378ec20316c1e68328b76bdf08981a685cb38c28b3e0aca0cc3639"
   },
   {
     "path": "tests/test_dpi_install_tls.py",
@@ -1671,8 +1746,8 @@
   },
   {
     "path": "tests/test_dpi_jobs.py",
-    "bytes": 8375,
-    "sha256": "960ebe405f7d2783eb18ad38f777824d2c9eb69e44dff0dd25e158aacce89cac"
+    "bytes": 8457,
+    "sha256": "1ddb0ac23847ae305059f9145bc80f8a3e87727a727130d3868ee2484d128b76"
   },
   {
     "path": "tests/test_dpi_legacy_bundle.py",
@@ -1705,6 +1780,11 @@
     "sha256": "82d0d5e20dae2e37e781f1c8eac7c7cadf6872c56c82add1b74df3be579b337b"
   },
   {
+    "path": "tests/test_dpi_remove.py",
+    "bytes": 4997,
+    "sha256": "862b3bb67159172bdbfe5c2953dc454123747d6f8d250f4db4819b107c31f423"
+  },
+  {
     "path": "tests/test_dpi_saved_projector.py",
     "bytes": 5584,
     "sha256": "2b14251ae036e962e046fadeab6d39b23aa7ef88f81ef36cfd55918930d89ef1"
@@ -1730,9 +1810,59 @@
     "sha256": "9c157349fcdb951c7630986739e943738a9fcf66869ed828f43a99b3c3ca3ef7"
   },
   {
+    "path": "tests/test_dpi_terminal.py",
+    "bytes": 12665,
+    "sha256": "f42a4250bb226a20563fa59745b96a894e34f46d865bc503eef4642962688d2f"
+  },
+  {
+    "path": "tests/test_dpi_terminal_api.py",
+    "bytes": 8386,
+    "sha256": "46115f8fa6bbe121b295e3c6634817ece6f6548020d20d8e552fcaf6c8e23176"
+  },
+  {
+    "path": "tests/test_dpi_terminal_build.py",
+    "bytes": 2334,
+    "sha256": "0477dc4c0ad8704f969fbc42fb07a03991433da1a3f8d81528be9e53540086d7"
+  },
+  {
+    "path": "tests/test_dpi_terminal_client.mjs",
+    "bytes": 12449,
+    "sha256": "139a35a0b561948d32e5f4e4fc0247b7d0908e48b618572ded0f6813e14e0bcc"
+  },
+  {
+    "path": "tests/test_dpi_terminal_http.py",
+    "bytes": 7047,
+    "sha256": "644417cda5bf6578dce5c27b72e619d236a6cf2ba881b1aed507fb3f48638eb2"
+  },
+  {
+    "path": "tests/test_dpi_terminal_lifecycle.py",
+    "bytes": 8481,
+    "sha256": "c716b352611c10ea82ff9eb66e61abaeec1b4f7fa22dcd44fc39a7f8f68035f0"
+  },
+  {
+    "path": "tests/test_dpi_terminal_packaging.py",
+    "bytes": 7056,
+    "sha256": "7be6723a3d9f8ef96d2289041c46b563c55c62f93810e0fa2bf194a7e45ea4be"
+  },
+  {
+    "path": "tests/test_dpi_terminal_scroll.mjs",
+    "bytes": 2787,
+    "sha256": "e2803491a74e901d3ac0ae82a57f112954fddd3ff42b52464622d4e933df2c6c"
+  },
+  {
     "path": "tests/test_dpi_upstream_contract.py",
     "bytes": 3923,
     "sha256": "536c60f7840767bdbcbc62f3dc538b12cdfff73795b6bc3f2fbbff6e4270ed87"
+  },
+  {
+    "path": "tests/test_engine_release.py",
+    "bytes": 4076,
+    "sha256": "4a0e8d56bb9ef671c465b943c69de9ae2f28781ff2a3fd6d728357bf49be3e4a"
+  },
+  {
+    "path": "tests/test_header_layout_browser.mjs",
+    "bytes": 7342,
+    "sha256": "008814df23b47ae3747e45b9d6c48e93978ebcdee48a1257e0be1ccde78b3feb"
   },
   {
     "path": "tests/test_import_catalog_session_browser.mjs",
@@ -1746,8 +1876,8 @@
   },
   {
     "path": "tests/test_import_client.mjs",
-    "bytes": 3584,
-    "sha256": "7acd59ae5cac7a318b51a3d2cf121fad01c3428db7f476b5c3a7038a1083bf88"
+    "bytes": 3678,
+    "sha256": "350714e1da649ff0885a79f96a6c2b9673e6c2658d3f14843743e8319f32842a"
   },
   {
     "path": "tests/test_import_convert_http.py",
@@ -1783,6 +1913,26 @@
     "path": "tests/test_import_review_regressions.py",
     "bytes": 5261,
     "sha256": "827a238a2cedfba48a5e4158c5f5365993053851a42d9703847b77bde6708916"
+  },
+  {
+    "path": "tests/test_import_torrent_sites.py",
+    "bytes": 11333,
+    "sha256": "2c51e69f7d62fbca0d9debe7fb7290cf80b4880283a4331cd9464592e27c840b"
+  },
+  {
+    "path": "tests/test_import_torrent_sites_api.py",
+    "bytes": 5540,
+    "sha256": "1453ab31bafabf06e753b37a0bc2c0c30141e538e29785a41e34ac0219a00e01"
+  },
+  {
+    "path": "tests/test_import_torrent_sites_browser.mjs",
+    "bytes": 7129,
+    "sha256": "b0dd6f28db84c2096ed936db10f0fe4882268e39d2c0c2b8d0e423f4096f81e4"
+  },
+  {
+    "path": "tests/test_import_torrent_sites_engine.py",
+    "bytes": 2163,
+    "sha256": "2996521511d28f0e804098ed96414ab558689f836a61187c2646b531f0a512f4"
   },
   {
     "path": "tests/test_import_transaction.py",
@@ -1836,8 +1986,8 @@
   },
   {
     "path": "tests/test_ip_health_lua.py",
-    "bytes": 16642,
-    "sha256": "20f867b072282ec2c9e3abd599fa4c652e1edc7d50fd4a1de182e020ac792090"
+    "bytes": 16675,
+    "sha256": "5e1ead9c55d58ff9783cffd1d73dfb99944b60c6d91ec29d6103d44ffbda1503"
   },
   {
     "path": "tests/test_ip_health_native.py",
@@ -1915,6 +2065,16 @@
     "sha256": "e4cea1c20ba7e6a4c0e7943eb0c36771bf1b118c41e7c57d5815b553f567fd46"
   },
   {
+    "path": "tests/test_local_tls13_stun.py",
+    "bytes": 5326,
+    "sha256": "ed252f87503a5355130bee972432ce29e15d745161b98828a26c238ca550b765"
+  },
+  {
+    "path": "tests/test_lua_opkg_upgrade.py",
+    "bytes": 8373,
+    "sha256": "13429307e502dc1254b64553f37efd9df49c30dbae095b653a5e0038e3f7e124"
+  },
+  {
     "path": "tests/test_migration.py",
     "bytes": 11831,
     "sha256": "81735fd011afbb79b814b2c94425fa6b99639c2edfd639fe92dc70c72ff229b5"
@@ -1976,8 +2136,8 @@
   },
   {
     "path": "tests/test_openwrt_builder.py",
-    "bytes": 14561,
-    "sha256": "f6dd301d90aa8d182ff8462366aaa4ae8506582350a18ad5f5ab80e6b2f6dd35"
+    "bytes": 15407,
+    "sha256": "e2eba622650430af227939a2657683aa92c96ac7454b245ae77b08345e0da0d4"
   },
   {
     "path": "tests/test_openwrt_config.php",
@@ -2096,8 +2256,8 @@
   },
   {
     "path": "tests/test_openwrt_package_lifecycle.py",
-    "bytes": 9744,
-    "sha256": "5503ec5e7ce574a88feb0040312bc35f524ee0a784500e08cdac8403d633ef30"
+    "bytes": 10435,
+    "sha256": "a902ffff6542683104f0b9a0b1b439d51c0a66cb959bb48b1a9aaf119fd918b0"
   },
   {
     "path": "tests/test_openwrt_package_quiesce.py",
@@ -2116,8 +2276,8 @@
   },
   {
     "path": "tests/test_openwrt_resource_upgrade.php",
-    "bytes": 2731,
-    "sha256": "5a0efb2534e8c464b80a31ce6efedeb03b589684b865ef859dd0c025cdb50e3a"
+    "bytes": 3328,
+    "sha256": "a04b06b4e8efa071a4a5fd93a51f652f2a26fc22098dbf2b6c8277d98eb6df5e"
   },
   {
     "path": "tests/test_openwrt_service_lease.py",
@@ -2161,8 +2321,8 @@
   },
   {
     "path": "tests/test_openwrt_update_channel_continuity.py",
-    "bytes": 13369,
-    "sha256": "534876a3d28a89e5a2c34b71cb2fee0262b349c4e7e2a4530c07acdba80ecc53"
+    "bytes": 13448,
+    "sha256": "59e15d18246dee1f5f1a98f42a82756a6cdd532b1b2934c57422296591e18d15"
   },
   {
     "path": "tests/test_openwrt_update_environment.php",
@@ -2376,8 +2536,8 @@
   },
   {
     "path": "tests/test_package_update_runtime.py",
-    "bytes": 8113,
-    "sha256": "f73c4c552f54a8a39171b5cfe4dc4791ba144ef7d20e519f3a7e4b656db022bb"
+    "bytes": 8406,
+    "sha256": "3986737cdfa1fb5c23534a0051ad8fac61b651f913fa54d114359ad6eac45371"
   },
   {
     "path": "tests/test_package_update_session_browser.mjs",
@@ -2421,8 +2581,8 @@
   },
   {
     "path": "tests/test_packages.py",
-    "bytes": 21957,
-    "sha256": "357c8825181c07e57edb34902c79b8eb07fe8c7210eb4cadb1c414238a83d1e8"
+    "bytes": 22654,
+    "sha256": "76f3267d96b0cf1c838f45b8b398c2525a75bc3a71a36dd42453ad3eac26c190"
   },
   {
     "path": "tests/test_platform.py",
@@ -2461,8 +2621,8 @@
   },
   {
     "path": "tests/test_profile_catalog_publish.py",
-    "bytes": 8029,
-    "sha256": "59e26a534ff7a94be7830d091425fa0bcea3262777291c5478a7a0e9749f0f20"
+    "bytes": 8653,
+    "sha256": "b3e0ad2ac0696942cc731d7bea0162e9c3297e3395f63e0390852852c8eca854"
   },
   {
     "path": "tests/test_queue_samples.mjs",
@@ -3250,6 +3410,11 @@
     "sha256": "09b02ebe123e869e3055e324694f844b198b7d25b96fb1d30177210695d58224"
   },
   {
+    "path": "webui/web/.yarn/install-state.gz",
+    "bytes": 519977,
+    "sha256": "ca389a5d971d57c54354841b90ec3e5dfec2dcd4d8ca7f55b176fc6042d59ebc"
+  },
+  {
     "path": "webui/web/.yarn/releases/yarn-4.12.0.cjs",
     "bytes": 2992863,
     "sha256": "1fe4e1193cbcd13a48d8f436bb17d3c672b049a5e32a758aab9866a073db1702"
@@ -3271,8 +3436,8 @@
   },
   {
     "path": "webui/web/index.html",
-    "bytes": 933,
-    "sha256": "c2e9b4ce451c7bdaca0f27947f04bf0c279b7204d14821ea702ebdfd2cbdcae4"
+    "bytes": 935,
+    "sha256": "e0715a486e262b20845f029e97cfbd660532bff07d3c5902a48799a6c12ff9c3"
   },
   {
     "path": "webui/web/openapi.yaml",
@@ -3281,8 +3446,8 @@
   },
   {
     "path": "webui/web/package.json",
-    "bytes": 2217,
-    "sha256": "f643269526eb26e6e0013ea1d25fa217eb10b75c4240981d72c2fff14d7ee803"
+    "bytes": 2280,
+    "sha256": "8b1e7449adf7866d0474d12a92876fe7bae75c0ee643ba871dc482fe14193066"
   },
   {
     "path": "webui/web/prettier.config.js",
@@ -3345,6 +3510,11 @@
     "sha256": "72835fe9b34e1ccf1da5b81d00262c8666638f9656380d12953081aa2efd839e"
   },
   {
+    "path": "webui/web/public/compact-viewport.css",
+    "bytes": 1221,
+    "sha256": "bc025d64fe61dcd0f17d44a18b9171d3bdc6f3ca0c75325b62104f2e298327be"
+  },
+  {
     "path": "webui/web/public/dpi-analysis.php",
     "bytes": 7415,
     "sha256": "1fbad8e6f17f39a797db378d286418f1052854e19d2f81a0f28c2b6627ba546c"
@@ -3361,13 +3531,13 @@
   },
   {
     "path": "webui/web/public/dpi-install.php",
-    "bytes": 14129,
-    "sha256": "d0097d9bb811c1b979e9ad59c2cb6f799187873cc44163f9d39f87fae89ec6d5"
+    "bytes": 15853,
+    "sha256": "647af7b171188c6025e709e9e982e83f3065efc5c2ca01591832b778d0dd91e2"
   },
   {
     "path": "webui/web/public/dpi-jobs.php",
-    "bytes": 13169,
-    "sha256": "ff8321bfa3554b15d7982375c19248605379086bf2684bdf74ab003639e72741"
+    "bytes": 13620,
+    "sha256": "9cd9d586015131b54a82d134835f102c2367d1c7f345ddd181718b888b566dbe"
   },
   {
     "path": "webui/web/public/dpi-native.php",
@@ -3383,6 +3553,11 @@
     "path": "webui/web/public/dpi-options.php",
     "bytes": 12987,
     "sha256": "ea22d92eb9fa610768f303b3f18d2113ed5a63fa609a02a5cc65816804e45032"
+  },
+  {
+    "path": "webui/web/public/dpi-remove.php",
+    "bytes": 2232,
+    "sha256": "974e600fd76545c78757cdcc13245e3b03033f76b87bdbedba4ef228cfe2bc3b"
   },
   {
     "path": "webui/web/public/dpi-runtime.php",
@@ -3401,13 +3576,23 @@
   },
   {
     "path": "webui/web/public/dpi-store.php",
-    "bytes": 16210,
-    "sha256": "478fc852d610ef400a3b6a582e927c30d21b001a8a4d53294ab98fc87f8e4261"
+    "bytes": 17129,
+    "sha256": "d313363b53b28178fbccfe69fc5d9eb3ea15dac0453bdffb90ec89120d178405"
+  },
+  {
+    "path": "webui/web/public/dpi-terminal-lifecycle.php",
+    "bytes": 4111,
+    "sha256": "d74444353fc4f5a3f753b6fa7644e97d476b5165c7f667477ffb1ab9c2a06018"
+  },
+  {
+    "path": "webui/web/public/dpi-terminal.php",
+    "bytes": 14326,
+    "sha256": "b860499906cb227c51db162ddc4604a6b41e504c2e5cd71786cdbd738eaa5725"
   },
   {
     "path": "webui/web/public/import-api.php",
-    "bytes": 6103,
-    "sha256": "cc38046300b8d9359db6976b2c2defc6f03d58e2d880d5f35932c064ba42b24c"
+    "bytes": 7225,
+    "sha256": "66f0ab0af36b602df0ac24f2057745edc0448b1019a3687bca65a29b26b57d2e"
   },
   {
     "path": "webui/web/public/import-config.php",
@@ -3426,8 +3611,8 @@
   },
   {
     "path": "webui/web/public/import-plan.php",
-    "bytes": 16681,
-    "sha256": "beaf1702aaed4e62c6dca8cbfe6acc56b63f2575b3a5b1b780aa83f5019f0142"
+    "bytes": 17680,
+    "sha256": "56a7f3eb82dfa3aa633f5532a0c6fb8aa7935cd9ae4c27a33657724c0584faea"
   },
   {
     "path": "webui/web/public/import-store.php",
@@ -3435,14 +3620,19 @@
     "sha256": "a9aa17ae0b0ebe0e4b22538cd3fcd2ff58ab6b63be93b646f67bfd36d9de9487"
   },
   {
+    "path": "webui/web/public/import-torrent-sites.php",
+    "bytes": 8059,
+    "sha256": "0b7608169868985474c95cd7b23b105ea7b85f24fe72df66e488f63da14f5d36"
+  },
+  {
     "path": "webui/web/public/import-transaction.php",
-    "bytes": 14824,
-    "sha256": "ad735fcfab40e04252171c60d0d4491d483cf235ee26978773daaa2ce6344cdd"
+    "bytes": 14869,
+    "sha256": "21730b8bec5d3c4f778ee1cbb90160911dcd76c56013b32877f8956a8d1a6dee"
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 36689,
-    "sha256": "449c57f1d3ac8881605b7c5cd1e4b86646ac18b0b67094aacb64b3d10ea163c2"
+    "bytes": 38261,
+    "sha256": "748e6dc1f26e6312aa54f3912b5b1ce14f0e668cd1742fc5c1a3042e2078157e"
   },
   {
     "path": "webui/web/public/ip-health-api.php",
@@ -3536,8 +3726,8 @@
   },
   {
     "path": "webui/web/public/openwrt-package-quiesce.php",
-    "bytes": 1769,
-    "sha256": "06df268810ab808716792d2a11acd1301bd782d9e9a8285b3e5f4ffbf72e37fd"
+    "bytes": 1875,
+    "sha256": "3d78925dfd9d9f7e73189e4135ed6e75427554c3d33cb66c35d6a7d9d2f37059"
   },
   {
     "path": "webui/web/public/openwrt-report.php",
@@ -3546,8 +3736,8 @@
   },
   {
     "path": "webui/web/public/openwrt-resource-upgrade.php",
-    "bytes": 3924,
-    "sha256": "e0675cb104232d7e2aa8a457af6943adf8eef97851d32d3c0eaea22cc334bef1"
+    "bytes": 4430,
+    "sha256": "46d791accb7a22ae0e45fe57ebe3cd5c8bb9ff9c2c869c625ec4f45c2aee09ee"
   },
   {
     "path": "webui/web/public/openwrt-smartdns-backend.php",
@@ -3612,7 +3802,7 @@
   {
     "path": "webui/web/public/openwrt-update-runtime.php",
     "bytes": 6433,
-    "sha256": "04648f26d2c0f0e3bf9a7033af0da1d313ce4d3dbc7e200aa71c7c18d044a146"
+    "sha256": "872c5eeb87d198ddc85208b7f4a128e28660309e6666b85bc180de60a5347dbe"
   },
   {
     "path": "webui/web/public/openwrt-update-snapshot.php",
@@ -3916,8 +4106,8 @@
   },
   {
     "path": "webui/web/public/update-lifecycle.php",
-    "bytes": 15997,
-    "sha256": "9c48f07deb8e0843587d59a7a8f94b8635830becfbdf37f2033045e92830383e"
+    "bytes": 16278,
+    "sha256": "ee448a9a9f5862aa12177053a419b25ac16a3d6be32593f14b08f745bfdcfeec"
   },
   {
     "path": "webui/web/public/update-manifest.php",
@@ -3947,7 +4137,7 @@
   {
     "path": "webui/web/public/update-runtime.php",
     "bytes": 13363,
-    "sha256": "e7df925f82e8302e0d446eb430c614b8c78bbf8e01e045d4c73e8b43b3524700"
+    "sha256": "d2230c1d323445b1897478a3d363cf8fbe2cb17b6248221d3b45143c7edb3d60"
   },
   {
     "path": "webui/web/public/update-smartdns-resume.php",
@@ -4016,8 +4206,8 @@
   },
   {
     "path": "webui/web/src/api/dpiClient.ts",
-    "bytes": 9938,
-    "sha256": "2945eec3366076478e36e21bda16864da64176397d068bf0e298a5a02fa7dc56"
+    "bytes": 20267,
+    "sha256": "dc62676c6a7bacdeaceeddf0acc22d86bcaa1c373ed28fb3a94361329e8ee86e"
   },
   {
     "path": "webui/web/src/api/dpiOptions.ts",
@@ -4031,8 +4221,8 @@
   },
   {
     "path": "webui/web/src/api/importClient.ts",
-    "bytes": 9843,
-    "sha256": "5f25b8c6bdbe765114b065025a080851782e5d095d662820896a091a3cadd2eb"
+    "bytes": 10630,
+    "sha256": "aee3e0f69f7c51585faf549d6e30785d96d404c924179365b2a56d25a83fe359"
   },
   {
     "path": "webui/web/src/api/importPaths.ts",
@@ -4210,6 +4400,11 @@
     "sha256": "6e95650acbbceff01e14aab02d82d100d2db109a33bd0caa8b7cd925cff09487"
   },
   {
+    "path": "webui/web/src/components/DpiTerminalDialog.tsx",
+    "bytes": 21047,
+    "sha256": "9d13d41dcc3ae52cb7311e8dd00437d9655ee42545f5656503a21019674f8735"
+  },
+  {
     "path": "webui/web/src/components/Editor.tsx",
     "bytes": 11032,
     "sha256": "202227db4605b7987eaa868d3ce2e5445b6ad3e86025b12c415bd8f979cb3200"
@@ -4241,8 +4436,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 14962,
-    "sha256": "40a7d7464d94528a322dbe1a29c265c85f0a1c2d79e6f52afc68c643a1965e0b"
+    "bytes": 16475,
+    "sha256": "286da1bf3796db4451472e54a54b8dac992eabc5e4f1ed53d64c9ce0487cc302"
   },
   {
     "path": "webui/web/src/components/ImportCatalog.tsx",
@@ -4251,13 +4446,13 @@
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
-    "bytes": 14789,
-    "sha256": "b7f09b2ca93189eab73f6640da2cad5d70b04ebe1e8105a79900fec747432f0e"
+    "bytes": 16206,
+    "sha256": "3bdd86c1fb2fa58022475d689887dd65e4d29cf2485a301605747e519a1ed6d9"
   },
   {
     "path": "webui/web/src/components/ImportPreview.tsx",
-    "bytes": 4130,
-    "sha256": "c0906bf6e60222217227db36786a54c61a5c5808576a41d4d86d3baaba2616ed"
+    "bytes": 4488,
+    "sha256": "b170bcd935316dc68b1bd9444895ffd628dd0107a89eb42fdff74453cab2c3d0"
   },
   {
     "path": "webui/web/src/components/ImportSelection.tsx",
@@ -4326,8 +4521,8 @@
   },
   {
     "path": "webui/web/src/components/RequirementsDialog.tsx",
-    "bytes": 7448,
-    "sha256": "ed9bb983bd72bb08a4a37b596ce95e699c13b44379acf35b2c3307c5bfb54c3e"
+    "bytes": 7980,
+    "sha256": "90c7b8f1b17243a3e5bdfba7ed50d5cdd89c45f3b3a1b0f65977f6a1d90a564c"
   },
   {
     "path": "webui/web/src/components/RestartScheduleDialog.tsx",
@@ -4536,13 +4731,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 84875,
-    "sha256": "e8b3ca6d58e075ba99a86199fba4e3e12708099da051ab8f38dd67bd4b8808b1"
+    "bytes": 90817,
+    "sha256": "152eb5f01a643d3c9d5f391e21a0c34a6b6c223fa821bdeb8cd712bb03ef1457"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 137056,
-    "sha256": "fe846ae24abeef6219928542fb51c0fc270260705eb53257f05dbe2c85f5c44a"
+    "bytes": 146550,
+    "sha256": "f3a1f98aa3d45f3b27a4424a3571b0df0395c3e91888acf1c9d95b1da2908362"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4603,6 +4798,11 @@
     "path": "webui/web/src/utils/createRouterProviderContext.tsx",
     "bytes": 407,
     "sha256": "ff8bfc9d53c35a9e787d0d4db5eb3d56321b2e51ac9b5df773d4833163e9fb3a"
+  },
+  {
+    "path": "webui/web/src/utils/dpiTerminalScroll.ts",
+    "bytes": 2953,
+    "sha256": "939b28e06e586137369e17e2230a5a7b71dc7ab9a97883e7d2926afafeecfae5"
   },
   {
     "path": "webui/web/src/utils/getFileTypeForTab.ts",
@@ -4686,8 +4886,8 @@
   },
   {
     "path": "webui/web/yarn.lock",
-    "bytes": 202891,
-    "sha256": "bf5746ebe22eac43eb4ab457648ff9607f24a77b693e65ea500181c43167ecd8"
+    "bytes": 203505,
+    "sha256": "37368e693384b897908773a9fce588e0823020f378004ad97be638eaef7953d2"
   },
   {
     "path": "webui/web.mk",

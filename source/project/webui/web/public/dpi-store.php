@@ -79,6 +79,22 @@ final class AsusDpiStore
         } catch(JsonException $e) {throw new RuntimeException('invalid_state');}
         finally {flock($f,LOCK_UN);fclose($f);}
     }
+    /** Serialize component admission, separately from short state-file edits.
+     * A competing install/removal fails busy instead of waiting and reviving
+     * the component after an uninstall has reported success. */
+    public function mutation(callable $fn): mixed
+    {
+        $path=$this->root.'/mutation.lock';$before=$this->regular($path,0);$mask=umask(0077);
+        try{$f=@fopen($path,$before?'r+b':'x+b');}finally{umask($mask);}
+        if(!$f){$this->regular($path,0);$f=@fopen($path,'r+b');}
+        if(!$f)throw new RuntimeException('invalid_state');
+        try{
+            $actual=fstat($f);$s=$this->regular($path,0);
+            if(!$s||$s['ino']!==$actual['ino']||$s['dev']!==$actual['dev'])throw new RuntimeException('invalid_state');
+            if(!flock($f,LOCK_EX|LOCK_NB))throw new RuntimeException('busy');
+            return $fn();
+        }finally{flock($f,LOCK_UN);fclose($f);}
+    }
     private static function boot(): string {return trim(file_get_contents('/proc/sys/kernel/random/boot_id'));}
     private static function uptime(): float {return (float)explode(' ',file_get_contents('/proc/uptime'))[0];}
     private function cleanupRun(string $id): void

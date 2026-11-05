@@ -21,7 +21,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 ENTRY_FIELDS = {'id', 'title', 'category', 'provider', 'region', 'description',
                 'attribution', 'updated_at', 'revision', 'min_build', 'file', 'source_sha256'}
-INIT_FILES = {'zapret-lib.lua', 'zapret-antidpi.lua', 'zapret-auto.lua', 'local-guarded-ts.lua'}
+INIT_FILES = {'zapret-lib.lua', 'zapret-antidpi.lua', 'zapret-auto.lua', 'local-guarded-ts.lua', 'local-tls13-stun.lua'}
 
 
 def unique(pairs):

@@ -26,12 +26,12 @@ blob_bundle = importlib.util.module_from_spec(_blob_spec)
 _blob_spec.loader.exec_module(blob_bundle)
 TARGETS = {
     'armv7-3.2': {'opkg_arch': 'all', 'filename_arch': 'armv7', 'family': 'armv7', 'elf_class': 1, 'elf_machine': 40,
-                 'engine_asset': 'nfqws2-keenetic_1.3.2_all_entware.ipk',
+                 'engine_asset': 'nfqws2-keenetic_1.3.3_all_entware.ipk',
                  'engine_member': 'opt/tmp/nfqws2_binary/nfqws2-armv7',
-                 'packed_sha256': '19da1dd9e7f49e061bc7735f690d1a42b55f562976fa820a5794c28695412cbe',
-                 'unpacked_sha256': '8bdb300328a358c069d11e957e4f88b23883abbbeb659c9ffa1ff48090ad70c6'},
+                 'packed_sha256': 'fa066bf4a9e71b9077b37b5c9acf263567716839db30d708273935302f52cb6e',
+                 'unpacked_sha256': '458fd5adc9fe07797ee5a9b5574313d3b9490863b41108c4d9c4afb96dc594b5'},
     'aarch64-3.10': {'opkg_arch': 'aarch64-3.10', 'elf_class': 2, 'elf_machine': 183,
-                     'engine_asset': 'nfqws2-keenetic_1.3.2_aarch64-3.10.ipk',
+                     'engine_asset': 'nfqws2-keenetic_1.3.3_aarch64-3.10.ipk',
                      'engine_member': 'opt/usr/bin/nfqws2'},
 }
 for arch, target in TARGETS.items():
@@ -142,6 +142,20 @@ def local(path, executable=False):
     return (ROOT/path).read_bytes(), 0o755 if executable else 0o644
 
 
+def dpi_terminal_payload(family):
+    spec = importlib.util.spec_from_file_location('nfqws_dpi_terminal_build', ROOT/'asus/dpi/terminal_build.py')
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    return {'opt/libexec/nfqws2-asus/dpi-terminal': (helper.payload_for(family), 0o755)}
+
+
+def dpi_terminal_stop_hook():
+    spec = importlib.util.spec_from_file_location('nfqws_dpi_package_hook', ROOT/'asus/dpi/package_hook.py')
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    return hook.shutdown_hook('/opt/bin/php-cgi', asus_busybox=True)
+
+
 def update_launcher(target, base=None, stem='opkg-launch', manifest='launchers.json', source=None):
     base = base or ROOT/'asus/update'
     meta = json.loads((base/'bin'/manifest).read_text())
@@ -220,12 +234,13 @@ def package(output, name, version, depends, conflicts, payload, prefix, conffile
         if prefix == 'unified' and script in ['preinst', 'postinst']:
             source_bytes = scripts[script][0]
             migration = (ROOT/'asus/ipk/migration.sh').read_bytes()
+            migration += b'\n'+(ROOT/'asus/ipk/lua-upgrade.sh').read_bytes()
             if script == 'postinst':
                 migration += b'\n'+(ROOT/'asus/ipk/defaults.sh').read_bytes()
             source_bytes = b'#!/bin/sh\n'+migration+b'\n'+source_bytes.split(b'\n', 1)[1]
             if script == 'preinst':
-                source_bytes = source_bytes.replace(b"model=''", b"asus_migration_save || exit $?\nmodel=''", 1)
-                source_bytes = source_bytes.replace(b'asus_preserve_relay() { :; }',b'asus_preserve_relay() {\nasus_migration_select_busybox || return 1\n'+relay_preserver('prepare',version)+b'}',1)
+                source_bytes = source_bytes.replace(b"model=''", b"asus_migration_save || exit $?\nasus_lua_upgrade_save || exit $?\nmodel=''", 1)
+                source_bytes = source_bytes.replace(b'asus_preserve_relay() { :; }',b'asus_preserve_relay() {\nasus_migration_select_busybox || return 1\n'+dpi_terminal_stop_hook()+relay_preserver('prepare',version)+b'}',1)
             else:
                 source_bytes = source_bytes.replace(b'set -e\n',b'set -e\n'+relay_preserver('finish',version),1)
             scripts[script] = source_bytes, 0o755
@@ -281,6 +296,17 @@ def web_payload(dist=None):
             for p in sorted(dist.rglob('*')) if p.is_file() and not p.name.endswith('.map')}
 
 
+def add_lua_factory_resources(payload):
+    """opkg protects owner edits; postinst advances only verified old stock."""
+    conffiles = []
+    prefix = 'opt/etc/nfqws2/lua/'
+    for name, value in list(payload.items()):
+        if name.startswith(prefix) and name.endswith('.lua'):
+            payload['opt/share/nfqws2-asus/factory/lua/'+name[len(prefix):]] = value
+            conffiles.append('/'+name+'\n')
+    return ''.join(sorted(conffiles))
+
+
 def build_one(cache, output, offline, arch, build_number=None):
     target = TARGETS[arch]
     nfq = asset(target['engine_asset'], cache, offline)
@@ -298,9 +324,12 @@ def build_one(cache, output, offline, arch, build_number=None):
     validate_elf(engine, target, 'engine')
     core['opt/usr/bin/nfqws2'] = engine, 0o755
     core['opt/etc/nfqws2/lua/local-guarded-ts.lua'] = local('asus/lua/local-guarded-ts.lua')
+    core['opt/etc/nfqws2/lua/local-tls13-stun.lua'] = local('asus/lua/local-tls13-stun.lua')
+    conffiles = add_lua_factory_resources(core)
+    core['opt/lib/nfqws2-asus/lua-upgrade.php'] = local('asus/lua-upgrade.php')
     blob_bundle.add_bundle(core, 'opt/share/nfqws2-asus', 'opt/share/nfqws2-asus/defaults')
     baseline = {'schema_version': 1, 'package_version': package_version(build_number), 'web_version': WEB_VERSION,
-                'engine': {'version': '1.0.6', 'provider': 'nfqws2-keenetic',
+                'engine': {'version': '1.0.7', 'provider': 'nfqws2-keenetic',
                            'sha256': hashlib.sha256(engine).hexdigest(),
                            'elf_class': engine[4], 'elf_machine': int.from_bytes(engine[18:20], 'little')},
                 'resources': {}}
@@ -328,6 +357,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     for name in ['guard.sh', 'probe.sh', 'drop.sh', 'stop.sh', 'worker.php', 'cli.php', 'paths.sh']:
         core['opt/lib/nfqws2-asus/dpi/'+name] = local('asus/dpi/'+name)
     core['opt/bin/nfqws2-dpi'] = local('asus/dpi/cli.sh', True)
+    core.update(dpi_terminal_payload(arch))
     if family == 'armv7':
         legacy_dpi = (ROOT/'asus/dpi/legacy/dpi-detector-armv5te').read_bytes()
         legacy_spec = json.loads((ROOT/'support/dpi-catalog.json').read_text())['artifacts']['armv7-2.6']
@@ -405,7 +435,6 @@ def build_one(cache, output, offline, arch, build_number=None):
         core['opt/lib/nfqws2-asus/bin/'+applet] = (
             f'#!{shell_path} sh\nexec {shell_path} {applet} "$@"\n'.encode(), 0o755)
     licenses(core, 'nfqws2-asus')
-    conffiles = ''  # Active NFQWS2 config/lists are created once, never unpacked over.
 
     web = web_payload()
     light = asset(target['lighttpd_asset'], cache, offline)

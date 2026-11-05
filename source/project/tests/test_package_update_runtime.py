@@ -17,6 +17,12 @@ SYSROOT=AUDIT/(ABI+'-sysroot')
 
 
 class PackageUpdateRuntimeTests(unittest.TestCase):
+    def test_excess_application_files_are_rejected_before_staging(self):
+        for n in range(161):
+            (self.application/f'bounded-fixture-{n}.php').write_text('<?php')
+        self.assertEqual(self.call(),{'error':'runtime_limit'})
+        self.assertFalse(self.runtime.exists())
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.base=Path(self.tmp.name)
         self.opt=self.base/'original/opt';self.opt.mkdir(parents=True)

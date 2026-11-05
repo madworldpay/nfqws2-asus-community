@@ -11,7 +11,7 @@ class DpiJobsTests(unittest.TestCase):
     def call(self,script):
         with tempfile.TemporaryDirectory() as directory:
             code='''require $argv[1].'/dpi-jobs.php';try{$s=new AsusDpiStore($argv[2].'/state',(int)$argv[3]);$calls=[];
-            $dep=['launch'=>function($id,$kind)use(&$calls){$calls[]=[$id,$kind];},'available'=>fn()=>['available'=>true,'code'=>'ready'],'installed'=>fn()=>true];
+            $dep=['terminal_gate'=>new AsusDpiTerminalLifecycle($argv[2].'/terminal',(int)$argv[3]),'launch'=>function($id,$kind)use(&$calls){$calls[]=[$id,$kind];},'available'=>fn()=>['available'=>true,'code'=>'ready'],'installed'=>fn()=>true];
             $j=new AsusDpiJobs($s,$dep);'''+script+'''}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
             r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),directory,str(os.getuid()),str(ROOT)],capture_output=True,text=True)
         self.assertEqual(r.returncode,0,r.stdout+r.stderr);self.assertEqual(r.stderr,'');return json.loads(r.stdout)

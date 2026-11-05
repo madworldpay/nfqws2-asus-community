@@ -115,6 +115,9 @@ class AsusSmartDnsLifecycle {function __construct($s,$b){} function resume(){fil
         self.assertEqual(baseline['package_version'],target['version'])
         self.assertEqual(baseline['build_number'],int((ROOT/'BUILD_NUMBER').read_text()))
         self.assertEqual(baseline['resources']['lua/local-guarded-ts.lua']['sha256'],hashlib.sha256((ROOT/'asus/lua/local-guarded-ts.lua').read_bytes()).hexdigest())
+        local_lua=(ROOT/'asus/lua/local-tls13-stun.lua').read_bytes()
+        self.assertIn('usr/share/nfqws2/defaults/lua/local-tls13-stun.lua',list(files))
+        self.assertEqual(baseline['resources']['lua/local-tls13-stun.lua'],{'bytes':len(local_lua),'sha256':hashlib.sha256(local_lua).hexdigest()})
         artifact=json.loads(files['usr/share/nfqws2/dpi-native-artifact.json'][0])
         self.assertEqual((artifact['arch'],artifact['engine']),('arm_cortex-a9','arm'))
         self.assertEqual(artifact['artifact']['sha256'],'c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863')
@@ -181,6 +184,12 @@ class AsusSmartDnsLifecycle {function __construct($s,$b){} function resume(){fil
             self.assertEqual(schedule.read_text(),'periodic and watchdog settings\n')
             self.assertEqual(custom.read_text(),'my Lua\n')
             self.assertEqual((custom.parent/'local-guarded-ts.lua').read_bytes(),(ROOT/'asus/lua/local-guarded-ts.lua').read_bytes())
+            local_lua=custom.parent/'local-tls13-stun.lua'
+            self.assertEqual(local_lua.read_bytes(),(ROOT/'asus/lua/local-tls13-stun.lua').read_bytes())
+            local_lua.write_text('-- owner edit remains active\n')
+            repeated=subprocess.run(['fakeroot','sh',str(hook)],env={**os.environ,'IPKG_INSTROOT':str(root)},text=True,capture_output=True)
+            self.assertEqual(repeated.returncode,0,repeated.stdout+repeated.stderr)
+            self.assertEqual(local_lua.read_text(),'-- owner edit remains active\n')
             self.assertEqual(os.readlink(root/'etc/init.d/nfqws2-native'),'/usr/lib/nfqws2/nfqws2-native')
             for name in ['lists','lua','blobs']:
                 self.assertEqual(stat.S_IMODE((root/'etc/nfqws2'/name).stat().st_mode),0o755)

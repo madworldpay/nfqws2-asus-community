@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { useConfig } from '@/config/useConfig';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
@@ -7,12 +7,14 @@ import PasswordIcon from '@mui/icons-material/Password';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SaveIcon from '@mui/icons-material/Save';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import {
   Alert,
   AlertTitle,
   Box,
   Button,
   IconButton,
+  LinearProgress,
   Link,
   Stack,
   Tooltip,
@@ -40,6 +42,12 @@ import { useAppStore } from '@/store/useAppStore';
 
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
+
+const DpiTerminalDialog = lazy(() =>
+  import('@/components/DpiTerminalDialog').then((module) => ({
+    default: module.DpiTerminalDialog,
+  })),
+);
 
 export const Header = () => {
   const { t } = useTranslation();
@@ -72,6 +80,7 @@ export const Header = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [shareThanks, setShareThanks] = useState(0);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [dpiTerminalOpen, setDpiTerminalOpen] = useState(false);
   const [actionPending, setActionPending] = useState(false);
   const actionInFlight = useRef(false);
   const { appearance } = useAppearanceStore();
@@ -109,12 +118,35 @@ export const Header = () => {
       <Box
         component="header"
         sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
           px: 'max(15px, 1.6vh)',
           py: 'max(15px, 1.6vh)',
           borderBottom: '1px solid',
           borderColor: 'divider',
           backgroundColor: 'background.paper',
           whiteSpace: 'nowrap',
+          minHeight: {
+            xs: 0,
+            sm:
+              appearance === 'rabbit'
+                ? 'calc(203.2px + 2 * max(15px, 1.6vh))'
+                : 0,
+          },
+          '& .MuiButton-root, & .MuiIconButton-root, & .MuiChip-root': {
+            height: 36,
+            minHeight: 36,
+            flexShrink: 0,
+          },
+          '& .MuiIconButton-root': { width: 36 },
+          // Reserve the desktop artwork in the header, not between button rows.
+          '& .rabbit-build-stage': {
+            height: 36,
+            '--rabbit-button-top': '0px',
+            '--rabbit-seat': '36px',
+          },
+          '@media (max-height: 600px)': { minHeight: 0 },
           '@media (max-width: 599.95px)': {
             px: 1.25,
             py: 1,
@@ -137,102 +169,91 @@ export const Header = () => {
           rowGap={{ xs: 1, sm: 2 }}
           columnGap={1}
         >
-          <Stack
-            direction="row"
-            spacing={1.3}
-            alignItems="center"
-            flexGrow={0}
-            useFlexGap
-            flexWrap="wrap"
+          <Link
+            component={RouterLink}
+            underline="none"
+            to="/"
+            sx={{
+              display: 'inline-flex',
+              gap: 1.3,
+              alignItems: 'center',
+              direction: 'row',
+              userSelect: 'none',
+              flexShrink: 0,
+            }}
           >
-            <Link
-              component={RouterLink}
-              underline="none"
-              to="/"
+            <Typography
+              component="h2"
+              fontFamily={'Roboto, sans-serif'}
+              textTransform="uppercase"
+              color="primary.main"
+              fontSize="1.25em"
+              lineHeight={1}
               sx={{
-                display: 'inline-flex',
-                gap: 1.3,
-                alignItems: 'center',
-                direction: 'row',
-                userSelect: 'none',
+                '@media (max-width: 475px)': {
+                  fontSize: '0.85em',
+                },
               }}
             >
-              <Typography
-                component="h2"
-                fontFamily={'Roboto, sans-serif'}
-                textTransform="uppercase"
-                color="primary.main"
-                fontSize="1.25em"
-                lineHeight={1}
-                sx={{
-                  '@media (max-width: 475px)': {
-                    fontSize: '0.85em',
-                  },
-                }}
-              >
-                {platform === 'openwrt' ? 'OpenWrt' : 'ASUS'}
-              </Typography>
-              <Typography
-                component="h2"
-                fontFamily={'Device Model, Roboto, sans-serif'}
-                textTransform="uppercase"
-                color="textPrimary"
-                fontSize="1.131em"
-                lineHeight={1}
-                pt="3px"
-                sx={{
-                  '@media (max-width: 475px)': {
-                    fontSize: '0.8em',
-                  },
-                }}
-              >
-                {config.title}
-              </Typography>
-
-              {auth && service && (
-                <CloudDoneIcon
-                  sx={{
-                    fontSize: '1.25em',
-                    color: 'success.main',
-                    alignSelf: 'center',
-                    opacity: 0.9,
-                    '@media (max-width: 475px)': {
-                      fontSize: '1em',
-                    },
-                  }}
-                />
-              )}
-              {auth && !service && (
-                <CloudOffIcon
-                  sx={{
-                    fontSize: '1.25em',
-                    color: 'error.main',
-                    alignSelf: 'center',
-                    opacity: 0.9,
-                    '@media (max-width: 475px)': {
-                      fontSize: '1em',
-                    },
-                  }}
-                />
-              )}
-            </Link>
-            <CurrentVersion
+              {platform === 'openwrt' ? 'OpenWrt' : 'ASUS'}
+            </Typography>
+            <Typography
+              component="h2"
+              fontFamily={'Device Model, Roboto, sans-serif'}
+              textTransform="uppercase"
+              color="textPrimary"
+              fontSize="1.131em"
+              lineHeight={1}
+              pt="3px"
               sx={{
-                justifyContent: 'flex-end',
-                flexGrow: 500,
+                '@media (max-width: 475px)': {
+                  fontSize: '0.8em',
+                },
               }}
-            />
-          </Stack>
+            >
+              {config.title}
+            </Typography>
 
+            {auth && service && (
+              <CloudDoneIcon
+                sx={{
+                  fontSize: '1.25em',
+                  color: 'success.main',
+                  alignSelf: 'center',
+                  opacity: 0.9,
+                  '@media (max-width: 475px)': {
+                    fontSize: '1em',
+                  },
+                }}
+              />
+            )}
+            {auth && !service && (
+              <CloudOffIcon
+                sx={{
+                  fontSize: '1.25em',
+                  color: 'error.main',
+                  alignSelf: 'center',
+                  opacity: 0.9,
+                  '@media (max-width: 475px)': {
+                    fontSize: '1em',
+                  },
+                }}
+              />
+            )}
+          </Link>
           <Stack
             direction="row"
             spacing={{ xs: 0.5, sm: 0.75 }}
             useFlexGap
             flexWrap="wrap"
             flexGrow={1}
+            alignItems="center"
             justifyContent="flex-end"
             sx={{ rowGap: 1, flexBasis: { xs: '100%', lg: 0 }, minWidth: 0 }}
           >
+            <CurrentVersion
+              sx={{ alignItems: 'center', flexGrow: 0, height: 36 }}
+            />
             <Button
               variant="outlined"
               size="small"
@@ -253,6 +274,18 @@ export const Header = () => {
                 onClick={() => setArkOpen(true)}
               >
                 <Trans i18nKey="ark.title" />
+              </Button>
+            )}
+            {canControlService && csrfToken && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<TerminalIcon />}
+                aria-haspopup="dialog"
+                aria-expanded={dpiTerminalOpen}
+                onClick={() => setDpiTerminalOpen(true)}
+              >
+                {t('dpi_terminal.title')}
               </Button>
             )}
             {auth && (
@@ -297,7 +330,7 @@ export const Header = () => {
             <Stack
               direction="row"
               alignItems="center"
-              flexGrow={1}
+              flexGrow={0}
               justifyContent="flex-end"
             >
               {canControlService && (
@@ -409,6 +442,16 @@ export const Header = () => {
             }
           }}
         />
+      )}
+      {canControlService && csrfToken && dpiTerminalOpen && (
+        <Suspense
+          fallback={<LinearProgress aria-label={t('dpi_terminal.loading')} />}
+        >
+          <DpiTerminalDialog
+            csrfToken={csrfToken}
+            onClose={() => setDpiTerminalOpen(false)}
+          />
+        </Suspense>
       )}
       {scheduleOpen && (
         <RestartScheduleDialog

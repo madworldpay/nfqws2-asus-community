@@ -52,6 +52,7 @@ export async function request(
   cmd: string,
   params: Record<string, string> = {},
   max = 16384,
+  keepalive = false,
 ): Promise<{ value: unknown; text: string; response: Response }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
@@ -59,6 +60,7 @@ export async function request(
     const response = await fetch('/index.php', {
       method: 'POST',
       credentials: 'same-origin',
+      keepalive,
       body: new URLSearchParams({ cmd, csrf_token: csrf, ...params }),
       signal: controller.signal,
     });
@@ -357,4 +359,380 @@ export async function downloadDpiOriginal(
   return nativeAvailable
     ? downloadDpiNativeResult(csrf, jobId)
     : downloadDpiResult(csrf, jobId);
+}
+
+export type DpiTerminalState =
+  | 'running'
+  | 'exited'
+  | 'stopped'
+  | 'expired'
+  | 'output_limit'
+  | 'failed';
+export type DpiTerminalResponse = {
+  terminal_id: string;
+  state: DpiTerminalState;
+  offset: number;
+  data: string;
+  exit_code: number | null;
+};
+export type DpiTerminalInfo = {
+  available: boolean;
+  installed: boolean;
+  code: string | null;
+};
+const TERMINAL_OUTPUT_LIMIT = 2097152;
+function terminalSize(cols: number, rows: number) {
+  if (
+    !Number.isInteger(cols) ||
+    cols < 80 ||
+    cols > 240 ||
+    !Number.isInteger(rows) ||
+    rows < 10 ||
+    rows > 80
+  )
+    throw new DpiError('invalid_request');
+  return { cols: String(cols), rows: String(rows) };
+}
+function terminalBytes(data: string): Uint8Array {
+  if (
+    typeof data !== 'string' ||
+    data.length > 43692 ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+      data,
+    )
+  )
+    throw new DpiError('invalid_response');
+  const raw = atob(data);
+  if (raw.length > 32768 || btoa(raw) !== data)
+    throw new DpiError('invalid_response');
+  return Uint8Array.from(raw, (char) => char.charCodeAt(0));
+}
+function terminalResponse(
+  value: unknown,
+  expectedId?: string,
+): DpiTerminalResponse {
+  const v = value as DpiTerminalResponse;
+  if (
+    !v ||
+    !JOB.test(v.terminal_id) ||
+    (expectedId && v.terminal_id !== expectedId) ||
+    ![
+      'running',
+      'exited',
+      'stopped',
+      'expired',
+      'output_limit',
+      'failed',
+    ].includes(v.state) ||
+    !Number.isInteger(v.offset) ||
+    v.offset < 0 ||
+    v.offset > TERMINAL_OUTPUT_LIMIT ||
+    (v.exit_code !== null &&
+      (!Number.isInteger(v.exit_code) ||
+        v.exit_code < -255 ||
+        v.exit_code > 255))
+  )
+    throw new DpiError('invalid_response');
+  terminalBytes(v.data);
+  return v;
+}
+export async function getDpiTerminalInfo(
+  csrf: string,
+): Promise<DpiTerminalInfo> {
+  const { value } = await request(csrf, 'dpiterminalinfo');
+  const v = value as DpiTerminalInfo;
+  if (
+    !v ||
+    typeof v.available !== 'boolean' ||
+    typeof v.installed !== 'boolean' ||
+    (v.code !== null &&
+      (typeof v.code !== 'string' || !/^[a-z_]{1,40}$/.test(v.code)))
+  )
+    throw new DpiError('invalid_response');
+  return v;
+}
+export async function startDpiTerminal(
+  csrf: string,
+  cols: number,
+  rows: number,
+  language: 'ru' | 'en',
+  requestId: string,
+): Promise<DpiTerminalResponse> {
+  if (!['ru', 'en'].includes(language)) throw new DpiError('invalid_request');
+  return terminalResponse(
+    (
+      await request(
+        csrf,
+        'dpiterminalstart',
+        { ...terminalSize(cols, rows), language, request_id: id(requestId) },
+        49152,
+      )
+    ).value,
+  );
+}
+export async function removeDpiDetector(csrf: string, deleteReports: boolean) {
+  if (typeof deleteReports !== 'boolean') throw new DpiError('invalid_request');
+  const { value } = await request(
+    csrf,
+    'dpiterminalremove',
+    {
+      consent: 'remove',
+      delete_reports: deleteReports ? '1' : '0',
+    },
+    1024,
+  );
+  const result = value as { removed: boolean; reports_removed: boolean };
+  if (result?.removed !== true || result.reports_removed !== deleteReports)
+    throw new DpiError('invalid_response');
+  return result;
+}
+export async function pollDpiTerminal(
+  csrf: string,
+  terminalId: string,
+  offset: number,
+): Promise<DpiTerminalResponse> {
+  if (!Number.isInteger(offset) || offset < 0 || offset > TERMINAL_OUTPUT_LIMIT)
+    throw new DpiError('invalid_request');
+  return terminalResponse(
+    (
+      await request(
+        csrf,
+        'dpiterminalpoll',
+        { terminal_id: id(terminalId), offset: String(offset) },
+        49152,
+      )
+    ).value,
+    terminalId,
+  );
+}
+export async function inputDpiTerminal(
+  csrf: string,
+  terminalId: string,
+  data: string,
+): Promise<DpiTerminalResponse> {
+  const bytes = new TextEncoder().encode(data);
+  if (!bytes.length || bytes.length > 1024)
+    throw new DpiError('invalid_request');
+  return terminalResponse(
+    (
+      await request(
+        csrf,
+        'dpiterminalinput',
+        {
+          terminal_id: id(terminalId),
+          data: btoa(String.fromCharCode(...bytes)),
+        },
+        49152,
+      )
+    ).value,
+    terminalId,
+  );
+}
+export async function resizeDpiTerminal(
+  csrf: string,
+  terminalId: string,
+  cols: number,
+  rows: number,
+): Promise<DpiTerminalResponse> {
+  return terminalResponse(
+    (
+      await request(
+        csrf,
+        'dpiterminalresize',
+        { terminal_id: id(terminalId), ...terminalSize(cols, rows) },
+        49152,
+      )
+    ).value,
+    terminalId,
+  );
+}
+export async function stopDpiTerminal(
+  csrf: string,
+  terminalId: string,
+): Promise<DpiTerminalResponse> {
+  return terminalResponse(
+    (
+      await request(
+        csrf,
+        'dpiterminalstop',
+        { terminal_id: id(terminalId) },
+        49152,
+        true,
+      )
+    ).value,
+    terminalId,
+  );
+}
+
+/** Owns one native process. All output/input requests share a single loop. */
+export class DpiTerminalSession {
+  private terminalId: string | null = null;
+  // One nonce belongs to this dialog attempt, including retries after a lost
+  // response. Another dialog must never attach to this process before cleanup.
+  private requestId = Array.from(
+    crypto.getRandomValues(new Uint8Array(16)),
+    (byte) => byte.toString(16).padStart(2, '0'),
+  ).join('');
+  private offset = 0;
+  private closed = false;
+  private inputQueue: string[] = [];
+  private size: { cols: number; rows: number } | null = null;
+  private running: Promise<void> | null = null;
+  private stopping: Promise<void> | null = null;
+  private wake: (() => void) | null = null;
+  private csrf: string;
+  private language: 'ru' | 'en';
+  private callbacks: {
+    output: (data: Uint8Array) => void;
+    state: (state: DpiTerminalState) => void;
+    error: (error: DpiError) => void;
+  };
+  constructor(
+    csrf: string,
+    language: 'ru' | 'en',
+    callbacks: DpiTerminalSession['callbacks'],
+  ) {
+    this.csrf = csrf;
+    this.language = language;
+    this.callbacks = callbacks;
+  }
+  start(cols: number, rows: number): Promise<void> {
+    if (!this.running && !this.closed) this.running = this.run(cols, rows);
+    return this.running ?? Promise.resolve();
+  }
+  input(data: string) {
+    if (this.closed || !this.terminalId) return;
+    const bytes = new TextEncoder().encode(data).length;
+    const queued = this.inputQueue.reduce(
+      (sum, item) => sum + new TextEncoder().encode(item).length,
+      0,
+    );
+    if (!bytes || bytes > 1024 || queued + bytes > 8192) {
+      this.callbacks.error(new DpiError('input_limit'));
+      return;
+    }
+    this.inputQueue.push(data);
+    this.wake?.();
+  }
+  resize(cols: number, rows: number) {
+    terminalSize(cols, rows);
+    if (this.closed) return;
+    this.size = { cols, rows };
+    this.wake?.();
+  }
+  async close(): Promise<void> {
+    this.closed = true;
+    this.inputQueue = [];
+    this.wake?.();
+    // A keepalive stop must leave immediately on pagehide, even if a poll is
+    // awaiting a response. The output loop itself still never overlaps polls.
+    const stopping = this.stopOwned();
+    await this.running;
+    await stopping;
+    await this.stopOwned();
+  }
+  private stopOwned(): Promise<void> {
+    if (!this.stopping && this.terminalId) {
+      this.stopping = stopDpiTerminal(this.csrf, this.terminalId).then(
+        () => {},
+        () => {},
+      );
+    }
+    return this.stopping ?? Promise.resolve();
+  }
+  private consume(value: DpiTerminalResponse) {
+    const bytes = terminalBytes(value.data);
+    if (value.offset !== this.offset + bytes.length)
+      throw new DpiError('invalid_response');
+    this.offset = value.offset;
+    if (bytes.length) this.callbacks.output(bytes);
+    this.callbacks.state(value.state);
+    return bytes.length;
+  }
+  private wait() {
+    return new Promise<void>((resolve) => {
+      const finish = () => {
+        clearTimeout(timer);
+        this.wake = null;
+        resolve();
+      };
+      const timer = setTimeout(finish, 150);
+      this.wake = finish;
+    });
+  }
+  private async run(cols: number, rows: number) {
+    try {
+      let started: DpiTerminalResponse;
+      try {
+        started = await startDpiTerminal(
+          this.csrf,
+          cols,
+          rows,
+          this.language,
+          this.requestId,
+        );
+      } catch (error) {
+        if (
+          !(error instanceof DpiError) ||
+          !['timeout', 'request_failed'].includes(error.code)
+        )
+          throw error;
+        // The server returns the existing session for the same browser owner.
+        // Recover a lost reply even after close so its process can be stopped.
+        started = await startDpiTerminal(
+          this.csrf,
+          cols,
+          rows,
+          this.language,
+          this.requestId,
+        );
+      }
+      this.terminalId = started.terminal_id;
+      if (this.closed) return;
+      this.consume(started);
+      if (
+        started.state !== 'running' &&
+        terminalBytes(started.data).length < 32768
+      )
+        return;
+      while (!this.closed) {
+        if (this.size) {
+          const size = this.size;
+          this.size = null;
+          await resizeDpiTerminal(
+            this.csrf,
+            this.terminalId,
+            size.cols,
+            size.rows,
+          );
+        } else if (this.inputQueue.length) {
+          await inputDpiTerminal(
+            this.csrf,
+            this.terminalId,
+            this.inputQueue.shift()!,
+          );
+        } else {
+          const value = await pollDpiTerminal(
+            this.csrf,
+            this.terminalId,
+            this.offset,
+          );
+          if (this.closed) break;
+          const length = this.consume(value);
+          if (value.state !== 'running' && length < 32768) break;
+          if (!this.inputQueue.length && !this.size) await this.wait();
+        }
+      }
+    } catch (error) {
+      if (!this.closed) {
+        this.callbacks.error(
+          error instanceof DpiError ? error : new DpiError('request_failed'),
+        );
+        this.callbacks.state('failed');
+      }
+      this.closed = true;
+    } finally {
+      if (this.closed) await this.stopOwned();
+    }
+  }
 }

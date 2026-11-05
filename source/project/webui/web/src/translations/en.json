@@ -290,7 +290,11 @@
       "verify": "Open the required services on a selected device and test new connections.",
       "recover": "For help: Share → Preview. To disconnect SmartDNS: Restore previous DNS.",
       "ark": "Check the platform and packet capture. If ARK is loaded on ASUS, follow the preparation instructions.",
-      "start": "Start or restart NFQWS2 after changing its strategy. Check that the queue is bound."
+      "start": "Start or restart NFQWS2 after changing its strategy. Check that the queue is bound.",
+      "detector": "The new “DPI Detector” button at the top checks DNS and service reachability. Installation and help are available in its window.",
+      "keenetic_import": "The NFQWS2 Keenetic strategy converter is in Import profile → Paste Keenetic strategy. Review the result before saving.",
+      "keenetic_help": "You can always ask for help choosing strategies in the",
+      "keenetic_chat": "NFQWS2 Keenetic chat"
     },
     "details": "Details and limits",
     "open_ark": "Review ASUS preparation",
@@ -863,7 +867,8 @@
       "invalid_dns_profile": "Check DNS cards: a default server is required, and DNS hostnames need bootstrap addresses.",
       "incomplete_analysis": "Review the listed analysis limitations before saving.",
       "empty_selection": "Select a block, file, ports or DNS to import.",
-      "invalid_file_name": "Unsupported file name. Use up to 128 letters A–Z, digits, dots, hyphens or underscores."
+      "invalid_file_name": "Unsupported file name. Use up to 128 letters A–Z, digits, dots, hyphens or underscores.",
+      "torrent_sites_incompatible": "This profile or its files are incompatible with the additional rule. A compatible profile with TCP 443 and packaged Lua/TLS files is required. Turn this option off to import the original profile."
     },
     "errors": {
       "invalid_response": "The panel received an incomplete reply. Retry the check.",
@@ -911,7 +916,8 @@
       "catalog_changed": "The catalog has changed. Refresh the list and select the preset again.",
       "catalog_version": "Update the package to use this preset.",
       "unsupported_keenetic_strategy": "Could not convert this format. Paste an NFQWS2 text strategy without shell commands.",
-      "keenetic_limit": "The strategy text exceeds 64 KiB. Paste only the required strategy arguments."
+      "keenetic_limit": "The strategy text exceeds 64 KiB. Paste only the required strategy arguments.",
+      "invalid_torrent_sites_source": "This option requires a general cloud profile. Load the profile again: it has changed or the catalog is unavailable."
     },
     "from_json": "From JSON: ",
     "dns_default_hint": "A complete DNS draft needs at least one default server. Supply bootstrap addresses for DNS hostnames. Nothing is added automatically.",
@@ -959,6 +965,11 @@
       "choose": "Paste a Keenetic strategy",
       "hint": "Paste the NFQWS2 strategy text from Keenetic. File paths will be adapted for ASUS. Check the result before saving.",
       "convert": "Convert for ASUS"
+    },
+    "torrent_sites": {
+      "label": "Add bypass for torrent tracker websites",
+      "help": "Adds a rule to the selected profile for HTTPS websites nnmclub.to, rutracker.org, rutor.info and tapochek.net only (TCP 443). Results depend on your network. Review the added rule in the preview before saving.",
+      "preview": "Added rule for torrent tracker websites"
     }
   },
   "openwrt": {
@@ -1160,5 +1171,60 @@
       "stale_revision": "The list changed. Current status has been reloaded; review it before repeating the action.",
       "action_unknown": "The action result could not be confirmed. Status has been requested again; the action was not repeated."
     }
+  },
+  "dpi_terminal": {
+    "title": "DPI Detector",
+    "loading": "Opening DPI Detector…",
+    "description": "DPI Detector checks DNS, websites and network connections. This window opens its original menu. Use the keyboard or the buttons below. Closing the window stops this terminal and its tests.",
+    "screen": "Original DPI Detector terminal",
+    "controls": "Detector keyboard controls",
+    "space": "Space",
+    "save_key": "S · Save TXT",
+    "quit_key": "Q · Quit",
+    "key_up": "Up arrow",
+    "key_down": "Down arrow",
+    "key_left": "Left arrow",
+    "key_right": "Right arrow",
+    "key_space": "Space: select",
+    "key_enter": "Enter: confirm",
+    "key_escape": "Escape: back",
+    "key_save": "S: save the native TXT report",
+    "key_quit": "Q: quit Detector",
+    "saved_hint": "Use the wheel or swipe up/down to scroll history. Shift+PageUp/PageDown scrolls pages; Shift+Home/End jumps to the start/end. Press S in the results menu to save TXT; refresh the list under Export / report to find it. Wide tables scroll horizontally.",
+    "unavailable": "The native terminal is unavailable on this router. Refresh after installing a build with terminal support.",
+    "unsupported_abi": "NFQWS2 supports this architecture, but a verified DPI Detector build is not available for it yet.",
+    "session_error": "The panel session expired or was rejected. Refresh the page, sign in if prompted, and reopen DPI Detector.",
+    "busy": "DPI Detector is already in use by another terminal or check. Close it or wait for it to finish, then reopen this window.",
+    "input_limit": "That input is too large. Type or paste a smaller amount.",
+    "install_failed": "DPI Detector installation did not finish. Refresh its status and retry installation if needed.",
+    "request_failed": "The terminal connection failed. Close this window and reopen DPI Detector to try again.",
+    "retry": "Refresh status",
+    "state_exited": "DPI Detector has exited.",
+    "state_stopped": "The terminal has stopped.",
+    "state_expired": "The terminal session expired. Close this window and reopen DPI Detector.",
+    "state_output_limit": "The terminal output limit was reached and the Detector was stopped.",
+    "state_failed": "The terminal has stopped after an error.",
+    "reopen": "Reopen terminal",
+    "scroll_controls": "Report scrolling",
+    "scroll_top": "Top",
+    "scroll_up": "Page up",
+    "scroll_down": "Page down",
+    "scroll_bottom": "Bottom",
+    "help_title": "DPI Detector help",
+    "help": "Open help: installation, tests and results.",
+    "remove": "Uninstall DPI Detector",
+    "remove_confirm": "Uninstall the installed DPI Detector? Its current terminal and tests will stop.",
+    "remove_reports": "Delete saved Detector reports",
+    "remove_keep_reports": "Detector will be removed. Saved reports will be kept.",
+    "remove_with_reports": "Detector and saved reports will be deleted. Reports cannot be restored from the panel.",
+    "removing": "Uninstalling…",
+    "reports_not_removed": "Not all reports could be deleted. Detector is still installed. Refresh the report list before trying again.",
+    "guide_title": "How to use it and read the results",
+    "guide_purpose": "What it offers: helps locate a failure at DNS, connection setup or data transfer. It tests plain and encrypted DNS, altered replies, HTTP/TLS/QUIC websites, and connections to CDNs and hosting providers. Reported DNS resolvers can reveal an unexpected DNS path; this is not a complete leak test for every device.",
+    "guide_install": "Installation: if Detector is missing, click “Install DPI Detector” in this window and confirm. Its original menu opens afterwards. No separate SSH login is needed.",
+    "guide_run": "Run: start with tests 1, 2 and 3. Use the arrow keys to select a menu item, Space to toggle a test and Enter to start. On a phone, use the buttons below the terminal. Wait for the results.",
+    "guide_compare": "Compare: save a result with NFQWS2 off, then turn it on and repeat the same tests. When tuning a strategy, change one setting at a time and compare the reports.",
+    "guide_results": "Interpret: for DNS errors, start with the resolvers; for connection timeouts, check the address; for transfer interruptions or TLS errors, compare strategies. One failure does not prove ISP blocking. The OK percentage covers the selected tests and does not guarantee every website, video or app works. Detector does not select or change a strategy automatically.",
+    "guide_save": "Save: press S in the results menu. The original TXT appears in “Export / report” after refreshing its list. Compare reports before and after changing one setting. Closing this window stops the current test."
   }
 }

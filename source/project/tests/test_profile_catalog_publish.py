@@ -59,6 +59,15 @@ class ProfileCatalogPublisherTests(unittest.TestCase):
         docs,_=ImportPlanTests().dns_input();value=json.loads(docs[0]);value['sources'][0]['profile']['records']=[{'name':'media.example.com','include_subdomains':False,'addresses':['203.0.113.10'],'checked_at':None}]
         raw=json.dumps(value).encode();(self.profiles/'example.json').write_bytes(raw);self.meta['profiles'][0]['source_sha256']=hashlib.sha256(raw).hexdigest();self.publish()
 
+    def test_build88_profile_can_reference_only_the_packaged_tls13_predicate(self):
+        value=copy.deepcopy(STRATEGY)
+        value['shared']['NFQWS_EXTRA_ARGS']='--lua-init=@/opt/etc/nfqws2/lua/local-tls13-stun.lua'
+        value['blocks'][0]['value']='--filter-tcp=443 --lua-desync=condition:iff=nfqws_local_offers_tls13:instances=2'
+        raw=json.dumps(value).encode();(self.profiles/'example.json').write_bytes(raw)
+        self.meta['profiles'][0].update(min_build=88,source_sha256=hashlib.sha256(raw).hexdigest())
+        self.publish()
+        self.assertEqual(self.verified()['profiles'][0]['min_build'],88)
+
     def test_changed_unreviewed_input_does_not_replace_existing_catalog(self):
         self.publish();before=(self.out/'catalog.json').read_bytes()
         (self.profiles/'example.json').write_bytes(self.raw+b'\n');self.publish(False)

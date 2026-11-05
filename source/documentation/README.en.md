@@ -2,9 +2,10 @@
 
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
-NFQWS2 helps bypass your provider's DPI restrictions. Choose a ready-made strategy,
-select devices on your home network and manage processing through a browser.
-Your TV, phone or PC does not need a separate NFQWS2 client.
+Start with **Import profile**: choose a ready-made cloud strategy, your own JSON
+or NFQWS2 text from Keenetic. Review its blocks, lists and blobs in the preview,
+save the changes and select home-network devices. NFQWS2 processes traffic on
+the router; your TV, phone or PC does not need a separate client.
 
 Results depend on your provider's restrictions and a suitable strategy;
 test video playback, seeking and voice calls separately.
@@ -16,19 +17,22 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 87:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build87) · [change history](CHANGELOG.md). Fixed update preparation on ASUS routers with slow USB storage. If Build 85/86 fails with `timed_out`, run the installation command below once; settings are preserved. Update stages show completion percentages; failure details can be copied. Updated native OpenWrt service recovery and technical-channel continuity; all architectures rebuilt.
+**Build 88:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build88) · [change history](CHANGELOG.md). Profile import with dependency checks and preview, an optional tracker-website addition, the original DPI Detector menu in the panel, official zapret2 1.0.7 and improved layout. [Visual strategy comparison](docs/DETECTOR-COMPARISON.en.md).
+
 
 ## What you get
 
 | Benefit | How it helps at home |
 | --- | --- |
+| **Import a complete profile** | A provider profile or general strategy from the signed catalog, your JSON and its declared lists/blobs; review contents and dependencies before applying |
+| **Keenetic converter** | Paste NFQWS2 text from Keenetic: paths are adapted and missing files are shown before saving |
+| **Preview and undo** | See “before / after” before importing; undo the last import, while a trial DNS connection rolls back without confirmation |
 | **Access to services without a VPN** | Find a DPI bypass for YouTube, Instagram, Discord and other services while keeping a direct connection without a VPN tunnel |
 | **Browser-based management** | Start, stop, devices, strategies and logs in one panel; everyday setup does not require editing configuration files over SSH |
 | **Router-level setup** | Process traffic from your whole home network or only selected devices |
-| **Ready-made catalog profiles** | Start with a provider profile or import your own JSON with its lists and required files |
 | **DNS for specific sites** | SmartDNS assigns separate DoT/DoH servers or fixed IP addresses to sites |
-| **Preview and undo** | See “before / after” before importing; undo the last import, while a trial DNS connection rolls back without confirmation |
 | **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, services stop before the backup and installation, then return to their previous state |
+| **DPI Detector in the panel** | The original interactive menu, phone controls, help and TXT reports; availability depends on the architecture |
 | **Less waiting for unavailable addresses on ASUS** | A confirmed unavailable IP is temporarily excluded, helping applications move to working alternatives when the site provides them |
 
 Compared with installing the engine manually, this package already integrates
@@ -92,19 +96,33 @@ fallback login: **username `root`, password `asus`**.
 A separate panel password set earlier is preserved during updates; use that password.
 Use **Change password** to set your own panel password.
 
-1. Open `http://ROUTER_IP:90`. On ASUS, follow the panel's ARK check. If ARK is absent, no preparation is needed.
-2. Select devices. Import a cloud profile or your own JSON, review the preview and save the selected contents.
+1. Open `http://ROUTER_IP:90` and **Getting started**. On ASUS, follow the panel's ARK check. If ARK is absent, no preparation is needed.
+2. Select devices. Import a cloud profile or your own JSON, review the preview and save the selected contents. For NFQWS2 text from Keenetic, use **Import profile → Paste Keenetic strategy**.
 3. If needed, connect DNS through the SmartDNS wizard and confirm the result.
 4. Start NFQWS2. Test the required websites, video and voice from a selected device.
+
+In Build 88, the **DPI Detector** button at the top opens installation, the original menu and built-in help. Start with tests 1–3 and press **S** to save the result. [Read and compare reports](DPI-DETECTOR.en.md). The [NFQWS2 Keenetic chat](https://t.me/nfqws) can help with selecting Keenetic strategies.
 
 After a first install, processing stays off until you configure it.
 Updates preserve settings and the previous service state.
 
 <a id="inside-the-panel"></a>
 
+[A comparison example and how to test your profile](docs/DETECTOR-COMPARISON.en.md): one personal DOM.RU connection, limitations and interpreting Detector results. It is not a profile recommendation for other providers or regions.
+
+### Import: a profile and all required files
+
+**Import profile → From cloud** loads the selected entry from the signed catalog. Review the strategy blocks, lists, blobs and before/after preview. Unneeded parts can be deselected; resolve missing dependencies before applying. Your own JSON uses the same preview, while **Paste Keenetic strategy** converts NFQWS2 text and checks file references. DNS is selected separately and is not enabled automatically.
+
+In Build 88, compatible **general strategies from the signed cloud catalog** offer **Add bypass for torrent tracker websites**, unchecked by default. It adds a separate rule for the HTTPS websites **nnmclub.to, rutracker.org, rutor.info and tapochek.net** on TCP 443 only; the sites and rule are shown in the preview. It does not promise peer/DHT or all BitTorrent traffic. Unsupported settings or incompatible files cause the addition to be rejected. With the checkbox off, the original profile is imported.
+
+A separate **DOM.RU · Tula region profile v4 candidate** includes 14 lists/blobs and a packaged TLS helper requiring **Build 88 or later**. The previous public profile’s DNS is preserved. This candidate is awaiting final traffic checks and is not published; results on one connection do not guarantee success for every DOM.RU subscriber.
+
 ## What the panel looks like
 
-Settings, strategies and service controls in one panel. The [annotated gallery](SCREENSHOTS.en.md) also covers unavailable IPs, scheduled restart and recovery, blobs, Keenetic import, SmartDNS, export and MTProto installation.
+Settings, strategies and service controls in one panel. Main actions are at the top; language, theme and links are in the collapsible lower panel. It starts collapsed on phones. In Build 88, short windows, landscape screens and mobile desktop mode retain scrolling through settings and access to the lower panel; browser zoom is allowed.
+
+The [annotated gallery](SCREENSHOTS.en.md) also covers unavailable IPs, scheduled restart and recovery, blobs, Keenetic import, SmartDNS, export and MTProto installation. Screenshots from the previous release may differ from Build 88.
 
 [![NFQWS2 main panel](images/screenshots/panel-overview-en.jpg)](images/screenshots/panel-overview-en.jpg)
 
@@ -169,7 +187,7 @@ VPN capabilities depend on your firmware and chosen client.
 | Packet templates (blobs) | Choose another template without replacing the strategy or upload a `.bin` from your device — [guide](USAGE.en.md#packet-templates-blobs) |
 | Import preview and undo | Compare “before / after”, transfer required files and undo the last import |
 | SmartDNS | Up to **32 DNS servers**, **256 domain → DNS bindings** and **64 fixed answers**; DoT/DoH and custom servers |
-| Diagnostics and DPI Detector | Checkup, packet delivery checks, logs and separate network tests from the router |
+| Diagnostics and DPI Detector | Checkup, packet delivery checks and logs; the Build 88 candidate adds the original Detector menu in the panel, TXT reports, help and separate removal |
 | Profile sharing | Export individual blocks, lists, blobs and DNS; review and edit the copy to be sent |
 | Updates | Signature and SHA256 checks, retained settings; package backups and automatic rollback after a caught failure on ASUS |
 | Unavailable IPs (ASUS) | Address list with expiry, recheck and removal; ordinary UDP DNS filtering and fast failure on port 443 |
@@ -241,11 +259,23 @@ for a reproducible bug report. You can send settings and diagnostics to the deve
 after reviewing them in the panel preview.
 
 An independent community port. Packages are free, and participation is voluntary.
-Thanks to [NFQWS2 Keenetic](https://github.com/nfqws/nfqws2-keenetic),
-[WebUI Keenetic](https://github.com/nfqws/nfqws-keenetic-web),
-[zapret2](https://github.com/bol-van/zapret2),
-[SmartDNS](https://github.com/pymumu/smartdns) and
-[DPI Detector](https://github.com/Runnin4ik/dpi-detector).
+
+## Credits
+
+Thanks to the authors of the projects behind this adaptation and its additional features:
+
+- [NFQWS2 Keenetic](https://github.com/nfqws/nfqws2-keenetic) and [WebUI Keenetic](https://github.com/nfqws/nfqws-keenetic-web) — the foundations of the port and web interface.
+- [zapret2 — bol-van](https://github.com/bol-van/zapret2) — the nfqws2 engine and Lua bypass mechanisms.
+- [Anonym-tsk/zapret2](https://github.com/Anonym-tsk/zapret2/tree/tls-reasm-fastpath) — TLS fastpath changes adapted in the builds.
+- [DPI Detector — Runnin4ik](https://github.com/Runnin4ik/dpi-detector) — an independent tool for connectivity and DNS diagnostics.
+- [SmartDNS — pymumu](https://github.com/pymumu/smartdns) — the DNS resolver.
+- [tg-ws-proxy — Flowseal](https://github.com/Flowseal/tg-ws-proxy) and [LordArrin's Docker build](https://github.com/LordArrin/tg-ws-proxy-docker) — the basis of the Telegram proxy installation.
+
+Our bypass research also draws on materials and tools from
+[blockcheckw](https://github.com/rcd27/blockcheckw),
+[b4](https://github.com/DanielLavrushin/b4) and
+[Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube).
+These references do not mean that every feature of those projects is included in this package.
 
 Our ASUS adaptation is distributed under [MIT](LICENSE). Third-party components
 retain their licenses and attribution.

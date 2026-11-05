@@ -1,16 +1,54 @@
 # DPI Detector
 
-The panel shows the command for your system: `/opt/bin/nfqws2-dpi` on ASUS/Entware or `/usr/bin/nfqws2-dpi` on OpenWrt. Availability of the original DPI utility depends on the architecture.
+**For Build 88 and later.** The DPI Detector button opens its original menu directly in the panel. [Running over SSH](#run-over-ssh) is also supported.
 
-This is optional network diagnostics run from the router itself. It is not required for
-NFQWS2 to work and does not replace testing from a client device.
+DPI Detector is a separate, optional tool by [Runnin4ik](https://github.com/Runnin4ik/dpi-detector). It helps compare DNS, HTTP, TLS, QUIC and connections to network targets. NFQWS2 does not require Detector. Detector does not select or change a strategy automatically.
 
-Start a new test over SSH. In **Export / share**, select an already
-saved result. **Collect diagnostics** gathers information about the router
-and does not run DPI tests.
+## Run from the panel
 
-1. Open **Export / share** and install DPI Detector.
-2. Over SSH on the router, launch the original menu:
+1. Click **DPI Detector** at the top of the panel. If it is missing, click **Install DPI Detector** and confirm. The panel checks the pinned file, SHA256 and launch. The original menu opens after installation; no separate SSH login is needed.
+2. Start with tests **1, 2, 3**, selected by default. Arrow keys move the selection, **Space** toggles tests and **Enter** confirms. On a phone, use the buttons below the terminal.
+3. Wait for the result and press **S** in the results menu to save the original TXT.
+4. Open **Export / share** and refresh the result list. View or download the saved TXT, or select it for sending through the preview.
+
+The **?** button and expandable help explain installation, tests, controls and results. **Esc** goes back in the original menu; **Q** quits Detector. Closing the panel window stops its terminal and current tests. Open the window again to start a new session. A second terminal or separate Detector check cannot run at the same time.
+
+Scroll history with the wheel or a vertical swipe; buttons jump to the top, bottom or another page. Keyboard shortcuts are **Shift+PageUp/PageDown** and **Shift+Home/End**. Wide tables scroll horizontally without moving the whole page.
+
+## Compare and interpret results
+
+[Worked example: the package default and a personal DOM.RU strategy](docs/DETECTOR-COMPARISON.en.md) explains what to compare, how to import and why one connection does not represent everyone.
+
+Save a result with NFQWS2 off, then turn it on and repeat the same tests. Change one setting at a time. Account for DNS, VPNs, another bypass on the route and changing target addresses; otherwise a difference cannot reliably be attributed to the strategy.
+
+- **DNS:** failures of plain or encrypted DNS, altered replies and unexpected resolvers help investigate a problem. The report does not prove the absence of all DNS leaks.
+- **Connection:** a timeout before TCP connects, a TLS failure and an interrupted transfer are different results. A single failure does not prove ISP blocking.
+- **Protocol:** HTTP, TLS and QUIC are tested separately. `—` for QUIC can mean the server does not support it; `CLOSED` means the server closed the handshake.
+- **OK percentage:** covers only the selected tests. It does not guarantee every website, video, seek operation or voice call works.
+
+Test the required service from a selected device after changing a strategy. **Collect diagnostics** gathers router information and does not run Detector network tests.
+
+## Reports and removal
+
+The original TXT stays local and may contain network information. Sending prepares a separate sanitized JSON containing recognized metrics; it may be incomplete. Sending requires a preview and a separate click; tests are not run again.
+
+**Uninstall DPI Detector** is in its window and requires confirmation. **Delete saved Detector reports** is unchecked by default: normal removal keeps reports. Selecting that checkbox also deletes saved reports, which cannot be restored from the panel. Cancelling confirmation does not restart the current terminal.
+
+## Architectures
+
+The shared interface is intended for ASUS/Entware and native OpenWrt. An NFQWS2 package for an architecture does not imply that a compatible Detector is available.
+
+| Family | Pinned Detector variant |
+| --- | --- |
+| ARM64, MIPS, MIPSel, x86-64; ASUS/Entware `armv7-3.2` | Official v5.0.0-alpha.21 artifact |
+| Older Entware `armv7-2.6` and native OpenWrt ARM | Compatible ARMv5TE build from the same source; the standard official ARMv7 file did not launch on the tested older RT-AC87U |
+| 32-bit x86, MIPS64 | No compatible artifact is pinned; Detector installation is unavailable |
+
+This limits Detector, not NFQWS2 or SmartDNS. Artifact support and a launch check do not replace network testing on each model.
+
+## Run over SSH
+
+After installing Detector, you can also open its original menu on the router:
 
 ```sh
 # ASUS / Entware
@@ -20,30 +58,6 @@ and does not run DPI tests.
 /usr/bin/nfqws2-dpi
 ```
 
-3. Select the checks you need. In the original menu, press **S** to save a TXT file.
-4. Click **Refresh results** in the panel. You can view the result,
-   download it, delete it after confirmation, or select it for sending through the preview.
-
-The original TXT stays local and may contain network information.
-A separate sanitized JSON is prepared for sending, containing recognized metrics;
-it may be incomplete. Tests are not run again for this.
-
-DNS, VPNs, NFQWS2, and routes affect the results. A test from the ASUS router itself may take
-a different path from a phone or PC. Compare the same targets under the same conditions.
-
-In **Only listed devices** mode, add the router's WAN IPv4 address to the processing selection
-to test its own outgoing traffic. In **All devices** mode,
-this is usually already covered. The **?** hint next to DPI shows how to check the route's
-source address. Testing from a phone or PC remains a separate measurement.
-
-When reading the report, check the protocol: HTTP, TLS, and QUIC are tested separately.
-`—` for QUIC may mean the server does not support it; `CLOSED` means the server
-responded but closed the handshake. Assess video and voice in the application itself,
-and use the report to investigate why results differ.
-
-A compatible build from the same source is provided for `armv7-2.6`:
-the standard official ARMv7 binary did not run on the tested 87U.
-This is specific to the DPI Detector binary, not a restriction on NFQWS2 or SmartDNS.
-[Original project](https://github.com/Runnin4ik/dpi-detector).
+Do not run it alongside the panel's Detector window. Press **S** to save TXT, then refresh the panel's result list.
 
 [Project documentation](README.en.md#documentation).

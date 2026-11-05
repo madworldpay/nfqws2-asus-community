@@ -137,6 +137,19 @@ export const RequirementsDialog = ({
         <Typography variant="body2" sx={{ mb: 2 }}>
           {t('requirements.quick.recover')}
         </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          {t('requirements.quick.keenetic_import')}
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          {t('requirements.quick.keenetic_help')}{' '}
+          <Link href="https://t.me/nfqws" target="_blank" rel="noreferrer">
+            {t('requirements.quick.keenetic_chat')}
+          </Link>
+          .
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          {t('requirements.quick.detector')}
+        </Typography>
         <Accordion disableGutters sx={{ mb: 3 }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="body2">{t('requirements.details')}</Typography>

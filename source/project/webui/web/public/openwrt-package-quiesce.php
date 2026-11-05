@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/openwrt-update-guard.php';
+require_once __DIR__.'/dpi-terminal-lifecycle.php';
 
 /** One protected stop/snapshot boundary shared by native manager entry points. */
 final class NfqwsOpenWrtPackageQuiesce
@@ -11,6 +12,7 @@ final class NfqwsOpenWrtPackageQuiesce
         $manager=NfqwsOpenWrtManualContext::manager();$guard=new NfqwsOpenWrtUpdateGuard($this->store);$lease=null;
         if(!$guard->authorize('hook-prerm'))$lease=$this->store->lease('apply.lock');
         try{
+            (new AsusDpiTerminalLifecycle())->stop();
             $script='/usr/lib/nfqws2/update/quiesce.sh';AsusUpdateStore::noLinks($script);clearstatcache(true,$script);$s=@lstat($script);
             if(!$s||!is_file($script)||!is_executable($script)||$s['uid']!==0||$s['nlink']!==1||($s['mode']&0022)!==0||$s['size']>131072)throw new RuntimeException('invalid_state');
             for($parent=dirname($script);$parent!=='/';$parent=dirname($parent)){$d=@lstat($parent);if(!$d||!is_dir($parent)||$d['uid']!==0||($d['mode']&0022)!==0)throw new RuntimeException('invalid_state');}

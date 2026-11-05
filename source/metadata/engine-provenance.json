@@ -1,29 +1,108 @@
 {
   "provider": {
-    "version": "1.3.2",
-    "commit": "5d155f33ab00f3a4879c485c1094e8ec1e014586",
-    "release": "https://github.com/nfqws/nfqws2-keenetic/releases/tag/v1.3.2"
+    "version": "1.3.3",
+    "commit": "afd9f6a8a1be6b7ca28afc722a1be81946c41c6b",
+    "release": "https://github.com/nfqws/nfqws2-keenetic/releases/tag/v1.3.3"
   },
   "engine": {
-    "version": "1.0.6",
-    "commit": "221d7dff24bfec0cd5ac0a5070b8acef2008af3d",
+    "version": "1.0.7",
+    "commit": "038c97e5819df10f8e8c22a2f1fffe57f2f7379b",
     "lua_compat_ver": 6
   },
   "inputs": {
-    "nfqws2-keenetic_1.3.2_aarch64-3.10.ipk": {
-      "sha256": "f62c338d3e4abd7bb953c742a2e295fc58e21f19c9bfba296d857f9f9d365187",
-      "bytes": 381748
+    "nfqws2-keenetic_1.3.3_aarch64-3.10.ipk": {
+      "sha256": "1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91",
+      "bytes": 384297
     },
-    "nfqws2-keenetic_1.3.2_all_entware.ipk": {
-      "sha256": "6de14a39345e05c887cd0d9af573bf42b4a489773d36011079c6f5c2fe2a0dd9",
-      "bytes": 2381500
+    "nfqws2-keenetic_1.3.3_all_entware.ipk": {
+      "sha256": "499258e8a32aaf407c8b57c24c44696a50edc776a35fb41a449283faaabd6c55",
+      "bytes": 2386127
     }
   },
   "armv7_unpack": {
     "upx": "4.2.4",
-    "packed_sha256": "19da1dd9e7f49e061bc7735f690d1a42b55f562976fa820a5794c28695412cbe",
-    "unpacked_sha256": "8bdb300328a358c069d11e957e4f88b23883abbbeb659c9ffa1ff48090ad70c6"
+    "packed_sha256": "fa066bf4a9e71b9077b37b5c9acf263567716839db30d708273935302f52cb6e",
+    "unpacked_sha256": "458fd5adc9fe07797ee5a9b5574313d3b9490863b41108c4d9c4afb96dc594b5"
   },
-  "provider_patch_dry_run": "applies with fuzz=0",
-  "runtime_changes": "ASUS lifecycle remains separate; upstream argument builder and corrected UDP template are included. User configuration is retained."
+  "native_engines": {
+    "nfqws2-x86": {
+      "packed_sha256": "43946442b0c67aba99202b693b813a6ba73c075e1ea0f2982f54e185de8811b7",
+      "unpacked_sha256": "5a47e7f16fd583e264b72b410464db22fdb73858b18c53203de3b6192fd36cf4",
+      "bytes": 517928
+    },
+    "nfqws2-mips64": {
+      "packed_sha256": "dcd7ebee0f1db6eb29eac207d94e1cc23dcc582133bab72c8bf9f1d5f32f0067",
+      "unpacked_sha256": "dcd7ebee0f1db6eb29eac207d94e1cc23dcc582133bab72c8bf9f1d5f32f0067",
+      "bytes": 874264
+    },
+    "nfqws2-aarch64": {
+      "packed_sha256": "96f61de18dafa255dbffb5f2cc34f23652ccf6bb34fd0c7d3d4fd4c196e80b29",
+      "unpacked_sha256": "7c60806e242356d95c2611b62f4f1b223c62f29dccad7247d75572e290e43329",
+      "bytes": 723560
+    },
+    "nfqws2-armv7": {
+      "packed_sha256": "fa066bf4a9e71b9077b37b5c9acf263567716839db30d708273935302f52cb6e",
+      "unpacked_sha256": "458fd5adc9fe07797ee5a9b5574313d3b9490863b41108c4d9c4afb96dc594b5",
+      "bytes": 481232
+    },
+    "nfqws2-mips": {
+      "packed_sha256": "449023376cc258da0dac173feab184e94ad70ac1899eb963874f84cb8fb6fdb9",
+      "unpacked_sha256": "722b94d2520dca96b44dbe5f05eaf7860267231ded14a6a1228f8e31a2ab3430",
+      "bytes": 910144
+    },
+    "nfqws2-x86_64": {
+      "packed_sha256": "4a68d58df2ee4f9eb576aa9f1ef12647d11a7b4d365706afe39e5929dd85ccd6",
+      "unpacked_sha256": "ce8d6c7de5334a57f73e5c265e80f01dda36008da685c6c75d7fd4f0b3777afa",
+      "bytes": 691016
+    },
+    "nfqws2-mipsel": {
+      "packed_sha256": "44a869f5c1a4d7d4e4bbbbfdb2da75b4e7160a189b6addc511c35c4e7557cf35",
+      "unpacked_sha256": "933654512efc8499efa81fa246c66ae81a672fd5d8f85c7d900c312cc83c7255",
+      "bytes": 910176
+    }
+  },
+  "fastpath_patch": {
+    "source_commit": "88611a550078d338a02d4dd8e49277b9fde83fff",
+    "sha256": "35ae3f6fcf52def6478b85933302a71a6b75d39c0613a49d14e285b5b4fd4633",
+    "applies_to": "038c97e5819df10f8e8c22a2f1fffe57f2f7379b",
+    "verification": "patch --batch --fuzz=0 -p1; clean apply to the complete pristine archive",
+    "partial_sni_experiment_included": false
+  },
+  "upx": {
+    "version": "4.2.4",
+    "archive_sha256": "75cab4e57ab72fb4585ee45ff36388d280c7afd72aa03e8d4b9c3cbddb474193",
+    "binary_sha256": "746af4b1b8c230641d772d6a1ba645f606ac1e7a43951247477f239f29346fad",
+    "verification": "Existing archive independently matched a fresh official release download."
+  },
+  "runtime_changes": "Product package version remains 1.3.2. Both ASUS and native OpenWrt select official 1.3.3 engine and matching Lua. Public blob templates retain separately reviewed 1.0.6 provenance; custom configurations and resources remain operator data.",
+  "lua_resources": {
+    "zapret-antidpi.lua": {
+      "sha256": "6d1fa9168e5de1682fef91fd174f68b58c50f6739ef00f42ca7db2b940b6246d",
+      "bytes": 51866
+    },
+    "zapret-auto.lua": {
+      "sha256": "23a9b99a776d868d92f4cc0ee5110f5c1f12fe746620d9c0337022dbc2f52df0",
+      "bytes": 21123
+    },
+    "zapret-lib.lua": {
+      "sha256": "6bf528fef1f0fc3c65e189216fc8a06bb873f6e25d1c29d2bfa4695a09b73440",
+      "bytes": 93714
+    },
+    "zapret-obfs.lua": {
+      "sha256": "75d91452eae06c672aecebe87d753fa968f939d95452a6103292aed658c533f3",
+      "bytes": 21334
+    },
+    "zapret-pcap.lua": {
+      "sha256": "6866c37c92fbc62075accf94228da48af618c7f416edc682eba99b2196e05f45",
+      "bytes": 1441
+    },
+    "zapret-tests.lua": {
+      "sha256": "82664cb50a751a531b63dce094ac03de5045b16b489e726ff32a9a1034811459",
+      "bytes": 37399
+    }
+  },
+  "lua_runtime": {
+    "x86": "Lua 5.5.1",
+    "other_families": "OpenResty LuaJIT 2.1-20250826"
+  }
 }

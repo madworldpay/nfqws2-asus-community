@@ -110,6 +110,12 @@ def native_defaults():
     return text.encode()
 
 
+def dpi_terminal_payload(engine):
+    spec=importlib.util.spec_from_file_location('nfqws_native_dpi_terminal_build',ROOT/'asus/dpi/terminal_build.py')
+    helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
+    return {'usr/lib/nfqws2/dpi-terminal':(helper.payload_for(engine),0o755)}
+
+
 def payload_files(target,engine,source=None):
     platform.validate_engine(engine,target)
     files={'usr/bin/nfqws2':(engine,0o755),
@@ -120,6 +126,7 @@ def payload_files(target,engine,source=None):
         installed='nfqws2-native'if name=='nfqws2.init'else name
         files['usr/lib/nfqws2/'+installed]=((HERE/name).read_bytes(),0o755 if name in ['control.sh','firewall-hook.sh','nfqws2.init']else 0o644)
     files.update(ip_health_payload())
+    files.update(dpi_terminal_payload(target['engine']))
     files['usr/lib/nfqws2/diagnostics.sh']=((ROOT/'asus/diagnostics.sh').read_bytes(),0o644)
     files['usr/lib/nfqws2/restart-schedule.sh']=((ROOT/'asus/restart-schedule.sh').read_bytes(),0o644)
     files['usr/lib/nfqws2/restart-schedule-worker.php']=((HERE/'restart-schedule-worker.php').read_bytes(),0o644)
@@ -138,6 +145,7 @@ def payload_files(target,engine,source=None):
     for path in sorted((ROOT/'core/etc/nfqws2/lists').iterdir()):
         if path.is_file():files['usr/share/nfqws2/defaults/lists/'+path.name]=(path.read_bytes(),0o644)
     files['usr/share/nfqws2/defaults/lua/local-guarded-ts.lua']=((ROOT/'asus/lua/local-guarded-ts.lua').read_bytes(),0o644)
+    files['usr/share/nfqws2/defaults/lua/local-tls13-stun.lua']=((ROOT/'asus/lua/local-tls13-stun.lua').read_bytes(),0o644)
     if source is not None:
         for name,data in source.items():
             prefix='opt/etc/nfqws2/'
@@ -148,7 +156,7 @@ def payload_files(target,engine,source=None):
             files['usr/share/nfqws2/defaults/'+rel]=(data,0o644)
     blob_bundle.add_bundle(files,'usr/share/nfqws2','usr/share/nfqws2/defaults')
     baseline={'schema_version':1,'package_version':target['version'],'web_version':(ROOT/'VERSION').read_text().strip(),
-        'build_number':target['application_build'], 'engine':{'version':'1.0.6','provider':'nfqws2-keenetic',
+        'build_number':target['application_build'], 'engine':{'version':'1.0.7','provider':'nfqws2-keenetic',
             'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':{}}
     for name,(data,_)in files.items():
         for kind,directory in [('lua','lua'),('blob','blobs')]:
@@ -327,7 +335,15 @@ def package_hook(target,action,upgrade=False):
     for key,value in [('ACTION',action),('ARCH',target['arch']),('SERIES',target['series']),('FORMAT',target['format'])]:
         text+="NFQWS_PKG_"+key+"='"+value+"'\n"
     if upgrade:text+='PKG_UPGRADE=1\n'
-    return (text+(HERE/'package-lifecycle.sh').read_text()).encode()
+    lifecycle=(HERE/'package-lifecycle.sh').read_text()
+    if action=='preinstall':
+        spec=importlib.util.spec_from_file_location('nfqws_native_dpi_package_hook',ROOT/'asus/dpi/package_hook.py')
+        hook=importlib.util.module_from_spec(spec);spec.loader.exec_module(hook)
+        text+='nfqws_package_inline_stop_detector() {\n'+hook.shutdown_hook('/usr/bin/php-cgi').decode()+'}\n'
+        boundary='nfqws_package_snapshot && nfqws_package_prepare_upgrade'
+        if lifecycle.count(boundary)!=1:raise RuntimeError('Native preinstall shutdown boundary changed')
+        lifecycle=lifecycle.replace(boundary,'nfqws_package_inline_stop_detector && '+boundary,1)
+    return (text+lifecycle).encode()
 
 
 def build_native(series,package_arch,cache,output,offline=False,upx=None,release=1,sign_key=None):
