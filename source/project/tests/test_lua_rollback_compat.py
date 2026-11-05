@@ -73,7 +73,7 @@ class LuaRollbackCompatTests(unittest.TestCase):
         # Conffiles hash, even when the final active script looks correct.
         # The operator already handled one prior opkg offer; other existing
         # sidecars remain settings and must return unchanged.
-        (self.case.lua / 'zapret-antidpi.lua-opkg').unlink()
+        (self.case.lua / 'zapret-antidpi.lua-opkg').unlink(missing_ok=True)
         old_sidecars = {path.name: path.read_bytes() for path in self.case.lua.glob('*.lua-opkg')}
         old_status = [line for line in self.status.read_text().split('Conffiles:', 1)[1].splitlines() if line.startswith(' ')]
         next_lua = {name: raw + b'\n-- new factory revision\n' for name, raw in self.case.new.items()}
@@ -84,6 +84,10 @@ class LuaRollbackCompatTests(unittest.TestCase):
             self.assertEqual(archive.extractfile('opt/etc/nfqws2/lua/zapret-antidpi.lua').read(), self.case.new['zapret-antidpi.lua'])
         self.case.run_opkg('install', self.package('1.3.2-asus6+b89', next_lua))
         self.assertEqual((self.opt / 'share/nfqws2-asus/factory/lua/zapret-lib.lua').read_bytes(), next_lua['zapret-lib.lua'])
+        # Simulate an offer retained by older hooks. Current hooks consume
+        # their own proven stock duplicate before the updater postflight.
+        sidecar=self.case.lua/'zapret-antidpi.lua-opkg'
+        sidecar.write_bytes(next_lua['zapret-antidpi.lua']);sidecar.chmod(0o644)
         self.assertEqual((self.case.lua / 'zapret-antidpi.lua-opkg').read_bytes(), next_lua['zapret-antidpi.lua'])
         # Saved factory proof must survive replacement of the live factory.
         self.assertIn('value', self.call('load'))
@@ -143,7 +147,7 @@ class LuaRollbackCompatTests(unittest.TestCase):
         self.assertEqual(self.call('attest'), {'error': 'rollback_unavailable'})
 
     def test_changed_lua_sidecar_is_preserved_and_rollback_refuses(self):
-        sidecar = self.case.lua / 'zapret-antidpi.lua-opkg'; sidecar.unlink()
+        sidecar = self.case.lua / 'zapret-antidpi.lua-opkg'; sidecar.unlink(missing_ok=True)
         raw = b'-- candidate factory offer\n'
         self.defaults = {'etc/nfqws2/lua/zapret-antidpi.lua-opkg': {'mode': 0o644, 'size': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}}
         self.capture()

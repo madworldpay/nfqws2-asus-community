@@ -8,5 +8,8 @@ require_once '/opt/share/nfqws-asus-web/openwrt-resource-upgrade.php';
 try{
     // This factory tree contains Lua only; ASUS blob seeding remains independent.
     NfqwsOpenWrtResourceUpgrade::apply($previous,'/opt/share/nfqws2-asus/factory','/opt/etc/nfqws2',0,'/opt');
+    $sidecars=dirname($previous).'/sidecar-snapshot/names';
+    NfqwsOpenWrtResourceUpgrade::cleanupOpkgSidecars($sidecars,'/opt/share/nfqws2-asus/factory','/opt/etc/nfqws2',0,'/opt');
+    NfqwsOpenWrtResourceUpgrade::finishOpkgSidecars($sidecars,0,'/opt');
     if(!unlink($previous))throw new RuntimeException('storage_unavailable');
 }catch(Throwable $e){file_put_contents('php://stderr',"ASUS stock Lua could not be updated: ".$e->getMessage()."\n");exit(1);}

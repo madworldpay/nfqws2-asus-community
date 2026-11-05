@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 89:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build89) · [change history](CHANGELOG.md). Fixes updates with edited Lua/blobs, post-install checks and ASUS recovery; adds an initial settings/resource check stage. Profile import with preview, the original DPI Detector menu and zapret2 1.0.7 are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
+**Build 90:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build90) · [change history](CHANGELOG.md). Fixes compatibility with older update workers and preserves Lua alternatives across interrupted installations. Profile import with preview, the original DPI Detector menu and zapret2 1.0.7 are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get

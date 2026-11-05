@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "69a9cd8a9e12b122cdf59392131bf6c83e7360c2f745921e76f48a16f1cc541a"
+    "sha256": "4393447bd3c1d55ea7f97417ecb1b36a691ccaacaaf2ebd21c59a5acf825fb7b"
   },
   {
     "path": "LICENSE",
@@ -306,8 +306,8 @@
   },
   {
     "path": "asus/ipk/lua-upgrade.sh",
-    "bytes": 2078,
-    "sha256": "569a74a636fbf429c4f68c7af2ea6a6e000888ac2cafcb676e38e79e9110c716"
+    "bytes": 7253,
+    "sha256": "ddd2e9e5276860300f864a3b057f29a4275236af554b24f1786e0c6f49fc2372"
   },
   {
     "path": "asus/ipk/migration.sh",
@@ -411,8 +411,8 @@
   },
   {
     "path": "asus/lua-upgrade.php",
-    "bytes": 974,
-    "sha256": "258baec692cbebac22106ce0fc4f39e44874296420bd807c180e86c32542e562"
+    "bytes": 1232,
+    "sha256": "69a31cee0cb459439b2187f6d6139e2f5b715fa5c641effa350f0e7c1a0f0fcd"
   },
   {
     "path": "asus/php-cgi.sh",
@@ -2071,18 +2071,23 @@
   },
   {
     "path": "tests/test_lua_opkg_upgrade.py",
-    "bytes": 8373,
-    "sha256": "13429307e502dc1254b64553f37efd9df49c30dbae095b653a5e0038e3f7e124"
+    "bytes": 13088,
+    "sha256": "156965c53bc3348823d4ef509a27bf801b71812f47160cce7989ac5464f661f6"
   },
   {
     "path": "tests/test_lua_rollback_compat.py",
-    "bytes": 10893,
-    "sha256": "00f05d2871501ff00b455fb836b64b13943327d5e3c2089c95a36213118ea7e1"
+    "bytes": 11209,
+    "sha256": "cfe16c671af449418f176374dbcda701483974c61341c491c1cc780f697e3846"
+  },
+  {
+    "path": "tests/test_lua_sidecar_cleanup.py",
+    "bytes": 6208,
+    "sha256": "d671032ca829a27e793830576d3aadc168b7e736e94746c64358b616ffbda8ed"
   },
   {
     "path": "tests/test_lua_update_snapshot.py",
-    "bytes": 2233,
-    "sha256": "19fff0bc3a739756129714f9d4dba8741a4ce8275b6d980ab30033be8b48c6bb"
+    "bytes": 2599,
+    "sha256": "b1345cfa83724255fa7a0f7b021bf266db2f0d3ce236b508762b7e224be5f432"
   },
   {
     "path": "tests/test_migration.py",
@@ -3746,8 +3751,8 @@
   },
   {
     "path": "webui/web/public/openwrt-resource-upgrade.php",
-    "bytes": 4430,
-    "sha256": "46d791accb7a22ae0e45fe57ebe3cd5c8bb9ff9c2c869c625ec4f45c2aee09ee"
+    "bytes": 10306,
+    "sha256": "40ce219db3d6df5aa12ea6b720127cc6e116b9a5a889429e4eba924969028bd0"
   },
   {
     "path": "webui/web/public/openwrt-smartdns-backend.php",

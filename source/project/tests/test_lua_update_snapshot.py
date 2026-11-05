@@ -34,8 +34,14 @@ class LuaSnapshotIntegrationTests(unittest.TestCase):
         self.case.run_opkg('install', self.case.package('1.3.2+b88', self.case.new, True))
         self.baseline_schema()
         self.assertEqual((self.case.lua / 'zapret-antidpi.lua').read_bytes(), self.case.edited)
+        # Earlier maintainer hooks can leave this signed factory alternative.
+        # New hooks remove their own copies, but postflight must still accept
+        # an exact factory copy and detect a later operator edit to it.
+        alternative=self.case.lua/'zapret-obfs.lua-opkg'
+        if not alternative.exists():
+            alternative.write_bytes(self.case.new['zapret-obfs.lua']);alternative.chmod(0o644)
         sidecars = list(self.case.lua.glob('*.lua-opkg'))
-        self.assertTrue(sidecars, 'Real opkg creates retained factory alternatives')
+        self.assertTrue(sidecars)
         for path in sidecars:
             self.assertEqual(path.read_bytes(), self.case.new[path.name.removesuffix('-opkg')])
         self.assertEqual(self.call('verify'), {'ok': True})

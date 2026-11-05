@@ -36,7 +36,7 @@ class LuaOpkgUpgradeTests(unittest.TestCase):
         if ok: self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result
 
-    def package(self, version, scripts, upgrade=False):
+    def package(self, version, scripts, upgrade=False, interrupt=False):
         payload = {'opt/etc/nfqws2/lua/' + name: (raw, 0o644) for name, raw in scripts.items()}
         baseline = {'resources': {'lua/' + name: {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()} for name, raw in scripts.items()}}
         payload['opt/share/nfqws2-asus/report-baseline.json'] = (json.dumps(baseline).encode(), 0o644)
@@ -62,7 +62,8 @@ class LuaOpkgUpgradeTests(unittest.TestCase):
                 for name in ['openwrt-resource-upgrade.php', 'support-json-schema.php', 'platform.php']:
                     payload['opt/share/nfqws-asus-web/' + name] = ((ROOT / 'webui/web/public' / name).read_bytes(), 0o644)
                 command = [str(PHP), '-n', '-d', 'register_argc_argv=1', '-q', '-f', str(self.opt / 'lib/nfqws2-asus/lua-upgrade.php'), '--']
-                controls['postinst'] = (('#!/bin/sh\n' + shlex.join(command) + '\n').encode(), 0o755)
+                gate=('if [ -e '+shlex.quote(str(self.base/'pause-postinst'))+' ]; then exit 43; fi\n')if interrupt else ''
+                controls['postinst'] = (('#!/bin/sh\n' + gate + shlex.join(command) + '\n').encode(), 0o755)
         path = self.base / (version + '.ipk')
         path.write_bytes(migration.b.compressed_tar({'debian-binary': (b'2.0\n', 0o644), 'control.tar.gz': (migration.b.compressed_tar(controls), 0o644), 'data.tar.gz': (migration.b.compressed_tar(payload), 0o644)}))
         return path
@@ -82,6 +83,71 @@ class LuaOpkgUpgradeTests(unittest.TestCase):
             if name != 'zapret-antidpi.lua': self.assertEqual((self.lua / name).read_bytes(), self.new[name], name)
         self.assertEqual((self.lua / 'custom.lua').read_bytes(), b'-- owner custom Lua\n')
         self.assertFalse((self.opt / 'var/lib/nfqws2-asus/lua-upgrade/previous-baseline.json').exists())
+
+    def test_new_factory_sidecars_do_not_break_the_previous_panel_postflight(self):
+        self.prepare()
+        owner_copy=self.lua/'owner-antidpi.lua';owner_copy.write_bytes(self.edited)
+        (self.lua/'zapret-antidpi.lua').write_bytes(self.old['zapret-antidpi.lua'])
+        self.run_opkg('install',self.package('1.3.2+b90',self.new,True))
+        self.assertEqual(list(self.lua.glob('*.lua-opkg')),[],
+                         'fresh, proven factory copies must not appear as new owner settings to old updaters')
+        self.assertEqual(owner_copy.read_bytes(),self.edited)
+        for name in NAMES:self.assertEqual((self.lua/name).read_bytes(),self.new[name])
+
+    def test_preexisting_alternatives_survive_opkg_overwrite_and_unknown_names_are_ignored(self):
+        self.prepare()
+        before={}
+        for name in ['zapret-antidpi.lua-opkg','zapret-obfs.lua-opkg','my backup.lua-opkg']:
+            path=self.lua/name;raw=b'-- existing owner alternative: '+name.encode()+b'\n'
+            path.write_bytes(raw);path.chmod(0o600);before[name]=raw
+        self.run_opkg('install',self.package('1.3.2+b90',self.new,True))
+        for name,raw in before.items():
+            self.assertEqual((self.lua/name).read_bytes(),raw,name)
+            self.assertEqual(stat.S_IMODE((self.lua/name).stat().st_mode),0o600)
+
+    def test_interrupted_postinst_restores_original_alternative_when_configured_again(self):
+        self.prepare();sidecar=self.lua/'zapret-antidpi.lua-opkg'
+        sidecar.write_bytes(b'-- original alternative\n');sidecar.chmod(0o600)
+        gate=self.base/'pause-postinst';gate.touch()
+        result=self.run_opkg('install',self.package('1.3.2+b90',self.new,True,True),ok=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertEqual(sidecar.read_bytes(),self.new['zapret-antidpi.lua'])
+        gate.unlink();self.run_opkg('configure','nfqws2-asus')
+        self.assertEqual(sidecar.read_bytes(),b'-- original alternative\n')
+        self.assertEqual(sidecar.stat().st_mode&0o777,0o600)
+        self.assertFalse((self.opt/'var/lib/nfqws2-asus/lua-upgrade/previous-baseline.json').exists())
+
+    def test_retired_snapshot_partial_removal_does_not_block_next_upgrade(self):
+        self.prepare();self.run_opkg('install',self.package('1.3.2+b90',self.new,True))
+        state=self.opt/'var/lib/nfqws2-asus/lua-upgrade'
+        retired=state/'sidecar-complete';(state/'sidecar-snapshot').rename(retired)
+        (retired/'names').unlink();(retired/'complete').unlink()
+        self.run_opkg('install',self.package('1.3.2+b91',self.new,True))
+        self.assertFalse(retired.exists());self.assertTrue((state/'sidecar-snapshot/names').exists())
+        self.assertEqual((self.lua/'zapret-antidpi.lua').read_bytes(),self.edited)
+
+    def test_retry_before_baseline_refreshes_latest_owner_alternative(self):
+        self.prepare();name='zapret-antidpi.lua-opkg'
+        sidecar=self.lua/name;sidecar.write_bytes(b'-- latest owner edit\n');sidecar.chmod(0o600)
+        snapshot=self.opt/'var/lib/nfqws2-asus/lua-upgrade/sidecar-snapshot';snapshot.mkdir(parents=True,mode=0o700)
+        for directory in [self.opt/'var',self.opt/'var/lib',self.opt/'var/lib/nfqws2-asus']:directory.chmod(0o755)
+        snapshot.parent.chmod(0o700)
+        (snapshot/'names').write_text('NFQWS LUA SIDECARS 1\n'+name+'\n');(snapshot/'names').chmod(0o600)
+        (snapshot/name).write_bytes(b'-- earlier owner bytes\n');(snapshot/name).chmod(0o600)
+        abandoned=snapshot.parent/'.sidecars.Abc123';abandoned.mkdir(mode=0o700);(abandoned/'partial').write_bytes(b'PARTIAL')
+        self.run_opkg('install',self.package('1.3.2+b90',self.new,True))
+        self.assertEqual(sidecar.read_bytes(),b'-- latest owner edit\n');self.assertFalse(abandoned.exists())
+
+    def test_retry_after_baseline_preserves_latest_edit_without_losing_original_factory_offer(self):
+        self.prepare();name='zapret-antidpi.lua-opkg';sidecar=self.lua/name
+        sidecar.write_bytes(b'-- original alternative\n');sidecar.chmod(0o600)
+        gate=self.base/'pause-postinst';gate.touch()
+        self.run_opkg('install',self.package('1.3.2+b90',self.new,True,True),ok=False)
+        # Reinstall after an interrupted postinst must retain its original
+        # backup for factory bytes, but keep a later, distinct owner edit.
+        sidecar.write_bytes(b'-- later owner edit\n');sidecar.chmod(0o600);gate.unlink()
+        self.run_opkg('install',self.package('1.3.2+b91',self.new,True))
+        self.assertEqual(sidecar.read_bytes(),b'-- later owner edit\n')
 
     def test_later_upgrade_uses_the_new_baseline_and_preserves_new_owner_edits(self):
         self.prepare(); self.run_opkg('install', self.package('1.3.2+b88', self.new, True))
