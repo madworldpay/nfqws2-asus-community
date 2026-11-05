@@ -75,6 +75,10 @@ class PackageUpdateStoreTests(unittest.TestCase):
     def test_terminal_failure_captures_previous_step_before_finished_patch(self):
         value=self.call([self.reserve(),['update',['LAST',{'phase':'checking_package'}]],['update',['LAST',{'state':'failed','phase':'finished','code':'download_hash'}]]])[-1]
         self.assertEqual(value.get('failure_phase'),'checking_package');self.assertEqual(value.get('failure_code'),'download_hash')
+    def test_failure_before_download_records_settings_check_stage(self):
+        value=self.call([self.reserve(),['update',['LAST',{'state':'failed','code':'settings_changed'}]]])[-1]
+        self.assertEqual(value.get('failure_phase'),'checking_settings')
+        self.assertEqual(value.get('failure_code'),'settings_changed')
     def test_reboot_reconciliation_retains_the_last_known_failure_stage(self):
         self.call([self.reserve(),['update',['LAST',{'phase':'downloading'}]],['reconcile',['different-boot',0]]])
         value=self.call([['status',[]]])[0]['history'][0]

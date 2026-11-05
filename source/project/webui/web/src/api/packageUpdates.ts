@@ -21,6 +21,7 @@ export type PackageCheck = {
 };
 export type PackageOperationPhase =
   | 'queued'
+  | 'checking_settings'
   | 'downloading'
   | 'checking_package'
   | 'validating'
@@ -76,6 +77,7 @@ const operationPhase = (v: unknown) =>
   typeof v === 'string' &&
   [
     'queued',
+    'checking_settings',
     'downloading',
     'checking_package',
     'validating',

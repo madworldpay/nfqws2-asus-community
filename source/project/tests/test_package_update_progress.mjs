@@ -12,7 +12,7 @@ const parse = async operation => {
   return (await api.getPackageUpdateOverview('csrf')).operation;
 };
 // These new worker phases must survive the real strict status parser.
-for (const phase of ['downloading', 'checking_package', 'backing_up']) {
+for (const phase of ['checking_settings', 'downloading', 'checking_package', 'backing_up']) {
   assert.equal((await parse({...base, phase})).phase, phase);
 }
 const failed = {...base, state:'failed', phase:'finished', failure_phase:'installing', failure_code:'install_failed', code:'update_rolled_back'};
@@ -33,6 +33,7 @@ const progress = (state, phase, extra={}) => packageUpdateProgress({...base,stat
 // A real operation moves monotonically through preparation and installation.
 const stages = [
   ['preparing','queued',0,'queued'],
+  ['preparing','checking_settings',0,'checking_settings'],
   ['preparing','downloading',0,'downloading'],
   ['preparing','checking_package',14,'checking_package'],
   ['prepared','checking_package',28,'prepared'],

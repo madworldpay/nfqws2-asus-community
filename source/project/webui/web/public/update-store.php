@@ -5,7 +5,7 @@ require_once __DIR__.'/dpi-store.php';
 final class AsusUpdateStore
 {
     public const TERMINAL=['succeeded','failed','interrupted'];
-    private const PHASES=['queued','downloading','checking_package','validating','stopping','backing_up','installing','verifying','finished'];
+    private const PHASES=['queued','checking_settings','downloading','checking_package','validating','stopping','backing_up','installing','verifying','finished'];
     private string $root;
     private bool $locked=false;
     public function __construct(?string $root=null,private int $owner=0)
@@ -147,7 +147,7 @@ final class AsusUpdateStore
             foreach($db['operations'] as $job)if($job['request_id']===$requestId){if($job['revision']!==$revision)throw new RuntimeException('request_conflict');return $job;}
             foreach($db['operations'] as $job)if(!in_array($job['state'],self::TERMINAL,true))throw new RuntimeException('busy');
             $id=bin2hex(random_bytes(16));$this->directory('operations/'.$id);$this->writeFile('operations/'.$id.'/candidate.json',json_encode($candidate,JSON_THROW_ON_ERROR));
-            $job=['id'=>$id,'request_id'=>$requestId,'revision'=>$revision,'state'=>'preparing','code'=>null,'boot_id'=>self::boot(),'created_at'=>time(),'created_uptime'=>self::uptime(),'package_version'=>$candidate['package_version']];
+            $job=['id'=>$id,'request_id'=>$requestId,'revision'=>$revision,'state'=>'preparing','phase'=>'checking_settings','code'=>null,'boot_id'=>self::boot(),'created_at'=>time(),'created_uptime'=>self::uptime(),'package_version'=>$candidate['package_version']];
             $db['operations'][$id]=$job;$this->rotate($db);$this->save($db);return $job;
         });
     }

@@ -231,11 +231,13 @@ class PackageRollbackTests(unittest.TestCase):
             'opt/etc/nfqws2/nfqws2.conf.notactive':(b'factory config',0o600),
             'opt/etc/nfqws2/lists/user.list.notactive':(b'factory list',0o644),
             'opt/share/nfqws2-asus/defaults/blobs/new.bin':(b'NEW',0o644),
+            'opt/share/nfqws2-asus/factory/lua/stock.lua':(b'factory Lua',0o644),
             'opt/share/other.bin':(b'FOREIGN',0o644),
         })
         result=self.call('defaults');self.assertIn('value',result,result)
-        self.assertEqual(set(result['value']),{'etc/nfqws2/nfqws2.conf','etc/nfqws2/lists/user.list','etc/nfqws2/blobs/new.bin'})
+        self.assertEqual(set(result['value']),{'etc/nfqws2/nfqws2.conf','etc/nfqws2/lists/user.list','etc/nfqws2/blobs/new.bin','etc/nfqws2/lua/stock.lua-opkg'})
         self.assertEqual(result['value']['etc/nfqws2/blobs/new.bin']['size'],3)
+        self.assertEqual(result['value']['etc/nfqws2/lua/stock.lua-opkg']['sha256'],hashlib.sha256(b'factory Lua').hexdigest())
 
     def test_candidate_seeded_active_blob_is_quarantined_to_restore_old_absence(self):
         import hashlib

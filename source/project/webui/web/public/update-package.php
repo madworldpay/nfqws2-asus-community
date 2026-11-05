@@ -44,9 +44,9 @@ final class AsusUpdatePackage
     }
     private static function gzRead($f,int $n): string
     {$out='';while(strlen($out)<$n){$chunk=@gzread($f,min(16384,$n-strlen($out)));if(!is_string($chunk)||$chunk==='')throw new RuntimeException('invalid_package');$out.=$chunk;}return $out;}
-    private static function control(string $path,string $family,?array &$scripts=null): array
+    private static function control(string $path,string $family,?array &$scripts=null,?array &$mutableLua=null): array
     {
-        $scripts=[];if(!function_exists('gzopen'))throw new RuntimeException('package_reader_unavailable');$f=@gzopen($path,'rb');if(!$f)throw new RuntimeException('invalid_package');$found=[];$control=null;$total=0;
+        $scripts=[];$mutableLua=[];if(!function_exists('gzopen'))throw new RuntimeException('package_reader_unavailable');$f=@gzopen($path,'rb');if(!$f)throw new RuntimeException('invalid_package');$found=[];$control=null;$total=0;
         try{for($i=0;$i<8;$i++){$h=self::header(self::gzRead($f,512));if($h===null)break;$name=$h['name'];$size=$h['size'];
             if(isset($found[$name])||!in_array($name,['control.tar.gz','data.tar.gz','debian-binary'],true)||$size>134217728||($name==='control.tar.gz'&&$size>2097152)||($name==='debian-binary'&&$size!==4))throw new RuntimeException('invalid_package');$found[$name]=true;$total+=$size;if($total>134217728)throw new RuntimeException('invalid_package');
             $raw='';for($left=$size;$left>0;){$chunk=self::gzRead($f,min(16384,$left));if($name!=='data.tar.gz')$raw.=$chunk;$left-=strlen($chunk);}if($size%512)self::gzRead($f,512-$size%512);
@@ -67,6 +67,11 @@ final class AsusUpdatePackage
             }
             if($h['name']==='control'){if($h['size']>16384)throw new RuntimeException('invalid_package');$fields=self::fields(substr($tar,$p,$h['size']));}
             elseif(in_array($h['name'],['preinst','postinst','prerm','postrm'],true)){$mode=trim(substr($block,100,8),"\0 ");if(!preg_match('/^[0-7]{1,7}$/D',$mode))throw new RuntimeException('invalid_package');$scripts[$h['name']]=['bytes'=>substr($tar,$p,$h['size']),'mode'=>(int)octdec($mode)];}
+            elseif($h['name']==='conffiles'&&$family!=='native')foreach(preg_split('/\s+/',trim(substr($tar,$p,$h['size']))) as $name){
+                if(!str_starts_with($name,'/opt/etc/nfqws2/lua/'))continue;
+                if(!preg_match('~^/opt/etc/nfqws2/lua/[a-zA-Z0-9_.-]{1,124}\.lua$~D',$name)||isset($mutableLua[substr($name,1)])||count($mutableLua)>=512)throw new RuntimeException('invalid_package');
+                $mutableLua[substr($name,1)]=true;
+            }
             $p+=(int)(ceil($h['size']/512)*512);
         }if($fields===null)throw new RuntimeException('invalid_package');sort($bootstrap);sort($helpers);if($bootstrap!==[]&&$bootstrap!==$helpers)throw new RuntimeException('invalid_package');return $fields;
     }
@@ -77,7 +82,7 @@ final class AsusUpdatePackage
         if(!(($family==='aarch64-3.10'&&$abi==='aarch64-3.10'&&$machine==='aarch64')||($family==='armv7'&&in_array($abi,['armv7-2.6','armv7-3.2'],true)&&in_array($machine,['armv7l','armv8l'],true))))throw new RuntimeException('unsupported_abi');
         AsusUpdateStore::noLinks($path);$s=@lstat($path);if(!$s||($s['mode']&0170000)!==0100000||$s['nlink']!==1)throw new RuntimeException('invalid_state');
         if($s['size']!==($candidate['package']['size']??null))throw new RuntimeException('download_size');if(!hash_equals($candidate['package']['sha256'],hash_file('sha256',$path)))throw new RuntimeException('download_hash');
-        $scripts=null;$control=self::control($path,$family,$scripts);$resume=($candidate['action']??null)==='configure';
+        $scripts=null;$mutableLua=null;$control=self::control($path,$family,$scripts,$mutableLua);$resume=($candidate['action']??null)==='configure';
         if(($control['Package']??null)!=='nfqws2-asus'||($control['Version']??null)!==$candidate['package_version']||($control['Architecture']??null)!==($family==='armv7'?'all':$family)||($control['Replaces']??'')!=='nfqws-asus-web')throw new RuntimeException('invalid_package');
         // Opkg marks the old version deinstall before running the new preinst.
         // A failed preinst leaves that old, fully configured version installed.
@@ -93,7 +98,7 @@ final class AsusUpdatePackage
             if(count($state)!==3||$state[0]!=='install'||$state[2]!=='installed')throw new RuntimeException('missing_dependencies');}
         foreach(array_filter(array_map('trim',explode(',',$control['Conflicts']??''))) as $p)if(!in_array($p,self::REPLACEES,true))throw new RuntimeException('invalid_package');
         foreach(self::REPLACEES as $p)if(isset($db[$p])&&str_ends_with($db[$p]['Status'],' installed'))throw new RuntimeException('pending_packages');
-        if($resume){if($opt===null||!isset($scripts['postinst']))throw new RuntimeException('recovery_required');self::recoveryScripts($opt,$owner,$scripts);self::recoveryPayload($path,$opt,$owner);}
+        if($resume){if($opt===null||!isset($scripts['postinst']))throw new RuntimeException('recovery_required');self::recoveryScripts($opt,$owner,$scripts);self::recoveryPayload($path,$opt,$owner,false,$mutableLua);}
         return $control;
     }
     private static function recoveryScripts(string $opt,int $owner,array $scripts): void
@@ -119,7 +124,7 @@ final class AsusUpdatePackage
     public static function stockDefaults(string $package,string $opt,int $owner):array
     {return self::recoveryPayload($package,$opt,$owner,true);}
     /** Compare archive members as bytes, without extracting any archive paths. */
-    private static function recoveryPayload(string $package,string $opt,int $owner,bool $defaultsOnly=false): array
+    private static function recoveryPayload(string $package,string $opt,int $owner,bool $defaultsOnly=false,array $mutableLua=[]): array
     {
         $parent=dirname($package);AsusUpdateStore::noLinks($parent);$s=@lstat($parent);$free=@disk_free_space($parent);
         if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$owner||($s['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
@@ -134,9 +139,14 @@ final class AsusUpdatePackage
                 if($h['name']==='data.tar.gz'){$found=true;break;}if($size%512)self::gzRead($outer,512-$size%512);
             }
             if(!$found||!fflush($out))throw new RuntimeException('invalid_package');fclose($out);$out=null;gzclose($outer);$outer=null;
-            $data=@gzopen($temporary,'rb');if(!$data)throw new RuntimeException('invalid_package');$seen=[];$total=0;$files=0;$defaults=[];
+            $data=@gzopen($temporary,'rb');if(!$data)throw new RuntimeException('invalid_package');$seen=[];$total=0;$files=0;$defaults=[];$luaProof=[];$factories=[];
+            foreach($mutableLua as $name=>$_)$factories['opt/share/nfqws2-asus/factory/lua/'.substr($name,strlen('opt/etc/nfqws2/lua/'))]=$name;
             for($count=0;$count<8192;$count++){
-                $h=self::gzRead($data,512);if($h===str_repeat("\0",512)){if($files===0&&!$defaultsOnly)throw new RuntimeException('invalid_package');ksort($defaults);return $defaults;}
+                $h=self::gzRead($data,512);if($h===str_repeat("\0",512)){
+                    if($files===0&&!$defaultsOnly)throw new RuntimeException('invalid_package');
+                    foreach($factories as $factory=>$active)if(!isset($luaProof[$factory],$luaProof[$active])||$luaProof[$factory]!==$luaProof[$active])throw new RuntimeException('invalid_package');
+                    ksort($defaults);return $defaults;
+                }
                 $size=trim(substr($h,124,12)," \0");$sum=trim(substr($h,148,8)," \0");$mode=trim(substr($h,100,8)," \0");$uid=trim(substr($h,108,8)," \0");
                 if(!preg_match('/^[0-7]{1,11}$/D',$size)||!preg_match('/^[0-7]{1,7}$/D',$sum)||!preg_match('/^[0-7]{1,7}$/D',$mode)||!preg_match('/^0+$/D',$uid)||octdec($size)>16777216||octdec($mode)>0777||array_sum(unpack('C*',substr_replace($h,str_repeat(' ',8),148,8)))!==octdec($sum))throw new RuntimeException('invalid_package');
                 $name=rtrim(substr($h,0,100),"\0");$prefix=rtrim(substr($h,345,155),"\0");if($prefix!=='')$name=$prefix.'/'.$name;if(str_starts_with($name,'./'))$name=substr($name,2);
@@ -152,11 +162,19 @@ final class AsusUpdatePackage
                     if($name==='opt/etc/nfqws2/nfqws2.conf.notactive')$target='etc/nfqws2/nfqws2.conf';
                     elseif(preg_match('~^opt/etc/nfqws2/lists/([a-zA-Z0-9_.-]+)\.notactive$~D',$name,$match))$target='etc/nfqws2/lists/'.$match[1];
                     elseif(preg_match('~^opt/share/nfqws2-asus/defaults/blobs/([a-zA-Z0-9_.-]+\.bin)$~D',$name,$match))$target='etc/nfqws2/blobs/'.$match[1];
+                    elseif(preg_match('~^opt/share/nfqws2-asus/factory/lua/([a-zA-Z0-9_.-]{1,124}\.lua)$~D',$name,$match))$target='etc/nfqws2/lua/'.$match[1].'-opkg';
                     if($target!==null){if(count($defaults)>=512||((int)octdec($mode)&0022)!==0)throw new RuntimeException('invalid_package');$defaults[$target]=['mode'=>(int)octdec($mode),'size'=>$size,'sha256'=>$digest];}
                     continue;
                 }
-                // The package owns these two conffiles, whose active contents
-                // are deliberately administrator-specific after installation.
+                if(isset($mutableLua[$name])||isset($factories[$name]))$luaProof[$name]=['mode'=>(int)octdec($mode),'size'=>$size,'sha256'=>$digest];
+                // Only declared active Lua is mutable; its corresponding
+                // factory payload is still verified exactly and paired above.
+                if(isset($mutableLua[$name])){
+                    $path=$opt.substr($name,3);self::recoveryParents($path,$opt,$owner);$installed=@lstat($path);
+                    if(!$installed||($installed['mode']&0170000)!==0100000||$installed['uid']!==$owner||$installed['nlink']!==1||($installed['mode']&07022)!==0||$installed['size']>8388608)throw new RuntimeException('recovery_required');
+                    continue;
+                }
+                // Auth/relay contents are administrator-specific as well.
                 if(in_array($name,['opt/etc/nfqws-asus-web/auth.json','opt/etc/nfqws-asus-web/support-relay.json'],true))continue;
                 $path=$opt.substr($name,3);self::recoveryParents($path,$opt,$owner);$installed=@lstat($path);
                 if(!$installed||($installed['mode']&0170000)!==0100000||$installed['uid']!==$owner||$installed['nlink']!==1||($installed['mode']&07777)!==octdec($mode)||$installed['size']!==$size||!hash_equals($digest,hash_file('sha256',$path)))throw new RuntimeException('recovery_required');

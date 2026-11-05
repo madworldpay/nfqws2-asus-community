@@ -13,6 +13,7 @@ export type PackageUpdateProgress = {
 
 const stagePercent: Record<PackageOperationPhase, number> = {
   queued: 0,
+  checking_settings: 0,
   downloading: 0,
   checking_package: 14,
   validating: 28,

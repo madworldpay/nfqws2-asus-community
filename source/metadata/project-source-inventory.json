@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "94357f63ecbc9f2a794d70f4d95b4a0db358191b6ae02fe472d240e367467503"
+    "sha256": "69a9cd8a9e12b122cdf59392131bf6c83e7360c2f745921e76f48a16f1cc541a"
   },
   {
     "path": "LICENSE",
@@ -2075,6 +2075,16 @@
     "sha256": "13429307e502dc1254b64553f37efd9df49c30dbae095b653a5e0038e3f7e124"
   },
   {
+    "path": "tests/test_lua_rollback_compat.py",
+    "bytes": 10893,
+    "sha256": "00f05d2871501ff00b455fb836b64b13943327d5e3c2089c95a36213118ea7e1"
+  },
+  {
+    "path": "tests/test_lua_update_snapshot.py",
+    "bytes": 2233,
+    "sha256": "19fff0bc3a739756129714f9d4dba8741a4ce8275b6d980ab30033be8b48c6bb"
+  },
+  {
     "path": "tests/test_migration.py",
     "bytes": 11831,
     "sha256": "81735fd011afbb79b814b2c94425fa6b99639c2edfd639fe92dc70c72ff229b5"
@@ -2386,8 +2396,8 @@
   },
   {
     "path": "tests/test_openwrt_update_snapshot.php",
-    "bytes": 9969,
-    "sha256": "d19c109bdfdc04eea22bf12b265f5712cc6e891e64adddd44ead1aa844bce175"
+    "bytes": 11902,
+    "sha256": "cffa3ddc1095455baed0748193600d7dd0b5e26befb8c6a926080847da7ee22a"
   },
   {
     "path": "tests/test_openwrt_update_snapshot.py",
@@ -2496,13 +2506,13 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 37389,
-    "sha256": "3ac6c09eab8e0bb87ba48130ae282e4b2e9b3273abeaa5c15feed8226f5d8dbb"
+    "bytes": 41325,
+    "sha256": "24344f8fa58779ec3c5a8b61b56e6ea44d949606ba383e9d945e2231a9da8325"
   },
   {
     "path": "tests/test_package_update_progress.mjs",
-    "bytes": 4439,
-    "sha256": "43db43906fcbeb6aa609890d4248f227e4311a48ca6865cc83fe2eaaac85e9cf"
+    "bytes": 4519,
+    "sha256": "00ce0f59ef78c3e2fa15e797f659f2db97657813961accb57715403217c978a9"
   },
   {
     "path": "tests/test_package_update_progress_browser.mjs",
@@ -2531,8 +2541,8 @@
   },
   {
     "path": "tests/test_package_update_rollback.py",
-    "bytes": 47915,
-    "sha256": "67cc1d02190358c9cca5dcc37e4e608434b05b5f04c2e364e0c5250eb9bb2c51"
+    "bytes": 48157,
+    "sha256": "39482d3ff35cdefe718ff3bfa9b4bd1b1e71a0064e4180d826f75367ced60eb7"
   },
   {
     "path": "tests/test_package_update_runtime.py",
@@ -2551,8 +2561,8 @@
   },
   {
     "path": "tests/test_package_update_store.py",
-    "bytes": 26038,
-    "sha256": "f377b4f0c127d88851579d93d6f9984ec76d517076f8289ba2612a1b17a454b9"
+    "bytes": 26366,
+    "sha256": "b54743aefb402266ddba25e83ec77b4bd0b53ebba199c7946da3f0c364b0fe4f"
   },
   {
     "path": "tests/test_package_update_transport.py",
@@ -3806,8 +3816,8 @@
   },
   {
     "path": "webui/web/public/openwrt-update-snapshot.php",
-    "bytes": 12444,
-    "sha256": "91d7c202d69a54b5ae6e8651445921d5608aca05d4b1c25ddf9d6b609c04b97f"
+    "bytes": 12592,
+    "sha256": "9423dd9b6788a92e651fa1cd316aeb0ca51878fd451af63b6ee9b14c3babc2d8"
   },
   {
     "path": "webui/web/public/openwrt-update-worker.php",
@@ -4116,8 +4126,8 @@
   },
   {
     "path": "webui/web/public/update-package.php",
-    "bytes": 18470,
-    "sha256": "32fbf95a4d82df48d213224bcf724981b3a2d52307e4faf548c3f486bfc8bc10"
+    "bytes": 20319,
+    "sha256": "45bb895ed91716e1591effaaf824a47003a909383c00be65e7ad0916b8bb29d1"
   },
   {
     "path": "webui/web/public/update-postinst-resume.php",
@@ -4126,13 +4136,13 @@
   },
   {
     "path": "webui/web/public/update-prepare.php",
-    "bytes": 18861,
-    "sha256": "856acbab38131a7a23b945526dcbcc154eff6fb74eac3fbfc096885cb04cbd3c"
+    "bytes": 20101,
+    "sha256": "af8146a90957f4797825085539fcf8cc414d4e28d6f9489bad62f7b2f8e5bd6f"
   },
   {
     "path": "webui/web/public/update-rollback.php",
-    "bytes": 50823,
-    "sha256": "7f91daefdb05febd218f157ef4d98ec4520333767c9bac92d96c1504cc671b02"
+    "bytes": 52694,
+    "sha256": "acfecc93ba5a89dd6c12779f9b2641a28eea8e009945a33d97fd134c2f1cdc6f"
   },
   {
     "path": "webui/web/public/update-runtime.php",
@@ -4146,8 +4156,8 @@
   },
   {
     "path": "webui/web/public/update-store.php",
-    "bytes": 19986,
-    "sha256": "41e638d7659ab06ef8a71ca7c75f40a8ec73d04ac2d03f2a014154725ad6fa7b"
+    "bytes": 20035,
+    "sha256": "afe12a16e60918b0a42104640962f17347bc0f364cdee7ebf6ee7f29ed4c47c0"
   },
   {
     "path": "webui/web/public/update-transport.php",
@@ -4251,8 +4261,8 @@
   },
   {
     "path": "webui/web/src/api/packageUpdates.ts",
-    "bytes": 11730,
-    "sha256": "801163fb59860eaad982c34e55e86e671250fc1ba331ba78d17e5ef7888b24b2"
+    "bytes": 11779,
+    "sha256": "565cc85de20c59cc37ea9c2f3f02e3cbdc6fc648ca8ce9820ca4aa9029702748"
   },
   {
     "path": "webui/web/src/api/profileCatalogClient.ts",
@@ -4731,13 +4741,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 90817,
-    "sha256": "152eb5f01a643d3c9d5f391e21a0c34a6b6c223fa821bdeb8cd712bb03ef1457"
+    "bytes": 90901,
+    "sha256": "77ac9eea90febbd0fa37b4f041239fc3e85b9b3da870e4a1824a92943f151295"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 146550,
-    "sha256": "f3a1f98aa3d45f3b27a4424a3571b0df0395c3e91888acf1c9d95b1da2908362"
+    "bytes": 146674,
+    "sha256": "73317067195b544817495804049eda81b8afc9ab1ff33e800172d535661d3990"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4826,8 +4836,8 @@
   },
   {
     "path": "webui/web/src/utils/packageUpdateProgress.ts",
-    "bytes": 2960,
-    "sha256": "62d68c4d1434cab80abf54032061626b44f6889987d010cc2292de73dee73a6b"
+    "bytes": 2984,
+    "sha256": "62cf8b4aa17e87bd84fe47f3ed10571d55b560aee888d27b14c0bcd8f0704d37"
   },
   {
     "path": "webui/web/src/utils/packageVersion.ts",

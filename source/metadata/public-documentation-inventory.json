@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 37017,
-      "sha256": "3a1214a9a45be4a090c7ba0bb54a7dd418d207164a8da624046a0a35b2e6961a"
+      "bytes": 39995,
+      "sha256": "d30d4ae42da557d464ea00c28e2b21869a76dc0e65fd470f7a0743f501a86704"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -107,8 +107,8 @@
     },
     {
       "file": "NEXT-BUILD.md",
-      "bytes": 10970,
-      "sha256": "2398e057867851dda65098b3aaa9fcda99c7c1a820a42bd0f42f5db087d38f1b"
+      "bytes": 11825,
+      "sha256": "b32b5621140a59b05463ebc93883e503dbc2d43523e4df4d8ec45c3354250c19"
     },
     {
       "file": "OPENWRT.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 23620,
-      "sha256": "9211f06d51996e00eea32990d2e484e8eef91275fdfa30454e8f004bda33f675"
+      "bytes": 23673,
+      "sha256": "e9f281d4308a35200b097de443d687cfdee756fab56e047ddbdde87290b4f842"
     },
     {
       "file": "README.md",
-      "bytes": 39418,
-      "sha256": "06d2cd5da0a0b19588bf9fd3dc442a482deace0ad6733689ad5f36819398c9f2"
+      "bytes": 39460,
+      "sha256": "22b91fdf3bd8dc73cc3e0369daca5fc02b4b368b3334294133555ef88f67b983"
     },
     {
       "file": "ROADMAP.en.md",
@@ -222,13 +222,13 @@
     },
     {
       "file": "docs/DETECTOR-COMPARISON.en.md",
-      "bytes": 4438,
-      "sha256": "2c363be8eb60b924cefd8caa0623266aaf648af2af44cb22bb88ba7ce6b17ccb"
+      "bytes": 6553,
+      "sha256": "fc6e780373eab6841ab729ac7ac0b108cc62f3f3711db612fc29a1539ed4753a"
     },
     {
       "file": "docs/DETECTOR-COMPARISON.md",
-      "bytes": 7639,
-      "sha256": "689017e23f15170bbb3b194d3a4b4ba8f9342d979304a3634c5d0401aa2059e1"
+      "bytes": 10971,
+      "sha256": "85e4e62e9c8ccebe0e94d5aba96b45528157d87ecfd01534dbfe1320df942f87"
     },
     {
       "file": "images/cloud-catalog.jpg",
@@ -249,6 +249,66 @@
       "file": "images/more-screenshots-ru.svg",
       "bytes": 513,
       "sha256": "5c5355e28d9df9c9c46081ec3ead6bd2ab858613aec3c0c16f3b6bca01f0189e"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-personal-01.png",
+      "bytes": 746387,
+      "sha256": "980dbad04310b36dad3eaec9a1b90b22403308cf1e4e1ef73b1ab54bb6da7bc6"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-personal-02.png",
+      "bytes": 769087,
+      "sha256": "b3082596fb588516f512ca52e6266650cbdde4738da7e91d0ad82f70a7ba70c0"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-personal-03.png",
+      "bytes": 499041,
+      "sha256": "e6ee821db1994ba8259d7c2f80bba3dc1d483c5f5add9da10750db9d239b4777"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-personal-04.png",
+      "bytes": 851140,
+      "sha256": "d338941104b4826bd08fd2593aeabb0785bff4aa14b9389f328f137bfd581459"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-personal-05.png",
+      "bytes": 835439,
+      "sha256": "07316750612e3038425df0cada7c386b98b135ee7995ccd1526a304600564511"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-personal-06-bottom.png",
+      "bytes": 771902,
+      "sha256": "95cda1273ef10e4e88b8143f8b13a400d2f3931c6e3d1d3032a41fce44ddffcc"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-stock-01.png",
+      "bytes": 746387,
+      "sha256": "980dbad04310b36dad3eaec9a1b90b22403308cf1e4e1ef73b1ab54bb6da7bc6"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-stock-02.png",
+      "bytes": 770405,
+      "sha256": "a25c918e4f475198f3ffa890c221423d38f11374b127d6954969f2c89d968fde"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-stock-03.png",
+      "bytes": 506673,
+      "sha256": "d8e30d5855570f9b7b94d9b1d2138e518f80adb3df0b3687fee4134308c72d9a"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-stock-04.png",
+      "bytes": 909675,
+      "sha256": "5833b36641416eaeafe716bdc001c1066e8c3dd05fa25795a814ea927456d606"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-stock-05.png",
+      "bytes": 903590,
+      "sha256": "7860d2d15e117d559afbf9411006a4a242b22ba59e3efe302f28c5e0537e6472"
+    },
+    {
+      "file": "images/screenshots/detector-comparison-stock-06-bottom.png",
+      "bytes": 887912,
+      "sha256": "7873e019cbb5e65bcd4eb02f5055be41b38f8b5c8f58b9293ddf2ddbc99a0fa8"
     },
     {
       "file": "images/screenshots/panel-overview-en.jpg",

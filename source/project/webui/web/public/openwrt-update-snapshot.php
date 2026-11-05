@@ -115,7 +115,8 @@ final class NfqwsOpenWrtUpdateSnapshot
         $saved=self::identity($saved,$owner);self::bounded($saved,'invalid_state');$now=self::state($root,$owner);
         foreach($saved['files']as $name=>$r){
             $new=$now['files'][$name]??null;
-            if($new===$r)continue;
+            // The current package baseline may reclassify otherwise identical settings.
+            if(is_array($new)){$same=$new;$same['stock']=$r['stock'];if($same===$r)continue;}
             if(isset($r['consent'])&&is_array($new)&&($new['consent']??null)===$r['consent']&&$new['uid']===$r['uid']&&$new['gid']===$r['gid']&&$new['mode']===$r['mode'])continue;
             // An untouched old stock resource may become the new proven stock.
             if(($r['stock']??false)&&is_array($new)&&($new['stock']??false)&&$new['uid']===$r['uid']&&$new['gid']===$r['gid']&&$new['mode']===$r['mode'])continue;

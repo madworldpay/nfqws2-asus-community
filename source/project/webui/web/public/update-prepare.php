@@ -23,15 +23,23 @@ final class AsusUpdateSnapshot
             $hash=hash_file('sha256',$p);if($hash===false)throw new RuntimeException('invalid_state');$files[$relative]=['mode'=>$s['mode']&0777,'size'=>$s['size'],'sha256'=>$hash,'uid'=>$s['uid'],'gid'=>$s['gid']];
         };
         $scan('etc/nfqws2');foreach(['auth.json','support-relay.json','update-channel.json'] as $n)$scan('etc/nfqws-asus-web/'.$n);ksort($files);
-        // Only proven stock resources may change with a package. Custom files
-        // remain settings; a customized stock file refuses preparation.
+        // Only proven stock resources may change with a package. Existing
+        // customized resources remain settings and must survive byte-for-byte.
         $resources=[];$baseline=$opt.'/share/nfqws2-asus/report-baseline.json';AsusUpdateStore::noLinks($baseline);$bs=@lstat($baseline);
         if($bs){if(($bs['mode']&0170000)!==0100000||$bs['uid']!==$owner||$bs['nlink']!==1||($bs['mode']&0022)!==0||$bs['size']>131072)throw new RuntimeException('invalid_state');
             try{$b=json_decode(file_get_contents($baseline),true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
             if(($b['schema_version']??null)!==1||!is_array($b['resources']??null)||count($b['resources'])>512)throw new RuntimeException('invalid_state');
             foreach($b['resources'] as $name=>$r){if(!preg_match('~^(lua|blob)/[a-zA-Z0-9_.-]+$~D',(string)$name)||!is_array($r)||!is_int($r['bytes']??null)||$r['bytes']<0||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256']??''))throw new RuntimeException('invalid_state');
                 $path='etc/nfqws2/'.(str_starts_with($name,'blob/')?'blobs/'.substr($name,5):$name);$f=$files[$path]??null;
-                if(!$f||$f['size']!==$r['bytes']||$f['sha256']!==$r['sha256'])throw new RuntimeException('settings_changed');$resources[$path]=$r;
+                if(!$f)throw new RuntimeException('settings_changed');
+                if($f['size']===$r['bytes']&&$f['sha256']===$r['sha256'])$resources[$path]=$r;
+                // Entware keeps the incoming factory alternative beside an
+                // edited Lua conffile. Only its exact protected factory bytes
+                // qualify; arbitrary suffix files remain ordinary settings.
+                if(str_starts_with($name,'lua/')){
+                    $sidecar=$path.'-opkg';$s=$files[$sidecar]??null;
+                    if($s&&$s['mode']===0644&&$s['size']===$r['bytes']&&$s['sha256']===$r['sha256'])$resources[$sidecar]=$r;
+                }
             }ksort($resources);
         }
         return ['files'=>$files,'total'=>$total,'package_resources'=>$resources];
@@ -66,7 +74,21 @@ final class AsusUpdateSnapshot
         AsusUpdateStore::noLinks($destination);$p=$destination.'/snapshot.json';$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||($s['mode']&0777)!==0600||$s['nlink']!==1||$s['size']>131072)throw new RuntimeException('invalid_state');
         try{$manifest=json_decode(file_get_contents($p),true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
         $current=self::collect($opt,$owner);
-        if($allowPackageDefaults){$active=fn($snapshot)=>array_filter($snapshot['files'],fn($name)=>!isset($snapshot['package_resources'][$name])&&!preg_match('~^etc/nfqws2/(?:nfqws2\.conf|lists/[a-zA-Z0-9_.-]+)\.notactive$~D',$name),ARRAY_FILTER_USE_KEY);if($active($current)!==$active($manifest))throw new RuntimeException('settings_changed');}
+        if($allowPackageDefaults){
+            $template=fn($name)=>preg_match('~^etc/nfqws2/(?:nfqws2\.conf|lists/[a-zA-Z0-9_.-]+)\.notactive$~D',$name)===1;
+            foreach($manifest['files'] as $name=>$saved){
+                $now=$current['files'][$name]??null;
+                if($now===$saved||$template($name))continue;
+                if(isset($manifest['package_resources'][$name])){
+                    if($now===null)continue;
+                    if(isset($current['package_resources'][$name])&&$now['uid']===$saved['uid']&&$now['gid']===$saved['gid']&&$now['mode']===$saved['mode'])continue;
+                }
+                throw new RuntimeException('settings_changed');
+            }
+            // A saved customization remains settings even if it happens to
+            // equal the next package's stock resource; never filter it away.
+            foreach($current['files'] as $name=>$_)if(!isset($manifest['files'][$name])&&!isset($current['package_resources'][$name])&&!$template($name))throw new RuntimeException('settings_changed');
+        }
         elseif($current!==$manifest)throw new RuntimeException('settings_changed');
         foreach($manifest['files'] as $name=>$item){if(!preg_match('~^etc/(?:nfqws2|nfqws-asus-web)/[a-zA-Z0-9_./-]+$~D',$name)||in_array('..',explode('/',$name),true))throw new RuntimeException('invalid_state');$p=$destination.'/'.$name;AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0777)!==$item['mode']||$s['size']!==$item['size']||hash_file('sha256',$p)!==$item['sha256'])throw new RuntimeException('invalid_state');}return true;
     }

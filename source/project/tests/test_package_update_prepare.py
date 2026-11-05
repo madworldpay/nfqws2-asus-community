@@ -141,6 +141,34 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         status=self.resume_fixture()
         self.assertIn('value',self.call(status=status))
 
+    def test_resume_preserves_declared_lua_edits_but_requires_intact_factory_closure(self):
+        self.addCleanup(os.umask,os.umask(0o022))
+        status=self.resume_fixture()
+        active=self.base/'opt/etc/nfqws2/lua/stock.lua'
+        factory=self.base/'opt/share/nfqws2-asus/factory/lua/stock.lua'
+        for path,raw in [(active,b'-- owner edit\n'),(factory,b'-- factory\n')]:
+            path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(raw);path.chmod(0o600 if path==active else 0o644)
+        self.add_control_members([('conffiles',b'/opt/etc/nfqws2/lua/stock.lua\n',tarfile.REGTYPE)])
+        self.payload({'opt/lib/nfqws2-asus/helper.sh':(self.immutable.read_bytes(),0o755),
+                      'opt/etc/nfqws2/lua/stock.lua':(b'-- factory\n',0o644),
+                      'opt/share/nfqws2-asus/factory/lua/stock.lua':(b'-- factory\n',0o644)})
+        self.assertIn('value',self.call(status=status))
+        self.assertEqual(active.read_bytes(),b'-- owner edit\n')
+        factory.write_bytes(b'-- tampered factory\n')
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        factory.write_bytes(b'-- factory\n')
+        active.unlink();active.symlink_to(factory)
+        self.assertEqual(self.call(status=status),{'error':'invalid_state'})
+
+    def test_resume_never_exempts_undeclared_lua_or_missing_factory_payload(self):
+        self.addCleanup(os.umask,os.umask(0o022))
+        status=self.resume_fixture();active=self.base/'opt/etc/nfqws2/lua/stock.lua'
+        active.parent.mkdir(parents=True);active.write_bytes(b'-- owner edit\n');active.chmod(0o600)
+        self.payload({'opt/lib/nfqws2-asus/helper.sh':(self.immutable.read_bytes(),0o755),'opt/etc/nfqws2/lua/stock.lua':(b'-- factory\n',0o644)})
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        self.add_control_members([('conffiles',b'/opt/etc/nfqws2/lua/stock.lua\n',tarfile.REGTYPE)])
+        self.assertIn(self.call(status=status).get('error'),['invalid_package','recovery_required'])
+
     def test_resume_rejects_other_pending_rows_and_wrong_version(self):
         status=self.resume_fixture()
         self.assertEqual(self.call(status=status+'Package: other\nVersion: 1\nStatus: install user unpacked\n'),{'error':'pending_packages'})
@@ -348,11 +376,41 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         self.assertEqual(self.call('verify'),{'error':'settings_changed'})
         self.assertEqual(self.call('verify',allow_defaults=True),{'value':True})
         (config/'lua/custom.lua').write_text('OVERWRITTEN');self.assertEqual(self.call('verify',allow_defaults=True),{'error':'settings_changed'})
-    def test_customized_stock_resource_is_refused_before_snapshot_or_service_stop(self):
-        opt,config,web=self.fixture();(config/'lua').mkdir();(config/'lua/stock.lua').write_text('MY CUSTOMIZATION')
-        self.stock_baseline(opt,{'lua/stock.lua':'original stock'})
+    def test_customized_stock_resources_are_settings_and_survive_factory_updates(self):
+        opt,config,web=self.fixture();(config/'lua').mkdir();(config/'blobs').mkdir()
+        (config/'lua/stock.lua').write_text('MY CUSTOMIZATION')
+        (config/'blobs/stock.bin').write_text('MY BLOB')
+        self.stock_baseline(opt,{'lua/stock.lua':'original stock','blob/stock.bin':'original blob'})
+        result=self.call('snapshot');self.assertIn('value',result)
+        self.assertFalse(result['value']['package_resources'])
+        self.assertEqual((self.base/'backup/etc/nfqws2/lua/stock.lua').read_text(),'MY CUSTOMIZATION')
+        self.stock_baseline(opt,{'lua/stock.lua':'new stock','blob/stock.bin':'new blob'})
+        self.assertEqual(self.call('verify',allow_defaults=True),{'value':True})
+        (config/'lua/stock.lua').write_text('new stock')
+        self.assertEqual(self.call('verify',allow_defaults=True),{'error':'settings_changed'})
+
+    def test_existing_edit_matching_next_factory_is_still_verified_as_saved_settings(self):
+        opt,config,web=self.fixture();(config/'lua').mkdir()
+        (config/'lua/stock.lua').write_text('already updated by owner')
+        self.stock_baseline(opt,{'lua/stock.lua':'old stock'})
+        self.assertIn('value',self.call('snapshot'))
+        self.stock_baseline(opt,{'lua/stock.lua':'already updated by owner'})
+        self.assertEqual(self.call('verify',allow_defaults=True),{'value':True})
+        (config/'lua/stock.lua').chmod(0o600)
+        self.assertEqual(self.call('verify',allow_defaults=True),{'error':'settings_changed'})
+
+    def test_edited_resource_changed_after_capture_is_not_accepted(self):
+        opt,config,web=self.fixture();(config/'lua').mkdir()
+        (config/'lua/stock.lua').write_text('first edit')
+        self.stock_baseline(opt,{'lua/stock.lua':'factory'})
+        self.assertIn('value',self.call('snapshot'))
+        (config/'lua/stock.lua').write_text('later edit')
+        self.assertEqual(self.call('verify'),{'error':'settings_changed'})
+
+    def test_missing_declared_factory_resource_is_still_refused(self):
+        opt,config,web=self.fixture()
+        self.stock_baseline(opt,{'lua/missing.lua':'factory'})
         self.assertEqual(self.call('snapshot'),{'error':'settings_changed'})
-        self.assertFalse((self.base/'backup').exists())
 
 
 class PackageUpdateCoordinatorTests(unittest.TestCase):

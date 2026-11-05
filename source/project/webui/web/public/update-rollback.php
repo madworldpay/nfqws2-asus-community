@@ -70,15 +70,19 @@ final class AsusUpdateRollback
     }
     private static function conffileMap(string $text,string $opt):array
     {
-        if(trim($text)==='')return [];$parts=preg_split('/\s+/',trim($text));if(count($parts)>4||count($parts)%2!==0)throw new RuntimeException('rollback_unavailable');$out=[];
-        for($i=0;$i<count($parts);$i+=2){$name=self::relative($parts[$i],$opt);$hash=$parts[$i+1];if(!isset(self::CONFFILE_SEEDS[$name])||isset($out[$name])||!hash_equals(self::CONFFILE_SEEDS[$name]['sha256'],$hash))throw new RuntimeException('rollback_unavailable');$out[$name]=$hash;}
+        if(trim($text)==='')return [];$parts=preg_split('/\s+/',trim($text));if(count($parts)>1024||count($parts)%2!==0)throw new RuntimeException('rollback_unavailable');$out=[];
+        for($i=0;$i<count($parts);$i+=2){$name=self::relative($parts[$i],$opt);$hash=$parts[$i+1];if(!self::conffileName($name)||isset($out[$name])||!preg_match('/^[a-f0-9]{64}$/D',$hash)||isset(self::CONFFILE_SEEDS[$name])&&!hash_equals(self::CONFFILE_SEEDS[$name]['sha256'],$hash))throw new RuntimeException('rollback_unavailable');$out[$name]=$hash;}
         ksort($out);return $out;
     }
+    private static function luaFactory(string $name):?string
+    {return preg_match('~^etc/nfqws2/lua/([a-zA-Z0-9_.-]{1,124}\.lua)$~D',$name,$match)===1?'share/nfqws2-asus/factory/lua/'.$match[1]:null;}
+    private static function conffileName(string $name):bool
+    {return isset(self::CONFFILE_SEEDS[$name])||self::luaFactory($name)!==null;}
     private static function conffiles(array $own,array $metadata,string $opt):array
     {
         $map=self::conffileMap($own['Conffiles']??'',$opt);$declared=[];
         if(isset($metadata['conffiles']))foreach(preg_split('/\s+/',trim((string)file_get_contents($opt.'/lib/opkg/info/nfqws2-asus.conffiles'))) as $path){
-            if($path==='')continue;$name=self::relative($path,$opt);if(!isset(self::CONFFILE_SEEDS[$name])||isset($declared[$name]))throw new RuntimeException('rollback_unavailable');$declared[$name]=true;
+            if($path==='')continue;$name=self::relative($path,$opt);if(!self::conffileName($name)||isset($declared[$name])||count($declared)>=512)throw new RuntimeException('rollback_unavailable');$declared[$name]=true;
         }
         ksort($declared);if(array_keys($map)!==array_keys($declared))throw new RuntimeException('rollback_unavailable');return $map;
     }
@@ -86,6 +90,22 @@ final class AsusUpdateRollback
     {
         $seed=self::CONFFILE_SEEDS[$name]??null;$raw=$seed===null?false:base64_decode($seed['base64'],true);
         if(!is_string($raw)||!hash_equals($seed['sha256'],hash('sha256',$raw)))throw new RuntimeException('rollback_unavailable');return $raw;
+    }
+    /** Lua factory bytes must be protected, package-owned payload. The saved
+     * closure is checked under payload/ after the live factory has advanced. */
+    private static function conffileClosure(array $conffiles,array $files,string $root,int $owner):void
+    {
+        $present=array_intersect_key($files,self::CONFFILE_SEEDS);$fixed=array_intersect_key($conffiles,self::CONFFILE_SEEDS);ksort($present);ksort($fixed);
+        if(array_keys($fixed)!==array_keys($present))throw new RuntimeException('rollback_unavailable');$factories=[];
+        foreach($conffiles as $name=>$hash){
+            if(!self::conffileName($name)||!isset($files[$name])||!is_string($hash)||!preg_match('/^[a-f0-9]{64}$/D',$hash))throw new RuntimeException('rollback_unavailable');
+            $factory=self::luaFactory($name);
+            if($factory===null){if(!hash_equals(self::CONFFILE_SEEDS[$name]['sha256'],$hash))throw new RuntimeException('rollback_unavailable');continue;}
+            $meta=$files[$factory]??null;if(!is_array($meta)||$meta['uid']!==$owner||($meta['mode']&0022)!==0||!hash_equals($hash,$meta['sha256']))throw new RuntimeException('rollback_unavailable');
+            self::dataDirectory($root,dirname($root.'/'.$factory),$owner);$actual=self::file($root.'/'.$factory,$owner,8388608);
+            if($actual['size']!==$meta['size']||$actual['sha256']!==$hash)throw new RuntimeException('rollback_unavailable');$factories[$factory]=true;
+        }
+        foreach($files as $name=>$_)if(str_starts_with($name,'share/nfqws2-asus/factory/lua/')&&!isset($factories[$name]))throw new RuntimeException('rollback_unavailable');
     }
     private static function copy(string $from,string $to,array $meta,int $owner):void
     {
@@ -205,10 +225,10 @@ final class AsusUpdateRollback
         // from .list even after configure succeeds. Only the closed factory
         // map plus validated own declarations can supply these ownership claims.
         foreach($conffiles as $name=>$hash){
-            if(!isset(self::CONFFILE_SEEDS[$name])||!hash_equals(self::CONFFILE_SEEDS[$name]['sha256'],$hash))throw new RuntimeException('rollback_unavailable');
+            if(!self::conffileName($name))throw new RuntimeException('rollback_unavailable');
             if(!isset($files[$name])){if(count($files)>=512)throw new RuntimeException('rollback_unavailable');$files[$name]=self::file($opt.'/'.$name,$owner,self::CAP);}
         }
-        $present=array_intersect_key($files,self::CONFFILE_SEEDS);ksort($present);if(array_keys($conffiles)!==array_keys($present))throw new RuntimeException('rollback_unavailable');
+        self::conffileClosure($conffiles,$files,$opt,$owner);
         $ownSeen=false;
         foreach(self::inventory($opt,$owner) as $index=>$record){
             $fingerprint=[$record['identity'],$record['sha256']];
@@ -266,7 +286,7 @@ final class AsusUpdateRollback
     {
         if(count($defaults)>512)throw new RuntimeException('rollback_unavailable');$out=[];
         foreach($defaults as $name=>$meta){
-            if(!is_string($name)||!preg_match('~^etc/nfqws2/(?:nfqws2\.conf|lists/[a-zA-Z0-9_.-]+|blobs/[a-zA-Z0-9_.-]+\.bin)$~D',$name)||array_intersect(explode('/',$name),['.','..'])||!is_array($meta)||array_keys($meta)!==['mode','size','sha256']||!is_int($meta['mode'])||$meta['mode']<0||$meta['mode']>0777||($meta['mode']&0022)!==0||!is_int($meta['size'])||$meta['size']<0||$meta['size']>16777216||!preg_match('/^[a-f0-9]{64}$/D',$meta['sha256']??''))throw new RuntimeException('rollback_unavailable');
+            if(!is_string($name)||!preg_match('~^etc/nfqws2/(?:nfqws2\.conf|lists/[a-zA-Z0-9_.-]+|blobs/[a-zA-Z0-9_.-]+\.bin|lua/[a-zA-Z0-9_.-]{1,124}\.lua-opkg)$~D',$name)||array_intersect(explode('/',$name),['.','..'])||!is_array($meta)||array_keys($meta)!==['mode','size','sha256']||!is_int($meta['mode'])||$meta['mode']<0||$meta['mode']>0777||($meta['mode']&0022)!==0||!is_int($meta['size'])||$meta['size']<0||$meta['size']>16777216||!preg_match('/^[a-f0-9]{64}$/D',$meta['sha256']??''))throw new RuntimeException('rollback_unavailable');
             if(!isset($settings['files'][$name]))$out[$name]=$meta;
         }ksort($out);return $out;
     }
@@ -314,7 +334,11 @@ final class AsusUpdateRollback
             foreach($files as $name=>$meta)self::copy($opt.'/'.$name,$destination.'/payload/'.$name,$meta,$owner);
             foreach($metadata as $name=>$meta)self::copy($opt.'/lib/opkg/info/nfqws2-asus.'.$name,$destination.'/metadata/'.$name,$meta,$owner);
             $data=[];$directories=[];foreach($files as $name=>$meta){for($p=dirname('opt/'.$name);$p!=='.';$p=dirname($p))$directories[$p]=true;
-                if(isset($conffiles[$name])){$raw=self::conffileSeed($name);$data['opt/'.$name]=['bytes'=>$raw,'meta'=>array_replace($meta,['mode'=>0600,'size'=>strlen($raw),'sha256'=>$conffiles[$name]])];}
+                if(isset($conffiles[$name])){
+                    $factory=self::luaFactory($name);
+                    if($factory!==null)$data['opt/'.$name]=['source'=>$destination.'/payload/'.$factory,'meta'=>array_replace($files[$factory],['mode'=>0600])];
+                    else{$raw=self::conffileSeed($name);$data['opt/'.$name]=['bytes'=>$raw,'meta'=>array_replace($meta,['mode'=>0600,'size'=>strlen($raw),'sha256'=>$conffiles[$name]])];}
+                }
                 else $data['opt/'.$name]=['source'=>$destination.'/payload/'.$name,'meta'=>$meta];
             }
             ksort($directories);$entries=[];foreach($directories as $name=>$_){$p=$opt.substr($name,3);AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$owner||($s['mode']&0022)!==0)throw new RuntimeException('rollback_unavailable');$entries[$name.'/']=['directory'=>true,'meta'=>['mode'=>$s['mode']&0777,'size'=>0,'uid'=>$s['uid'],'gid'=>$s['gid']]];}
@@ -340,10 +364,9 @@ final class AsusUpdateRollback
     {
         try{AsusUpdateStore::noLinks($directory);$s=@lstat($directory);if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$owner||($s['mode']&0777)!==0700)throw new RuntimeException();
             self::file($directory.'/snapshot.json',$owner,131072);$m=json_decode(file_get_contents($directory.'/snapshot.json'),true,32,JSON_THROW_ON_ERROR);
-            if(!is_array($m)||array_keys($m)!==['schema','version','architecture','foreign','payload','metadata','conffiles','aux','settings','defaults','package']||($m['schema']??null)!==1||!is_string($m['version'])||!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+-asus[0-9]+\+b[1-9][0-9]*$/D',$m['version'])||!in_array($m['architecture'],['all','aarch64-3.10','armv7-2.6','armv7-3.2'],true)||!is_array($m['payload']??null)||count($m['payload'])>512||!is_array($m['metadata']??null)||!is_array($m['conffiles']??null)||count($m['conffiles'])>2||!preg_match('/^[a-f0-9]{64}$/D',$m['foreign']??''))throw new RuntimeException();
-            foreach($m['conffiles'] as $name=>$hash)if(!isset(self::CONFFILE_SEEDS[$name],$m['payload'][$name])||!is_string($hash)||!hash_equals(self::CONFFILE_SEEDS[$name]['sha256'],$hash))throw new RuntimeException();
-            $present=array_intersect_key($m['payload'],self::CONFFILE_SEEDS);ksort($present);if(array_keys($present)!==array_keys($m['conffiles']))throw new RuntimeException();
+            if(!is_array($m)||array_keys($m)!==['schema','version','architecture','foreign','payload','metadata','conffiles','aux','settings','defaults','package']||($m['schema']??null)!==1||!is_string($m['version'])||!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+-asus[0-9]+\+b[1-9][0-9]*$/D',$m['version'])||!in_array($m['architecture'],['all','aarch64-3.10','armv7-2.6','armv7-3.2'],true)||!is_array($m['payload']??null)||count($m['payload'])>512||!is_array($m['metadata']??null)||!is_array($m['conffiles']??null)||count($m['conffiles'])>512||!preg_match('/^[a-f0-9]{64}$/D',$m['foreign']??''))throw new RuntimeException();
             foreach(['payload','metadata'] as $group)foreach($m[$group] as $name=>$meta){self::meta($meta);if($group==='metadata'&&!in_array($name,self::META,true))throw new RuntimeException();if(!preg_match('~^[a-zA-Z0-9_@+.-]+(?:/[a-zA-Z0-9_@+.-]+)*$~D',$name)||array_intersect(explode('/',$name),['.','..']))throw new RuntimeException();$actual=self::file($directory.'/'.$group.'/'.$name,$owner);if($actual['size']!==$meta['size']||$actual['sha256']!==$meta['sha256']||$actual['mode']!==0600)throw new RuntimeException();}
+            self::conffileClosure($m['conffiles'],$m['payload'],$directory.'/payload',$owner);
             if(!is_array($m['aux'])||array_keys($m['aux'])!==['migration','history','owners']||!is_array($m['aux']['migration'])||array_keys($m['aux']['migration'])!==['present','directories','files']||!is_bool($m['aux']['migration']['present'])||!is_array($m['aux']['migration']['directories'])||!is_array($m['aux']['migration']['files'])||count($m['aux']['migration']['files'])>512||!is_array($m['aux']['history'])||count($m['aux']['history'])>1000||!is_array($m['aux']['owners'])||array_keys($m['aux']['owners'])!==self::OWNER_FILES)throw new RuntimeException();
             self::meta($m['settings']);self::meta($m['package']);if(!is_array($m['defaults'])||self::defaults($m['defaults'],['files'=>[]])!==$m['defaults'])throw new RuntimeException();
             foreach($m['aux']['migration']['directories'] as $name=>$meta){self::name($name,true);if(!is_array($meta)||array_keys($meta)!==['mode','uid','gid']||!is_int($meta['mode'])||$meta['mode']<0||$meta['mode']>0777||($meta['mode']&0022)!==0||$meta['uid']!==$owner||!is_int($meta['gid'])||$meta['gid']<0)throw new RuntimeException();}
