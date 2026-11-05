@@ -2506,8 +2506,8 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 41325,
-    "sha256": "24344f8fa58779ec3c5a8b61b56e6ea44d949606ba383e9d945e2231a9da8325"
+    "bytes": 43497,
+    "sha256": "0b92b4aa9391f81da0b5d1d57eecf5be38d440fed2e81a333638f51b1096eee6"
   },
   {
     "path": "tests/test_package_update_progress.mjs",
@@ -2526,8 +2526,8 @@
   },
   {
     "path": "tests/test_package_update_recovery_artifact.py",
-    "bytes": 5485,
-    "sha256": "d460bed07399f6e2e67857e25568e5fd165a914794b119e10769f3d1f794106a"
+    "bytes": 6426,
+    "sha256": "ed77ff823bfec5d06d5d3f4fadc03528d33f9bd42e7d1a01e8a219d233b337c0"
   },
   {
     "path": "tests/test_package_update_recovery_browser.mjs",
@@ -4126,8 +4126,8 @@
   },
   {
     "path": "webui/web/public/update-package.php",
-    "bytes": 20319,
-    "sha256": "45bb895ed91716e1591effaaf824a47003a909383c00be65e7ad0916b8bb29d1"
+    "bytes": 20912,
+    "sha256": "a4d3b1628df5ae0ec56a1eb973a682010257778c5c9fd4612f4f1de18d2b86e7"
   },
   {
     "path": "webui/web/public/update-postinst-resume.php",

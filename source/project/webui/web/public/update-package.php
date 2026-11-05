@@ -98,7 +98,17 @@ final class AsusUpdatePackage
             if(count($state)!==3||$state[0]!=='install'||$state[2]!=='installed')throw new RuntimeException('missing_dependencies');}
         foreach(array_filter(array_map('trim',explode(',',$control['Conflicts']??''))) as $p)if(!in_array($p,self::REPLACEES,true))throw new RuntimeException('invalid_package');
         foreach(self::REPLACEES as $p)if(isset($db[$p])&&str_ends_with($db[$p]['Status'],' installed'))throw new RuntimeException('pending_packages');
-        if($resume){if($opt===null||!isset($scripts['postinst']))throw new RuntimeException('recovery_required');self::recoveryScripts($opt,$owner,$scripts);self::recoveryPayload($path,$opt,$owner,false,$mutableLua);}
+        if($resume){
+            if($opt===null||!isset($scripts['postinst']))throw new RuntimeException('recovery_required');self::recoveryScripts($opt,$owner,$scripts);
+            // Older releases shipped active/factory Lua pairs before listing
+            // active Lua as conffiles. Derive only those signed factory names;
+            // recoveryPayload still proves both archive members match and
+            // verifies the installed factory and every immutable file exactly.
+            if($mutableLua===[])foreach(self::stockDefaults($path,$opt,$owner) as $name=>$_){
+                if(preg_match('~^etc/nfqws2/lua/[a-zA-Z0-9_.-]{1,124}\\.lua-opkg$~D',$name))$mutableLua['opt/'.substr($name,0,-5)]=true;
+            }
+            self::recoveryPayload($path,$opt,$owner,false,$mutableLua);
+        }
         return $control;
     }
     private static function recoveryScripts(string $opt,int $owner,array $scripts): void

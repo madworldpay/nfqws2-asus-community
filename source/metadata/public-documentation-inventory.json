@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 39995,
-      "sha256": "d30d4ae42da557d464ea00c28e2b21869a76dc0e65fd470f7a0743f501a86704"
+      "bytes": 41264,
+      "sha256": "6606d18ecca9c44f134ff3a4845947f50176ee7a34cd51940da13f4d0d20d679"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -107,8 +107,8 @@
     },
     {
       "file": "NEXT-BUILD.md",
-      "bytes": 11825,
-      "sha256": "b32b5621140a59b05463ebc93883e503dbc2d43523e4df4d8ec45c3354250c19"
+      "bytes": 12438,
+      "sha256": "13ff6197fc8eaa180674ba893aa33c54cf435bfb8c03dd95b3bae9f40f28db9d"
     },
     {
       "file": "OPENWRT.en.md",
@@ -127,8 +127,8 @@
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 21762,
-      "sha256": "3c4f5ef2b1f7255956f76092dfec5b37deb7890de142e366ca2a4a9eebde0c94"
+      "bytes": 22757,
+      "sha256": "3cf2e7ed968cc38bb93cae0f02f7ede7bef4e6b0eefb4beae08d15fa7b8dfca8"
     },
     {
       "file": "PRESETS.en.md",

@@ -65,5 +65,18 @@ class PackageUpdateRecoveryArtifactTests(unittest.TestCase):
                 self.assertEqual(check(),{'verified':True})
                 for name in ['auth.json','support-relay.json']:(opt/'etc/nfqws-asus-web'/name).write_bytes(b'PRIVATE CONFFILE CANARY')
                 self.assertEqual(check(),{'verified':True})
+                # Build87's signed control predates the Lua conffile entries.
+                # Real old archives must preserve active edits using their
+                # matching signed factory copy, just like current archives.
+                active=opt/'etc/nfqws2/lua/zapret-obfs.lua'
+                factory=opt/'share/nfqws2-asus/factory/lua/zapret-obfs.lua'
+                if active.is_file() and factory.is_file():
+                    original=factory.read_bytes()
+                    active.write_bytes(b'-- private operator Lua customization\n');active.chmod(0o600)
+                    self.assertEqual(check(),{'verified':True})
+                    self.assertEqual(active.read_bytes(),b'-- private operator Lua customization\n')
+                    factory.write_bytes(original+b'\nCHANGED FACTORY\n')
+                    self.assertEqual(check(),{'error':'recovery_required'})
+                    factory.write_bytes(original)
                 immutable=opt/'lib/nfqws2-asus/args.sh';immutable.write_bytes(immutable.read_bytes()+b'\nCHANGED\n')
                 self.assertEqual(check(),{'error':'recovery_required'})

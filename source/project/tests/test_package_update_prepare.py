@@ -169,6 +169,39 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         self.add_control_members([('conffiles',b'/opt/etc/nfqws2/lua/stock.lua\n',tarfile.REGTYPE)])
         self.assertIn(self.call(status=status).get('error'),['invalid_package','recovery_required'])
 
+    def test_legacy_resume_preserves_edited_lua_with_signed_factory_pair_without_conffiles(self):
+        self.addCleanup(os.umask,os.umask(0o022))
+        status=self.resume_fixture()
+        active=self.base/'opt/etc/nfqws2/lua/stock.lua'
+        factory=self.base/'opt/share/nfqws2-asus/factory/lua/stock.lua'
+        for path,raw in [(active,b'-- owner strategy\n'),(factory,b'-- original factory\n')]:
+            path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(raw);path.chmod(0o644)
+        original_active=active.read_bytes()
+        files={'opt/lib/nfqws2-asus/helper.sh':(self.immutable.read_bytes(),0o755),
+               'opt/etc/nfqws2/lua/stock.lua':(b'-- original factory\n',0o644),
+               'opt/share/nfqws2-asus/factory/lua/stock.lua':(b'-- original factory\n',0o644)}
+        for entries in [files,dict(reversed(list(files.items())))]:
+            self.payload(entries)
+            self.assertIn('value',self.call(status=status))
+            self.assertEqual(active.read_bytes(),original_active)
+        factory.write_bytes(b'-- changed factory\n')
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+        factory.write_bytes(b'-- original factory\n')
+        self.immutable.write_bytes(b'changed executable')
+        self.assertEqual(self.call(status=status),{'error':'recovery_required'})
+
+    def test_legacy_resume_requires_signed_active_and_factory_lua_to_match(self):
+        self.addCleanup(os.umask,os.umask(0o022))
+        status=self.resume_fixture()
+        active=self.base/'opt/etc/nfqws2/lua/stock.lua'
+        factory=self.base/'opt/share/nfqws2-asus/factory/lua/stock.lua'
+        for path in [active,factory]:
+            path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'-- original factory\n');path.chmod(0o644)
+        self.payload({'opt/lib/nfqws2-asus/helper.sh':(self.immutable.read_bytes(),0o755),
+                      'opt/etc/nfqws2/lua/stock.lua':(b'-- DIFFERENT\n',0o644),
+                      'opt/share/nfqws2-asus/factory/lua/stock.lua':(b'-- original factory\n',0o644)})
+        self.assertEqual(self.call(status=status),{'error':'invalid_package'})
+
     def test_resume_rejects_other_pending_rows_and_wrong_version(self):
         status=self.resume_fixture()
         self.assertEqual(self.call(status=status+'Package: other\nVersion: 1\nStatus: install user unpacked\n'),{'error':'pending_packages'})
