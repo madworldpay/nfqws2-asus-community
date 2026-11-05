@@ -241,11 +241,23 @@ for a reproducible bug report. You can send settings and diagnostics to the deve
 after reviewing them in the panel preview.
 
 An independent community port. Packages are free, and participation is voluntary.
-Thanks to [NFQWS2 Keenetic](https://github.com/nfqws/nfqws2-keenetic),
-[WebUI Keenetic](https://github.com/nfqws/nfqws-keenetic-web),
-[zapret2](https://github.com/bol-van/zapret2),
-[SmartDNS](https://github.com/pymumu/smartdns) and
-[DPI Detector](https://github.com/Runnin4ik/dpi-detector).
+
+## Credits
+
+Thanks to the authors of the projects behind this adaptation and its additional features:
+
+- [NFQWS2 Keenetic](https://github.com/nfqws/nfqws2-keenetic) and [WebUI Keenetic](https://github.com/nfqws/nfqws-keenetic-web) — the foundations of the port and web interface.
+- [zapret2 — bol-van](https://github.com/bol-van/zapret2) — the nfqws2 engine and Lua bypass mechanisms.
+- [Anonym-tsk/zapret2](https://github.com/Anonym-tsk/zapret2/tree/tls-reasm-fastpath) — TLS fastpath changes adapted in the builds.
+- [DPI Detector — Runnin4ik](https://github.com/Runnin4ik/dpi-detector) — an independent tool for connectivity and DNS diagnostics.
+- [SmartDNS — pymumu](https://github.com/pymumu/smartdns) — the DNS resolver.
+- [tg-ws-proxy — Flowseal](https://github.com/Flowseal/tg-ws-proxy) and [LordArrin's Docker build](https://github.com/LordArrin/tg-ws-proxy-docker) — the basis of the Telegram proxy installation.
+
+Our bypass research also draws on materials and tools from
+[blockcheckw](https://github.com/rcd27/blockcheckw),
+[b4](https://github.com/DanielLavrushin/b4) and
+[Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube).
+These references do not mean that every feature of those projects is included in this package.
 
 Our ASUS adaptation is distributed under [MIT](LICENSE). Third-party components
 retain their licenses and attribution.

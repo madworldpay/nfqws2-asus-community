@@ -248,11 +248,23 @@ VPN настраивается отдельно средствами проши�
 доступ прекращается. Канал позволяет Администратору выполнять команды с правами root. Срок задан ссылкой и не продлевается при переподключении. Отключение прекращает доступ; уже выполненные изменения настроек сохраняются. Это не заявка на постоянную или круглосуточную поддержку.
 
 Самостоятельный community-порт. Пакеты бесплатные, участие добровольное.
-Спасибо [NFQWS2 Keenetic](https://github.com/nfqws/nfqws2-keenetic),
-[WebUI Keenetic](https://github.com/nfqws/nfqws-keenetic-web),
-[zapret2](https://github.com/bol-van/zapret2),
-[SmartDNS](https://github.com/pymumu/smartdns) и
-[DPI Detector](https://github.com/Runnin4ik/dpi-detector).
+
+## Благодарности
+
+Спасибо авторам проектов, на которых основана адаптация и её дополнительные возможности:
+
+- [NFQWS2 Keenetic](https://github.com/nfqws/nfqws2-keenetic) и [WebUI Keenetic](https://github.com/nfqws/nfqws-keenetic-web) — основа порта и веб-интерфейса.
+- [zapret2 — bol-van](https://github.com/bol-van/zapret2) — движок nfqws2 и Lua-механизмы обхода.
+- [Anonym-tsk/zapret2](https://github.com/Anonym-tsk/zapret2/tree/tls-reasm-fastpath) — доработки TLS fastpath, адаптированные в сборках.
+- [DPI Detector — Runnin4ik](https://github.com/Runnin4ik/dpi-detector) — самостоятельный инструмент диагностики доступности и DNS.
+- [SmartDNS — pymumu](https://github.com/pymumu/smartdns) — DNS-резолвер.
+- [tg-ws-proxy — Flowseal](https://github.com/Flowseal/tg-ws-proxy) и [Docker-сборка LordArrin](https://github.com/LordArrin/tg-ws-proxy-docker) — основа установки прокси для Telegram.
+
+При исследовании способов обхода также используем материалы и инструменты
+[blockcheckw](https://github.com/rcd27/blockcheckw),
+[b4](https://github.com/DanielLavrushin/b4) и
+[Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube).
+Их упоминание не означает, что все функции этих проектов включены в пакет.
 
 Наша ASUS-адаптация распространяется по [MIT](LICENSE). Сторонние компоненты сохраняют
 свои лицензии и авторство.
