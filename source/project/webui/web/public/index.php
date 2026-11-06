@@ -293,6 +293,25 @@ function main(): void
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+  if ($_POST['cmd'] === 'dpisitecheck') {
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    require_once __DIR__.'/dpi-site-check.php';require_once __DIR__.'/support-report.php';
+    $siteLease=null;
+    try {
+      AsusDpiSiteCheck::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
+      session_write_close();
+      require_once __DIR__.'/update-guard.php';$siteLease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
+      $siteValue=(new AsusDpiSiteCheck())->check($_POST['target']);$siteRaw=json_encode($siteValue,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);
+      if(strlen($siteRaw)>16384)throw new RuntimeException('invalid_state');
+      http_response_code(200);echo $siteRaw;
+    }catch(Throwable $e){
+      $siteCode=in_array($e->getMessage(),['invalid_request','busy','invalid_state','unsupported_runtime','insufficient_space'],true)?$e->getMessage():'probe_failed';
+      http_response_code($siteCode==='invalid_request'?400:($siteCode==='busy'?409:503));echo json_encode(['error'=>$siteCode]);
+    }finally{if(is_resource($siteLease)){flock($siteLease,LOCK_UN);fclose($siteLease);}}
+    exit();
+  }
+
   if (in_array($_POST['cmd'], ['dpiterminalinfo','dpiterminalstart','dpiterminalpoll','dpiterminalinput','dpiterminalresize','dpiterminalstop','dpiterminalremove'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     require_once __DIR__.'/dpi-terminal.php';require_once __DIR__.'/support-report.php';

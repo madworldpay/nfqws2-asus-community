@@ -14,6 +14,8 @@ Detector sends test requests and reports each stage: plain and encrypted DNS ava
 
 The example changes the strategy on the same connection and repeats the same tests. Read specific rows as well as the total: some `TLS DROP` and read interruptions become `OK`, while other failures remain.
 
+`OK` describes the network probe rather than the whole application: even a completed HTTP400 can be OK in the original Detector. The panel's separate **Service check** shows exact HTTP codes and control-domain errors; its downloaded TXT records service/configuration context during those requests. It supplements testing the actual page, video or voice. Older original TXT files may lack this context; a percentage or filename cannot reconstruct it.
+
 ## Before: package default strategy
 
 ASUS GT-BE19000AI; started **20:34:41 UTC**, completed **20:35:40 UTC**. NFQWS2 enabled, configuration `f516be08…`.

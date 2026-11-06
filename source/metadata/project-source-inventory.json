@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "d867d3f88fa20d7cb936ecd93651adeedf473a6177218cd0987f462ff5511cb6"
+    "sha256": "d93844f8f37e55564be3f194656bf33b5d0fb5e589a0fe17eb7c2d4e8593ec9c"
   },
   {
     "path": "LICENSE",
@@ -1860,6 +1860,31 @@
     "sha256": "3835eaddae4de0b553775a4f73ae65b0ad7ef9a40812359a755db24474e907e7"
   },
   {
+    "path": "tests/test_dpi_site_check.py",
+    "bytes": 21647,
+    "sha256": "fdde052bb6782a1cca54b975fbb10fb0fa25813f70a77eeb27b03bc969f719d0"
+  },
+  {
+    "path": "tests/test_dpi_site_check_browser.mjs",
+    "bytes": 13886,
+    "sha256": "1750f0e1513edff7c67e3968013bd74e771bd63f92aadcf08e3ffda71a1800fd"
+  },
+  {
+    "path": "tests/test_dpi_site_check_client.mjs",
+    "bytes": 7533,
+    "sha256": "2eb798c3847423e4f844f7e25b1cd81e0c3380d21c75c12db50969bc35318234"
+  },
+  {
+    "path": "tests/test_dpi_site_check_http.py",
+    "bytes": 2774,
+    "sha256": "884a8a7d7a0d311b2ee865306805890977e1ebf889b95ffc3f968aac67fdab8e"
+  },
+  {
+    "path": "tests/test_dpi_site_check_packaging.py",
+    "bytes": 1435,
+    "sha256": "0dcd0159da2a82be789a9b4ad29d357a83664aa1c1dc734ebbf28916e7980b5e"
+  },
+  {
     "path": "tests/test_dpi_store.py",
     "bytes": 10443,
     "sha256": "9c157349fcdb951c7630986739e943738a9fcf66869ed828f43a99b3c3ca3ef7"
@@ -3695,6 +3720,11 @@
     "sha256": "4d19304d8258f5c389f3ffa08570e1801f1b4bf48ac2bbf279e74e9c8cb0c550"
   },
   {
+    "path": "webui/web/public/dpi-site-check.php",
+    "bytes": 19695,
+    "sha256": "08fd67f2ed115e44beb00738c91bd941f252b9c65dc799870aec8f73ea5eca93"
+  },
+  {
     "path": "webui/web/public/dpi-store.php",
     "bytes": 17129,
     "sha256": "d313363b53b28178fbccfe69fc5d9eb3ea15dac0453bdffb90ec89120d178405"
@@ -3766,8 +3796,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 38282,
-    "sha256": "7666260f2c4f401500897478b6fbc952d8dc56bcaa1fc4d2d51934eb0b59b522"
+    "bytes": 39597,
+    "sha256": "be8d0785126892fe742083064d7a9dbb5c109a1f2adfbd6a364957a4d4896c6e"
   },
   {
     "path": "webui/web/public/ip-health-api.php",
@@ -4355,6 +4385,11 @@
     "sha256": "67e602f117532d5e6a1b5766ff908de2c5415d4191d4942e108bab7b7a570aa9"
   },
   {
+    "path": "webui/web/src/api/dpiSiteCheckClient.ts",
+    "bytes": 5804,
+    "sha256": "69e2aab43379f4faafe1b50b529b408b3e2ca84859512bf81322dd19aa5f416e"
+  },
+  {
     "path": "webui/web/src/api/importAddonClient.ts",
     "bytes": 4242,
     "sha256": "aa5a270c478e84c10a235ed70e7dd53adbc59ed1e7744feea8f3b6cb02aae43b"
@@ -4545,9 +4580,14 @@
     "sha256": "7f19c6e20a17a233d5e2a5679ccf7af546dedf9e1b59caffb6d6c68903c7e59e"
   },
   {
+    "path": "webui/web/src/components/DpiSiteCheck.tsx",
+    "bytes": 8722,
+    "sha256": "d869fceb4efb6bc4ffa17842151a31dbb4b1c487082acd5ccd685f57e6408fb3"
+  },
+  {
     "path": "webui/web/src/components/DpiTerminalDialog.tsx",
-    "bytes": 21953,
-    "sha256": "bc0552ba18e5b8c8f5276baab0e32035862b2ad2a2ab39b30a18971b60a13045"
+    "bytes": 23792,
+    "sha256": "c1e293729e66db2ed495ea512bc3f9f27da7bfb086ccc33cbf04ff92da3569c0"
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
@@ -4881,13 +4921,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 93640,
-    "sha256": "9c3f1606033c2ebad1f833e927619ec6a05932098858409255d36d2945e03ecc"
+    "bytes": 97371,
+    "sha256": "9c632db9cfc0051594d22fecceca6d1d93de7fe356749900f49ed0ba84d7f76c"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 151212,
-    "sha256": "03a6e57c8b67344d61f32aee1bc42249ad78c0fc12cd149b6865b7ae79d3b9ed"
+    "bytes": 157384,
+    "sha256": "dcab6f96dfa326157ea86fd37601e2d82a5bf0dfd84d5c0ce04d1f5f65effd58"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4953,6 +4993,11 @@
     "path": "webui/web/src/utils/dpiSavedDownload.ts",
     "bytes": 1149,
     "sha256": "7bf0600ac63ce7794f385ffd4e190e07e2d19f6df570773f204ba0cb6d3b8178"
+  },
+  {
+    "path": "webui/web/src/utils/dpiSiteCheckDownload.ts",
+    "bytes": 2599,
+    "sha256": "eccbc74b5bb0b041ed635c9b77b98dc58de240bdca610e23ea719dad98281ad0"
   },
   {
     "path": "webui/web/src/utils/dpiTerminalScroll.ts",

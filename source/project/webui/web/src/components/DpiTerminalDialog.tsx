@@ -21,6 +21,8 @@ import {
   Menu,
   MenuItem,
   Stack,
+  Tab,
+  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -43,6 +45,7 @@ import {
 import { newSupportSubmissionId } from '@/api/supportReport';
 
 import { DpiSavedReports } from '@/components/DpiSavedReports';
+import { DpiSiteCheck } from '@/components/DpiSiteCheck';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -281,6 +284,8 @@ export const DpiTerminalDialog = ({
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [terminalAttempt, setTerminalAttempt] = useState(0);
+  const [view, setView] = useState<'native' | 'services'>('native');
+  const [siteRunning, setSiteRunning] = useState(false);
   const [confirmInstall, setConfirmInstall] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -417,7 +422,9 @@ export const DpiTerminalDialog = ({
       fullWidth
       maxWidth="lg"
       aria-labelledby="dpi-terminal-title"
-      aria-describedby="dpi-terminal-description"
+      aria-describedby={
+        view === 'native' ? 'dpi-terminal-description' : undefined
+      }
       slotProps={{
         paper: {
           sx: {
@@ -475,9 +482,39 @@ export const DpiTerminalDialog = ({
           pt: 0.5,
         }}
       >
-        <Typography id="dpi-terminal-description" variant="body2">
-          {t('dpi_terminal.description')}
-        </Typography>
+        {view === 'native' && (
+          <>
+            <Typography id="dpi-terminal-description" variant="body2">
+              {t('dpi_terminal.description')}
+            </Typography>
+            <Typography variant="body2" sx={{ flexShrink: 0 }}>
+              {t('dpi_terminal.result_scope')}
+            </Typography>
+          </>
+        )}
+        <Tabs
+          value={view}
+          aria-label={t('dpi_terminal.title')}
+          variant="fullWidth"
+          sx={{ flexShrink: 0 }}
+          onChange={(_, value: 'native' | 'services') => {
+            if (siteRunning) return;
+            setError('');
+            setTerminalState(null);
+            setView(value);
+          }}
+        >
+          <Tab
+            value="native"
+            label={t('dpi_site_check.native_view')}
+            disabled={siteRunning || removing || confirmRemove}
+          />
+          <Tab
+            value="services"
+            label={t('dpi_site_check.title')}
+            disabled={siteRunning || removing || confirmRemove}
+          />
+        </Tabs>
         <Accordion
           expanded={helpOpen}
           onChange={(_, expanded) => setHelpOpen(expanded)}
@@ -503,6 +540,7 @@ export const DpiTerminalDialog = ({
                   'compare',
                   'results',
                   'save',
+                  'scope',
                 ] as const
               ).map((item) => (
                 <Typography variant="body2" key={item}>
@@ -556,7 +594,14 @@ export const DpiTerminalDialog = ({
         {info?.code === 'unsupported_abi' && (
           <Alert severity="info">{t('dpi_terminal.unsupported_abi')}</Alert>
         )}
-        {ready && (
+        {view === 'services' && (
+          <DpiSiteCheck
+            key="site-check"
+            csrfToken={csrfToken}
+            onRunning={setSiteRunning}
+          />
+        )}
+        {ready && view === 'native' && (
           <NativeTerminal
             key={`terminal-${terminalAttempt}`}
             csrfToken={csrfToken}
@@ -565,32 +610,43 @@ export const DpiTerminalDialog = ({
             onError={setError}
           />
         )}
-        {!confirmRemove && terminalState && terminalState !== 'running' && (
-          <Alert
-            severity={
-              terminalState === 'exited' || terminalState === 'stopped'
-                ? 'info'
-                : 'warning'
-            }
-          >
-            {t(`dpi_terminal.state_${terminalState}`)}
-          </Alert>
-        )}
-        {ready && (
+        {view === 'native' &&
+          !confirmRemove &&
+          terminalState &&
+          terminalState !== 'running' && (
+            <Alert
+              severity={
+                terminalState === 'exited' || terminalState === 'stopped'
+                  ? 'info'
+                  : 'warning'
+              }
+            >
+              {t(`dpi_terminal.state_${terminalState}`)}
+            </Alert>
+          )}
+        {ready && view === 'native' && (
           <Typography variant="caption">
             {t('dpi_terminal.saved_hint')}
           </Typography>
         )}
-        <DpiSavedReports
-          key={`reports-${attempt}`}
-          csrfToken={csrfToken}
-          disabled={removing || confirmRemove}
-        />
+        {view === 'native' && (
+          <Typography variant="caption" sx={{ flexShrink: 0 }}>
+            {t('dpi_terminal.native_context')}
+          </Typography>
+        )}
+        {view === 'native' && (
+          <DpiSavedReports
+            key={`reports-${attempt}`}
+            csrfToken={csrfToken}
+            disabled={removing || confirmRemove}
+          />
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 2, flexWrap: 'wrap' }}>
         {info?.installed && !confirmRemove && !installing && (
           <Button
             startIcon={<MoreHorizIcon />}
+            disabled={siteRunning}
             sx={{ mr: 'auto' }}
             aria-haspopup="menu"
             aria-expanded={!!moreAnchor}
@@ -600,17 +656,20 @@ export const DpiTerminalDialog = ({
             {t('dpi_terminal.more')}
           </Button>
         )}
-        {ready && terminalState && terminalState !== 'running' && (
-          <Button
-            onClick={() => {
-              setError('');
-              setTerminalState(null);
-              setTerminalAttempt((value) => value + 1);
-            }}
-          >
-            {t('dpi_terminal.reopen')}
-          </Button>
-        )}
+        {ready &&
+          view === 'native' &&
+          terminalState &&
+          terminalState !== 'running' && (
+            <Button
+              onClick={() => {
+                setError('');
+                setTerminalState(null);
+                setTerminalAttempt((value) => value + 1);
+              }}
+            >
+              {t('dpi_terminal.reopen')}
+            </Button>
+          )}
         {!ready && !confirmRemove && !installing && !installPending && (
           <Button
             onClick={() => {

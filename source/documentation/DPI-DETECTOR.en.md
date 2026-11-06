@@ -26,7 +26,21 @@ Scroll history with the wheel or a vertical swipe; buttons jump to the top, bott
 - **Protocol:** HTTP, TLS and QUIC are tested separately. `—` for QUIC can mean the server does not support it; `CLOSED` means the server closed the handshake.
 - **OK percentage:** covers only the selected tests. It does not guarantee every website, video, seek operation or voice call works.
 
+**What OK means:** the original Detector judges its own network probe. A completed HTTP error response, such as **400**, may also receive OK. This does not confirm a usable page, its resources or a successful login. A normal redirect does not establish that its destination works either.
+
+DNS availability in the original menu is an **independent check of its public resolver list**. It does not test the entire configured SmartDNS or AdGuard Home chain. An unchanged DNS-availability summary after changing a DNS profile does not by itself prove that the profile was not applied.
+
 Test the required service from a selected device after changing a strategy. **Collect diagnostics** gathers router information and does not run Detector network tests.
+
+## Service control check
+
+Starting with Build 96, a separate **Service check** view in the Detector window covers Facebook, YouTube and Discord. It supplements the original menu with HTTP status, redirect, bytes read and network errors for fixed control domains. Switching closes the window's original terminal; concurrent checks are excluded.
+
+The check makes certificate-verified HTTPS requests, uses system name resolution and does not follow redirects. HTTP400 is shown as a server error response. A connection reset differs from HTTP403/404: a CDN root may not serve a public page. Response reading is bounded; control domains do not cover every asset, video playback, voice, matches or authentication. Full service functionality is never asserted automatically.
+
+**Download TXT** saves the control report to your PC or phone. Every request records its times and before/after snapshots of NFQWS2 state, mode and configuration SHA256. Different known values are marked changed; incomplete observations remain unknown. This context belongs to the control requests, not an unrelated original-menu run. The check does not change settings, lists, DNS or service state.
+
+Original TXT files may lack historical NFQWS2 state and configuration. The panel never inserts the current service state into them or infers test start from opening the terminal. Record each run's conditions separately when comparing original TXT files.
 
 ## Reports and removal
 
