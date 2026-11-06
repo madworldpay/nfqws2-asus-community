@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 96:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build96) · [change history](CHANGELOG.md). DPI Detector adds a separate Facebook, YouTube and Discord check: HTTP codes, redirects and control-domain errors, with a TXT download recording service/configuration context. The scope of OK and independent DNS checks is explained. Profile import, optional beta add-ons, signed catalogs and combined preview are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
+**Build 96:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build96) · [change history](CHANGELOG.md). DPI Detector adds a separate Facebook, YouTube and Discord check: HTTP codes, redirects and control-domain errors, with a TXT download recording service/configuration context. The scope of OK and independent DNS checks is explained. Profile import, optional beta add-ons, signed catalogs and combined preview are retained. [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get
@@ -32,7 +32,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 | **Router-level setup** | Process traffic from your whole home network or only selected devices |
 | **DNS for specific sites** | SmartDNS assigns separate DoT/DoH servers or fixed IP addresses to sites |
 | **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, services stop before the backup and installation, then return to their previous state |
-| **DPI Detector in the panel** | The original interactive menu, phone controls, help and TXT reports; availability depends on the architecture |
+| **DPI Detector in the panel** | The original menu with phone controls, TXT downloads and separate Facebook, YouTube and Discord control-URL checks; original Detector support depends on the architecture |
 | **Less waiting for unavailable addresses on ASUS** | A confirmed unavailable IP is temporarily excluded, helping applications move to working alternatives when the site provides them |
 
 Compared with installing the engine manually, this package already integrates
@@ -108,23 +108,23 @@ Updates preserve settings and the previous service state.
 
 <a id="inside-the-panel"></a>
 
-[A comparison example and how to test your profile](docs/DETECTOR-COMPARISON.en.md): one personal DOM.RU connection, limitations and interpreting Detector results. It is not a profile recommendation for other providers or regions.
+[A comparison example and how to test your profile](docs/DETECTOR-COMPARISON.en.md): the default and personal strategies on one DOM.RU connection, with NFQWS2 running in both runs; limitations and interpreting Detector results. It is not a profile recommendation for other providers or regions.
 
 ### Import: a profile and all required files
 
 **Import profile → From cloud** loads the selected entry from the signed catalog. Review the strategy blocks, lists, blobs and before/after preview. Unneeded parts can be deselected; resolve missing dependencies before applying. Your own JSON uses the same preview, while **Paste Keenetic strategy** converts NFQWS2 text and checks file references. DNS is selected separately and is not enabled automatically.
 
-In Build 88, compatible **general strategies from the signed cloud catalog** offer **Add bypass for torrent tracker websites**, unchecked by default. It adds a separate rule for the HTTPS websites **nnmclub.to, rutracker.org, rutor.info and tapochek.net** on TCP 443 only; the sites and rule are shown in the preview. It does not promise peer/DHT or all BitTorrent traffic. Unsupported settings or incompatible files cause the addition to be rejected. With the checkbox off, the original profile is imported.
+Since Build 92, the **Add-ons · Beta** section below the base strategy offers optional domain collections from a separate signed catalog with a fixed GitHub fallback. Checkboxes start off. **Riot** adds web domains to the selected base strategy; game UDP and voice functionality are not asserted. The combined preview shows added domains, rules and affected blocks; incompatible combinations receive an explanation. Changing the base strategy clears the add-on selection. [Using add-ons](IMPORT.en.md#add-ons--beta).
 
-A separate **DOM.RU · Tula region profile v4 candidate** includes 14 lists/blobs and a packaged TLS helper requiring **Build 88 or later**. The previous public profile’s DNS is preserved. This candidate is awaiting final traffic checks and is not published; results on one connection do not guarantee success for every DOM.RU subscriber.
+Since Build 88, compatible **general strategies from the signed cloud catalog** offer **Add bypass for torrent tracker websites**, unchecked by default. It adds a separate rule for the HTTPS websites **nnmclub.to, rutracker.org, rutor.info and tapochek.net** on TCP 443 only; the sites and rule are shown in the preview. It does not promise peer/DHT or all BitTorrent traffic. Unsupported settings or incompatible files cause the addition to be rejected. With the checkbox off, the original profile is imported.
 
 ## What the panel looks like
 
-Settings, strategies and service controls in one panel. Main actions are at the top; language, theme and links are in the collapsible lower panel. It starts collapsed on phones. In Build 88, short windows, landscape screens and mobile desktop mode retain scrolling through settings and access to the lower panel; browser zoom is allowed.
+Settings, strategies and service controls share one panel. Header buttons use a consistent height and wrap to fit the window. The phone header is more compact; language, theme and links have moved to the collapsible lower panel. It starts collapsed, with expansion remembered separately for narrow and wide windows. Settings and the lower panel remain accessible in portrait and landscape. Short screens and mobile desktop mode allow page scrolling; the expanded lower panel has its own scrolling. Browser zoom is allowed.
 
-The [annotated gallery](SCREENSHOTS.en.md) also covers unavailable IPs, scheduled restart and recovery, blobs, Keenetic import, SmartDNS, export and MTProto installation. Screenshots from the previous release may differ from Build 88.
+The [annotated gallery](SCREENSHOTS.en.md) includes real Build 96 screenshots: the compact phone panel, scrolling in both orientations, the lower panel, Service checks, Detector removal confirmation, add-ons with combined preview, the SmartDNS editor and update window. Large historical default/personal strategy results are shown alongside, with NFQWS2 running in both runs. Archived Build 85 screens are identified separately.
 
-[![NFQWS2 main panel](images/screenshots/panel-overview-en.jpg)](images/screenshots/panel-overview-en.jpg)
+[![NFQWS2 main panel](images/screenshots/build96-panel-overview-en.png)](images/screenshots/build96-panel-overview-en.png)
 
 [![More screenshots](images/more-screenshots-en.svg)](SCREENSHOTS.en.md#panel-screenshots)
 
@@ -187,7 +187,7 @@ VPN capabilities depend on your firmware and chosen client.
 | Packet templates (blobs) | Choose another template without replacing the strategy or upload a `.bin` from your device — [guide](USAGE.en.md#packet-templates-blobs) |
 | Import preview and undo | Compare “before / after”, transfer required files and undo the last import |
 | SmartDNS | Up to **32 DNS servers**, **256 domain → DNS bindings** and **64 fixed answers**; DoT/DoH and custom servers |
-| Diagnostics and DPI Detector | Checkup, packet delivery checks and logs; the original Detector menu in the panel, TXT downloads, help and removal through a separate confirmation |
+| Diagnostics and DPI Detector | Checkup, packet delivery checks and logs; the original terminal, TXT downloads, Service checks with request context and removal through More with separate confirmation |
 | Profile sharing | Export individual blocks, lists, blobs and DNS; review and edit the copy to be sent |
 | Updates | Signature and SHA256 checks, retained settings; package backups and automatic rollback after a caught failure on ASUS |
 | Unavailable IPs (ASUS) | Address list with expiry, recheck and removal; ordinary UDP DNS filtering and fast failure on port 443 |
@@ -224,7 +224,11 @@ Save the link and configuration before closing the dialog: the panel does not re
 
 ## Updates and profile catalog
 
-**The Build 85 updater on ASUS/Entware** stops services before creating a backup and installing the package. After verification, it restores their previous state; a stopped NFQWS2 stays stopped. On failure, it verifies the old installation before restoring services, or rolls back if package replacement has begun. Power loss and a direct opkg command require separate checks — [update and recovery details](PACKAGE-UPDATES.en.md).
+**The ASUS/Entware updater** stops services before creating a backup and installing the package. After verification, it restores their previous state; a stopped NFQWS2 stays stopped. On failure, it verifies the old installation before restoring services, or rolls back if package replacement has begun. Power loss and a direct opkg command require separate checks — [update and recovery details](PACKAGE-UPDATES.en.md).
+
+The update window shows the current phase and phase progress, preserving the failure reason and log if it fails. **Copy error** includes versions, phase and codes. Edited settings, Lua, blobs and existing user copies are retained; SmartDNS uses its last confirmed profile for restoration.
+
+Since Build 87, snapshot preparation accounts for file count and USB write latency. If a Build 85/86 worker cancels with `timed_out`, rerun the usual installer command above once to use the corrected standalone worker. Package removal and reboot are unnecessary.
 
 The strategy catalog is hosted on ASUS. User-submitted profiles and diagnostics
 are received on ASUS and delivered to the project's Gmail inbox; releases

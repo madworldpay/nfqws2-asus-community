@@ -27,6 +27,12 @@ the strategy and your test result** — this helps improve the catalog.
 Open **Export / share**, select the strategy and its files, specify
 the provider and result, check the preview, and click **Send**.
 
+## Add-ons and checking results
+
+**Add-ons · Beta** below the base strategy provides checkboxes that start off. Riot adds web domains to the selected strategy; the separate tracker-website add-on keeps its own limited scope. All selections go through the combined preview. [Add-on contents and limits](IMPORT.en.md#add-ons--beta).
+
+Descriptions of measured profiles should include the date, provider, region, mode, repeated-run count and separate TCP, HTTP, TLS 1.2, TLS 1.3 and QUIC success ratios with original denominators. These metrics belong to the measured configuration and resources. If parameters or lists change for publication, earlier figures do not establish the new copy’s result. A Detector percentage does not replace checking pages, video or voice.
+
 ## Downloads and sharing
 
 The catalog and profile files are downloaded over HTTPS. The panel verifies the catalog signature,

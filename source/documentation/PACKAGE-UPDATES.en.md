@@ -1,5 +1,11 @@
 # Updates
 
+## Lua copies and settings preservation: Build 90
+
+An old worker could reject an installed package because `opkg` left a factory `*.lua-opkg` copy. The ASUS package now preserves existing alternatives before unpacking, restores their contents and permissions afterwards, and removes only its own verified new factory duplicates. Owner edits, Lua and blobs are retained.
+
+If an old panel reports `settings_changed` **before downloading**, use the current standalone installer for the first transition. Checking for an update cannot replace the installed old worker.
+
 ## Updating older builds
 
 **Updating an older build to Build 74 or later requires the installer once.**
@@ -30,6 +36,12 @@ The strategy catalog and submission receiver run on ASUS, submissions are delive
 to the project's Gmail inbox, and releases come from GitHub. Importing, submitting
 and updating do not require a VPS.
 
+## Slow USB writes on ASUS: Build 85/86 → 87
+
+On some USB drives, Build 85/86 snapshot creation exceeded the fixed 240-second limit before package replacement began. Build 87 and the current standalone installer estimate preparation time using the checked file count and two durable-write probes on the same drive, up to 30 minutes. Network timeouts and checks remain separate; an already-running package manager is not interrupted. The operation log retains the calculation in `apply-budget.json`.
+
+If the old worker fails with `timed_out`, run the usual installer command below once. It preserves settings and former service state. Removing NFQWS2, formatting USB and rebooting are unnecessary for this transition.
+
 ## Snapshot preparation on older ASUS routers and Build 84
 
 Build 84 fixes a separate PHP CPU limit that could stop snapshot preparation
@@ -57,6 +69,8 @@ package's signature, exact version and installed files before continuing to the
 latest release. Other unfinished Entware packages and active operations still
 block the update; rebooting does not replace those checks.
 
+**The November 6, 2026 installer** also handles older packages that did not yet list Lua as configuration files. An edited Lua file is preserved when its factory counterpart is verified against the signed package. This resolves one `recovery_required` case during recovery of an interrupted old installation. Factory files, binaries and installation scripts remain checked; other mismatches still require the log. Build 89 packages were not replaced for this installer fix.
+
 An SSH disconnect does not cancel an installation already running in the
 background. On failure, the installer shows the retained log path. Check the
 final status before starting the service manually.
@@ -76,7 +90,7 @@ verified rollback restores the previous package and settings. If restoration
 cannot be verified, the updater keeps the backup and log and reports the reason.
 It does not start an unverified or partly installed version.
 
-The panel and temporary technical access may disconnect during replacement.
+Since Build 87, the normal worker can stop the panel while retaining an existing technical channel; the exception applies only to the verified installation process. The connection and original expiry remain unchanged. Manual panel stop, channel disconnect and expiry still end access. On the first transition from Build 85/86, old code may close the channel; reconnect using the same valid invitation. An already disconnected channel is not recreated automatically.
 The technical-channel expiry is never extended automatically. Losing power or
 all update controllers does not justify replaying an old start request after a
 reboot; such an interrupted operation requires a new verified recovery.
@@ -122,6 +136,18 @@ If you clicked **Restore previous DNS**, the update does not reconnect SmartDNS.
 After updating, check the version, service state and DNS:
 **SmartDNS connected** accounts for both the process and the actual request path.
 If restoration is incomplete, the panel shows the reason and guidance.
+
+## Phases, failures and the operation log
+
+The update window shows the current phase and percentage of phases completed, rather than time remaining. A failure retains the original phase and reason even if the old version is restored afterwards. **Copy error** includes versions, phase, codes and operation number. A current panel-connection error is shown separately.
+
+## OpenWrt: stop, backup and restoration
+
+The background installer and stop controller use an external supervisor; ordinary web requests retain their PHP limit. A running OPKG/APK process is not terminated on a timeout. The settings backup uses RAM, so the Entware USB write-latency estimate does not apply.
+
+Settings identity is recorded before stopping services and refreshed for the final copy. A failed partial copy is not treated as a damaged installed package. Former services return only after checks of the old package, version, unrelated packages and settings. A previously running service receives a fresh stop/start to restore processing after an incomplete stop; a previously stopped service remains stopped.
+
+A partially replaced package is not started without verification: the log is retained and package recovery is required. For a saved `pending_packages` state, use the supported recovery path rather than editing the OPKG/APK database manually.
 
 ## Manually
 

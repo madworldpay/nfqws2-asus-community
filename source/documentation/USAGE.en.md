@@ -91,8 +91,10 @@ The router's own WAN addresses appear below the IPv4 clients. These are its inte
 which are not necessarily public IP addresses. In selected-client mode, you can add a WAN address
 if you need to process the ASUS router's own traffic. Check VPNs and guest networks separately.
 
-EN / RU changes the language. Select the theme in the top menu. Changing the password applies
+Select the EN / RU language and theme in the collapsible lower panel. It starts collapsed on phones; expand it for community, releases, MTProto and technical-channel links. Main actions and the version stay in the header; the version button opens update checks, while the additional menu opens separately. Changing the password applies
 to the separate WebUI account and does not change the ASUS password. Enter the new password twice; the limit is 72 bytes. Saving with both fields empty disables the login prompt. The technical channel still requires a configured panel password.
+
+Header buttons use a consistent height and wrap to fit. Settings remain scrollable in portrait and landscape; short windows, including mobile desktop mode, allow page scrolling. The expanded lower panel has a bounded height and its own scrolling. Its expansion is remembered separately for narrow and wide windows; browser zoom is allowed.
 
 For detailed logging, enable **Debug logging**, save and restart the service. **Logs** shows the newest lines first; clearing a selected log asks for confirmation. Save information needed for troubleshooting before clearing it.
 
@@ -102,6 +104,10 @@ The project is free, and reports are voluntary. Save working profiles through
 **Export / share** so you can restore them yourself or share them with others.
 
 [Project documentation](README.en.md#documentation).
+
+## DPI Detector and reports
+
+The **DPI Detector** header button opens the original terminal and separate **Service checks**. In the terminal, start with default tests **1, 2, 3**, save with **S**, then refresh **TXT reports** and download the required file to your PC or phone. **More → Remove DPI Detector** requires separate confirmation; deleting reports starts unchecked. Checking Facebook, YouTube or Discord makes three control HTTPS requests and downloads its own TXT with request context. [Controls and interpreting results](DPI-DETECTOR.en.md).
 
 ## Packet templates (blobs)
 

@@ -89,9 +89,7 @@ in your comment. State whether a VPN is enabled and which device runs it.
 For a comparison after changing the strategy, reopen the application or browser
 to create new connections.
 
-For a more detailed check, open **DPI Detector**, install the utility,
-and run the command shown by the panel. Save the result with **S**,
-then click **Refresh results** in the panel.
+For a more detailed check, open **DPI Detector**, install the utility if needed and run tests **1, 2, 3** in the original terminal. Save with **S**, then refresh **TXT reports** and download it to your device. To send it through a preview, refresh DPI results in **Export / share**. Separate **Service checks** show exact HTTP codes, errors and request context for Facebook, YouTube or Discord; they do not verify every application feature. [Details](DPI-DETECTOR.en.md).
 
 If the submission channel is not configured yet, click **Connect sending**. Then prepare the preview and click **Send**. Connecting the channel alone does not send anything; saving JSON is available separately.
 

@@ -906,18 +906,18 @@
   },
   {
     "path": "docs/IMPORT.md",
-    "bytes": 11231,
-    "sha256": "ec1f47e5e85d17bd6183db26183ff2fd9675429fc25bb8ada4434ca4e43cada4"
+    "bytes": 12015,
+    "sha256": "9aa7756966e0fa5acae3d29303465345ec265d1254d18b5b1e50a413b647370f"
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
-    "bytes": 16483,
-    "sha256": "0d0bbad02963d0e12e9d3abd16add7fb7ddcb3c5643451100696eaf298347a58"
+    "bytes": 24046,
+    "sha256": "2eabb722dc115fd488a1a1d4c855917a11c3b20adcc9279b8211438b48272f46"
   },
   {
     "path": "docs/USAGE.md",
-    "bytes": 7355,
-    "sha256": "a96bb7ac85576b6eb6bccccce613bc35bc2332c0d0a109d897b4e282495514d3"
+    "bytes": 10203,
+    "sha256": "5f9f9b88c814aa93f3ae2288a959cf6e46c855b1bb646ae491b36b54dc7d2a5e"
   },
   {
     "path": "ip-health/control.sh",
@@ -1246,8 +1246,8 @@
   },
   {
     "path": "profile-catalog/README.md",
-    "bytes": 5607,
-    "sha256": "af2f38e3cd67498c4559cefe670ab20f2d7e49c440beedf923cc36fd135b8f40"
+    "bytes": 7860,
+    "sha256": "ae009e81fd34f70a2a57933144c9dc11c2f32aff0714773baaad7cbdd12530b4"
   },
   {
     "path": "profile-catalog/addons-nginx.conf.example",

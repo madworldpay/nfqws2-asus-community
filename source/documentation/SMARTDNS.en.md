@@ -47,6 +47,8 @@ Select at least one **Default** resolver. A custom resolver hostname needs conne
 
 Fixed answers take priority over resolver selection for overlapping domains; the preview identifies these overlaps. Fixed IP records can include an optional last-checked date.
 
+The editor first loads the saved draft. After import, it picks up the new profile while there are no unsaved manual edits; save or discard such edits before switching to imported data. Validation and preview use the server-saved, normalized profile rather than stale form contents.
+
 Installing the engine and validating a profile do not switch DNS. Checkup reads router state without testing website access. If SmartDNS is already managed outside the wizard, drafts can be validated, but connection remains blocked until management is transferred.
 
 **Check profile** checks the settings and whether the configuration starts; it does not
@@ -92,6 +94,8 @@ If the connection fails or another service changes the DNS path, the panel shows
 
 A browser's built-in DoH, a phone's Private DNS, or DNS inside a VPN may bypass
 the router's DNS. Check the actual query path when results differ.
+
+The original DPI Detector DNS test independently queries its own public UDP/DoT/DoH resolver list. Its percentage does not verify the entire SmartDNS chain or client DNS. Service checks use router system name resolution for their URLs. [How these checks differ](DPI-DETECTOR.en.md).
 
 If DNS is part of a successful profile, select it together with the strategy in
 **Export / share**, check the preview, and send the result to the project.

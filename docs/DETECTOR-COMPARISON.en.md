@@ -1,8 +1,8 @@
-# DPI Detector: real results before and after tuning
+# DPI Detector: a historical strategy comparison
 
 [Русский](DETECTOR-COMPARISON.md)
 
-Detector separates DNS, connections, TLS and data transfer. These are large screenshots of the live panel terminal from two new runs on November 5, 2026. Results and errors are unchanged. Click an image for its full **2276 × 2562** resolution.
+Detector separates DNS, connections, TLS and data transfer. These are historical screenshots of the live Build 89 panel terminal from two runs on November 5, 2026. Results and errors are unchanged. Click an image for its full **2276 × 2562** resolution.
 
 This is one personal DOM.RU connection in the Tula region. It demonstrates a testing method, not a profile recommendation for other providers or regions.
 
@@ -12,9 +12,11 @@ A strategy defines NFQWS2 packet-processing rules: which traffic to process, how
 
 Detector sends test requests and reports each stage: plain and encrypted DNS availability, signs of resolver or answer substitution, HTTP, TLS, QUIC, and interrupted data transfer after connecting. Repeating the tests after import helps compare strategies; TXT retains details for investigation. Checking the actual service complements these measurements.
 
-The example changes the strategy on the same connection and repeats the same tests. Read specific rows as well as the total: some `TLS DROP` and read interruptions become `OK`, while other failures remain.
+**NFQWS2 was running in both runs:** the comparison is between the default and personal strategies, rather than service off and on. The example changes the strategy on the same connection and repeats the same tests. Read specific rows as well as the total: some `TLS DROP` and read interruptions become `OK`, while other failures remain.
 
-`OK` describes the network probe rather than the whole application: even a completed HTTP400 can be OK in the original Detector. The panel's separate **Service check** shows exact HTTP codes and control-domain errors; its downloaded TXT records service/configuration context during those requests. It supplements testing the actual page, video or voice. Older original TXT files may lack this context; a percentage or filename cannot reconstruct it.
+`OK` describes the network probe rather than the whole application: even a completed HTTP 400 can be OK in the original Detector. The panel's separate **Service checks** shows exact HTTP codes and control-domain errors; its downloaded TXT records service/configuration context during those requests. It supplements testing the actual page, video or voice. Older original TXT files may lack this context; a percentage or filename cannot reconstruct it.
+
+The times, NFQWS2 state and configuration fingerprints below were recorded separately during the historical comparison. Original Detector TXT files do not contain those state snapshots; Build 96 Service checks were not used for these runs. The screenshots show the older interface rather than the current panel.
 
 ## Before: package default strategy
 
@@ -38,7 +40,7 @@ Failures remain: Detector marked **11 blocked checks**, with another indetermina
 
 This repeated an earlier pair with TCP results of 62/110 and 98/110. Variation is a reason to repeat comparisons: targets, their DNS addresses and network state can change. The OK percentage is neither the share of all Internet sites that work nor an Internet speed measurement.
 
-**97/110 belongs to the personal configuration. The public DOM.RU v4 candidate omits diagnostic IP branches and a separate tracker-website block. These screenshots do not establish the same result for the public profile.**
+**97/110 belongs only to the measured personal configuration and its resources. A public-catalog copy can have different lists and parameters; these screenshots establish neither that copy’s result nor its publication. A changed profile needs separate measurements.**
 
 ## Conditions in both runs
 

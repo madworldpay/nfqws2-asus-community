@@ -26,10 +26,22 @@ Local WAN, queue, and client settings are not replaced with someone else's setti
 
 SmartDNS is imported only into the draft. To apply DNS, open SmartDNS and click
 **Check profile → Connect**, then confirm that DNS works. Importing does not switch the active DNS.
+Since Build 91, once initial loading finishes, the SmartDNS editor picks up the saved imported draft while the form has no unsaved manual edits. Review its contents in SmartDNS before connecting; preview uses the server-saved profile.
+
 **Undo last import** restores the previous data if it has not been
 edited separately since the import.
 
 If the import save response is lost, use **Check result** or **Retry the same write**. Repeating that write does not create a second import. If recovery is required, preserve the error and import log before making further edits.
+
+## Add-ons · Beta
+
+Since Build 92, optional add-ons below the base strategy come from a separate signed catalog. Select a base strategy, then the required add-ons: every checkbox starts off. **Preview** shows added domains, configuration changes and other affected blocks. Only explicitly selected changes are applied after **Save selection**.
+
+**Riot** means Riot service web domains processed using the selected base strategy. Game UDP, matches and voice chat are not verified. The add-on extends domain coverage while retaining algorithms, ports, devices and exclusions. An unrestricted strategy is not narrowed. If safe composition is impossible, the preview explains why; deselect the add-on to import the base profile separately.
+
+The separate tracker-website checkbox for compatible general cloud strategies adds a rule only for the HTTPS websites `nnmclub.to`, `rutracker.org`, `rutor.info` and `tapochek.net` on TCP 443. Peer/DHT and all BitTorrent traffic are not asserted. Other add-ons do not extend that rule’s scope.
+
+Changing the base strategy clears the add-on selection. Changes to selected catalog data require a new preview. If the add-on catalog is unavailable, ordinary import remains available. Compatible domain collections can update without a new build; a new rule type needs package support. Signatures and SHA256 are checked for both the primary HTTPS source and the fixed GitHub fallback; switching sources never bypasses a signature or content error.
 
 ## Export and send
 
@@ -50,9 +62,7 @@ Export starts from the saved configuration, so save the required edits in the ma
 5. Click **Download JSON** or **Send**.
 
 **DPI is a separate network check.** The **Collect diagnostics** button does not run it.
-Start a new test in **DPI Detector** using the command shown, save
-the result with **S**, then click **Refresh results** in the panel
-and select the required file.
+In **DPI Detector → Original terminal**, run tests **1, 2, 3**, save with **S**, then refresh **TXT reports** and download the original TXT to your device. To send it through a preview, refresh DPI results in **Export / share** and select the required file. Separate **Service checks** save their own TXT with control-request context. [Check types and result limits](DPI-DETECTOR.en.md).
 
 Hover over or tap **Preview** to see what is still required for a JSON download. Check that the selected diagnostics have been collected,
 strategy blocks or the entire configuration are selected, and the two required fields are filled in.

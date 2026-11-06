@@ -30,10 +30,10 @@ lighttpd использует BSD-3-Clause. LuaJIT, musl, Rust и зависим
 В **нативных пакетах OpenWrt** используются системные PHP, uhttpd и firewall4.
 Комплектный SmartDNS взят из официальных пакетов OpenWrt: 1.2023.43 для 24.10
 и 46.1 для 25.12. Его бинарники не изменяются; компонент включается отдельно
-в панели. Точные входы и SHA256: [smartdns-assets.json](source/project/openwrt/smartdns-assets.json).
+в панели. Точные входы и SHA256: [smartdns-assets.json](https://github.com/madworldpay/nfqws2-asus-community/blob/main/source/project/openwrt/smartdns-assets.json).
 Соответствующие исходники и снимки рецептов включены в архив выпуска:
-[источники](source/metadata/openwrt-smartdns-sources.json),
-[рецепты OpenWrt](source/recipes/openwrt-smartdns/README.md).
+[источники](https://github.com/madworldpay/nfqws2-asus-community/blob/main/source/metadata/openwrt-smartdns-sources.json),
+[рецепты OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/blob/main/source/recipes/openwrt-smartdns/README.md).
 Нативные пакеты не включают модуль старого ядра ASUS или частный runtime Entware.
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — импорт коммита
@@ -111,8 +111,7 @@ libmnl1.0.5 (LGPLv2.1), libnfnetlink1.0.2 и libnetfilter_queue1.0.5 (GPLv2).
 стандартной библиотеки Rust1.98.1 и musl из Zig0.13.0.
 433 файла уведомлений frontend сохранены в IPK без изменения.
 
-Полные LICENSE и THIRD-PARTY-NOTICES включены в IPK. Они содержат точные уведомления zlib1.3.2, musl1.2.5 и GCC15.2.0 с Runtime Library
-Exception. Версии сверены по официальному журналу сборки и закреплённым инструментам.
+Полные LICENSE и THIRD-PARTY-NOTICES включены в IPK. Официальные движки поставщика 1.3.3 для всех семи семейств используют статическую zlib 1.4; её закреплённый исходный архив и проверка происхождения описаны в `source/recipes/nfqws2/README.md` и `source/metadata/engine-provenance.json`. Старый архив zlib 1.3.2 сохранён только для исторических исходных тестовых данных. Сохранены уведомления musl 1.2.5 и GCC 15.2.0 с Runtime Library Exception.
 
 Архив исходников выпуска содержит код ASUS, исходники компонентов, конфигурации,
 патчи и рецепты. Для модуля 87U повторена точная сборка; полная пересборка всех

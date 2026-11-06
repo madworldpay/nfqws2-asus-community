@@ -30,10 +30,10 @@ license terms: [pymumu/smartdns](https://github.com/pymumu/smartdns/tree/Release
 The **native OpenWrt packages** use the system PHP, uhttpd, and firewall4.
 The bundled SmartDNS comes from official OpenWrt packages: 1.2023.43 for 24.10
 and 46.1 for 25.12. Its binaries are unchanged; the component is enabled separately
-in the panel. Exact inputs and SHA256 checksums: [smartdns-assets.json](source/project/openwrt/smartdns-assets.json).
+in the panel. Exact inputs and SHA256 checksums: [smartdns-assets.json](https://github.com/madworldpay/nfqws2-asus-community/blob/main/source/project/openwrt/smartdns-assets.json).
 The corresponding sources and recipe snapshots are included in the release archive:
-[sources](source/metadata/openwrt-smartdns-sources.json),
-[OpenWrt recipes](source/recipes/openwrt-smartdns/README.md).
+[sources](https://github.com/madworldpay/nfqws2-asus-community/blob/main/source/metadata/openwrt-smartdns-sources.json),
+[OpenWrt recipes](https://github.com/madworldpay/nfqws2-asus-community/blob/main/source/recipes/openwrt-smartdns/README.md).
 Native packages do not include the legacy ASUS kernel module or the private Entware runtime.
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — imported commit
@@ -111,8 +111,7 @@ For the compatible DPI build, notices have been added for 173 source Rust depend
 the Rust1.98.1 standard library, and musl from Zig0.13.0.
 433 frontend notice files are preserved unchanged in the IPK.
 
-The complete LICENSE and THIRD-PARTY-NOTICES are included in the IPK. They contain the exact notices for zlib1.3.2, musl1.2.5, and GCC15.2.0 with the Runtime Library
-Exception. The versions were checked against the official build log and pinned tools.
+The complete LICENSE and THIRD-PARTY-NOTICES are included in the IPK. The provider’s official 1.3.3 engines for all seven families use static zlib 1.4; its pinned source archive and provenance checks are documented in `source/recipes/nfqws2/README.md` and `source/metadata/engine-provenance.json`. The older zlib 1.3.2 archive is retained only for legacy source test fixtures. The musl 1.2.5 and GCC 15.2.0 Runtime Library Exception notices are retained.
 
 The release source archive contains the ASUS code, component sources, configurations,
 patches, and recipes. The exact build was reproduced for the 87U module; a full rebuild of all

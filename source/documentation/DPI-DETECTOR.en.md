@@ -1,6 +1,6 @@
 # DPI Detector
 
-**For Build 88 and later.** The DPI Detector button opens its original menu directly in the panel. [Running over SSH](#run-over-ssh) is also supported.
+**Build 96 interface.** The original terminal is available since Build 88, TXT downloads and protected removal since Build 91, and separate Service checks since Build 96. The DPI Detector button opens the window directly in the panel. [Running over SSH](#run-over-ssh) is also supported.
 
 DPI Detector is a separate, optional tool by [Runnin4ik](https://github.com/Runnin4ik/dpi-detector). It helps compare DNS, HTTP, TLS, QUIC and connections to network targets. NFQWS2 does not require Detector. Detector does not select or change a strategy automatically.
 
@@ -11,7 +11,7 @@ DPI Detector is a separate, optional tool by [Runnin4ik](https://github.com/Runn
 3. Wait for the result and press **S** in the results menu to save the original TXT.
 4. In the Detector window, refresh **TXT reports** and click download next to the required TXT to save it to your PC or phone. **Export / share** also lets you select it for sending through the preview.
 
-The **?** button and expandable help explain installation, tests, controls and results. **Esc** goes back in the original menu; **Q** quits Detector. Closing the panel window stops its terminal and current tests. Open the window again to start a new session. A second terminal or separate Detector check cannot run at the same time.
+The **?** button and expandable help explain installation, tests, controls and results. **Esc** goes back in the original menu; **Q** quits Detector. Closing the panel window stops its terminal and current tests. Open it again for a new run. The window contains one original terminal: status, report-list and help updates do not create copies. **Open terminal again** replaces its session. A second terminal or separate Detector check cannot run at the same time.
 
 Scroll history with the wheel or a vertical swipe; buttons jump to the top, bottom or another page. Keyboard shortcuts are **Shift+PageUp/PageDown** and **Shift+Home/End**. Wide tables scroll horizontally without moving the whole page.
 
@@ -32,15 +32,23 @@ DNS availability in the original menu is an **independent check of its public re
 
 Test the required service from a selected device after changing a strategy. **Collect diagnostics** gathers router information and does not run Detector network tests.
 
-## Service control check
+## Service checks
 
-Starting with Build 96, a separate **Service check** view in the Detector window covers Facebook, YouTube and Discord. It supplements the original menu with HTTP status, redirect, bytes read and network errors for fixed control domains. Switching closes the window's original terminal; concurrent checks are excluded.
+Starting with Build 96, a separate **Service checks** view in the Detector window covers Facebook, YouTube and Discord. It supplements the original menu with HTTP status, redirect, bytes read and network errors for fixed control domains. Switching closes the window's original terminal; concurrent checks are excluded.
 
-The check makes certificate-verified HTTPS requests, uses system name resolution and does not follow redirects. HTTP400 is shown as a server error response. A connection reset differs from HTTP403/404: a CDN root may not serve a public page. Response reading is bounded; control domains do not cover every asset, video playback, voice, matches or authentication. Full service functionality is never asserted automatically.
+Select a service and click **Run service check**. Each run checks the selected service’s three URLs sequentially, from nine fixed targets in total:
 
-**Download TXT** saves the control report to your PC or phone. Every request records its times and before/after snapshots of NFQWS2 state, mode and configuration SHA256. Different known values are marked changed; incomplete observations remain unknown. This context belongs to the control requests, not an unrelated original-menu run. The check does not change settings, lists, DNS or service state.
+| Service | Control URLs |
+| --- | --- |
+| Facebook | `https://www.facebook.com/`, `https://m.facebook.com/`, `https://static.xx.fbcdn.net/` |
+| YouTube | `https://www.youtube.com/`, `https://i.ytimg.com/`, `https://www.gstatic.com/` |
+| Discord | `https://discord.com/`, `https://cdn.discordapp.com/`, `https://gateway.discord.gg/` |
 
-Original TXT files may lack historical NFQWS2 state and configuration. The panel never inserts the current service state into them or infers test start from opening the terminal. Record each run's conditions separately when comparing original TXT files.
+The check makes certificate-verified HTTPS requests, uses system name resolution and does not follow redirects. HTTP 400 is shown as a server error response. A connection reset differs from HTTP 403/404: a CDN root may not serve a public page. Each request is limited to 10 seconds and 256 KiB of response body, with a partial-read label when the body limit is reached; control domains do not cover every asset, video playback, voice, matches or authentication. Full service functionality is never asserted automatically.
+
+**Download service TXT** saves the control report to your PC or phone. Every request records its times and before/after snapshots of NFQWS2 state, mode and configuration SHA256. Different known values are marked changed; incomplete observations remain unknown. Matching snapshots cannot rule out changes between them. If the router clock moves backwards, original timestamps and a warning are retained; duration uses a monotonic timer. This context belongs to the control requests, not an unrelated original-menu run. The check does not change settings, lists, DNS or service state.
+
+This integration does not record historical NFQWS2 state, mode or configuration SHA256 in original TXT files; those values remain unknown. The panel never inserts the current service state into them or infers test start from opening the terminal. Record each run's conditions separately when comparing original TXT files.
 
 ## Reports and removal
 
