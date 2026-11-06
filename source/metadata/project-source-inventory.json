@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "13c1dc569ae4a0d7f90d8f83d22fc9c8fa526e133f8fea0f9526c8533c4d8da3"
+    "sha256": "d6ba4fb19951b0a0175af857ec4891947aaf65d7de043c48a38b2daf2df0a329"
   },
   {
     "path": "LICENSE",
@@ -4871,13 +4871,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 93328,
-    "sha256": "188e80826ab39b6a3e37032073c4759f4540524e2cd5e996159f2fe451075d87"
+    "bytes": 93586,
+    "sha256": "6847effc853129a68370db4812d5142455961d4e9b633074d04caa5ef0386502"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 150741,
-    "sha256": "0db83103886d493421d5099f1044f053735db700d37b387a6cbdcbfc0885a58c"
+    "bytes": 151145,
+    "sha256": "3db9e252a393bdaeb73135af7d3d557c2643f48a0d88f745c0085760a9bbc286"
   },
   {
     "path": "webui/web/src/types/types.ts",

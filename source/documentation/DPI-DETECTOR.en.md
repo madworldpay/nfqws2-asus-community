@@ -9,7 +9,7 @@ DPI Detector is a separate, optional tool by [Runnin4ik](https://github.com/Runn
 1. Click **DPI Detector** at the top of the panel. If it is missing, click **Install DPI Detector** and confirm. The panel checks the pinned file, SHA256 and launch. The original menu opens after installation; no separate SSH login is needed.
 2. Start with tests **1, 2, 3**, selected by default. Arrow keys move the selection, **Space** toggles tests and **Enter** confirms. On a phone, use the buttons below the terminal.
 3. Wait for the result and press **S** in the results menu to save the original TXT.
-4. Open **Export / share** and refresh the result list. View or download the saved TXT, or select it for sending through the preview.
+4. In the Detector window, refresh **Saved reports** and click download next to the required TXT to save it to your PC or phone. **Export / share** also lets you select it for sending through the preview.
 
 The **?** button and expandable help explain installation, tests, controls and results. **Esc** goes back in the original menu; **Q** quits Detector. Closing the panel window stops its terminal and current tests. Open the window again to start a new session. A second terminal or separate Detector check cannot run at the same time.
 
@@ -19,7 +19,7 @@ Scroll history with the wheel or a vertical swipe; buttons jump to the top, bott
 
 [Worked example: the package default and a personal DOM.RU strategy](docs/DETECTOR-COMPARISON.en.md) explains what to compare, how to import and why one connection does not represent everyone.
 
-Save a result with NFQWS2 off, then turn it on and repeat the same tests. Change one setting at a time. Account for DNS, VPNs, another bypass on the route and changing target addresses; otherwise a difference cannot reliably be attributed to the strategy.
+**Detector matters when checking an imported profile:** comparing the same tests helps distinguish DNS problems from connection, TLS or QUIC failures. For a baseline, save a result with NFQWS2 off, then turn it on and repeat the same tests. To compare two strategies, test each with the service running under the same conditions. Change one setting at a time. Account for DNS, VPNs, another bypass on the route and changing target addresses; otherwise a difference cannot reliably be attributed to the strategy.
 
 - **DNS:** failures of plain or encrypted DNS, altered replies and unexpected resolvers help investigate a problem. The report does not prove the absence of all DNS leaks.
 - **Connection:** a timeout before TCP connects, a TLS failure and an interrupted transfer are different results. A single failure does not prove ISP blocking.
@@ -32,7 +32,7 @@ Test the required service from a selected device after changing a strategy. **Co
 
 The original TXT stays local and may contain network information. Sending prepares a separate sanitized JSON containing recognized metrics; it may be incomplete. Sending requires a preview and a separate click; tests are not run again.
 
-**Uninstall DPI Detector** is in its window and requires confirmation. **Delete saved Detector reports** is unchecked by default: normal removal keeps reports. Selecting that checkbox also deletes saved reports, which cannot be restored from the panel. Cancelling confirmation does not restart the current terminal.
+**Uninstall DPI Detector** is in the window’s **More** menu and opens a separate confirmation. **Delete saved Detector reports** is unchecked by default: normal removal keeps reports. Selecting that checkbox also deletes saved reports, which cannot be restored from the panel. Cancelling confirmation does not restart the current terminal.
 
 ## Architectures
 

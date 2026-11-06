@@ -291,7 +291,7 @@
       "recover": "For help: Share → Preview. To disconnect SmartDNS: Restore previous DNS.",
       "ark": "Check the platform and packet capture. If ARK is loaded on ASUS, follow the preparation instructions.",
       "start": "Start or restart NFQWS2 after changing its strategy. Check that the queue is bound.",
-      "detector": "The new “DPI Detector” button at the top checks DNS and service reachability. Installation and help are available in its window.",
+      "detector": "DPI Detector helps compare strategies: repeat the same test set under the same conditions before and after changes to identify DNS, TLS and QUIC issues. Errors alone do not prove DPI blocking; check actual YouTube and video playback separately on your device. Installation, help and TXT report downloads are available in the “DPI Detector” window via the button at the top of the panel.",
       "keenetic_import": "The NFQWS2 Keenetic strategy converter is in Import profile → Paste Keenetic strategy. Review the result before saving.",
       "keenetic_help": "You can always ask for help choosing strategies in the",
       "keenetic_chat": "NFQWS2 Keenetic chat"

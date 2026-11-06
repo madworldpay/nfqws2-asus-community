@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 49509,
-      "sha256": "1fb2a28eef596b58e99e230b88f4737bd19ceeaa09933112b2154a93b3596967"
+      "bytes": 50709,
+      "sha256": "4b0eee623da5a78d5134cd7a1603cbd35706b4216613b86b15037558cba52412"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -62,13 +62,13 @@
     },
     {
       "file": "DPI-DETECTOR.en.md",
-      "bytes": 4616,
-      "sha256": "4b0f0bef941bc116ed91644d1a87255a5830f841c77f903cc6da4df24460cb67"
+      "bytes": 4969,
+      "sha256": "cb3c7588c68cce5e9001a794cfa37f91c2900162f6558d4353ab0614ecb621f6"
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 7937,
-      "sha256": "31b64053d9e423f2976c9db14e80c0330c67d0a15c00eb54888d8f2ac9ef9a8b"
+      "bytes": 8580,
+      "sha256": "93099213b903ec0768f511f1217e2d0e82b3e348a3b08161d1f3b0bc7563d5f6"
     },
     {
       "file": "IMPORT.en.md",
@@ -107,8 +107,8 @@
     },
     {
       "file": "NEXT-BUILD.md",
-      "bytes": 26969,
-      "sha256": "369141b9abd06cadb16b8667be5638d6759dbecb6f8d7a1c1a3b90d07516c92f"
+      "bytes": 27676,
+      "sha256": "29b797a88db8d5afd840d627ec395998d129288270a0130d8ffd02b4409fd0ab"
     },
     {
       "file": "OPENWRT.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 23671,
-      "sha256": "9c3b7c9ef3f11d7753786eaba6456ecad576b885bba38c8a3a0edca464d0efca"
+      "bytes": 24105,
+      "sha256": "7f4042b960dd0ef96554fe248c17474b48109ffe6f65bb5c59c27064fc7bb1e4"
     },
     {
       "file": "README.md",
-      "bytes": 39449,
-      "sha256": "c6982c1242cbd418b058f65d5d41f2017e88bd8ae6c0e8a121921a0cdd74c0af"
+      "bytes": 40196,
+      "sha256": "1e20baa1ce431d9792097fee28dbac0edc5533e29871f086e6ab5ff8c6058605"
     },
     {
       "file": "ROADMAP.en.md",
@@ -222,13 +222,13 @@
     },
     {
       "file": "docs/DETECTOR-COMPARISON.en.md",
-      "bytes": 6553,
-      "sha256": "fc6e780373eab6841ab729ac7ac0b108cc62f3f3711db612fc29a1539ed4753a"
+      "bytes": 6677,
+      "sha256": "9e56cf8173d5420f15af07dbe680db960fc0430d3994b9becfe34da770273c59"
     },
     {
       "file": "docs/DETECTOR-COMPARISON.md",
-      "bytes": 10971,
-      "sha256": "85e4e62e9c8ccebe0e94d5aba96b45528157d87ecfd01534dbfe1320df942f87"
+      "bytes": 11194,
+      "sha256": "bf6b08e8b5d5b1e7e7eb7afa6ffb457743e5de2ade692fad784a2ddf9c584355"
     },
     {
       "file": "images/cloud-catalog.jpg",

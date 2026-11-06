@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 92:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build92) · [change history](CHANGELOG.md). Optional beta add-ons for imported profiles, a signed catalog and a combined preview. Riot covers web domains; game UDP is not claimed. Detector TXT downloads and removal through a confirmation menu are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
+**Build 93:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build93) · [change history](CHANGELOG.md). Getting started explains why DPI Detector matters when comparing strategies. The optional beta add-ons, signed catalog and combined preview from Build 92 are retained. Riot covers web domains; game UDP is not claimed. Detector TXT downloads and removal through a confirmation menu are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get
@@ -101,7 +101,7 @@ Use **Change password** to set your own panel password.
 3. If needed, connect DNS through the SmartDNS wizard and confirm the result.
 4. Start NFQWS2. Test the required websites, video and voice from a selected device.
 
-In Build 88, the **DPI Detector** button at the top opens installation, the original menu and built-in help. Start with tests 1–3 and press **S** to save the result. [Read and compare reports](DPI-DETECTOR.en.md). The [NFQWS2 Keenetic chat](https://t.me/nfqws) can help with selecting Keenetic strategies.
+**DPI Detector matters when checking a strategy.** The **DPI Detector** button at the top opens installation, the original menu and help. Repeat tests **1–3** before and after changing a strategy under the same conditions to find remaining DNS, TLS or QUIC problems. The OK percentage covers only the tested targets; errors alone do not prove DPI blocking. Also check video playback, seeking and other required features on your device. Press **S** to save the result, then download TXT directly from the Detector window. [Read and compare reports](DPI-DETECTOR.en.md). The [NFQWS2 Keenetic chat](https://t.me/nfqws) can help with selecting Keenetic strategies.
 
 After a first install, processing stays off until you configure it.
 Updates preserve settings and the previous service state.
@@ -187,7 +187,7 @@ VPN capabilities depend on your firmware and chosen client.
 | Packet templates (blobs) | Choose another template without replacing the strategy or upload a `.bin` from your device — [guide](USAGE.en.md#packet-templates-blobs) |
 | Import preview and undo | Compare “before / after”, transfer required files and undo the last import |
 | SmartDNS | Up to **32 DNS servers**, **256 domain → DNS bindings** and **64 fixed answers**; DoT/DoH and custom servers |
-| Diagnostics and DPI Detector | Checkup, packet delivery checks and logs; the Build 88 candidate adds the original Detector menu in the panel, TXT reports, help and separate removal |
+| Diagnostics and DPI Detector | Checkup, packet delivery checks and logs; the original Detector menu in the panel, TXT downloads, help and removal through a separate confirmation |
 | Profile sharing | Export individual blocks, lists, blobs and DNS; review and edit the copy to be sent |
 | Updates | Signature and SHA256 checks, retained settings; package backups and automatic rollback after a caught failure on ASUS |
 | Unavailable IPs (ASUS) | Address list with expiry, recheck and removal; ordinary UDP DNS filtering and fast failure on port 443 |
