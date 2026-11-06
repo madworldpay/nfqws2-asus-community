@@ -103,6 +103,12 @@ final class AsusTechnicalChannel
             if(!is_array($stamp)||array_keys($stamp)!==['dev','ino']||!is_int($stamp['dev'])||!is_int($stamp['ino']))throw new RuntimeException('unsafe_key_file');
             if($present!==null){$now=lstat($path);if($now['dev']!==$stamp['dev']||$now['ino']!==$stamp['ino']||$present['mode']!==0600||!unlink($path))throw new RuntimeException('unsafe_key_file');}
         }
+        if(isset($s['operator_banner'])){
+            $text=self::bannerText($s,$s['login']??'');$stamp=$s['operator_banner'];$path=$this->path('operator-banner.'.$s['activation_id']);
+            if(!is_array($stamp)||array_keys($stamp)!==['dev','ino']||!is_int($stamp['dev'])||!is_int($stamp['ino']))throw new RuntimeException('unsafe_key_file');
+            $present=AsusTechnicalFiles::read($path,$this->c['owner'],256);
+            if($present!==null){$now=lstat($path);if($now['dev']!==$stamp['dev']||$now['ino']!==$stamp['ino']||$present['mode']!==0600||$present['raw']!==$text||!unlink($path))throw new RuntimeException('unsafe_key_file');}
+        }
         return $s;
     }
     private function recover(?array $s): ?array
@@ -187,6 +193,7 @@ final class AsusTechnicalChannel
             AsusTechnicalFiles::write($this->path('tunnel.key'),base64_decode($v['tunnel_key']),0600,$this->c['owner']);
             unlink($this->path('invitation'));unset($link);
             $s['stage']='local_server';$this->save('state.json',$s);
+            $this->prepareBanner($s,$login);
             $pidfile=$this->path('server.pid');if(AsusTechnicalFiles::read($pidfile,$this->c['owner'],32)!==null)throw new RuntimeException('unsafe_key_file');
             AsusTechnicalFiles::write($pidfile,'',0600,$this->c['owner']);$pidstat=lstat($pidfile);$s['server_pidfile']=['dev'=>$pidstat['dev'],'ino'=>$pidstat['ino']];$this->save('state.json',$s);
             [$server,$port,$serverArgs]=$this->localServer($id);$serverStatus=proc_get_status($server);$s['server_process']=AsusTechnicalProcess::identity($serverStatus['pid']);$s['child_argv']=['server_process'=>$serverArgs];$this->save('state.json',$s);
@@ -222,6 +229,20 @@ final class AsusTechnicalChannel
             $lock=$this->lock();try{$s=$this->read('state.json');if(($s['activation_id']??null)===$id&&in_array($s['state'],['connecting','connected'],true))$this->clean($s,'failed','interrupted');}finally{$this->unlock($lock);}
         }
     }
+    /** Public metadata, authenticated by the existing pinned SSH host and tunnel. */
+    private static function bannerText(array $s,string $login): string
+    {
+        foreach(['activation_id','session_id'] as $key)if(!is_string($s[$key]??null)||!preg_match('/^[a-f0-9]{32}$/D',$s[$key]))throw new RuntimeException('invalid_state');
+        if(!preg_match('/^[a-zA-Z0-9_][a-zA-Z0-9_-]{0,31}$/D',$login))throw new RuntimeException('invalid_state');
+        return 'NFQWS2-TECH-META/1 '.$s['session_id'].' '.$login."\n";
+    }
+    private function prepareBanner(array &$s,string $login): void
+    {
+        $text=self::bannerText($s,$login);$path=$this->path('operator-banner.'.$s['activation_id']);
+        if(AsusTechnicalFiles::read($path,$this->c['owner'],256)!==null)throw new RuntimeException('unsafe_key_file');
+        AsusTechnicalFiles::write($path,$text,0600,$this->c['owner']);$stamp=lstat($path);
+        $s['login']=$login;$s['operator_banner']=['dev'=>$stamp['dev'],'ino'=>$stamp['ino']];$this->save('state.json',$s);
+    }
     private function rootAccount(): array
     {
         $raw=file_get_contents('/etc/passwd');foreach(explode("\n",$raw) as $line){$f=explode(':',$line);
@@ -243,7 +264,7 @@ final class AsusTechnicalChannel
         $keys=array_values(array_unique($keys));if(!$binary||!$keys)throw new RuntimeException('unsupported_runtime');
         $reserve=@stream_socket_server('tcp://127.0.0.1:0',$errno,$error);if(!$reserve)throw new RuntimeException('launch_failed');
         $address=stream_socket_get_name($reserve,false);$port=(int)substr($address,strrpos($address,':')+1);fclose($reserve);
-        $args=array_merge(AsusTechnicalProcess::serverPrefix($binary),['-F','-E','-s','-j','-k','-P',$this->path('server.pid'),'-p','127.0.0.1:'.$port,'-c',$this->c['library'].'/guard.sh '.$id]);
+        $args=array_merge(AsusTechnicalProcess::serverPrefix($binary),['-F','-E','-s','-j','-k','-P',$this->path('server.pid'),'-b',$this->path('operator-banner.'.$id),'-p','127.0.0.1:'.$port,'-c',$this->c['library'].'/guard.sh '.$id]);
         foreach($keys as $path){$resolved=realpath($path);$st=$resolved===false?false:@lstat($resolved);
             if(!$st||($st['mode']&0170000)!==0100000||$st['uid']!==0||($st['mode']&0077)!==0)throw new RuntimeException('unsafe_key_file');
             $args[]='-r';$args[]=$resolved;

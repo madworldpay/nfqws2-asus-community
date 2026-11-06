@@ -55,10 +55,47 @@ at expiry. To revoke it immediately on the VPS:
 python3 /usr/local/libexec/nfqws-technical-server.py revoke SESSION_ID
 ```
 
-The Administrator uses their normal VPS SSH login to reach that local port, then
-authenticates to the router with `operator`. Use root on OpenWrt or the UID 0
-account on ASUS. Verify the router's host key through a trusted source as well;
-do not disable host key checking. An interactive empty command and PTY are denied.
+With a receiver on the operator's PC, connect directly to
+`127.0.0.1:remote_port` from `session.json`; no VPS is required. `connect.py`
+discovers the router's UID 0 account name before authenticating with `operator`.
+The owner only pastes the signed invitation into WebUI and presses Connect;
+they do not need to provide a login name or password.
+
+```sh
+python3 connect.py --session-dir /private/new-session \
+  --router-known-hosts /private/router-known-hosts \
+  --router-host-key-alias owner-router --command '/bin/busybox id -u'
+```
+
+`owner-router` identifies an already verified router SSH host key in that
+known_hosts file. Host verification is mandatory during both discovery and
+command execution. Verify a new host key through an existing trusted source;
+automatically accepting a key from the same connection does not establish trust.
+Without `--command`, the helper prints only the session ID and discovered login.
+Use absolute command paths on firmware with a limited PATH.
+For a VPS receiver, forward its loopback port to the same local port on the PC
+using your normal trusted SSH access, then run the helper on the PC. The operator
+key stays on the PC.
+The restricted `nfqs-…` tunnel account never receives a shell or TTY.
+An interactive empty command and PTY on the router are also denied.
+
+The temporary loopback Dropbear uses `-b` to publish exactly one line:
+`NFQWS2-TECH-META/1 SESSION_ID UID0_LOGIN`. It contains public metadata only,
+with no password, key material or signed invitation. It travels inside the
+existing authenticated tunnel and SSH connection with a pinned router host key.
+The first short SSH probe requests only `none` authentication for a fixed
+discovery identity, offers no operator key and exits before the next
+connection starts. The helper accepts one valid line matching the expected
+session ID; a mismatch, unsupported version or unsafe login prevents execution.
+OpenSSH must display banners (`LogLevel=INFO`); `ERROR` suppresses them.
+The signed invitation format, forced guard, deadline and revocation are unchanged.
+The banner file has mode 0600 and is removed only when its activation ID,
+device, inode and exact contents still match the owned file.
+
+The router client must be updated to publish this metadata. Existing build 87 and 90
+sessions do not transmit the login: updating the PC helper alone cannot repair
+it. Update the client through an ordinary authorized path, then reconnect;
+the helper does not guess account names or bypass authentication.
 
 The router uses its existing Dropbear and the package's PHP/OpenSSL. A separate
 temporary Dropbear listens only on loopback, disables passwords/forwarding and

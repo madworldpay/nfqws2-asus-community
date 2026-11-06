@@ -60,7 +60,8 @@ export const SmartDnsConfigurator = ({
     inFlight = useRef(false),
     dirty = useRef(false);
   const reply = useRef(0),
-    validatedRevision = useRef(0);
+    validatedRevision = useRef(0),
+    validatedHash = useRef<string | null>(null);
   const updateStatus = useCallback((s: ConfigStatus) => {
     setStatus(s);
     setClock({ server: s.deadline_remaining_s, received: performance.now() });
@@ -76,25 +77,38 @@ export const SmartDnsConfigurator = ({
       setSavedProfile(data.confirmed_profile || null);
       setResumeInfo(data.resume_code || null);
       setRouting(data.routing || 'unknown');
-      if (!initialized.current) {
+      const profile = data.draft || data.active_profile || emptyProfile();
+      if (
+        !initialized.current ||
+        (!dirty.current &&
+          JSON.stringify(profile) !== JSON.stringify(current.current.profile))
+      ) {
+        const next = initialized.current
+          ? editProfile(current.current, profile)
+          : { profile, revision: 0, preview: null };
         initialized.current = true;
-        const initial = {
-          profile: data.draft || data.active_profile || emptyProfile(),
-          revision: 0,
-          preview: null,
-        };
-        current.current = initial;
-        setEditor(initial);
+        current.current = next;
+        setEditor(next);
       }
       const revision = current.current.revision;
       if (
         data.status.state === 'preview_ready' &&
         data.status.preview_id &&
         !dirty.current &&
-        validatedRevision.current === revision
+        (validatedRevision.current === revision ||
+          validatedHash.current !== null)
       ) {
         const preview = await getSmartDnsPreview(csrf, data.status.preview_id);
-        if (alive.current && seq === reply.current)
+        // Normalization can change the loaded representation after our save.
+        // The server checks the preview against its draft; bind that preview to
+        // our submitted hash before accepting it across the new revision.
+        if (
+          alive.current &&
+          seq === reply.current &&
+          (validatedHash.current === null
+            ? validatedRevision.current === revision
+            : preview.profile_hash === validatedHash.current)
+        )
           setEditor((s) => acceptPreview(s, revision, preview));
       }
     } catch (e) {
@@ -161,6 +175,7 @@ export const SmartDnsConfigurator = ({
         throw new DpiError('stale_draft');
       dirty.current = false;
       validatedRevision.current = snapshot.revision;
+      validatedHash.current = hash;
       return validateSmartDnsDraft(
         csrf,
         newSupportSubmissionId().replace(/-/g, ''),
@@ -259,7 +274,7 @@ export const SmartDnsConfigurator = ({
         </InlineHelp>
         <Button
           size="small"
-          disabled={busy || pending || connected}
+          disabled={busy || pending || connected || !initialized.current}
           onClick={reloadDraft}
         >
           {t('smartdns.reload_draft')}
@@ -351,6 +366,7 @@ export const SmartDnsConfigurator = ({
         onChange={change}
         disabled={
           busy ||
+          !initialized.current ||
           ['applying', 'awaiting_confirmation', 'rolling_back'].includes(
             status?.state || '',
           )

@@ -17,7 +17,7 @@ NFQWS2 обрабатывает трафик на роутере; отдельн
 
 💬 **[Чат сообщества в Telegram](https://t.me/nfqws2AsusCommunityChat)** — помощь с настройкой и обсуждение стратегий.
 
-**Build 90:** [скачать выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build90) · [история изменений](CHANGELOG.md). Исправлены совместимость старого обработчика обновлений и сохранение Lua-копий после прерывания. Сохранены импорт профилей с предпросмотром, оригинальное меню DPI Detector и zapret2 1.0.7. [Реальные прогоны Detector до и после настройки](docs/DETECTOR-COMPARISON.md).
+**Build 91:** [скачать выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build91) · [история изменений](CHANGELOG.md). Скачивание TXT из окна DPI Detector, удаление через меню с подтверждением и исправления редактора SmartDNS после импорта. Сохранены импорт профилей с предпросмотром и zapret2 1.0.7. [Реальные прогоны Detector до и после настройки](docs/DETECTOR-COMPARISON.md).
 
 
 ## Что вы получаете

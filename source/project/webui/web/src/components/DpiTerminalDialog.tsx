@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import {
   Accordion,
   AccordionDetails,
@@ -17,6 +18,8 @@ import {
   FormControlLabel,
   IconButton,
   LinearProgress,
+  Menu,
+  MenuItem,
   Stack,
   Tooltip,
   Typography,
@@ -38,6 +41,8 @@ import {
   type DpiTerminalState,
 } from '@/api/dpiClient';
 import { newSupportSubmissionId } from '@/api/supportReport';
+
+import { DpiSavedReports } from '@/components/DpiSavedReports';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -279,6 +284,7 @@ export const DpiTerminalDialog = ({
   const [confirmInstall, setConfirmInstall] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
   const [deleteReports, setDeleteReports] = useState(false);
   const [removing, setRemoving] = useState(false);
   const removalInFlight = useRef(false);
@@ -575,20 +581,23 @@ export const DpiTerminalDialog = ({
             {t('dpi_terminal.saved_hint')}
           </Typography>
         )}
+        <DpiSavedReports
+          key={attempt}
+          csrfToken={csrfToken}
+          disabled={removing || confirmRemove}
+        />
       </DialogContent>
       <DialogActions sx={{ px: 2, flexWrap: 'wrap' }}>
         {info?.installed && !confirmRemove && !installing && (
           <Button
-            color="error"
-            variant="outlined"
+            startIcon={<MoreHorizIcon />}
             sx={{ mr: 'auto' }}
-            onClick={() => {
-              setDeleteReports(false);
-              setError('');
-              setConfirmRemove(true);
-            }}
+            aria-haspopup="menu"
+            aria-expanded={!!moreAnchor}
+            aria-controls={moreAnchor ? 'dpi-detector-more-menu' : undefined}
+            onClick={(event) => setMoreAnchor(event.currentTarget)}
           >
-            {t('dpi_terminal.remove')}
+            {t('dpi_terminal.more')}
           </Button>
         )}
         {ready && terminalState && terminalState !== 'running' && (
@@ -617,6 +626,24 @@ export const DpiTerminalDialog = ({
           {t('common.close')}
         </Button>
       </DialogActions>
+      <Menu
+        id="dpi-detector-more-menu"
+        anchorEl={moreAnchor}
+        open={!!moreAnchor}
+        onClose={() => setMoreAnchor(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            setMoreAnchor(null);
+            setDeleteReports(false);
+            setError('');
+            setConfirmRemove(true);
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          {t('dpi_terminal.remove')}
+        </MenuItem>
+      </Menu>
       <Dialog
         open={confirmRemove}
         onClose={() => {

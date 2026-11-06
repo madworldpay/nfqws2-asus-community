@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "4393447bd3c1d55ea7f97417ecb1b36a691ccaacaaf2ebd21c59a5acf825fb7b"
+    "sha256": "0433e993a3dbc505d6e5cad972a1df0ab189cfe7ceece5e94fd47ca9a074370f"
   },
   {
     "path": "LICENSE",
@@ -1486,18 +1486,23 @@
   },
   {
     "path": "technical-channel/README.en.md",
-    "bytes": 3892,
-    "sha256": "5736786521b2d76762c922ca482f7f93c61ed99e71e3ab8c305c24a10b02e71b"
+    "bytes": 6078,
+    "sha256": "a3ed61605424e28fa6ae2cfbcbcd52d567ce4bb5eba33285a878ecd17362525b"
   },
   {
     "path": "technical-channel/README.md",
-    "bytes": 6811,
-    "sha256": "3f6e6b7ac182edc18162e000967daf03c5cd7377363d1dae546ccd1b10defbb0"
+    "bytes": 10320,
+    "sha256": "f64e991325365232ecf587835f1dcb89ed062e7d4e239242a4c2859a96bdc23c"
   },
   {
     "path": "technical-channel/admin.py",
     "bytes": 5394,
     "sha256": "e0bfea3ab72a171bb8500b6637b19651840e453191bcc476aa107af5cd9f09e5"
+  },
+  {
+    "path": "technical-channel/connect.py",
+    "bytes": 5784,
+    "sha256": "db09aa450a368f45db9642a1ce549287486c1b6ab1425e6963b304495bdb0ce7"
   },
   {
     "path": "technical-channel/server.py",
@@ -1783,6 +1788,11 @@
     "path": "tests/test_dpi_remove.py",
     "bytes": 4997,
     "sha256": "862b3bb67159172bdbfe5c2953dc454123747d6f8d250f4db4819b107c31f423"
+  },
+  {
+    "path": "tests/test_dpi_saved_download.mjs",
+    "bytes": 6819,
+    "sha256": "4fb68e0354a66ae38fcd7e748c515536a0d624b00b913bca81f1d0517b74c65d"
   },
   {
     "path": "tests/test_dpi_saved_projector.py",
@@ -2875,6 +2885,11 @@
     "sha256": "563795ab649ea2091174a3cd1318b6ba127a6b0c73f714d2a457ca585f6ac761"
   },
   {
+    "path": "tests/test_smartdns_draft_browser.mjs",
+    "bytes": 13291,
+    "sha256": "b9f3233463408716850066e96cd32eae17a9a0aab1d741921dd7295648060247"
+  },
+  {
     "path": "tests/test_smartdns_form.mjs",
     "bytes": 1533,
     "sha256": "244f363300b39d202e177d8d6a534715890a415e60dbc773fd341bfeb52d84de"
@@ -3180,6 +3195,11 @@
     "sha256": "8c0ec58abaf1a64c307b71062b3f059c674abcd601e35332d768c7c95f580588"
   },
   {
+    "path": "tests/test_technical_channel_banner_dropbear.py",
+    "bytes": 9532,
+    "sha256": "759fa97a8f3429e48b52abd30a8bb34f2e23d70700a8e12e4ce5c6b306c7b2ca"
+  },
+  {
     "path": "tests/test_technical_channel_children.py",
     "bytes": 25923,
     "sha256": "83321a17647c1d9eb63e8ccea03f6da41fb9dcf42a8d10a2ece9f9d0c29f3c57"
@@ -3188,6 +3208,16 @@
     "path": "tests/test_technical_channel_client.mjs",
     "bytes": 3760,
     "sha256": "b54be8240d5fdec3a2e384c833fa5fffb16fa6297bb16b2a4c838006264e0294"
+  },
+  {
+    "path": "tests/test_technical_channel_metadata.py",
+    "bytes": 4954,
+    "sha256": "9f3198ce0081392fe935e37262380fdeb74731e152f9e057f4eb7521dc5385ea"
+  },
+  {
+    "path": "tests/test_technical_channel_operator.py",
+    "bytes": 4560,
+    "sha256": "449962dc2fa016d516fe8d89de3ef5af83f305460d29f3e6ddc3e530a7a7cb45"
   },
   {
     "path": "tests/test_technical_channel_server.py",
@@ -3426,8 +3456,8 @@
   },
   {
     "path": "webui/web/.yarn/install-state.gz",
-    "bytes": 519977,
-    "sha256": "ca389a5d971d57c54354841b90ec3e5dfec2dcd4d8ca7f55b176fc6042d59ebc"
+    "bytes": 563299,
+    "sha256": "72a9d0bd48081695c32320ddb5459fc475b04d4774ea81b1768059018baaf8b5"
   },
   {
     "path": "webui/web/.yarn/releases/yarn-4.12.0.cjs",
@@ -4081,8 +4111,8 @@
   },
   {
     "path": "webui/web/public/technical-channel-runtime.php",
-    "bytes": 24356,
-    "sha256": "64801a3888b627aa92532d8a8c6fbcce089641d17d1853cd2999b8d696045a37"
+    "bytes": 26141,
+    "sha256": "08307bb2d203ea64a903e7cc87014eace3f297d2334dfbf8741b401cdc50e366"
   },
   {
     "path": "webui/web/public/technical-channel.php",
@@ -4415,9 +4445,14 @@
     "sha256": "6e95650acbbceff01e14aab02d82d100d2db109a33bd0caa8b7cd925cff09487"
   },
   {
+    "path": "webui/web/src/components/DpiSavedReports.tsx",
+    "bytes": 5425,
+    "sha256": "7f19c6e20a17a233d5e2a5679ccf7af546dedf9e1b59caffb6d6c68903c7e59e"
+  },
+  {
     "path": "webui/web/src/components/DpiTerminalDialog.tsx",
-    "bytes": 21047,
-    "sha256": "9d13d41dcc3ae52cb7311e8dd00437d9655ee42545f5656503a21019674f8735"
+    "bytes": 21926,
+    "sha256": "60c745c30da12d51f575201041c24b320d49f309f8972d46db4a1ff4fb151e59"
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
@@ -4606,8 +4641,8 @@
   },
   {
     "path": "webui/web/src/components/SmartDnsConfigurator.tsx",
-    "bytes": 12382,
-    "sha256": "378c5d7f0a41f9338010818513a64709ff9ae4499bbd5a297b54ef35901c31f3"
+    "bytes": 13176,
+    "sha256": "ff6870b2b7b461ec41d685247887650ca789c489c9d06481b4c6452e213bc260"
   },
   {
     "path": "webui/web/src/components/SmartDnsPanel.tsx",
@@ -4746,13 +4781,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 90901,
-    "sha256": "77ac9eea90febbd0fa37b4f041239fc3e85b9b3da870e4a1824a92943f151295"
+    "bytes": 91872,
+    "sha256": "384a0404b0868d1fa5d45c0e907c5d640c22a278629304ad563265b73af94240"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 146674,
-    "sha256": "73317067195b544817495804049eda81b8afc9ab1ff33e800172d535661d3990"
+    "bytes": 148180,
+    "sha256": "2a14b790aa709adf61c5765a1e96263adf35d5ca2dae549bb520711b58afcf7a"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4813,6 +4848,11 @@
     "path": "webui/web/src/utils/createRouterProviderContext.tsx",
     "bytes": 407,
     "sha256": "ff8bfc9d53c35a9e787d0d4db5eb3d56321b2e51ac9b5df773d4833163e9fb3a"
+  },
+  {
+    "path": "webui/web/src/utils/dpiSavedDownload.ts",
+    "bytes": 1149,
+    "sha256": "7bf0600ac63ce7794f385ffd4e190e07e2d19f6df570773f204ba0cb6d3b8178"
   },
   {
     "path": "webui/web/src/utils/dpiTerminalScroll.ts",
