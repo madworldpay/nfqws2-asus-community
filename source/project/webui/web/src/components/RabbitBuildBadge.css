@@ -52,6 +52,18 @@
   filter: var(--rabbit-tone);
   animation: rabbit-build-breathe 10s ease-in-out infinite;
 }
+.rabbit-build-video-trigger {
+  display: block;
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.rabbit-build-video-trigger:focus-visible {
+  outline: 2px solid #91b9df;
+  outline-offset: 3px;
+}
 .rabbit-build-off {
   z-index: 3;
   top: calc(var(--rabbit-seat) - 102.5024px);

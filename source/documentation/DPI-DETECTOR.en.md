@@ -9,7 +9,7 @@ DPI Detector is a separate, optional tool by [Runnin4ik](https://github.com/Runn
 1. Click **DPI Detector** at the top of the panel. If it is missing, click **Install DPI Detector** and confirm. The panel checks the pinned file, SHA256 and launch. The original menu opens after installation; no separate SSH login is needed.
 2. Start with tests **1, 2, 3**, selected by default. Arrow keys move the selection, **Space** toggles tests and **Enter** confirms. On a phone, use the buttons below the terminal.
 3. Wait for the result and press **S** in the results menu to save the original TXT.
-4. In the Detector window, refresh **Saved reports** and click download next to the required TXT to save it to your PC or phone. **Export / share** also lets you select it for sending through the preview.
+4. In the Detector window, refresh **TXT reports** and click download next to the required TXT to save it to your PC or phone. **Export / share** also lets you select it for sending through the preview.
 
 The **?** button and expandable help explain installation, tests, controls and results. **Esc** goes back in the original menu; **Q** quits Detector. Closing the panel window stops its terminal and current tests. Open the window again to start a new session. A second terminal or separate Detector check cannot run at the same time.
 

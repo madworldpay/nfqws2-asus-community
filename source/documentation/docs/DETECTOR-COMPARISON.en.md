@@ -85,4 +85,4 @@ DPI Detector **v5.0.0-alpha.21**, zapret2 **1.0.7** with fastpath; tests **1, 2,
 3. Save and restart NFQWS2. Repeat the same tests with the same parameters. Avoid changing DNS, VPN and test selections together.
 4. Compare specific rows, then test the service you need: page loading, video startup and seeking, messages or voice. Repeat both strategies if results vary. If worse, undo the last import or restore your saved profile.
 
-Closing Detector stops its current tests. After pressing **S**, refresh **Saved reports** in the Detector window to download TXT to your PC or phone. **Export / share** also supports sending through the preview. Detector does not apply or automatically select a strategy. [Controls, help and reports](../DPI-DETECTOR.en.md).
+Closing Detector stops its current tests. After pressing **S**, refresh **TXT reports** in the Detector window to download TXT to your PC or phone. **Export / share** also supports sending through the preview. Detector does not apply or automatically select a strategy. [Controls, help and reports](../DPI-DETECTOR.en.md).

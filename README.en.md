@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 94:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build94) · [change history](CHANGELOG.md). Fixed duplicate DPI Detector terminals accumulating in one dialog. Getting started explains why it matters when comparing strategies. The optional beta add-ons, signed catalog and combined preview from Build 92 are retained. Riot covers web domains; game UDP is not claimed. Detector TXT downloads and removal through a confirmation menu are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
+**Build 95:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build95) · [change history](CHANGELOG.md). Fixed duplicate DPI Detector terminals accumulating in one dialog. Getting started explains why it matters when comparing strategies. The optional beta add-ons, signed catalog and combined preview from Build 92 are retained. Riot covers web domains; game UDP is not claimed. Detector TXT downloads and removal through a confirmation menu are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get

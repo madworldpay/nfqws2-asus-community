@@ -1255,5 +1255,8 @@
     "report_bytes": "{{bytes}} bytes",
     "report_changed": "The report changed or failed its integrity check. Refresh the list and try downloading it again.",
     "reports_failed": "Could not load or download the reports. Refresh the list and try again."
+  },
+  "rabbit_videos": {
+    "open": "Rabbit videos"
   }
 }

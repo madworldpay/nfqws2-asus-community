@@ -53,7 +53,7 @@ try {
       await page.locator('header .MuiChip-root').waitFor();
       await page.getByRole('button', { name: 'DPI Detector', exact: true }).waitFor();
       const result = await page.locator('header').evaluate(header => {
-        const controls = [...header.querySelectorAll('button,.MuiChip-root')].map(node => { const r = node.getBoundingClientRect(); return { text: node.getAttribute('aria-label') || node.textContent, chip: node.classList.contains('MuiChip-root'), x: r.x, y: r.y, width: r.width, height: r.height }; });
+        const controls = [...header.querySelectorAll('button:not(.rabbit-build-video-trigger),.MuiChip-root')].map(node => { const r = node.getBoundingClientRect(); return { text: node.getAttribute('aria-label') || node.textContent, chip: node.classList.contains('MuiChip-root'), x: r.x, y: r.y, width: r.width, height: r.height }; });
         const sprites = [...header.querySelectorAll('.rabbit-build-sprite')].map(node => { const r = node.getBoundingClientRect(); return { display: getComputedStyle(node).display, top: r.top, bottom: r.bottom }; });
         const r = header.getBoundingClientRect();
         return { controls, sprites, width: document.documentElement.clientWidth, top: r.top, bottom: r.bottom };

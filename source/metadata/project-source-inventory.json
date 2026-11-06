@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "6fc16b03d8c15b9885876848a301a01816cccaf7b48e74f2b51db99c007a3bd5"
+    "sha256": "d867d3f88fa20d7cb936ecd93651adeedf473a6177218cd0987f462ff5511cb6"
   },
   {
     "path": "LICENSE",
@@ -1921,8 +1921,8 @@
   },
   {
     "path": "tests/test_header_layout_browser.mjs",
-    "bytes": 7342,
-    "sha256": "008814df23b47ae3747e45b9d6c48e93978ebcdee48a1257e0be1ccde78b3feb"
+    "bytes": 7375,
+    "sha256": "3d825f88abc703a3c22049bf5e1453242e5c957f4ca1f4e7e49af911be0f962d"
   },
   {
     "path": "tests/test_import_addons.py",
@@ -2728,6 +2728,11 @@
     "path": "tests/test_quote_diagnostics.mjs",
     "bytes": 2186,
     "sha256": "fe3fe9eef08c83abc6e6b4013727d0f14b5c21017e4688d91cece9782068e001"
+  },
+  {
+    "path": "tests/test_rabbit_videos_browser.mjs",
+    "bytes": 11895,
+    "sha256": "31318ff773a8e902a45633f29b695b016e231c6b159256f9f62d6b77bb80875b"
   },
   {
     "path": "tests/test_relay_conffile.py",
@@ -4651,13 +4656,13 @@
   },
   {
     "path": "webui/web/src/components/RabbitBuildBadge.css",
-    "bytes": 2779,
-    "sha256": "75be4614a0d9d7e26b9cefd26c9424148e51caa361e5721eeeb5669250490f83"
+    "bytes": 3031,
+    "sha256": "965f4556d5585db2a5ea4457525c9e217091f8b858ff07905260927f174e4900"
   },
   {
     "path": "webui/web/src/components/RabbitBuildBadge.tsx",
-    "bytes": 1154,
-    "sha256": "037ef76407506ff7f127c8d7373303768deaa1f69ea87391f8e5dc04a20bd64d"
+    "bytes": 2639,
+    "sha256": "a6f3a9e7e9eac670ce3abb0c5887ff8b15a788e26377813abca3d1b0c9ada055"
   },
   {
     "path": "webui/web/src/components/ReportPreview.tsx",
@@ -4876,13 +4881,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 93586,
-    "sha256": "6847effc853129a68370db4812d5142455961d4e9b633074d04caa5ef0386502"
+    "bytes": 93640,
+    "sha256": "9c3f1606033c2ebad1f833e927619ec6a05932098858409255d36d2945e03ecc"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 151145,
-    "sha256": "3db9e252a393bdaeb73135af7d3d557c2643f48a0d88f745c0085760a9bbc286"
+    "bytes": 151212,
+    "sha256": "03a6e57c8b67344d61f32aee1bc42249ad78c0fc12cd149b6865b7ae79d3b9ed"
   },
   {
     "path": "webui/web/src/types/types.ts",
