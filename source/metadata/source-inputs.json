@@ -39,7 +39,18 @@
     "url": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.2",
     "sha256": "b99a0b86c0ba9360ec7e78c4f1e43b1cbdf1e6936c8fa0f6835c0cd694a495a1",
     "bytes": 1566911,
-    "tar_members": 299
+    "tar_members": 299,
+    "note": "Retained for legacy source test fixtures; current nfqws2-keenetic v1.3.3 engines use zlib 1.4."
+  },
+  {
+    "file": "zlib-1.4.tar.gz",
+    "url": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.4",
+    "commit": "99623ef7097352da7993ba614161fd6a311e046e",
+    "tag": "v1.4",
+    "sha256": "4331355048e286908260fdbeaa0b8cf75ceaf2907c75855a093a6487c7032aaa",
+    "bytes": 1569065,
+    "tar_members": 310,
+    "note": "Statically linked into all seven official nfqws2-keenetic v1.3.3 engine families; confirmed by release build run 41995173819."
   },
   {
     "file": "musl-cross-bcd3603b.tar.gz",

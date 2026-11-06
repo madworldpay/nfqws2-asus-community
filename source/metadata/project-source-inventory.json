@@ -16,13 +16,13 @@
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
-    "bytes": 4156220,
-    "sha256": "1ddf770e34f2cb16bf47e9e009b617a4ff980e78669777f0e6fa953fe5620c97"
+    "bytes": 4158075,
+    "sha256": "84ff565150d3013deefe46cf80f42cba1953701c983db11b24a398f5140d9522"
   },
   {
     "path": "UPSTREAM.md",
-    "bytes": 11044,
-    "sha256": "823903e40c80efbf41fed19d45cfbf11ed2f179b0df6d714f452102a2416ec1e"
+    "bytes": 11855,
+    "sha256": "aaa43b283b607ed19c47cff497e11a09a90b9be9d300c4014ae0cd8ef3775d2e"
   },
   {
     "path": "VERSION",
@@ -1291,8 +1291,8 @@
   },
   {
     "path": "profile-catalog/upstreams.json",
-    "bytes": 1839,
-    "sha256": "6b515c93b0474c0a408b51f8d519b054abeb0c887d5b87c55fb65d4582e6fbe7"
+    "bytes": 2221,
+    "sha256": "d482696600d96ce87657faa19be7aea1e35376b61196e2541f0d2e14466cf6a4"
   },
   {
     "path": "support/dns-share.schema.json",

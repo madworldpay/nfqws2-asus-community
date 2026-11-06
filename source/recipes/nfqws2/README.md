@@ -16,6 +16,14 @@ build.yml `24d184d2dd11701c794fcf48136fff8ba4edaf503e5f01c4dc8ed8da51f93ada`.
 Эта проверка рецепта не заменяет проверку применимости патча.
 Семь семейств: arm, arm64, mips, mipsel, mips64, x86, x86_64; MIPS32 soft-float.
 Используются LuaJIT 2.1-20250826, Lua 5.5.1 для x86, UPX 4.2.4 (кроме mips64).
+Все семь семейств официальной сборки поставщика 1.3.3 статически используют zlib 1.4:
+[журнал выпуска](https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819).
+Соответствующий архив — `sources/zlib-1.4.tar.gz`, tag `v1.4`, commit
+`99623ef7097352da7993ba614161fd6a311e046e`; его SHA256 и размеры закреплены
+в `metadata/source-inputs.json`, ссылки на семь build jobs — в `metadata/engine-provenance.json`.
+При повторной компиляции замените выбор zlib через latest в сохранённом workflow
+на закреплённый `v1.4` и проверьте архив по manifest. `zlib-1.3.2.tar.gz` сохранён
+для старых тестовых fixtures и не описывает зависимость текущих движков.
 Входы toolchain/zlib через latest не являются сами по себе воспроизводимым lock:
 перед компиляцией сверяйте сохранённые хеши и версии, не обновляйте их молча.
 

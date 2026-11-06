@@ -104,5 +104,45 @@
   "lua_runtime": {
     "x86": "Lua 5.5.1",
     "other_families": "OpenResty LuaJIT 2.1-20250826"
+  },
+  "static_dependencies": {
+    "zlib": {
+      "version": "1.4",
+      "commit": "99623ef7097352da7993ba614161fd6a311e046e",
+      "source_input": "zlib-1.4.tar.gz",
+      "sha256": "4331355048e286908260fdbeaa0b8cf75ceaf2907c75855a093a6487c7032aaa",
+      "provider_build": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819",
+      "build_jobs": [
+        {
+          "name": "build-nfqws2 / Linux mipselsf",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610408"
+        },
+        {
+          "name": "build-nfqws2 / Linux arm64",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610413"
+        },
+        {
+          "name": "build-nfqws2 / Linux arm",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610429"
+        },
+        {
+          "name": "build-nfqws2 / Linux mipssf",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610437"
+        },
+        {
+          "name": "build-nfqws2 / Linux mips64",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610449"
+        },
+        {
+          "name": "build-nfqws2 / Linux x86",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610506"
+        },
+        {
+          "name": "build-nfqws2 / Linux x86_64",
+          "url": "https://github.com/nfqws/nfqws2-keenetic/actions/runs/41995173819/job/127136610531"
+        }
+      ],
+      "verification": "All seven official build-job logs identify static libz.a version 1.4. The pinned source archive matches all 271 blobs in the official v1.4 Git tree."
+    }
   }
 }

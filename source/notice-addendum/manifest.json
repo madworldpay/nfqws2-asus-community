@@ -18,5 +18,10 @@
     "file": "gcc-15.2.0-COPYING.RUNTIME.txt",
     "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
     "bytes": 3324
+  },
+  {
+    "file": "zlib-1.4-LICENSE.txt",
+    "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2",
+    "bytes": 1002
   }
 ]
