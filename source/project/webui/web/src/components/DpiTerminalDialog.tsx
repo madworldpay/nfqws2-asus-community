@@ -558,7 +558,7 @@ export const DpiTerminalDialog = ({
         )}
         {ready && (
           <NativeTerminal
-            key={terminalAttempt}
+            key={`terminal-${terminalAttempt}`}
             csrfToken={csrfToken}
             language={language}
             onState={setTerminalState}
@@ -582,7 +582,7 @@ export const DpiTerminalDialog = ({
           </Typography>
         )}
         <DpiSavedReports
-          key={attempt}
+          key={`reports-${attempt}`}
           csrfToken={csrfToken}
           disabled={removing || confirmRemove}
         />

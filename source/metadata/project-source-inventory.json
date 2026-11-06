@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "d6ba4fb19951b0a0175af857ec4891947aaf65d7de043c48a38b2daf2df0a329"
+    "sha256": "6fc16b03d8c15b9885876848a301a01816cccaf7b48e74f2b51db99c007a3bd5"
   },
   {
     "path": "LICENSE",
@@ -1873,6 +1873,11 @@
     "path": "tests/test_dpi_terminal_api.py",
     "bytes": 8386,
     "sha256": "46115f8fa6bbe121b295e3c6634817ece6f6548020d20d8e552fcaf6c8e23176"
+  },
+  {
+    "path": "tests/test_dpi_terminal_browser.mjs",
+    "bytes": 10570,
+    "sha256": "0684ef086755ac0c4f234f88166409b79df5e30f463fc400ccdf778d9c43c38f"
   },
   {
     "path": "tests/test_dpi_terminal_build.py",
@@ -4536,8 +4541,8 @@
   },
   {
     "path": "webui/web/src/components/DpiTerminalDialog.tsx",
-    "bytes": 21926,
-    "sha256": "60c745c30da12d51f575201041c24b320d49f309f8972d46db4a1ff4fb151e59"
+    "bytes": 21953,
+    "sha256": "bc0552ba18e5b8c8f5276baab0e32035862b2ad2a2ab39b30a18971b60a13045"
   },
   {
     "path": "webui/web/src/components/Editor.tsx",
