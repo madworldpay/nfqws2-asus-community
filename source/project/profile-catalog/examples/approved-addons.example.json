@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "revision": 1,
+  "addons": [
+    {
+      "id": "riot-web",
+      "title": "Riot: веб-домены с выбранной базовой стратегией",
+      "description": "Веб-домены Riot обрабатываются выбранной базовой стратегией. Дополнение расширяет только доменную область; не добавляет DNS/Lua и не является проверенным обходом игрового UDP или всего трафика AS6507.",
+      "attribution": "Riot Games — названия и сервисы; перечень веб-доменов: nfqws2 ASUS Community (публичные источники Riot).",
+      "updated_at": "2026-11-06T00:00:00Z",
+      "revision": 1,
+      "min_build": 92,
+      "file": "riot-web.json",
+      "source_sha256": "1b2b1a63c5367d206a79d37a0f09753e979029b0b6f9e5d97ada11f88a7dafb1"
+    }
+  ]
+}

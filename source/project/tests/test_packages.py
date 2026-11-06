@@ -23,6 +23,19 @@ def read_ipk(path):
 
 
 class PackageTests(unittest.TestCase):
+    def test_signed_import_addon_contract_is_installed_with_matching_backend(self):
+        for package in self.packages().values():
+            data = package['data']
+            for name in ['import-addon.schema.json', 'import-addon-catalog.schema.json']:
+                path = 'opt/share/nfqws2-asus/' + name
+                self.assertTrue(path in data, 'Missing add-on schema: ' + path)
+                self.assertEqual(data[path][1], (ROOT/'support'/name).read_bytes())
+                self.assertEqual(data[path][0].mode, 0o644)
+            for name in ['import-addons.php', 'import-addon-catalog.php', 'import-addon-catalog-transport.php']:
+                path = 'opt/share/nfqws-asus-web/' + name
+                self.assertTrue(path in data, 'Missing add-on backend: ' + path)
+                self.assertEqual(data[path][1], (ROOT/'webui/web/public'/name).read_bytes())
+
     def test_local_tls13_predicate_is_packaged_baselined_and_preserves_owner_edits(self):
         source=(ROOT/'asus/lua/local-tls13-stun.lua').read_bytes()
         name='opt/etc/nfqws2/lua/local-tls13-stun.lua'

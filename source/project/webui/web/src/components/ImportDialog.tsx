@@ -18,6 +18,7 @@ import {
 
 import { selectAllImport } from '@/api/bulkSelection';
 import { API } from '@/api/client';
+import type { ImportAddonSelection } from '@/api/importAddonClient';
 import {
   applyImport,
   convertKeeneticImport,
@@ -42,6 +43,7 @@ import {
 import { ShareError } from '@/api/shareClient';
 
 import { Editor } from '@/components/Editor';
+import { ImportAddons } from '@/components/ImportAddons';
 import { ImportCatalog } from '@/components/ImportCatalog';
 import { ImportPreview } from '@/components/ImportPreview';
 import { ImportSelectionView } from '@/components/ImportSelection';
@@ -59,6 +61,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
   const [documents, setDocuments] = useState<string[]>([]);
   const [doc, setDoc] = useState<ImportDocument>();
   const [catalogChoice, setCatalogChoice] = useState<CatalogProfile>();
+  const [sourceGeneration, setSourceGeneration] = useState(0);
   const [selection, setSelection] =
     useState<ImportSelection>(emptyImportSelection);
   const [plan, setPlan] = useState<ImportPlan>();
@@ -105,14 +108,30 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
       API.invalidateListFiles(),
     ]);
   };
-  const edit = (value: ImportSelection) => {
-    revision.current++;
-    setSelection(value);
-    setPlan(undefined);
-    requestId.current = '';
-    setSaved(false);
-    setError('');
-  };
+  const edit = useCallback(
+    (
+      value: ImportSelection | ((current: ImportSelection) => ImportSelection),
+    ) => {
+      revision.current++;
+      setSelection(value);
+      setPlan(undefined);
+      requestId.current = '';
+      setSaved(false);
+      setError('');
+    },
+    [],
+  );
+  const editAddons = useCallback(
+    (addons: ImportAddonSelection[]) => {
+      edit((current) => {
+        const next = { ...current };
+        if (addons.length) next.addons = addons;
+        else delete next.addons;
+        return next;
+      });
+    },
+    [edit],
+  );
   const run = async (fn: () => Promise<void>) => {
     if (pending.current || !csrfToken) return;
     pending.current = true;
@@ -136,6 +155,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
     if (pending.current) return;
     source.current = autoPreview ? 'keenetic' : 'other';
     chosenFiles.current = files;
+    setSourceGeneration((value) => value + 1);
     revision.current++;
     setDoc(undefined);
     setCatalogChoice(undefined);
@@ -180,6 +200,7 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
     setKeeneticText(value);
     setError('');
     if (source.current === 'keenetic') {
+      setSourceGeneration((value) => value + 1);
       revision.current++;
       source.current = null;
       setDocuments([]);
@@ -427,31 +448,41 @@ export const ImportDialog = ({ onClose }: { onClose: VoidFunction }) => {
               onError={fail}
             />
           )}
-          {doc && catalogChoice?.category === 'global' && (
-            <Stack spacing={0.5}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={Boolean(selection.torrent_sites)}
-                    disabled={disabled || needSave}
-                    onChange={(_, checked) => {
-                      const next = { ...selection };
-                      if (checked)
-                        next.torrent_sites = {
-                          catalog_id: catalogChoice.id,
-                          sha256: catalogChoice.sha256,
-                        };
-                      else delete next.torrent_sites;
-                      edit(next);
-                    }}
+          {doc && csrfToken && (
+            <ImportAddons
+              key={`${csrfToken}:${sourceGeneration}`}
+              csrfToken={csrfToken}
+              disabled={disabled || needSave}
+              value={selection.addons ?? []}
+              onChange={editAddons}
+            >
+              {catalogChoice?.category === 'global' && (
+                <Stack spacing={0.5}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={Boolean(selection.torrent_sites)}
+                        disabled={disabled || needSave}
+                        onChange={(_, checked) => {
+                          const next = { ...selection };
+                          if (checked)
+                            next.torrent_sites = {
+                              catalog_id: catalogChoice.id,
+                              sha256: catalogChoice.sha256,
+                            };
+                          else delete next.torrent_sites;
+                          edit(next);
+                        }}
+                      />
+                    }
+                    label={t('import.torrent_sites.label')}
                   />
-                }
-                label={t('import.torrent_sites.label')}
-              />
-              <Typography variant="body2" color="text.secondary">
-                {t('import.torrent_sites.help')}
-              </Typography>
-            </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('import.torrent_sites.help')}
+                  </Typography>
+                </Stack>
+              )}
+            </ImportAddons>
           )}
           {plan && (
             <>

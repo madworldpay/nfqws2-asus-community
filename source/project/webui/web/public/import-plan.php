@@ -3,6 +3,7 @@ require_once __DIR__.'/import-document.php';
 require_once __DIR__.'/share-dependencies.php';
 require_once __DIR__.'/smartdns-profile.php';
 require_once __DIR__.'/import-torrent-sites.php';
+require_once __DIR__.'/import-addons.php';
 /** Deterministic, read-only proposal. The transaction consumes the same bytes. */
 final class AsusImportPlan
 {
@@ -70,11 +71,11 @@ final class AsusImportPlan
         try{return AsusSmartDnsProfile::normalize(['schema_version'=>1,'upstreams'=>$servers,'records'=>$records]);}
         catch(AsusSmartDnsProfileError $e){$problems[]=['code'=>'invalid_dns_profile','field'=>$e->field];return null;}
     }
-    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null): array
+    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null,array $addons=[],?callable $readList=null): array
     {
         $profile??=NfqwsPlatform::current();NfqwsPlatform::settings($profile);
-        self::keys($selection,array_merge(['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua'],array_key_exists('torrent_sites',$selection)?['torrent_sites']:[]));
-        $torrentOption=AsusImportTorrentSites::requested($selection);$torrentPreview=null;
+        self::keys($selection,array_merge(['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua'],array_key_exists('torrent_sites',$selection)?['torrent_sites']:[],array_key_exists('addons',$selection)?['addons']:[]));
+        $torrentOption=AsusImportTorrentSites::requested($selection);$torrentPreview=null;$addonPicks=AsusImportAddons::requested($selection);$addonPreview=null;$addonSources=[];$addonShared=false;
         foreach(['allow_shared_impact','allow_incomplete','trusted_lua']as $key)if(!is_bool($selection[$key]))throw new RuntimeException('invalid_import_selection');
         foreach(['blocks','shared','ports','files','dns']as $key)if(!is_array($selection[$key]))throw new RuntimeException('invalid_import_selection');
         $blocks=self::picks($selection['blocks'],AsusImportConfig::BLOCKS,$document['values']);$shared=self::picks($selection['shared'],AsusImportConfig::SHARED,$document['values']);$ports=self::picks($selection['ports'],AsusImportConfig::PORTS,$document['ports']);foreach($ports as $v)self::port($v);
@@ -104,6 +105,12 @@ final class AsusImportPlan
         foreach($targets as &$target)if(isset($selectedTargets[$target['path']])&&$selectedTargets[$target['path']]!==$target['sha256'])$target['reuse']=false;unset($target);
         $current=($blocks||$shared||$ports||$files)?AsusImportConfig::parse($currentConfig):[];$changes=[];
         foreach($blocks+$shared+$ports as $key=>$value)$changes[$key]=self::bind($value,$aliases,$problems,$profile);
+        if($addonPicks){
+            try{
+                $added=AsusImportAddons::compose($changes,$current,$blocks,$addons,$addonPicks,$virtual,$files,self::words(...),$readList);
+                $changes=$added['changes'];$addonPreview=$added['preview'];$addonSources=$added['sources'];$addonShared=$added['shared_changed'];
+            }catch(RuntimeException $e){if($e->getMessage()!=='addon_scope_incompatible')throw $e;$problems[]=['code'=>'addon_scope_incompatible','name'=>$e instanceof AsusImportAddonScopeError?$e->remedy:'Choose an explicit readable hostlist/AUTO base and preserve its exclusions.'];}
+        }
         if($torrentOption!==null){
             try{
                 if(!$blocks)throw new RuntimeException('torrent_sites_incompatible');
@@ -118,7 +125,7 @@ final class AsusImportPlan
         }
         foreach($hypothetical as $value)foreach($available as $id=>$file)foreach($file['aliases']as $alias)if(str_starts_with($alias,'RESOURCE_')&&preg_match('/\b'.preg_quote($alias,'/').'\b/',$value)&&(!isset($targets[$id])||(!$targets[$id]['selected']&&!$targets[$id]['reuse'])))$required['files'][]=$id;
         $required['files']=array_values(array_unique($required['files']));foreach($required['files']as $id)$problems[]=['code'=>'missing_file','id'=>$id];
-        $affected=[];$sharedChanged=false;foreach($shared as $key=>$_)if(($current[$key]??'')!==$changes[$key])$sharedChanged=true;
+        $affected=[];$sharedChanged=$addonShared;foreach($shared as $key=>$_)if(($current[$key]??'')!==$changes[$key])$sharedChanged=true;
         if($sharedChanged)foreach(AsusImportConfig::BLOCKS as $key)if(!isset($blocks[$key])&&trim($current[$key]??'')!=='')$affected[]=$key;
         foreach($files as $file)if($file['replace'])foreach(AsusImportConfig::BLOCKS as $key)if(!isset($blocks[$key])&&trim($current[$key]??'')!==''){
             $uses=implode(' ',array_map(fn($k)=>$current[$k]??'',[$key,'NFQWS_BASE_ARGS','NFQWS_EXTRA_ARGS','NFQWS_ARGS_IPSET']));
@@ -151,6 +158,7 @@ final class AsusImportPlan
         $out=['ready'=>$problems===[],'problems'=>$problems,'warnings'=>$warnings,'required'=>$required,'affected_blocks'=>$affected,
             'config'=>$newConfig,'changes'=>$diff,'files'=>$files,'draft'=>$draft,'old_draft'=>$currentDraft,'fingerprints'=>['config'=>hash('sha256',$currentConfig),'draft'=>$currentDraft===null?null:AsusSmartDnsProfile::hash($currentDraft),'files'=>$fingerprints],'input_sha256'=>$document['input_sha256']];
         if($torrentPreview!==null)$out['torrent_sites']=$torrentPreview;
+        if($addonPreview!==null){$out['addons']=$addonPreview;$out['fingerprints']['addons']=$addonSources;}
         $out['digest']=hash('sha256',json_encode($out,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));return $out;
     }
 }

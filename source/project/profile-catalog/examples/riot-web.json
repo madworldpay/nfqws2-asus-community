@@ -1,0 +1,14 @@
+{
+  "type": "nfqws2_import_addon",
+  "schema_version": 1,
+  "id": "riot-web",
+  "title": "Riot: веб-домены с выбранной базовой стратегией",
+  "description": "Веб-домены Riot обрабатываются выбранной базовой стратегией. Дополнение расширяет только доменную область; не добавляет DNS/Lua и не является проверенным обходом игрового UDP или всего трафика AS6507.",
+  "kind": "scope_domains_v1",
+  "domains": [
+    "riotgames.com",
+    "riotcdn.net",
+    "leagueoflegends.com",
+    "playvalorant.com"
+  ]
+}

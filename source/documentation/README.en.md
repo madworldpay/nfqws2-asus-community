@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 91:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build91) · [change history](CHANGELOG.md). Download original TXT reports from DPI Detector, remove it through a confirmation menu, and keep the SmartDNS editor in sync after imports. Profile import with preview and zapret2 1.0.7 are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
+**Build 92:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build92) · [change history](CHANGELOG.md). Optional beta add-ons for imported profiles, a signed catalog and a combined preview. Riot covers web domains; game UDP is not claimed. Detector TXT downloads and removal through a confirmation menu are retained. [Real Detector runs before and after tuning](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get

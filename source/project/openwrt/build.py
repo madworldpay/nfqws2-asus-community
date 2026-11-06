@@ -165,7 +165,8 @@ def payload_files(target,engine,source=None):
     files['usr/share/nfqws2/report-baseline.json']=((json.dumps(baseline,sort_keys=True,separators=(',',':'))+'\n').encode(),0o644)
     for source,name in [('openwrt-package-manifest.schema.json','openwrt-package-manifest.schema.json'),('trusted-release-key.pem','update-release-key.pem')]:
         files['usr/share/nfqws2/'+name]=((ROOT/'updates'/source).read_bytes(),0o644)
-    for name in ['profile-catalog.schema.json','dpi-catalog.json','dpi-profile.json','dpi-native-defaults.json',
+    for name in ['profile-catalog.schema.json','import-addon.schema.json','import-addon-catalog.schema.json',
+                 'dpi-catalog.json','dpi-profile.json','dpi-native-defaults.json',
                  'dpi-analysis-v2.schema.json','dpi-report.schema.json','dpi-envelope.schema.json','dpi-saved.schema.json',
                  'strategy.schema.json','strategy-v2.schema.json','resources.schema.json','dns-share.schema.json',
                  'share-v4.schema.json','share-envelope.schema.json','report.schema.json']:

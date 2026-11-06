@@ -130,7 +130,8 @@ class AsusSmartDnsLifecycle {function __construct($s,$b){} function resume(){fil
         self.assertNotIn('case "$NFQWS_PKG_ACTION" in',functions)
         raw,mode=files['usr/share/nfqws2/optional/dpi-detector-armv5te']
         self.assertEqual((hashlib.sha256(raw).hexdigest(),mode),('c0e0045bab2ae654a9f0fef125602fc042b6f54705afdfa0d6bfc10557e74863',0o644))
-        for name in ['strategy-v2.schema.json','profile-catalog.schema.json','profile-catalog-public.pem']:
+        for name in ['strategy-v2.schema.json','profile-catalog.schema.json','profile-catalog-public.pem',
+                     'import-addon.schema.json','import-addon-catalog.schema.json']:
             self.assertIn('usr/share/nfqws2/'+name,files.keys())
         self.assertEqual(files['usr/share/nfqws2/openwrt-package-manifest.schema.json'][0],(ROOT/'updates/openwrt-package-manifest.schema.json').read_bytes())
         self.assertEqual(files['usr/share/nfqws2/update-release-key.pem'][0],(ROOT/'updates/trusted-release-key.pem').read_bytes())

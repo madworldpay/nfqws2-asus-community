@@ -442,7 +442,7 @@ function main(): void
     exit();
   }
 
-  if (in_array($_POST['cmd'], ['importconvert','importinspect','importprepare','importapply','importstatus','importundo'], true)) {
+  if (in_array($_POST['cmd'], ['importaddoncatalog','importconvert','importinspect','importprepare','importapply','importstatus','importundo'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/import-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     try {

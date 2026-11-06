@@ -39,6 +39,7 @@ try {
       const post=new URLSearchParams(route.request().postData()),cmd=post.get('cmd');calls.push(cmd);let body;
       if(cmd==='importstatus')body={state:'idle',id:null,can_undo:false,config_saved:false,dns_draft_saved:false};
       else if(cmd==='importcatalog')body={schema_version:1,revision:1,build:88,profiles};
+      else if(cmd==='importaddoncatalog')body={schema_version:1,revision:1,build:92,addons:[]};
       else if(cmd==='importcatalogload')body={document:'{}'};
       else if(cmd==='importinspect')body=doc;
       else if(cmd==='importprepare'){

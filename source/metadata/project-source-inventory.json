@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "0433e993a3dbc505d6e5cad972a1df0ab189cfe7ceece5e94fd47ca9a074370f"
+    "sha256": "13c1dc569ae4a0d7f90d8f83d22fc9c8fa526e133f8fea0f9526c8533c4d8da3"
   },
   {
     "path": "LICENSE",
@@ -126,8 +126,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 31354,
-    "sha256": "bce7dd855c51bda3cf0158788cdff55f16ac275f81bc1d74fd74306eeda14193"
+    "bytes": 31418,
+    "sha256": "66f344af5e092757ee9867eeba6e366569e9ce2583e017559d31172a8168cd2f"
   },
   {
     "path": "asus/compatibility.sh",
@@ -906,8 +906,8 @@
   },
   {
     "path": "docs/IMPORT.md",
-    "bytes": 8600,
-    "sha256": "bdc19a5d46f27af75bb6c0b0444352908b60b0be31da03eaddfd30f2e42a0084"
+    "bytes": 11231,
+    "sha256": "ec1f47e5e85d17bd6183db26183ff2fd9675429fc25bb8ada4434ca4e43cada4"
   },
   {
     "path": "docs/PACKAGE-UPDATES.md",
@@ -916,8 +916,8 @@
   },
   {
     "path": "docs/USAGE.md",
-    "bytes": 7454,
-    "sha256": "a90a14fd3c25309bb287540d4cc6a8030584015c71fdfd9c0d52b9b0cf61e801"
+    "bytes": 7355,
+    "sha256": "a96bb7ac85576b6eb6bccccce613bc35bc2332c0d0a109d897b4e282495514d3"
   },
   {
     "path": "ip-health/control.sh",
@@ -991,8 +991,8 @@
   },
   {
     "path": "openwrt/build.py",
-    "bytes": 30133,
-    "sha256": "3043655d64e08bce9164a0cc23af7551cebd47302ac3963ddfd8c9a10b33ce2d"
+    "bytes": 30213,
+    "sha256": "ba05b5edb91e1a16eac61ead09627adcaa5c157a317bc6b4abd1376b6d9781f0"
   },
   {
     "path": "openwrt/config-cli.php",
@@ -1240,9 +1240,34 @@
     "sha256": "78c10f5abb29dc18e48058ba38fec85adf606c0671e7f737c332e7009135cfa8"
   },
   {
+    "path": "profile-catalog/ADDONS.md",
+    "bytes": 9074,
+    "sha256": "3903767b7f34b732188b0205c03843ec651272cf4907a82f8d4f1b4a87906536"
+  },
+  {
     "path": "profile-catalog/README.md",
     "bytes": 5607,
     "sha256": "af2f38e3cd67498c4559cefe670ab20f2d7e49c440beedf923cc36fd135b8f40"
+  },
+  {
+    "path": "profile-catalog/addons-nginx.conf.example",
+    "bytes": 1541,
+    "sha256": "38df08d840e74d5227139cd9265025b324f6f0eebee5aea0027239ab5e9aa318"
+  },
+  {
+    "path": "profile-catalog/addons.py",
+    "bytes": 12198,
+    "sha256": "60cb7cec186e53621b6c32aaaaa7b4d3fa218b0f56b052d532d1420ab9f4b1db"
+  },
+  {
+    "path": "profile-catalog/examples/approved-addons.example.json",
+    "bytes": 969,
+    "sha256": "c02cec72e9bf1797871f1ab9181d1fc2a6df875182ea7effb064eaf2e346c1fc"
+  },
+  {
+    "path": "profile-catalog/examples/riot-web.json",
+    "bytes": 690,
+    "sha256": "1b2b1a63c5367d206a79d37a0f09753e979029b0b6f9e5d97ada11f88a7dafb1"
   },
   {
     "path": "profile-catalog/nginx-http.conf.example",
@@ -1258,6 +1283,11 @@
     "path": "profile-catalog/publish.py",
     "bytes": 12898,
     "sha256": "9032a1307b952c73120fec96653a4ff0ba16509e032eb8ab3678d8396ec66a00"
+  },
+  {
+    "path": "profile-catalog/test_addons.py",
+    "bytes": 20009,
+    "sha256": "d99d23154ed1539d7f8d0068dd40b0247c701b9f80ae0288ec79516e5be8901b"
   },
   {
     "path": "profile-catalog/upstreams.json",
@@ -1308,6 +1338,16 @@
     "path": "support/dpi-saved.schema.json",
     "bytes": 70761,
     "sha256": "ef2bdf708f48f5ef487672912c45707735aa593e9ec651b37541f28c9a6b36c6"
+  },
+  {
+    "path": "support/import-addon-catalog.schema.json",
+    "bytes": 1891,
+    "sha256": "fa0ef5a2c20f380e400b86d35e8acabd7ab6706aea98e58a84f56fce8d9a1416"
+  },
+  {
+    "path": "support/import-addon.schema.json",
+    "bytes": 916,
+    "sha256": "352e9030f67c3c068d70d39f2e7dffcda438c7ed0961659a97add4fd58b3ea7d"
   },
   {
     "path": "support/profile-catalog.schema.json",
@@ -1553,6 +1593,11 @@
     "path": "tests/fixtures/dpi/group6.json",
     "bytes": 1209,
     "sha256": "eb07792fb0e41de1fcfd9663a9d29c5f7bb1c60b210e86418f35ac629b0c69bd"
+  },
+  {
+    "path": "tests/fixtures/import_addons_hostlist.c",
+    "bytes": 2349,
+    "sha256": "e757645e6e0a83d5a6e35408426ff4ac17fb012f4f40746c5163cf60b590d3c7"
   },
   {
     "path": "tests/fixtures/ip_health_harness.lua",
@@ -1875,14 +1920,34 @@
     "sha256": "008814df23b47ae3747e45b9d6c48e93978ebcdee48a1257e0be1ccde78b3feb"
   },
   {
+    "path": "tests/test_import_addons.py",
+    "bytes": 35822,
+    "sha256": "2e9f18c850a289ca02156a6fd9094face0c2a6e1faeb67e345ad9b8df940b7e8"
+  },
+  {
+    "path": "tests/test_import_addons_browser.mjs",
+    "bytes": 18768,
+    "sha256": "542a8fd9c6972ee5b0c3b7e3a8a4dc370e0d645318ed4fb3d7649089586e3933"
+  },
+  {
+    "path": "tests/test_import_addons_client.mjs",
+    "bytes": 4590,
+    "sha256": "182eef1d8d2fddabb051eae54bc9a9faf88c02a5d5fb874b78e8f0ae47992c27"
+  },
+  {
+    "path": "tests/test_import_addons_engine.py",
+    "bytes": 5296,
+    "sha256": "a7ad31c8207ce869321aa7818e3e1fc5a1039fd0cf8894927caf0e83f9acb678"
+  },
+  {
     "path": "tests/test_import_catalog_session_browser.mjs",
     "bytes": 6401,
     "sha256": "3b1c21d7f2dbc3ecff8c8677554f5a5acc6333f3542582557e407fd8032b7585"
   },
   {
     "path": "tests/test_import_catalog_ui.mjs",
-    "bytes": 9155,
-    "sha256": "f29b2ee1ff9b066d02bd99c08f2db6cb0e19978e399d82acef401f5a40be2e58"
+    "bytes": 9249,
+    "sha256": "571e78406088ccaa8997a938375337b1d74720a58753f9b195057a13948a2e10"
   },
   {
     "path": "tests/test_import_client.mjs",
@@ -1901,8 +1966,8 @@
   },
   {
     "path": "tests/test_import_http.py",
-    "bytes": 6108,
-    "sha256": "f8f2b591a289f62d1b687a5992f18d414bf01c252dece3d8e6e649b6894faefb"
+    "bytes": 6671,
+    "sha256": "5effc14dc14a8f5c9166aeaf774ed34ee09bbe0deaf06cb9b20657b1081f4bfa"
   },
   {
     "path": "tests/test_import_keenetic.py",
@@ -1936,8 +2001,8 @@
   },
   {
     "path": "tests/test_import_torrent_sites_browser.mjs",
-    "bytes": 7129,
-    "sha256": "b0dd6f28db84c2096ed936db10f0fe4882268e39d2c0c2b8d0e423f4096f81e4"
+    "bytes": 7225,
+    "sha256": "a8c6b47cc06e2cecf767d48044645d88aae32f2cb9c6041a7d01a4d98f94e645"
   },
   {
     "path": "tests/test_import_torrent_sites_engine.py",
@@ -2061,8 +2126,8 @@
   },
   {
     "path": "tests/test_keenetic_import_ui.mjs",
-    "bytes": 6825,
-    "sha256": "624ac41feb85287fece35efbbf552a20cdfd58faff9912198674a492f70537d4"
+    "bytes": 6983,
+    "sha256": "63ea6451c19e8bf216bc5a4686cf401dd7775066704e25b32810fa3680dbd26a"
   },
   {
     "path": "tests/test_legacy_compatibility.py",
@@ -2161,8 +2226,8 @@
   },
   {
     "path": "tests/test_openwrt_builder.py",
-    "bytes": 15407,
-    "sha256": "e2eba622650430af227939a2657683aa92c96ac7454b245ae77b08345e0da0d4"
+    "bytes": 15491,
+    "sha256": "c770e9815a989cf38c2baba0ad86e7bf19cfed52ab1af4fe15eb614d50703fbb"
   },
   {
     "path": "tests/test_openwrt_config.php",
@@ -2606,8 +2671,8 @@
   },
   {
     "path": "tests/test_packages.py",
-    "bytes": 22654,
-    "sha256": "76f3267d96b0cf1c838f45b8b398c2525a75bc3a71a36dd42453ad3eac26c190"
+    "bytes": 23537,
+    "sha256": "43e7b6464122ee3d330929630856fe98b82cbadf5899efd0db8f16a7bb74399a"
   },
   {
     "path": "tests/test_platform.py",
@@ -3635,9 +3700,24 @@
     "sha256": "b860499906cb227c51db162ddc4604a6b41e504c2e5cd71786cdbd738eaa5725"
   },
   {
+    "path": "webui/web/public/import-addon-catalog-transport.php",
+    "bytes": 11830,
+    "sha256": "b5ba41856447e02fcd1328a4180b7155a494a34f5b15eed0da1203da677b1cdd"
+  },
+  {
+    "path": "webui/web/public/import-addon-catalog.php",
+    "bytes": 3870,
+    "sha256": "ef639036c68a8a9e99ca6395b7e246ce825f406adfb44ecee38a4aa788fa19e1"
+  },
+  {
+    "path": "webui/web/public/import-addons.php",
+    "bytes": 14605,
+    "sha256": "d4601dc8f782f5765322d9cb23f35e0fcfb6e0d2899ce0c32fecafbdddfe0ea3"
+  },
+  {
     "path": "webui/web/public/import-api.php",
-    "bytes": 7225,
-    "sha256": "66f0ab0af36b602df0ac24f2057745edc0448b1019a3687bca65a29b26b57d2e"
+    "bytes": 8218,
+    "sha256": "c9c32d63dc647b8886ab2638b738633f606cdf202dc1bdba1b87997d4a83a158"
   },
   {
     "path": "webui/web/public/import-config.php",
@@ -3651,13 +3731,13 @@
   },
   {
     "path": "webui/web/public/import-keenetic.php",
-    "bytes": 9801,
-    "sha256": "2d6e96ba828c2a68be82f711d4346bcec1f9a2ee139f5fde6900ec2b87972665"
+    "bytes": 9800,
+    "sha256": "294b16adf14c0df63bb1cc117e6a62f539073a1655bf0cf7e72c234fdcce89f8"
   },
   {
     "path": "webui/web/public/import-plan.php",
-    "bytes": 17680,
-    "sha256": "56a7f3eb82dfa3aa633f5532a0c6fb8aa7935cd9ae4c27a33657724c0584faea"
+    "bytes": 18664,
+    "sha256": "1269b59a5ea3fd4149aa66c207463f146ffa3650dfa90acae928431f802e21be"
   },
   {
     "path": "webui/web/public/import-store.php",
@@ -3666,18 +3746,18 @@
   },
   {
     "path": "webui/web/public/import-torrent-sites.php",
-    "bytes": 8059,
-    "sha256": "0b7608169868985474c95cd7b23b105ea7b85f24fe72df66e488f63da14f5d36"
+    "bytes": 8058,
+    "sha256": "30b7b72cdd628c48cdd41f7d6735783ca44d7f8498b9ec3cde53a9efa26f6e45"
   },
   {
     "path": "webui/web/public/import-transaction.php",
-    "bytes": 14869,
-    "sha256": "21730b8bec5d3c4f778ee1cbb90160911dcd76c56013b32877f8956a8d1a6dee"
+    "bytes": 14992,
+    "sha256": "c4b289e2043176e3cc0190b72f0c2a0f70458f3115535f034ff4c2c8efba97ee"
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 38261,
-    "sha256": "748e6dc1f26e6312aa54f3912b5b1ce14f0e668cd1742fc5c1a3042e2078157e"
+    "bytes": 38282,
+    "sha256": "7666260f2c4f401500897478b6fbc952d8dc56bcaa1fc4d2d51934eb0b59b522"
   },
   {
     "path": "webui/web/public/ip-health-api.php",
@@ -4265,9 +4345,14 @@
     "sha256": "67e602f117532d5e6a1b5766ff908de2c5415d4191d4942e108bab7b7a570aa9"
   },
   {
+    "path": "webui/web/src/api/importAddonClient.ts",
+    "bytes": 4242,
+    "sha256": "aa5a270c478e84c10a235ed70e7dd53adbc59ed1e7744feea8f3b6cb02aae43b"
+  },
+  {
     "path": "webui/web/src/api/importClient.ts",
-    "bytes": 10630,
-    "sha256": "aee3e0f69f7c51585faf549d6e30785d96d404c924179365b2a56d25a83fe359"
+    "bytes": 11271,
+    "sha256": "e1a777a8629212126cbf9cb2ac617b484a63e262610f5d0f4ab6d56f878685aa"
   },
   {
     "path": "webui/web/src/api/importPaths.ts",
@@ -4490,19 +4575,24 @@
     "sha256": "286da1bf3796db4451472e54a54b8dac992eabc5e4f1ed53d64c9ce0487cc302"
   },
   {
+    "path": "webui/web/src/components/ImportAddons.tsx",
+    "bytes": 6495,
+    "sha256": "12ce9eb22a945734d11b0b30682ae5f1a2abeb1c7209de96ca9f8f4858dc8811"
+  },
+  {
     "path": "webui/web/src/components/ImportCatalog.tsx",
     "bytes": 6325,
     "sha256": "691715201dca9799b38a64de6d25072909750d54c46ef54bb5987da7ac3f50cc"
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
-    "bytes": 16206,
-    "sha256": "3bdd86c1fb2fa58022475d689887dd65e4d29cf2485a301605747e519a1ed6d9"
+    "bytes": 17304,
+    "sha256": "01cf45de8a594b69a3c95e117c108ff7cc3dd1de862d6886f4cbf757bf84c826"
   },
   {
     "path": "webui/web/src/components/ImportPreview.tsx",
-    "bytes": 4488,
-    "sha256": "b170bcd935316dc68b1bd9444895ffd628dd0107a89eb42fdff74453cab2c3d0"
+    "bytes": 5569,
+    "sha256": "df481a312bc9b96d907264d3a80e27df046ca61b512f456c7a22f5acafc4414f"
   },
   {
     "path": "webui/web/src/components/ImportSelection.tsx",
@@ -4781,13 +4871,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 91872,
-    "sha256": "384a0404b0868d1fa5d45c0e907c5d640c22a278629304ad563265b73af94240"
+    "bytes": 93328,
+    "sha256": "188e80826ab39b6a3e37032073c4759f4540524e2cd5e996159f2fe451075d87"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 148180,
-    "sha256": "2a14b790aa709adf61c5765a1e96263adf35d5ca2dae549bb520711b58afcf7a"
+    "bytes": 150741,
+    "sha256": "0db83103886d493421d5099f1044f053735db700d37b387a6cbdcbfc0885a58c"
   },
   {
     "path": "webui/web/src/types/types.ts",
@@ -4811,8 +4901,8 @@
   },
   {
     "path": "webui/web/src/utils/codeMirrorLangList.ts",
-    "bytes": 1036,
-    "sha256": "0ca431a523d367c956cebac12a72decfd254cc7506402f153c8ff573e333aec5"
+    "bytes": 1037,
+    "sha256": "765d42c28d223af29d9bd7d0d193b8b1bae086c2088b716981e8dfb1c8742ed4"
   },
   {
     "path": "webui/web/src/utils/codeMirrorLangLog.ts",

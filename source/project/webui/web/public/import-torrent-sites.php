@@ -4,7 +4,7 @@ require_once __DIR__.'/resource-paths.php';
 final class AsusImportTorrentSites
 {
     public const SITES=['nnmclub.to','rutracker.org','rutor.info','tapochek.net'];
-    private const MARKER='nfqws2-community-torrent-sites-v1';
+    public const MARKER='nfqws2-community-torrent-sites-v1';
     private const TLS_SHA='936c2bee4cfb80aa3c426b2dcbcc834b3fbcd1adb17172959dc569c73a14275c';
     private const BASE=['--fastpath-workaround','--lua-init','--blob','--debug','--bind-fix4','--bind-fix6','--ipcache-lifetime','--ipcache-hostname'];
     private const PROGRAM=['--new','--comment','--filter-tcp','--filter-udp','--filter-l3','--filter-l7','--payload','--lua-desync','--out-range','--in-range',

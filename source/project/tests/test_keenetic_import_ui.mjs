@@ -23,6 +23,7 @@ try {
     const post = Object.fromEntries(new URLSearchParams(route.request().postData())); calls.push(post.cmd); assert.equal(post.csrf_token, 'fixture-csrf');
     let body, status = 200;
     if (post.cmd === 'importstatus') body = { state: 'idle', id: null, can_undo: false, config_saved: false, dns_draft_saved: false };
+    else if (post.cmd === 'importaddoncatalog') body = { schema_version: 1, revision: 1, build: 92, addons: [] };
     else if (post.cmd === 'importconvert') { texts.push(post.text); if (unsupported) { status = 422; body = { error: 'unsupported_keenetic_strategy' }; } else body = { document: converted }; }
     else if (post.cmd === 'importinspect') { assert.deepEqual(JSON.parse(post.documents), [converted]); body = document; }
     else if (post.cmd === 'importprepare') { assert.deepEqual(JSON.parse(post.documents), [converted]); selections.push(JSON.parse(post.selection)); body = { ready: false, problems: [{ code: 'unresolved_file', key: 'NFQWS_ARGS', name: 'missing.list' }], warnings: [], required: { files: [], shared: [] }, affected_blocks: [], config: '', changes: [{ key: 'NFQWS_ARGS', before: '--filter-tcp=80', after }], files: [], draft: null, old_draft: null, digest: 'e'.repeat(64), proof: null }; }
@@ -40,7 +41,7 @@ try {
   await page.getByRole('button', { name: 'Преобразовать под ASUS', exact: true }).dblclick();
   await page.getByText('Нужного файла нет на роутере: missing.list', { exact: true }).waitFor();
   assert.deepEqual(texts, [text]);
-  assert.deepEqual(calls, ['importstatus', 'importconvert', 'importinspect', 'importprepare']);
+  assert.deepEqual(calls.filter(cmd => cmd !== 'importaddoncatalog'), ['importstatus', 'importconvert', 'importinspect', 'importprepare']);
   assert.deepEqual(selections[0].blocks, [{ key: 'NFQWS_ARGS', value: after }]);
   assert.equal(await page.getByRole('checkbox', { name: 'Базовая стратегия', exact: true }).isChecked(), true);
   assert.equal(await page.getByRole('button', { name: 'Сохранить выбранное', exact: true }).isDisabled(), true);

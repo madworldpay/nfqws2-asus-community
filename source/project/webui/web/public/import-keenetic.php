@@ -11,7 +11,7 @@ final class AsusImportKeenetic
     // commit 221d7dff24bfec0cd5ac0a5070b8acef2008af3d; plus the pinned fastpath patch.
     // 0 = no operand, 1 = required operand, 2 = optional operand (equals form).
     // Process control, arbitrary outputs and input execution modes are excluded.
-    private const OPTIONS=[
+    public const OPTIONS=[
         '--debug'=>2,
         '--comment'=>2,
         '--ctrack-timeouts'=>1,

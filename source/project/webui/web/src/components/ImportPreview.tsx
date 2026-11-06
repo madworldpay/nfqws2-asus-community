@@ -56,6 +56,38 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
           {text(plan.torrent_sites.block)}
         </Stack>
       )}
+      {!!plan.addons?.length && (
+        <Stack spacing={1}>
+          <Typography variant="subtitle2">
+            {t('import.addons.preview')}
+          </Typography>
+          {plan.addons.map((addon) => (
+            <Stack
+              key={addon.id}
+              spacing={0.5}
+              sx={{ overflowWrap: 'anywhere' }}
+            >
+              <Typography variant="subtitle2">{addon.title}</Typography>
+              <Typography variant="body2">
+                {t(`import.addons.${addon.action}`)}
+              </Typography>
+              {!!addon.domains.length && (
+                <>
+                  <Typography variant="caption">
+                    {t('import.addons.domains')}
+                  </Typography>
+                  <Typography variant="body2">
+                    {addon.domains.join(', ')}
+                  </Typography>
+                </>
+              )}
+              {!!addon.note && (
+                <Typography variant="body2">{addon.note}</Typography>
+              )}
+            </Stack>
+          ))}
+        </Stack>
+      )}
       {!!plan.affected_blocks.length && (
         <Alert severity="info">
           {t('import.affected')}: {plan.affected_blocks.join(', ')}

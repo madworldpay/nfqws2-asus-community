@@ -869,7 +869,8 @@
       "incomplete_analysis": "Review the listed analysis limitations before saving.",
       "empty_selection": "Select a block, file, ports or DNS to import.",
       "invalid_file_name": "Unsupported file name. Use up to 128 letters A–Z, digits, dots, hyphens or underscores.",
-      "torrent_sites_incompatible": "This profile or its files are incompatible with the additional rule. A compatible profile with TCP 443 and packaged Lua/TLS files is required. Turn this option off to import the original profile."
+      "torrent_sites_incompatible": "This profile or its files are incompatible with the additional rule. A compatible profile with TCP 443 and packaged Lua/TLS files is required. Turn this option off to import the original profile.",
+      "addon_scope_incompatible": "This add-on cannot be safely combined with this strategy scope. Choose a base with conventional domain lists or AUTO, or turn off the add-on. Exclusions are retained."
     },
     "errors": {
       "invalid_response": "The panel received an incomplete reply. Retry the check.",
@@ -918,7 +919,8 @@
       "catalog_version": "Update the package to use this preset.",
       "unsupported_keenetic_strategy": "Could not convert this format. Paste an NFQWS2 text strategy without shell commands.",
       "keenetic_limit": "The strategy text exceeds 64 KiB. Paste only the required strategy arguments.",
-      "invalid_torrent_sites_source": "This option requires a general cloud profile. Load the profile again: it has changed or the catalog is unavailable."
+      "invalid_torrent_sites_source": "This option requires a general cloud profile. Load the profile again: it has changed or the catalog is unavailable.",
+      "invalid_addon_source": "The selected add-on changed or failed verification. Refresh add-ons, select it again and preview again."
     },
     "from_json": "From JSON: ",
     "dns_default_hint": "A complete DNS draft needs at least one default server. Supply bootstrap addresses for DNS hostnames. Nothing is added automatically.",
@@ -971,6 +973,21 @@
       "label": "Add bypass for torrent tracker websites",
       "help": "Adds a rule to the selected profile for HTTPS websites nnmclub.to, rutracker.org, rutor.info and tapochek.net only (TCP 443). Results depend on your network. Review the added rule in the preview before saving.",
       "preview": "Added rule for torrent tracker websites"
+    },
+    "addons": {
+      "title": "Add-ons · Beta",
+      "hint": "Signed cloud collections supplement the selected base strategy. All options start off; review their combined result in the preview.",
+      "scope_help": "A domain module uses the base strategy rules for the listed websites. This does not confirm a game UDP bypass.",
+      "refresh": "Refresh add-ons",
+      "offline": "Unable to load or verify add-ons. You can import the base strategy separately. Previously selected add-ons are retained until the next check.",
+      "changed": "The catalog changed: outdated add-ons were deselected. Select their current versions and preview again.",
+      "empty": "No cloud add-ons are available yet.",
+      "limit": "Select up to 8 cloud add-ons.",
+      "preview": "Add-ons · Beta: combined result",
+      "scope_extended": "Base strategy scope extended",
+      "already_covered": "The base strategy already covers these domains; no change",
+      "domains": "Domains to add",
+      "preview_changed": "Catalog details changed. Your add-on selection is retained; the previous preview was cleared."
     }
   },
   "openwrt": {

@@ -1,3 +1,8 @@
+import {
+  validImportAddonPreview,
+  type ImportAddonPreview,
+  type ImportAddonSelection,
+} from '@/api/importAddonClient';
 import { ShareError, shareRequest, STRATEGY_KEYS } from '@/api/shareClient';
 import {
   resourceBytes,
@@ -37,6 +42,7 @@ export type ImportSelection = {
   allow_incomplete: boolean;
   trusted_lua: boolean;
   torrent_sites?: false | { catalog_id: string; sha256: string };
+  addons?: ImportAddonSelection[];
 };
 export type ImportPlan = {
   ready: boolean;
@@ -64,6 +70,7 @@ export type ImportPlan = {
   digest: string;
   proof: string | null;
   torrent_sites?: { sites: string[]; block: string; key: 'NFQWS_ARGS_CUSTOM' };
+  addons?: ImportAddonPreview[];
 };
 export type ImportStatus = {
   state:
@@ -291,6 +298,8 @@ export async function prepareImport(
     )
       return invalid();
   }
+  if (v.addons !== undefined && !validImportAddonPreview(v.addons))
+    return invalid();
   for (const f of v.files) {
     if (
       !obj(f) ||
@@ -382,6 +391,20 @@ export function importOutcomeUnknown(error: unknown): boolean {
       'invalid_request',
       'invalid_import',
       'invalid_torrent_sites_source',
+      'invalid_addon_source',
+      'invalid_import_selection',
+      'catalog_invalid',
+      'catalog_signature',
+      'catalog_unavailable',
+      'catalog_runtime',
+      'catalog_dns',
+      'catalog_tls',
+      'catalog_connect',
+      'catalog_http',
+      'catalog_timeout',
+      'catalog_limit',
+      'catalog_changed',
+      'catalog_version',
       'invalid_proof',
       'forbidden',
       'unauthorized',

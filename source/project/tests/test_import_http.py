@@ -25,6 +25,13 @@ class ImportHttpTests(unittest.TestCase):
   p=self.post('importinspect',documents=json.dumps(documents()))
   self.assertEqual(self.request(p|{'csrf_token':'bad'})[0],403);self.origin='https://evil.invalid';self.assertEqual(self.request(p)[0],403);self.origin='http://localhost';self.assertEqual(self.request(p|{'root':'/etc'})[0],400)
   code,v=self.request(p);self.assertEqual(code,200);self.assertIn('NFQWS_ARGS',v['values']);self.assertFalse((self.base/'import-state').exists())
+ def test_addon_catalog_route_checks_auth_csrf_origin_and_exact_fields_before_fetch(self):
+  self.assertEqual(self.request({'cmd':'importaddoncatalog','csrf_token':'bad'})[0],401)
+  self.token=self.login();p=self.post('importaddoncatalog')
+  self.assertEqual(self.request(p|{'csrf_token':'bad'})[0],403)
+  self.origin='https://evil.invalid';self.assertEqual(self.request(p)[0],403)
+  self.origin='http://localhost';self.assertEqual(self.request(p|{'url':'https://evil.invalid'})[0],400)
+  self.assertEqual((self.base/'resources/nfqws2.conf').read_text(),CURRENT)
  def test_review_proof_tamper_then_apply_status_undo(self):
   self.token=self.login();code,p=self.prepare();self.assertEqual(code,200);self.assertTrue(p['ready']);self.assertTrue(p['proof'].startswith('im1.'));self.assertFalse((self.base/'import-state').exists())
   self.assertEqual(self.apply(p['proof']+'a')[0],403);self.assertEqual((self.base/'resources/nfqws2.conf').read_text(),CURRENT)
