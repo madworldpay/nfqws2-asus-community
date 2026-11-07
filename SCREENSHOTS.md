@@ -1,12 +1,100 @@
 # Скриншоты панели
 
-Галерея обновлена **реальными снимками Build 96**: панель ПК и телефона, DPI Detector, импорт, SmartDNS и обновления. Ниже отдельно сохранены архивные экраны Build 85 с демонстрационными адресами, состояниями и примерами заполнения. [Реальные исторические прогоны Detector на Build 89](docs/DETECTOR-COMPARISON.md) показаны рядом с текущим Detector и подробно разобраны отдельно.
+Галерея начинается с **реальных снимков Build 99**: панель ПК и телефона, разные стратегии для устройств, встроенный DPI Detector и обновление. Справочные снимки Build 96 и архив Build 85 сохранены отдельно. Историческое сравнение Detector остаётся привязанным к Build 89 и 5 ноября 2026 года.
 
 Разверните нужный снимок и нажмите на него для полного размера. Изображения без анимации; разделы свёрнуты, чтобы галерея занимала меньше места на телефоне.
 
 [English](SCREENSHOTS.en.md) · [Инструкция](README.md)
 
-## Актуальные возможности Build 96
+<a id="build99"></a>
+
+## Реальные снимки Build 99
+
+Снимки сделаны 7 ноября 2026 года в установленной панели: ASUS/Entware и OpenWrt на ASUS. Главное окно показывает фактическую версию и состояние службы. Нажмите на изображение для полного размера.
+
+### Главное окно и телефон
+
+Новая вкладка «Устройства · бета» находится в общей строке разделов. На телефоне строка вкладок прокручивается горизонтально. Язык, оформление и ссылки — в сворачиваемой нижней панели.
+
+<details>
+<summary>Показать главное окно Build 99</summary>
+
+[![Build 99: главное окно ASUS, русский интерфейс](images/screenshots/build99-panel-overview-ru.jpg)](images/screenshots/build99-panel-overview-ru.jpg)
+
+[![Build 99: главное окно ASUS, английский интерфейс](images/screenshots/build99-panel-overview-en.jpg)](images/screenshots/build99-panel-overview-en.jpg)
+
+</details>
+
+<details>
+<summary>Показать мобильную разметку Build 99</summary>
+
+[![Build 99: портретный экран 390 × 844](images/screenshots/build99-layout-mobile-portrait-ru.jpg)](images/screenshots/build99-layout-mobile-portrait-ru.jpg)
+
+[![Build 99: горизонтальный экран 844 × 390](images/screenshots/build99-layout-mobile-landscape-ru.jpg)](images/screenshots/build99-layout-mobile-landscape-ru.jpg)
+
+[![Build 99: прокрутка настроек на низком горизонтальном экране](images/screenshots/build99-layout-mobile-landscape-scroll-ru.jpg)](images/screenshots/build99-layout-mobile-landscape-scroll-ru.jpg)
+
+[![Build 99: раскрытая нижняя панель телефона](images/screenshots/build99-footer-mobile-expanded-ru.jpg)](images/screenshots/build99-footer-mobile-expanded-ru.jpg)
+
+</details>
+
+<a id="build99-device-profiles"></a>
+
+### Разные стратегии для разных устройств · бета
+
+**Общий режим** остаётся по умолчанию. В **«По устройствам»** можно назначить стратегии отдельным клиентам, менять приоритеты и использовать текущую или стоковую стратегию. Библиотека добавляет собственные копии, JSON с ресурсами и профили каталога. DNS остаётся общим. [Пошаговая инструкция и лимиты](docs/DEVICE-PROFILES.md).
+
+На первом снимке — реальный общий режим. На примере с телевизором и телефоном показан **несохранённый черновик** с условными названиями и адресами. Предпросмотр проверен, но «Сохранить черновик» и «Применить сохранённый режим» для примера не нажимались: рабочий режим остался общим, служба — выключенной. Это пример интерфейса, а не доказательство подключения этих устройств или результата обхода.
+
+<details>
+<summary>Показать общий режим и библиотеку стратегий</summary>
+
+[![Build 99: общий режим, служба выключена](images/screenshots/build99-device-profiles-common-ru.jpg)](images/screenshots/build99-device-profiles-common-ru.jpg)
+
+[![Build 99: библиотека, импорт JSON и подписанный каталог](images/screenshots/build99-device-profiles-library-ru.jpg)](images/screenshots/build99-device-profiles-library-ru.jpg)
+
+</details>
+
+<details>
+<summary>Показать разные стратегии, приоритеты и предпросмотр примера</summary>
+
+[![Build 99: несохранённый пример стратегий для телевизора и телефона](images/screenshots/build99-device-profiles-draft-ru.jpg)](images/screenshots/build99-device-profiles-draft-ru.jpg)
+
+[![Build 99: предпросмотр назначений без применения](images/screenshots/build99-device-profiles-preview-ru.jpg)](images/screenshots/build99-device-profiles-preview-ru.jpg)
+
+</details>
+
+<a id="build99-detector"></a>
+
+### Встроенный DPI Detector и наглядный пример
+
+Кнопка **DPI Detector** открывает оригинальное меню прямо в панели; если инструмент не установлен, здесь предлагается установка. На снимке тесты **1–3** выбраны по умолчанию. После прогона **S** сохраняет результат; в **«Отчётах TXT»** можно скачать файл на свой ПК или телефон. Для сравнения двух стратегий повторяйте одинаковые тесты с включённой службой и одинаковыми условиями. [Инструкция](DPI-DETECTOR.md).
+
+<details>
+<summary>Показать оригинальное меню и проверку сервисов Build 99</summary>
+
+[![Build 99: оригинальное меню встроенного Detector, выбраны тесты 1–3](images/screenshots/build99-detector-menu-ru.jpg)](images/screenshots/build99-detector-menu-ru.jpg)
+
+[![Build 99: локальный или системный DNS контрольных запросов](images/screenshots/build99-service-checks-ru.jpg)](images/screenshots/build99-service-checks-ru.jpg)
+
+</details>
+
+**[Крупные реальные скрины: штатная стратегия и личная DOM.RU](docs/DETECTOR-COMPARISON.md).** На одной линии TCP изменился с **67/110 до 97/110**, HTTP — с **16/35 до 35/35**. При этом QUIC был **19/21 и 18/21**: улучшение части тестов не означает улучшения всех протоколов. Это исторические измерения Build 89 от 5 ноября, NFQWS2 включён в обоих прогонах. Результаты не переносятся автоматически на другой профиль, провайдера или регион.
+
+«Проверка сервисов» дополняет оригинальное меню: локальный DNS роутера или системный резолвер, HTTP-коды, ошибки и отдельный TXT. Она проверяет контрольные URL, а не весь сайт, видео или голос. Путь DNS указан в отчёте; смена выбора не переключает настройки SmartDNS.
+
+### Подтверждённое обновление
+
+На снимке — итог завершённой установки Build 99 и сообщение об актуальной версии. Новая установка ради снимка не запускалась. 100% обозначает пройденные этапы, а не оценку оставшегося времени. [Обновление и восстановление](PACKAGE-UPDATES.md).
+
+<details>
+<summary>Показать завершённое обновление Build 99</summary>
+
+[![Build 99: установка завершена, настройки проверены обновлятором](images/screenshots/build99-updates-ru.jpg)](images/screenshots/build99-updates-ru.jpg)
+
+</details>
+
+## Справочные экраны Build 96
 
 | Что изменилось после архивных снимков | Где описано |
 | --- | --- |
@@ -26,7 +114,7 @@
 Основные кнопки выровнены по высоте, на узком экране переносятся на строки. Нижняя панель изначально свёрнута; язык и тема находятся в ней. На горизонтальном и низком экране настройки и низ страницы остаются доступны с прокруткой.
 
 <details>
-<summary>Показать актуальное главное окно на ПК</summary>
+<summary>Показать главное окно Build 96</summary>
 
 [![Главное окно Build 96, русский интерфейс](images/screenshots/build96-panel-overview-ru.png)](images/screenshots/build96-panel-overview-ru.png)
 

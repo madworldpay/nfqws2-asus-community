@@ -1,12 +1,98 @@
 # Panel screenshots
 
-The gallery now includes **real Build 96 screenshots**: desktop and phone panels, DPI Detector, import, SmartDNS and updates. Archived Build 85 screens with demonstration addresses, states and example entries are retained separately below. [Real historical Detector runs on Build 89](docs/DETECTOR-COMPARISON.en.md) appear beside the current Detector screens and have a separate detailed comparison.
+The gallery starts with **real Build 99 screenshots**: desktop and phone panels, per-device strategies, built-in DPI Detector and updates. Build 96 reference screens and the Build 85 archive are retained separately. Historical Detector measurements remain tied to Build 89 and November 5, 2026.
 
 Expand a screenshot and click it for full size. Static images have no animation; collapsed sections keep the gallery compact on phones.
 
 [Русский](SCREENSHOTS.md) · [Documentation](README.en.md)
 
-## Current Build 96 capabilities
+<a id="build99"></a>
+
+## Real Build 99 screenshots
+
+Captured on November 7, 2026 from the installed ASUS/Entware and native OpenWrt panels on ASUS hardware. Main panels show the actual installed version and service state. Click an image for full size. The beta page and some captures use Russian labels, as identified below.
+
+### Main panel and phones
+
+Devices · beta appears in the main tab row. Swipe that row horizontally on narrow screens. Language, theme and links are in the collapsible lower panel.
+
+<details>
+<summary>Show the Build 99 main panel — English UI</summary>
+
+[![Build 99 main ASUS panel — English UI](images/screenshots/build99-panel-overview-en.jpg)](images/screenshots/build99-panel-overview-en.jpg)
+
+</details>
+
+<details>
+<summary>Show mobile layouts — language identified per image</summary>
+
+[![Build 99 portrait 390 × 844 — English UI](images/screenshots/build99-layout-mobile-portrait-en.jpg)](images/screenshots/build99-layout-mobile-portrait-en.jpg)
+
+[![Build 99 landscape 844 × 390 — Russian UI](images/screenshots/build99-layout-mobile-landscape-ru.jpg)](images/screenshots/build99-layout-mobile-landscape-ru.jpg)
+
+[![Build 99 scrolled settings in landscape — Russian UI](images/screenshots/build99-layout-mobile-landscape-scroll-ru.jpg)](images/screenshots/build99-layout-mobile-landscape-scroll-ru.jpg)
+
+[![Build 99 expanded lower panel — Russian UI](images/screenshots/build99-footer-mobile-expanded-ru.jpg)](images/screenshots/build99-footer-mobile-expanded-ru.jpg)
+
+</details>
+
+<a id="build99-device-profiles"></a>
+
+### Different strategies for different devices · beta
+
+**Common** remains the default. **Per device** assigns strategies to selected clients with ordered priorities; current and stock strategies are available. The library adds separate copies, JSON with resources and signed catalog profiles. DNS remains shared. [Steps and limits](docs/DEVICE-PROFILES.en.md). The beta page currently uses Russian labels.
+
+The first capture shows the actual common mode. TV and phone cards are an **unsaved example** with demonstration names and addresses. Preview was checked, but the example was neither saved nor applied: the active mode remained Common and the service remained stopped. It illustrates controls, not measured traffic from these example devices.
+
+<details>
+<summary>Show common mode and strategy library — Russian UI</summary>
+
+[![Build 99 common mode, service stopped — Russian UI](images/screenshots/build99-device-profiles-common-ru.jpg)](images/screenshots/build99-device-profiles-common-ru.jpg)
+
+[![Build 99 strategy library, JSON and signed catalog — Russian UI](images/screenshots/build99-device-profiles-library-ru.jpg)](images/screenshots/build99-device-profiles-library-ru.jpg)
+
+</details>
+
+<details>
+<summary>Show per-device strategy cards and preview — Russian UI</summary>
+
+[![Build 99 unsaved TV and phone example — Russian UI](images/screenshots/build99-device-profiles-draft-ru.jpg)](images/screenshots/build99-device-profiles-draft-ru.jpg)
+
+[![Build 99 assignment preview without applying — Russian UI](images/screenshots/build99-device-profiles-preview-ru.jpg)](images/screenshots/build99-device-profiles-preview-ru.jpg)
+
+</details>
+
+<a id="build99-detector"></a>
+
+### Built-in DPI Detector and a worked example
+
+**DPI Detector** opens the original menu inside the panel, offering installation when absent. Tests **1–3** are selected by default in this capture. Press **S** after a run, then download the file to your PC or phone from **TXT reports**. Compare two strategies using identical tests with NFQWS2 running and comparable conditions. [Guide](DPI-DETECTOR.en.md).
+
+<details>
+<summary>Show the original Detector menu and Service checks — Russian UI</summary>
+
+[![Build 99 built-in Detector menu, tests 1–3 selected — Russian UI](images/screenshots/build99-detector-menu-ru.jpg)](images/screenshots/build99-detector-menu-ru.jpg)
+
+[![Build 99 local or system DNS for control requests — Russian UI](images/screenshots/build99-service-checks-ru.jpg)](images/screenshots/build99-service-checks-ru.jpg)
+
+</details>
+
+**[Large real screenshots: default and personal DOM.RU strategies](docs/DETECTOR-COMPARISON.en.md).** On one connection TCP changed from **67/110 to 97/110**, and HTTP from **16/35 to 35/35**. QUIC was **19/21 and 18/21**: some improvements do not mean every protocol improved. These historical Build 89 runs were recorded on November 5 with NFQWS2 running in both. They do not establish another profile's, provider's or region's result.
+
+Service checks supplement the original menu with local-router or system DNS selection, HTTP codes, errors and a separate TXT. They cover control URLs, not an entire site, video or voice. The report records the DNS path; selecting it does not change SmartDNS settings.
+
+### Verified update
+
+The capture shows the completed Build 99 installation and current-version message. No extra installation was started for the screenshot. 100% refers to completed steps, not estimated remaining time. [Updates and recovery](PACKAGE-UPDATES.en.md).
+
+<details>
+<summary>Show the completed Build 99 update — English UI</summary>
+
+[![Build 99 completed update — English UI](images/screenshots/build99-updates-en.jpg)](images/screenshots/build99-updates-en.jpg)
+
+</details>
+
+## Build 96 reference screens
 
 | Changes after the archived screenshots | Guide |
 | --- | --- |
@@ -26,7 +112,7 @@ The screenshots below come from the running Build 96 panel. They show its interf
 Main buttons use a consistent height and wrap on narrow screens. The lower panel starts collapsed and contains language and theme controls. Landscape and short windows retain access to settings and the bottom of the page through scrolling.
 
 <details>
-<summary>Show the current desktop panel — English UI</summary>
+<summary>Show the Build 96 desktop panel — English UI</summary>
 
 [![Build 96 main panel — English UI](images/screenshots/build96-panel-overview-en.png)](images/screenshots/build96-panel-overview-en.png)
 

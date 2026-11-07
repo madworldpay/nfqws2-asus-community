@@ -1,5 +1,7 @@
 # Device profiles · beta
 
+The beta page currently uses Russian labels: **«Общий»** means Common, **«По устройствам»** means Per device, **«Сохранить черновик»** means Save draft, and **«Применить сохранённый режим»** means Apply saved mode. [Real screenshots](../SCREENSHOTS.en.md#build99-device-profiles).
+
 Open **Devices · beta** in the panel. **Common** is the default: the ordinary configuration handles every device. Use **Per device** only when selected devices need different strategies. DNS remains shared.
 
 1. Add devices from the router's local DHCP/neighbour observations, or enter an IP or MAC manually. A known entry does not prove the device is online. MAC assignments follow complete, unambiguous local observations; unavailable observations use the common fallback. A fixed IP entry is tied to that IP.
@@ -8,7 +10,7 @@ Open **Devices · beta** in the panel. **Common** is the default: the ordinary c
 4. Review and save the draft, then explicitly press **Apply saved mode**. Saving alone changes no traffic. Choose whether the NFQWS2 service should run afterwards. The operation continues when the tab closes.
 5. Check the operation's phase and outcome, then verify the actual services on the selected device. Repeat the same Detector tests before/after under comparable conditions; its results do not guarantee another provider's connectivity. If activation fails, the job reports the original cause and whether restoration was verified; copy this information when asking for help.
 
-The beta supports up to128 devices,16 ordered cards,8 saved strategies and4 distinct additional strategy processes. Duplicate cards using the same saved strategy share one process. Additional engines consume RAM; importing a profile does not guarantee that every router has enough memory to run it. IPv6 capture follows the existing global IPv6 setting.
+The beta supports up to 128 devices, 16 ordered cards, 8 saved strategies and 4 distinct additional strategy processes. Duplicate cards using the same saved strategy share one process. Additional engines consume RAM; importing a profile does not guarantee that every router has enough memory to run it. IPv6 capture follows the existing global IPv6 setting.
 
 To disable per-device routing, save and apply **Common**. Before updating the package while this beta is active, apply Common first. Saved library entries and drafts are kept; verify the service and chosen mode after the update.
 

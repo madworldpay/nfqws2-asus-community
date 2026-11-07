@@ -906,13 +906,13 @@
   },
   {
     "path": "docs/DEVICE-PROFILES.en.md",
-    "bytes": 2366,
-    "sha256": "3b0aa46efde0c586a63aaa6696a1dc1404edf631a3a20c55e7796d8753632798"
+    "bytes": 2780,
+    "sha256": "7d046911b972d76a703ec08d31f718d50d5274246e337da577fc641c67d532c8"
   },
   {
     "path": "docs/DEVICE-PROFILES.md",
-    "bytes": 10926,
-    "sha256": "dcb37d8db539f8b36e7c963a7459efc4ab50f88311820085f576f52b408be4f1"
+    "bytes": 11159,
+    "sha256": "68e40f0f39548b9cecb6849d8ea56d759c879509dca8b3309727a84e237ebdd4"
   },
   {
     "path": "docs/IMPORT.md",

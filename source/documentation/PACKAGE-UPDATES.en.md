@@ -1,5 +1,13 @@
 # Updates
 
+## Current release and device profiles
+
+[Build 99](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build99) is current for all 22 ASUS/Entware and OpenWrt variants. [Real completed-update screenshot](SCREENSHOTS.en.md#build99).
+
+Before updating from an active Per device mode, save and apply Common in Devices · beta and wait for success. After installation check the version, previous service state, library and SmartDNS. Re-enable per-device mode by explicitly applying it when needed.
+
+Build 99 fixes ASUS preparation failures involving learned lists in saved strategies. Backup capture, validation, restoration and cleanup share limits of 4096 files, 64 MiB of data and 2 MiB of metadata; size is checked before stopping the service. If preview Build 98 fails with `invalid_state`, save its log; the current ASUS installer command in README includes the fix. Do not bypass unrelated failures by deleting files or editing the package database; share the error and log through community support.
+
 ## Lua copies and settings preservation: Build 90
 
 An old worker could reject an installed package because `opkg` left a factory `*.lua-opkg` copy. The ASUS package now preserves existing alternatives before unpacking, restores their contents and permissions afterwards, and removes only its own verified new factory duplicates. Owner edits, Lua and blobs are retained.
@@ -8,7 +16,7 @@ If an old panel reports `settings_changed` **before downloading**, use the curre
 
 ## Updating older builds
 
-**Updating an older build to Build 74 or later requires the installer once.**
+**A build that does not yet trust the current signing key requires the installer once.** Builds with the current key use the normal panel update buttons; the installer is not required for every release.
 Current releases use a new signing key. Rerun the usual installer command for
 your platform to complete the transition. Subsequent updates are available
 through the panel with signature and SHA256 verification.

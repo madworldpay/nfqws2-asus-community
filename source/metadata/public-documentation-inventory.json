@@ -62,13 +62,13 @@
     },
     {
       "file": "DPI-DETECTOR.en.md",
-      "bytes": 8072,
-      "sha256": "3c38201769cb2669a3aa1b37de3398fd672e5659bfc6d559ec011f973b007602"
+      "bytes": 8578,
+      "sha256": "89b9ce81f81bcc25e759246f9d9273cf99aa5aac324a2b45a7fcee4f1047ad73"
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 14174,
-      "sha256": "6415dd3db478e1977f6176b04c79b566b14bce4631ba9e10865f85ad04220fc8"
+      "bytes": 14976,
+      "sha256": "93dce82dc53435ee8c5b3b0bfbbec7fc0a012712b460a09cb3233cce9f1e020c"
     },
     {
       "file": "IMPORT.en.md",
@@ -107,8 +107,8 @@
     },
     {
       "file": "NEXT-BUILD.md",
-      "bytes": 29530,
-      "sha256": "cb80204a706280f7130dc4d9d8c46eda46bb3162ace1f0b43dc9681deedbcdfd"
+      "bytes": 31392,
+      "sha256": "d88e35c009c181d7ba6143fbefa153afae842c36e3daa2c080ec2ec9c963720c"
     },
     {
       "file": "OPENWRT.en.md",
@@ -122,13 +122,13 @@
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 13180,
-      "sha256": "302fd2ee3e490d9b96e74dbb7c1df9631ec686b8f9ee340dc48e588ff29ee8e1"
+      "bytes": 14323,
+      "sha256": "316cb73deec5b4cdb489ea3456f818d926ad4eaa88a301dbd0911eb92c7df734"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 23983,
-      "sha256": "208ee5ff8bd19da45c142814c096908c3c7dcf8b92213a74a64a1409e9caca04"
+      "bytes": 26010,
+      "sha256": "40cc10a413ea803dc4e63c1e6c6f377b7cb0b019bc85134fc1e705a6ec58275f"
     },
     {
       "file": "PRESETS.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 25693,
-      "sha256": "4e4e5d8ef4de24ee849710f91198a57f1bbb4716c48a9ac90db3f28a3a018850"
+      "bytes": 27480,
+      "sha256": "7e722631facd90d0728854982556096a7351fc858fcaeae555bccd851cb2ec13"
     },
     {
       "file": "README.md",
-      "bytes": 42947,
-      "sha256": "8f185a8ea058f3f9f5f1372864fb2568cc29fd72f1450810a8afbdfca668e368"
+      "bytes": 45903,
+      "sha256": "84a01aedd81d58a8693c4af9aba466ca8235fc20ddc46b5f9d9634de43768dc7"
     },
     {
       "file": "ROADMAP.en.md",
@@ -172,13 +172,13 @@
     },
     {
       "file": "SCREENSHOTS.en.md",
-      "bytes": 18261,
-      "sha256": "9d2ef6c4a8f8b761777318af0a4e6d28b60098c973419b4fce57e4f212688a43"
+      "bytes": 23486,
+      "sha256": "9e595c2d3972bee18803db996fc64408c2551858e98fb9d59cf56489aa16f222"
     },
     {
       "file": "SCREENSHOTS.md",
-      "bytes": 28309,
-      "sha256": "32e413e32f00184ddb010998428bebda0e390f5deb7e1a08bdf02ccf7df5cc3c"
+      "bytes": 36187,
+      "sha256": "81a06e83e1da8018685985b7e068ef564e864a108afe7c42c39f0cf22d140ba6"
     },
     {
       "file": "SMARTDNS.en.md",
@@ -207,13 +207,13 @@
     },
     {
       "file": "USAGE.en.md",
-      "bytes": 8337,
-      "sha256": "7ef68abc6ea26cba92ac24926b8e3730095818546a83349fad1d50cec66cf49f"
+      "bytes": 9181,
+      "sha256": "742d90270a9701f402e6302e55549b2596eb75850cbb274a193346cd66edaa6a"
     },
     {
       "file": "USAGE.md",
-      "bytes": 14542,
-      "sha256": "6c17aad8a1436f7fc0974cef4284d9ce1fb48b691389968f0aa95a1db11f6e79"
+      "bytes": 16136,
+      "sha256": "a1bb15810413faa26b8f3991f10100119a43913716135244c9da29b304c8ac94"
     },
     {
       "file": "build.svg",
@@ -222,23 +222,23 @@
     },
     {
       "file": "docs/DETECTOR-COMPARISON.en.md",
-      "bytes": 7626,
-      "sha256": "cbbdcdd9b26420e065b1a804bd7a927bd747161e6b7505da80d0c39c012c44db"
+      "bytes": 7863,
+      "sha256": "3af16024189143a2ac4bd64d5ee45f43ade7f4d3d34de9dc93ad15562d4b123a"
     },
     {
       "file": "docs/DETECTOR-COMPARISON.md",
-      "bytes": 12858,
-      "sha256": "dd1bde1d49ade3e3b602826677868be3cad37edcbd712bd17d5a025ed1fb388b"
+      "bytes": 13254,
+      "sha256": "7cb98dd9cefd53fc1a1d1fb5ae15a7150e2c5ee891e4180ab279b95082511c41"
     },
     {
       "file": "docs/DEVICE-PROFILES.en.md",
-      "bytes": 2366,
-      "sha256": "3b0aa46efde0c586a63aaa6696a1dc1404edf631a3a20c55e7796d8753632798"
+      "bytes": 2720,
+      "sha256": "c2838ed8c73f43acdd82573f8c35d691db3721ea4a42d0091c9a53127351295a"
     },
     {
       "file": "docs/DEVICE-PROFILES.md",
-      "bytes": 10926,
-      "sha256": "dcb37d8db539f8b36e7c963a7459efc4ab50f88311820085f576f52b408be4f1"
+      "bytes": 11099,
+      "sha256": "6eaf84c3df97b52a03964bb0a8736716be18d01ac494059badabbfe9cbacdd5c"
     },
     {
       "file": "images/cloud-catalog.jpg",
@@ -344,6 +344,81 @@
       "file": "images/screenshots/build96-updates-ru.png",
       "bytes": 33155,
       "sha256": "78c610e386bbf8698afde22d17966af92a3db49d7767e760a8602ddab031aba8"
+    },
+    {
+      "file": "images/screenshots/build99-detector-menu-ru.jpg",
+      "bytes": 82722,
+      "sha256": "9f44754e2db61830e489a47c0c1ad6208af27d09dbc8d1ec82169443887634d3"
+    },
+    {
+      "file": "images/screenshots/build99-device-profiles-common-ru.jpg",
+      "bytes": 116904,
+      "sha256": "61b371bcf08af403c05eca6e04a0da1f8eb6a1afcb30806d4298adbaaaa40e06"
+    },
+    {
+      "file": "images/screenshots/build99-device-profiles-draft-ru.jpg",
+      "bytes": 188847,
+      "sha256": "163851a179edc693610dbb52aeb75277b3030fbc2a66e9cbb80d0b245d326d38"
+    },
+    {
+      "file": "images/screenshots/build99-device-profiles-library-ru.jpg",
+      "bytes": 153807,
+      "sha256": "651b7c78a3694c423e3b4614220a2589af1537e497ccb15f98bc59f9165f23cd"
+    },
+    {
+      "file": "images/screenshots/build99-device-profiles-preview-ru.jpg",
+      "bytes": 59216,
+      "sha256": "f205940da94db829ea42311dc73efa2fc0b03208efd47f1edfc750ac48370ea1"
+    },
+    {
+      "file": "images/screenshots/build99-footer-mobile-expanded-ru.jpg",
+      "bytes": 40479,
+      "sha256": "8ea9551b27a836383ad746ad282b5e667a194772c7cdff7e66606e1d8d81615c"
+    },
+    {
+      "file": "images/screenshots/build99-layout-mobile-landscape-ru.jpg",
+      "bytes": 27577,
+      "sha256": "07c15bf1fbc4ba5852c0825201021501e5189895213df8d2b86542028047fc89"
+    },
+    {
+      "file": "images/screenshots/build99-layout-mobile-landscape-scroll-ru.jpg",
+      "bytes": 42379,
+      "sha256": "799bf0e4b92881b44b9a8a3a70877c6c7462e20395c8c41de86188dbf15a9ce3"
+    },
+    {
+      "file": "images/screenshots/build99-layout-mobile-portrait-en.jpg",
+      "bytes": 47938,
+      "sha256": "63ed73c83871a2e193797c8540ed080fd28b0aa40134e965e8485052d9266b92"
+    },
+    {
+      "file": "images/screenshots/build99-layout-mobile-portrait-ru.jpg",
+      "bytes": 46336,
+      "sha256": "f51e75e108ab0aaa573962eecd5cfd1454e9e268853f62dbccbe20079a470de0"
+    },
+    {
+      "file": "images/screenshots/build99-panel-overview-en.jpg",
+      "bytes": 67903,
+      "sha256": "a6b660bcf8af6651f8d29e15df7398f7d7b56f33093604292cfc09863b12a7ad"
+    },
+    {
+      "file": "images/screenshots/build99-panel-overview-ru.jpg",
+      "bytes": 108860,
+      "sha256": "a02366dd4c7ef7b3d690e7a691b9321a0f9bfe0c25db742c7ef42e4cf737a8ca"
+    },
+    {
+      "file": "images/screenshots/build99-service-checks-ru.jpg",
+      "bytes": 69968,
+      "sha256": "521c9b02400a6350bf25cdafd1d0090a18a97a39a02b0f397fa756a806b0595f"
+    },
+    {
+      "file": "images/screenshots/build99-updates-en.jpg",
+      "bytes": 61991,
+      "sha256": "8af4d55817cc8ea97703f3a6df5e761b7049a3177d5eb98935a432ca36e606b5"
+    },
+    {
+      "file": "images/screenshots/build99-updates-ru.jpg",
+      "bytes": 90497,
+      "sha256": "68231d64ad97c6b2706ad13b82b33dbd8be943bbe93f909fd90510daa983958d"
     },
     {
       "file": "images/screenshots/catalog6-beeline-moskva-ru.png",

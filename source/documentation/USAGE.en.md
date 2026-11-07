@@ -10,11 +10,18 @@ and the status of each step. **?** explains a field or action.
 - **Settings** — WAN, devices, strategy, and processing options.
 - **Lists** — files used by strategies.
 - **SmartDNS** — DNS for all sites and individual domains.
+- **Devices · beta** — separate strategies and priorities for selected devices; Common is the default.
 - **Logs** — service messages.
 
 Save your changes and restart NFQWS2 to apply the strategy.
 The saved configuration and the running process are separate states: after editing
 the strategy, use **Restart**. SmartDNS has its own connection wizard.
+
+## Different strategies for devices
+
+Open **Devices · beta**. Common uses the ordinary configuration. To separate devices, add them, select Per device, choose strategies and order profile cards. **Preview**, **Save draft** and **Apply saved mode** are separate actions. The first enabled matching card takes priority; remaining devices use the common strategy. DNS remains shared.
+
+The library accepts the current strategy, JSON with resources and catalog profiles. [Steps and limits](docs/DEVICE-PROFILES.en.md) · [cards and preview screenshots](SCREENSHOTS.en.md#build99-device-profiles). Apply Common before updating from an active per-device mode. The beta page uses Russian labels. Swipe the main tab row horizontally on a phone.
 
 ## WAN and processing arguments
 

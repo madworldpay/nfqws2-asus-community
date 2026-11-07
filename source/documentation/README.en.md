@@ -17,8 +17,13 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 99:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build99) · [change history](CHANGELOG.md). **Devices · beta** assigns separate strategies to selected devices with ordered priorities. Common mode remains the default; saving a draft does not apply it. [Guide and limits](docs/DEVICE-PROFILES.en.md). [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
+**Build 99:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build99) · [change history](CHANGELOG.md).
 
+**Different strategies for different devices · beta.** Common remains the default. Devices · beta lets you select a separate strategy for a TV, phone or PC, order priorities and review assignments before applying. [Setup guide](docs/DEVICE-PROFILES.en.md) · [real screenshots](SCREENSHOTS.en.md#build99-device-profiles). The beta page currently uses Russian labels.
+
+**The built-in DPI Detector helps check the result.** Repeat the same tests before and after changing a strategy, save TXT to your PC or phone and check the actual services. [How to use it](DPI-DETECTOR.en.md) · [large real comparison screenshots](docs/DETECTOR-COMPARISON.en.md).
+
+[Installation](#quick-start) · [Import](#import-a-profile-and-all-required-files) · [Device profiles](docs/DEVICE-PROFILES.en.md) · [Gallery](SCREENSHOTS.en.md)
 
 ## What you get
 
@@ -125,15 +130,15 @@ Since Build 88, compatible **general strategies from the signed cloud catalog** 
 
 Settings, strategies and service controls share one panel. Header buttons use a consistent height and wrap to fit the window. The phone header is more compact; language, theme and links have moved to the collapsible lower panel. It starts collapsed, with expansion remembered separately for narrow and wide windows. Settings and the lower panel remain accessible in portrait and landscape. Short screens and mobile desktop mode allow page scrolling; the expanded lower panel has its own scrolling. Browser zoom is allowed.
 
-The [annotated gallery](SCREENSHOTS.en.md) includes real Build 96 screenshots: the compact phone panel, scrolling in both orientations, the lower panel, Service checks, Detector removal confirmation, add-ons with combined preview, the SmartDNS editor and update window. Large historical default/personal strategy results are shown alongside, with NFQWS2 running in both runs. Archived Build 85 screens are identified separately.
+The [annotated gallery](SCREENSHOTS.en.md) now starts with real **Build 99** captures: RU/EN main panels, mobile layout, the lower panel, device profiles and strategy library, the Detector menu with tests 1–3, DNS selection in Service checks and the completed update. Device cards are explicitly labelled as an unsaved example. Build 96/85 screens and historical Detector runs retain their original versions and dates; Russian-only captures are identified.
 
-[![NFQWS2 main panel](images/screenshots/build96-panel-overview-en.png)](images/screenshots/build96-panel-overview-en.png)
+[![NFQWS2 main panel](images/screenshots/build99-panel-overview-en.jpg)](images/screenshots/build99-panel-overview-en.jpg)
 
 [![More screenshots](images/more-screenshots-en.svg)](SCREENSHOTS.en.md#panel-screenshots)
 
 ## Which sites and devices to process
 
-The panel has **two independent choices**: which sites to process and which devices they come from.
+The common configuration has **two independent choices**: which sites to process and which devices they come from. Separate strategies are configured in Devices · beta, described below.
 
 | “Mode” | Meaning |
 | --- | --- |
@@ -156,6 +161,14 @@ the TV gets DPI processing for listed domains; other devices use the network wit
 You can enter individual IP addresses or a subnet. Separate addresses with spaces;
 reserve IP addresses in DHCP for selected devices. IPv6 is enabled and selected separately.
 This selection applies to NFQWS2; SmartDNS is configured separately.
+
+## Different strategies for different devices · beta
+
+Keep **Common** when one strategy is sufficient. Otherwise open **Devices · beta**, add a device from local observations or by IP/MAC and select a strategy. Cards are checked from top to bottom; drag them or use ↑/↓. Devices without a separate assignment use the common strategy; existing exclusions still apply.
+
+The library accepts a copy of the current strategy, a complete JSON export with resources, or a signed catalog profile. **Preview → Save draft → Apply saved mode** are separate actions. DNS remains shared, and extra strategies require router memory. Before updating the package from an active per-device mode, apply Common first. The beta page currently uses Russian labels; the guide maps the controls.
+
+[Steps and limits](docs/DEVICE-PROFILES.en.md) · [Library, cards and preview screenshots](SCREENSHOTS.en.md#build99-device-profiles)
 
 ## What about VPN?
 
@@ -183,6 +196,7 @@ VPN capabilities depend on your firmware and chosen client.
 
 | Feature | What you can do |
 | --- | --- |
+| **Per-device strategies · beta** | Common or separate strategies; local discovery, manual IP/MAC, priorities and a library. Saving and applying are separate; DNS remains shared — [guide](docs/DEVICE-PROFILES.en.md) |
 | Strategies and devices | Select WAN, process all or selected devices, configure IPv6 separately |
 | Strategy editor | Highlighting, quote checks, visual line wrapping and restoring default strategies |
 | Local JSON and cloud presets | Provider profiles and global strategies; all JSON contents are initially selected, and unwanted parts can be deselected |

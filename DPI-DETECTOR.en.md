@@ -1,8 +1,10 @@
 # DPI Detector
 
-**Build 96 interface.** The original terminal is available since Build 88, TXT downloads and protected removal since Build 91, and separate Service checks since Build 96. The DPI Detector button opens the window directly in the panel. [Running over SSH](#run-over-ssh) is also supported.
+**Build 99 interface.** The original terminal is available since Build 88, TXT downloads and protected removal since Build 91, and separate Service checks since Build 96. The DPI Detector button opens the window directly in the panel. [Running over SSH](#run-over-ssh) is also supported.
 
 DPI Detector is a separate, optional tool by [Runnin4ik](https://github.com/Runnin4ik/dpi-detector). It helps compare DNS, HTTP, TLS, QUIC and connections to network targets. NFQWS2 does not require Detector. Detector does not select or change a strategy automatically.
+
+[Real Build 99 Detector and DNS-selection screenshots](SCREENSHOTS.en.md#build99-detector) · [large strategy-comparison screenshots](docs/DETECTOR-COMPARISON.en.md).
 
 ## Run from the panel
 
@@ -36,6 +38,8 @@ Test the required service from a selected device after changing a strategy. **Co
 
 Starting with Build 96, a separate **Service checks** view in the Detector window covers Facebook, YouTube and Discord. It supplements the original menu with HTTP status, redirect, bytes read and network errors for fixed control domains. Switching closes the window's original terminal; concurrent checks are excluded.
 
+Since Build 97 choose **Router local DNS** (`127.0.0.1:53`, including SmartDNS when connected) or **System DNS**. The selection applies only to these control requests and is recorded in TXT; it changes neither router settings nor the original Detector’s independent DNS tests. DNS errors are distinct, with no hidden resolver fallback.
+
 Select a service and click **Run service check**. Each run checks the selected service’s three URLs sequentially, from nine fixed targets in total:
 
 | Service | Control URLs |
@@ -44,7 +48,7 @@ Select a service and click **Run service check**. Each run checks the selected s
 | YouTube | `https://www.youtube.com/`, `https://i.ytimg.com/`, `https://www.gstatic.com/` |
 | Discord | `https://discord.com/`, `https://cdn.discordapp.com/`, `https://gateway.discord.gg/` |
 
-The check makes certificate-verified HTTPS requests, uses system name resolution and does not follow redirects. HTTP 400 is shown as a server error response. A connection reset differs from HTTP 403/404: a CDN root may not serve a public page. Each request is limited to 10 seconds and 256 KiB of response body, with a partial-read label when the body limit is reached; control domains do not cover every asset, video playback, voice, matches or authentication. Full service functionality is never asserted automatically.
+The check makes certificate-verified HTTPS requests, uses the selected DNS path and does not follow redirects. HTTP 400 is shown as a server error response. A connection reset differs from HTTP 403/404: a CDN root may not serve a public page. Each request is limited to 10 seconds and 256 KiB of response body, with a partial-read label when the body limit is reached; control domains do not cover every asset, video playback, voice, matches or authentication. Full service functionality is never asserted automatically.
 
 **Download service TXT** saves the control report to your PC or phone. Every request records its times and before/after snapshots of NFQWS2 state, mode and configuration SHA256. Different known values are marked changed; incomplete observations remain unknown. Matching snapshots cannot rule out changes between them. If the router clock moves backwards, original timestamps and a warning are retained; duration uses a monotonic timer. This context belongs to the control requests, not an unrelated original-menu run. The check does not change settings, lists, DNS or service state.
 

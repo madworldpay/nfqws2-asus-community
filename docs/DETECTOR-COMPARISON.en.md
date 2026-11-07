@@ -6,6 +6,8 @@ Detector separates DNS, connections, TLS and data transfer. These are historical
 
 This is one personal DOM.RU connection in the Tula region. It demonstrates a testing method, not a profile recommendation for other providers or regions.
 
+See the [current Build 99 built-in Detector UI](../SCREENSHOTS.en.md#build99-detector) and [launch/TXT instructions](../DPI-DETECTOR.en.md). The historical result images below have not been recaptured or replaced with new measurements.
+
 ## How a strategy affects traffic and what Detector shows
 
 A strategy defines NFQWS2 packet-processing rules: which traffic to process, how to split it, and which techniques to apply to a connection. A suitable combination may help pass a particular provider's filtering; an unsuitable one can leave connections unavailable or make them worse.
