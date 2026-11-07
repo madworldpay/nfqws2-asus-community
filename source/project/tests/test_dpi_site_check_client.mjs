@@ -16,7 +16,7 @@ try {
   await build({ entryPoints: [join(src, 'api/dpiSiteCheckClient.ts')], outfile: join(dir, 'client.mjs'), bundle: true, alias: { '@': src }, format: 'esm', platform: 'node', logLevel: 'silent' });
   await build({ entryPoints: [join(src, 'utils/dpiSiteCheckDownload.ts')], outfile: join(dir, 'download.mjs'), bundle: true, alias: { '@': src }, format: 'esm', platform: 'node', logLevel: 'silent' });
   const { checkDpiSite, validateDpiSiteCheck } = await import(pathToFileURL(join(dir, 'client.mjs')));
-  const { buildDpiSiteCheckText } = await import(pathToFileURL(join(dir, 'download.mjs')));
+  const { buildDpiSiteCheckText, dpiSiteResponseLabel } = await import(pathToFileURL(join(dir, 'download.mjs')));
   const context = { nfqws: 'running', mode: 'auto', config_sha256: 'a'.repeat(64) };
   const fixture = () => ({ type: 'nfqws2_dpi_site_check', schema_version: 1, target: 'facebook-main', url: 'https://www.facebook.com/', started_at: 1793952000, finished_at: 1793952001, context: { before: { ...context }, after: { ...context }, changed: false }, response: { outcome: 'response', http_status: 400, bytes_read: 125, body_limited: false, redirect: null, elapsed_ms: 451, error_code: null }, full_service_verified: false, dns_scope: 'system_resolver' });
   let sent;
@@ -31,6 +31,14 @@ try {
   assert.equal(sent.options.credentials, 'same-origin');
   assert.deepEqual(Object.fromEntries(sent.options.body), { cmd: 'dpisitecheck', csrf_token: 'csrf-fixture', target: 'facebook-main' });
   await assert.rejects(checkDpiSite('csrf', 'https://127.0.0.1/'), error => error.code === 'invalid_request');
+  const local = {...fixture(), dns_scope:'local_resolver'};
+  assert.deepEqual(validateDpiSiteCheck(local, 'facebook-main'), local);
+  globalThis.fetch = async (url, options) => { sent={url,options}; return Response.json(local); };
+  await checkDpiSite('csrf-fixture', 'facebook-main', 'local_resolver');
+  assert.equal(sent.options.body.get('dns_scope'), 'local_resolver');
+  globalThis.fetch = async () => Response.json(fixture());
+  await assert.rejects(checkDpiSite('csrf-fixture','facebook-main','local_resolver'), error => error.code==='invalid_response');
+  await assert.rejects(checkDpiSite('csrf-fixture','facebook-main','8.8.8.8'), error => error.code==='invalid_request');
   const rollback = fixture();
   rollback.finished_at = rollback.started_at - 30;
   const valid = [fixture(), rollback];
@@ -62,6 +70,7 @@ try {
     value => { value.url = 'http://127.0.0.1/'; },
     value => { value.full_service_verified = true; },
     value => { value.dns_scope = 'configured_chain_verified'; },
+    value => { value.dns_scope = ['local_resolver']; },
     value => { value.schema_version = 2; },
     value => { value.started_at = '1793952000'; },
     value => { value.response.http_status = 600; },
@@ -100,6 +109,13 @@ try {
   for (const lang of ['ru', 'en']) {
     const pack = JSON.parse(await readFile(join(src, `translations/${lang}.json`), 'utf8'));
     const t = key => key.split('.').reduce((v, part) => v[part], pack);
+    const cdn={...fixture(),target:'facebook-cdn',url:'https://static.xx.fbcdn.net/'};
+    cdn.response={...cdn.response,http_status:403};
+    assert.equal(dpiSiteResponseLabel(cdn,t),t('dpi_site_check.endpoint_response'));
+    const dns={...fixture(),response:{...fixture().response,outcome:'connection_error',http_status:null,error_code:'dns_failed'}};
+    assert.equal(dpiSiteResponseLabel(dns,t),t('dpi_site_check.dns_failed'));
+    const localText=buildDpiSiteCheckText('facebook',[local],t);
+    assert.ok(localText.includes(t('dpi_site_check.dns_local_resolver')));
     const text = buildDpiSiteCheckText('facebook', [report, changed, unknown, rollback], t);
     for (const value of [report, changed, unknown, rollback]) {
       assert.ok(text.includes(JSON.stringify(value, null, 2)), 'TXT contains each exact validated server observation');

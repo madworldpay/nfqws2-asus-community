@@ -15,25 +15,26 @@ final class AsusDpiSiteCheck
     public static function validate(array $post): void
     {
         $keys=array_keys($post);sort($keys);
-        if($keys!==['cmd','csrf_token','target']||($post['cmd']??null)!=='dpisitecheck'||
+        if(!in_array($keys,[['cmd','csrf_token','target'],['cmd','csrf_token','dns_scope','target']],true)||($post['cmd']??null)!=='dpisitecheck'||
             !is_string($post['csrf_token'])||strlen($post['csrf_token'])>256||
-            !is_string($post['target'])||!isset(self::TARGETS[$post['target']]))throw new RuntimeException('invalid_request');
+            !is_string($post['target'])||!isset(self::TARGETS[$post['target']])||
+            array_key_exists('dns_scope',$post)&&!in_array($post['dns_scope'],['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
     }
     public static function response(string $outcome,string|null $error=null): array
     {
         return ['outcome'=>$outcome,'http_status'=>null,'bytes_read'=>0,'body_limited'=>false,
             'redirect'=>null,'elapsed_ms'=>null,'error_code'=>$error];
     }
-    public function check(string $target): array
+    public function check(string $target,string $dnsScope='system_resolver'): array
     {
-        if(!isset(self::TARGETS[$target]))throw new RuntimeException('invalid_request');
+        if(!isset(self::TARGETS[$target])||!in_array($dnsScope,['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
         $store=$this->store??new AsusDpiStore();$terminal=$this->terminal??new AsusDpiTerminalLifecycle();
-        return $store->mutation(function()use($target,$store,$terminal){
-            return $terminal->idle(function()use($target,$store){
+        return $store->mutation(function()use($target,$store,$terminal,$dnsScope){
+            return $terminal->idle(function()use($target,$store,$dnsScope){
                 require_once __DIR__.'/dpi-jobs.php';
                 if((new AsusDpiJobs($store))->active()!==null)throw new RuntimeException('busy');
                 $before=$this->context();$started=time();$clock=self::now();
-                $response=$this->boundedProbe($target,$clock);
+                $response=$this->boundedProbe($target,$clock,$dnsScope);
                 $response['elapsed_ms']=(int)max(0,round((self::now()-$clock)*1000));
                 $finished=time();$after=$this->context();$changed=null;$complete=true;
                 foreach(['nfqws','mode','config_sha256'] as $key){
@@ -43,17 +44,17 @@ final class AsusDpiSiteCheck
                 if($changed!==true&&$complete)$changed=false;
                 return ['type'=>'nfqws2_dpi_site_check','schema_version'=>1,'target'=>$target,'url'=>'https://'.self::TARGETS[$target].'/',
                     'started_at'=>$started,'finished_at'=>$finished,'context'=>['before'=>$before,'after'=>$after,'changed'=>$changed],
-                    'response'=>$response,'full_service_verified'=>false,'dns_scope'=>'system_resolver'];
+                    'response'=>$response,'full_service_verified'=>false,'dns_scope'=>$dnsScope];
             });
         });
     }
     private static function now(): float {$t=hrtime();return $t[0]+$t[1]/1e9;}
-    private function boundedProbe(string $target,float $started): array
+    private function boundedProbe(string $target,float $started,string $dnsScope): array
     {
         if(!function_exists('proc_open')||!function_exists('proc_terminate'))return self::response('unavailable','unsupported_runtime');
         $seconds=min(10.0,max(0.01,(float)($this->deps['deadline_seconds']??10)));$deadline=$started+$seconds;
-        $argv=isset($this->deps['worker_argv'])?($this->deps['worker_argv'])($target):
-            [NfqwsPlatform::translate('/opt/bin/php-cgi'),'-q','-d','register_argc_argv=1','-f',__FILE__,'--','--worker',$target];
+        $argv=isset($this->deps['worker_argv'])?($this->deps['worker_argv'])($target,$dnsScope):
+            [NfqwsPlatform::translate('/opt/bin/php-cgi'),'-q','-d','register_argc_argv=1','-f',__FILE__,'--','--worker',$target,$dnsScope];
         $proc=null;$pipes=[];$out='';$tooLarge=false;
         try{
             $proc=@proc_open($argv,[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','a']],$pipes,'/',
@@ -131,7 +132,7 @@ final class AsusDpiSiteCheck
      * data. Only one literal expanding reference selects a recognized mode. */
     private static function mode(string $raw): string
     {
-        if(str_contains($raw,"\0"))return 'unknown';$lines=explode("\n",$raw);$seen=[];$mode='unknown';
+        if(str_contains($raw,"\0"))return 'unknown';$lines=explode("\n",$raw);$seen=[];$mode='unknown';$literals=[];
         for($i=0;$i<count($lines);$i++){
             $line=$lines[$i];if(trim($line)===''||str_starts_with(ltrim($line),'#'))continue;
             if(!preg_match('/^\h*(?:export\h+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/D',$line,$m)||isset($seen[$m[1]]))return 'unknown';
@@ -154,6 +155,13 @@ final class AsusDpiSiteCheck
             }
             if($key==='NFQWS_EXTRA_ARGS'&&$quote!=="'"&&preg_match('/^\$(?:MODE_(AUTO|ALL|LIST)|\{MODE_(AUTO|ALL|LIST)\})$/D',$body,$m))
                 $mode=strtolower(($m[1]??'')!==''?$m[1]:$m[2]);
+            // Never evaluate shell expansions or escapes to infer a literal mode.
+            if($body!==''&&strpbrk($body,'$`\\')===false)$literals[$key]=$body;
+        }
+        if($mode==='unknown'&&isset($literals['NFQWS_EXTRA_ARGS'])){
+            $matches=[];foreach(['AUTO','ALL','LIST']as$name)
+                if(isset($literals['MODE_'.$name])&&$literals['MODE_'.$name]===$literals['NFQWS_EXTRA_ARGS'])$matches[]=strtolower($name);
+            if(count($matches)===1)$mode=$matches[0];
         }
         return $mode;
     }
@@ -183,9 +191,9 @@ final class AsusDpiSiteCheckProbe
         }
         return true;
     }
-    public function run(string $target): array
+    public function run(string $target,string $dnsScope='system_resolver'): array
     {
-        if(!isset(AsusDpiSiteCheck::TARGETS[$target]))throw new RuntimeException('invalid_request');
+        if(!isset(AsusDpiSiteCheck::TARGETS[$target])||!in_array($dnsScope,['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
         $this->deadline=self::now()+10;$this->response=AsusDpiSiteCheck::response('connection_error','connection_failed');$f=null;
         $host=AsusDpiSiteCheck::TARGETS[$target];$warning='';
         set_error_handler(static function($severity,$message)use(&$warning){$warning=substr($warning.' '.$message,0,4096);return true;});
@@ -193,7 +201,16 @@ final class AsusDpiSiteCheckProbe
             if(!extension_loaded('openssl'))return AsusDpiSiteCheck::response('unavailable','https_unavailable');
             $ca=$this->deps['ca']??NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt');
             if(!is_readable($ca))return AsusDpiSiteCheck::response('tls_error','ca_unavailable');
-            $addresses=isset($this->deps['resolve'])?($this->deps['resolve'])($host):gethostbynamel($host);
+            if($dnsScope==='local_resolver'){
+                require_once __DIR__.'/openwrt-dns-probe.php';
+                $timeout=(int)max(1,min(2500,floor($this->remaining()*1000)));
+                $dns=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$this->deps['dns_port']??53,$host,'A','udp',$timeout);
+                if(($dns['truncated']??false)===true){
+                    $timeout=(int)max(1,min(2500,floor($this->remaining()*1000)));
+                    $dns=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$this->deps['dns_port']??53,$host,'A','tcp',$timeout);
+                }
+                $addresses=($dns['ok']??false)===true?$dns['answers']:[];
+            }else $addresses=isset($this->deps['resolve'])?($this->deps['resolve'])($host):gethostbynamel($host);
             $this->remaining();
             if(!is_array($addresses)||$addresses===[])return AsusDpiSiteCheck::response('connection_error','dns_failed');
             // Reject the whole answer, rather than skipping poisoned entries.
@@ -296,6 +313,7 @@ final class AsusDpiSiteCheckProbe
 if(realpath($_SERVER['SCRIPT_FILENAME']??($argv[0]??''))===__FILE__){
     if(isset($_SERVER['REQUEST_METHOD'])||isset($_SERVER['REMOTE_ADDR'])||!in_array(PHP_SAPI,['cli','cgi-fcgi'],true))exit(1);
     $args=$argv??[];array_shift($args);if(($args[0]??null)==='--')array_shift($args);
-    if(count($args)!==2||$args[0]!=='--worker'||!isset(AsusDpiSiteCheck::TARGETS[$args[1]]))exit(2);
-    echo json_encode((new AsusDpiSiteCheckProbe())->run($args[1]),JSON_THROW_ON_ERROR);
+    if(!in_array(count($args),[2,3],true)||$args[0]!=='--worker'||!isset(AsusDpiSiteCheck::TARGETS[$args[1]])||
+        isset($args[2])&&!in_array($args[2],['system_resolver','local_resolver'],true))exit(2);
+    echo json_encode((new AsusDpiSiteCheckProbe())->run($args[1],$args[2]??'system_resolver'),JSON_THROW_ON_ERROR);
 }

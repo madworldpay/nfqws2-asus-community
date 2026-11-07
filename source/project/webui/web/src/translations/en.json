@@ -1273,7 +1273,7 @@
     "running": "Checking control domains…",
     "download": "Download service TXT",
     "incomplete": "This checks only three public control URLs. Login, page resources, video and voice are not verified. The whole service has not been verified. An error at a CDN root URL does not establish whether a specific asset loads.",
-    "dns_scope": "DNS scope: the router system resolver for these requests. This does not verify the configured DNS chain on your devices.",
+    "dns_scope": "Choose DNS for these control requests. This changes neither router settings nor the separate Detector DNS tests.",
     "switch_hint": "Switching views stops the original terminal. If it is still closing, wait briefly and run the check again.",
     "http_error": "HTTP error response from the server",
     "http_response": "HTTP response received; content operation is not verified",
@@ -1308,6 +1308,13 @@
     "request_failed": "The check request failed. Retry when the panel connection is available.",
     "download_failed": "Could not start the TXT download. Try again.",
     "snapshot_scope": "Snapshots record state only before and after the request; changes between them may go undetected.",
-    "clock_changed": "The router clock moved backwards during this request. Original timestamps are preserved; duration uses an independent monotonic timer."
+    "clock_changed": "The router clock moved backwards during this request. Original timestamps are preserved; duration uses an independent monotonic timer.",
+    "dns_choice": "Control-request DNS",
+    "dns_button_local_resolver": "Router local DNS",
+    "dns_button_system_resolver": "System DNS",
+    "dns_local_resolver": "DNS: 127.0.0.1:53 — router local resolver; uses SmartDNS when connected to this chain. Device DNS is not separately verified.",
+    "dns_system_resolver": "DNS: router system resolver. It may bypass configured SmartDNS.",
+    "dns_failed": "DNS returned no address; TLS and HTTP were not tested",
+    "endpoint_response": "The CDN/gateway root returned an HTTP response; this status does not prove service blocking or access to a specific resource"
   }
 }

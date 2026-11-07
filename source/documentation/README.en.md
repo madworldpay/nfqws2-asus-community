@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 96:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build96) · [change history](CHANGELOG.md). DPI Detector adds a separate Facebook, YouTube and Discord check: HTTP codes, redirects and control-domain errors, with a TXT download recording service/configuration context. The scope of OK and independent DNS checks is explained. Profile import, optional beta add-ons, signed catalogs and combined preview are retained. [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
+**Build 97:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build97) · [change history](CHANGELOG.md). Service checks explicitly select local or system DNS, distinguish DNS/TLS/HTTP observations and download the exact TXT to your device. New Entware MTProxy installations survive the installing SSH session; new native/Docker commands redact the key from upstream logs. The Rostelecom / Far East import profile separates measured public-copy and learned personal-profile results. [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get

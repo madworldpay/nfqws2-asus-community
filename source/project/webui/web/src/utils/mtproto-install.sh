@@ -159,6 +159,8 @@ import json, os, pwd, signal, sys
 root = os.path.dirname(os.path.realpath(__file__))
 with open(root + '/config.json') as f:
     config = json.load(f)
+secret = config['secret']
+@@MTPROTO_LOG_REDACTION@@
 sys.path[:0] = [root + '/app', root + '/app/vendor']
 signal.signal(signal.SIGHUP, signal.SIG_IGN)
 user = pwd.getpwnam('nobody')
@@ -180,9 +182,12 @@ root=/opt/share/nfqws-mtproto
 pidfile=/opt/var/run/nfqws-mtproto.pid
 log=/opt/var/log/nfqws-mtproto.log
 PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+bb=/opt/libexec/nfqws2-asus/busybox
 if [ -x /opt/libexec/nfqws2-asus/busybox ]; then
     tr() { /opt/libexec/nfqws2-asus/busybox tr "$@"; }
     grep() { /opt/libexec/nfqws2-asus/busybox grep "$@"; }
+else
+    bb=/bin/busybox
 fi
 owned() {
     [ -f "$pidfile" ] || return 1
@@ -196,8 +201,17 @@ start)
     owned && exit 0
     mkdir -p /opt/var/run /opt/var/log
     umask 077
-    /opt/bin/python3 "$root/run.py" >> "$log" 2>&1 < /dev/null &
-    echo $! > "$pidfile"
+    # Daemonize before exec: the process must outlive the installing SSH session.
+    "$bb" start-stop-daemon -S -b -m -p "$pidfile" -x /bin/sh -- -c \
+        'exec /opt/bin/python3 "$1/run.py" >> "$2" 2>&1' nfqws-mtproto "$root" "$log" || exit 1
+    count=0
+    while [ "$count" -lt 50 ]; do
+        owned && exit 0
+        count=$((count + 1))
+        "$bb" sleep 0.1
+    done
+    echo MTProto_START_FAILED >&2
+    exit 1
     ;;
 stop)
     if owned; then kill "$pid"; fi

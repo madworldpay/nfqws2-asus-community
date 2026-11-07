@@ -14,6 +14,7 @@ import {
   checkDpiSite,
   DPI_SITE_SERVICES,
   type DpiSiteContext,
+  type DpiSiteDnsScope,
   type DpiSiteService,
   type DpiSiteCheck as SiteObservation,
 } from '@/api/dpiSiteCheckClient';
@@ -74,6 +75,7 @@ export const DpiSiteCheck = ({
 }) => {
   const { t } = useTranslation();
   const [service, setService] = useState<DpiSiteService>('facebook');
+  const [dnsScope, setDnsScope] = useState<DpiSiteDnsScope>('local_resolver');
   const [reports, setReports] = useState<SiteObservation[]>([]);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
@@ -99,7 +101,7 @@ export const DpiSiteCheck = ({
     setReports([]);
     try {
       for (const target of DPI_SITE_SERVICES[service]) {
-        const report = await checkDpiSite(csrfToken, target);
+        const report = await checkDpiSite(csrfToken, target, dnsScope);
         if (generation.current !== ownGeneration) return;
         setReports((current) => [...current, report]);
       }
@@ -134,6 +136,17 @@ export const DpiSiteCheck = ({
     >
       <Typography variant="body2">{t('dpi_site_check.incomplete')}</Typography>
       <Typography variant="body2">{t('dpi_site_check.dns_scope')}</Typography>
+      <Stack direction="row" gap={1} useFlexGap flexWrap="wrap" aria-label={t('dpi_site_check.dns_choice')}>
+        {(['local_resolver', 'system_resolver'] as const).map((scope) => (
+          <Button key={scope} size="small" variant={dnsScope === scope ? 'contained' : 'outlined'}
+            disabled={running} aria-pressed={dnsScope === scope} onClick={() => {
+              if (pending.current) return;
+              setDnsScope(scope); setReports([]); setError('');
+            }}>
+            {t(`dpi_site_check.dns_button_${scope}`)}
+          </Button>
+        ))}
+      </Stack>
       <Typography variant="caption">
         {t('dpi_site_check.snapshot_scope')}
       </Typography>
@@ -229,6 +242,7 @@ export const DpiSiteCheck = ({
               <Alert severity={warning ? 'warning' : 'info'}>
                 HTTP {r.http_status ?? '—'} — {dpiSiteResponseLabel(report, t)}
               </Alert>
+              <Typography variant="caption">{t(`dpi_site_check.dns_${report.dns_scope}`)}</Typography>
               <Typography variant="body2">
                 {t('dpi_site_check.bytes')}: {r.bytes_read};{' '}
                 {t('dpi_site_check.body_limited')}:{' '}

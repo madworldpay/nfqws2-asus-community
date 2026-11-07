@@ -11,6 +11,14 @@ export function dpiSiteResponseLabel(
   t: TFunction,
 ): string {
   const r = report.response;
+  if (r.error_code === 'dns_failed') return t('dpi_site_check.dns_failed');
+  if (r.outcome !== 'response' && r.outcome !== 'read_limited')
+    return t(`dpi_site_check.outcome_${r.outcome}`);
+  if (
+    /-(cdn|images|static|gateway)$/.test(report.target) &&
+    (r.http_status === 403 || r.http_status === 404)
+  )
+    return t('dpi_site_check.endpoint_response');
   if (r.http_status !== null && r.http_status >= 400)
     return t('dpi_site_check.http_error');
   if (r.body_limited || r.outcome === 'read_limited')
@@ -50,6 +58,7 @@ export function buildDpiSiteCheckText(
   for (const report of reports) {
     lines.push(
       `${report.target} — ${report.url}`,
+      t(`dpi_site_check.dns_${report.dns_scope}`),
       `${dpiSiteResponseLabel(report, t)}; HTTP ${report.response.http_status ?? '—'}`,
       `${t('dpi_site_check.context')}: ${dpiSiteContextLabel(report.context.changed, t)}`,
       `${t('dpi_site_check.before')} / ${t('dpi_site_check.after')}:`,

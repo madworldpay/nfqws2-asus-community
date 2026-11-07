@@ -17,7 +17,7 @@ const updates={pending:false,error:null,data:{check:{state:'current'},operation:
 createRoot(document.getElementById('root')).render(<Layout><PackageUpdateDialog open onClose={()=>{}} installed="1.3.2-asus6+b80" updates={updates}/></Layout>);
 ` },
     bundle: true, platform: 'browser', format: 'iife', write: false,
-    jsx: 'automatic', logLevel: 'silent', tsconfig: web+'tsconfig.app.json', loader: {'.sh':'text'},
+    jsx: 'automatic', logLevel: 'silent', tsconfig: web+'tsconfig.app.json', loader: {'.sh':'text','.py':'text'},
   });
   server = createServer((req, res) => {
     res.setHeader('Content-Type', req.url === '/fixture.js' ? 'text/javascript' : 'text/html');

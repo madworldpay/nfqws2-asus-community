@@ -7,7 +7,7 @@ import { build } from '../webui/web/node_modules/esbuild/lib/main.js';
 const dir = await mkdtemp(join(tmpdir(), 'nfqws-start-'));
 try {
   const output = join(dir, 'progress.mjs');
-  await build({entryPoints: ['webui/web/src/api/startProgress.ts'], bundle: true,
+  await build({entryPoints: [new URL('../webui/web/src/api/startProgress.ts', import.meta.url).pathname], bundle: true,
     platform: 'node', format: 'esm', outfile: output, logLevel: 'silent'});
   const { startProgress } = await import(output);
   const states = (input) => Object.fromEntries(startProgress(input).map(x => [x.id, x.state]));
