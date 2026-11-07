@@ -27,6 +27,14 @@ the strategy and your test result** — this helps improve the catalog.
 Open **Export / share**, select the strategy and its files, specify
 the provider and result, check the preview, and click **Send**.
 
+## Profiles with Detector results
+
+Signed catalog revision 6 was published on 7 November 2026 and contains 30 profiles. **DOM.RU · Тульская область** was updated and **Билайн · Москва** was added. Their descriptions show separate TCP, HTTP, TLS and QUIC results.
+
+DOM.RU was tested twice with an empty `auto.list`: TCP 93/110 and 89/110; HTTP 16/35 and 15/35; TLS 1.2 24/35 and 19/35; TLS 1.3 24/35 and 20/35; QUIC 6/21 and 5/21. AUTO learns afresh. These measurements apply to the public copy on one connection; the personal 97/110 result in the [historical example](docs/DETECTOR-COMPARISON.en.md) belongs to a different configuration.
+
+Beeline retains the original configuration's measurements: TCP 86/110, HTTP 32/35, TLS 1.2 and TLS 1.3 both 31/35, and QUIC 16/21. Accumulated AUTO history was removed from the public copy, which has not been separately tested with traffic. Save your own lists and review the import preview. User-modified Lua requires review and explicit acknowledgement; the profile does not replace it automatically.
+
 ## Add-ons and checking results
 
 **Add-ons · Beta** below the base strategy provides checkboxes that start off. Riot adds web domains to the selected strategy; the separate tracker-website add-on keeps its own limited scope. All selections go through the combined preview. [Add-on contents and limits](IMPORT.en.md#add-ons--beta).

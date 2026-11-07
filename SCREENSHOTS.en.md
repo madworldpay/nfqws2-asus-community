@@ -84,6 +84,19 @@ This view is separate from the original terminal. The screenshot shows the view 
 
 [![Historical Build 89: personal strategy, NFQWS2 running — original Russian UI](images/screenshots/detector-comparison-personal-06-bottom.png)](images/screenshots/detector-comparison-personal-06-bottom.png)
 
+### Catalog profiles with Detector results
+
+Published revision 6 contains 30 profiles. These are two actual cards from the Build 96 panel after the catalog update, shown in Russian UI. Descriptions record conditions and separate metrics; Beeline distinguishes the original configuration's result from the anonymized copy that has not been measured separately. The card's Updated date uses UTC; the measurement date is recorded in its description. [How to choose a profile](PRESETS.en.md#profiles-with-detector-results).
+
+<details>
+<summary>Show the DOM.RU and Beeline cards — Russian UI</summary>
+
+[![Catalog 6: DOM.RU with two runs starting with empty AUTO history — Russian UI](images/screenshots/catalog6-domru-results-ru.png)](images/screenshots/catalog6-domru-results-ru.png)
+
+[![Catalog 6: Beeline Moscow original metrics and public-copy qualifications — Russian UI](images/screenshots/catalog6-beeline-moskva-ru.png)](images/screenshots/catalog6-beeline-moskva-ru.png)
+
+</details>
+
 ### Add-ons · Beta
 
 Optional Riot and the separate tracker-website rule appear below the base strategy. Checkboxes start off; a selected add-on joins the base profile in the combined preview. Riot covers web domains, without verified game UDP functionality. [Contents and limits](IMPORT.en.md#add-ons--beta).

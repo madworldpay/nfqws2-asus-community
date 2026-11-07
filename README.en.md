@@ -114,6 +114,8 @@ Updates preserve settings and the previous service state.
 
 **Import profile → From cloud** loads the selected entry from the signed catalog. Review the strategy blocks, lists, blobs and before/after preview. Unneeded parts can be deselected; resolve missing dependencies before applying. Your own JSON uses the same preview, while **Paste Keenetic strategy** converts NFQWS2 text and checks file references. DNS is selected separately and is not enabled automatically.
 
+The catalog updates **DOM.RU · Тульская область** and adds **Билайн · Москва**. Descriptions include short Detector results and their measurement conditions; [how to choose these profiles](PRESETS.en.md#profiles-with-detector-results).
+
 Since Build 92, the **Add-ons · Beta** section below the base strategy offers optional domain collections from a separate signed catalog with a fixed GitHub fallback. Checkboxes start off. **Riot** adds web domains to the selected base strategy; game UDP and voice functionality are not asserted. The combined preview shows added domains, rules and affected blocks; incompatible combinations receive an explanation. Changing the base strategy clears the add-on selection. [Using add-ons](IMPORT.en.md#add-ons--beta).
 
 Since Build 88, compatible **general strategies from the signed cloud catalog** offer **Add bypass for torrent tracker websites**, unchecked by default. It adds a separate rule for the HTTPS websites **nnmclub.to, rutracker.org, rutor.info and tapochek.net** on TCP 443 only; the sites and rule are shown in the preview. It does not promise peer/DHT or all BitTorrent traffic. Unsupported settings or incompatible files cause the addition to be rejected. With the checkbox off, the original profile is imported.
