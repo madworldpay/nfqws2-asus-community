@@ -281,6 +281,13 @@ after reviewing them in the panel preview.
 
 An independent community port. Packages are free, and participation is voluntary.
 
+## Support the project
+
+If the panel has been useful to you, you can support its development with
+[a voluntary contribution via YooMoney](https://yoomoney.ru/to/4100119670967911) ♡
+
+Feedback, working strategies and helping other community members are valuable too.
+
 ## Credits
 
 Thanks to the authors of the projects behind this adaptation and its additional features:
