@@ -41,7 +41,13 @@ class MailPackageTests(unittest.TestCase):
             self.assertEqual((template_info.mode,template_info.uid,template_info.gid),(0o644,0,0))
             self.assertEqual(template,raw)
             for name in ['support-mail.php','support-mail-proof.php','support-channel-setup.php','index.php']:
-                self.assertEqual(data['opt/share/nfqws-asus-web/'+name][1],(ROOT/'webui/web/public'/name).read_bytes())
+                expected=(ROOT/'webui/web/public'/name).read_bytes()
+                if name=='index.php':
+                    import importlib.util
+                    spec=importlib.util.spec_from_file_location('mail_profile_overlay',ROOT/'experimental/device-profiles/native_overlay.py')
+                    overlay=importlib.util.module_from_spec(spec);spec.loader.exec_module(overlay)
+                    expected=overlay.patch_index(expected.decode(),(ROOT/'experimental/device-profiles/dispatcher-hook.php.inc').read_text()).encode()
+                self.assertEqual(data['opt/share/nfqws-asus-web/'+name][1],expected)
             self.assertFalse(any('support-relay/' in name or name.endswith('.py') for name in data))
             versions.append(fields['Version'])
         self.assertEqual(versions[0],versions[1])

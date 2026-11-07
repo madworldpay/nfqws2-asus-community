@@ -76,7 +76,13 @@ class PackageTests(unittest.TestCase):
                          'share-contributions.php','share-v4.php','share-bundle-v4.php','support-json-schema.php']:
                 path='opt/share/nfqws-asus-web/'+name
                 self.assertIn(path,list(data))
-                self.assertEqual(data[path][1],(ROOT/'webui/web/public'/name).read_bytes())
+                expected=(ROOT/'webui/web/public'/name).read_bytes()
+                if name=='index.php':
+                    import importlib.util
+                    spec=importlib.util.spec_from_file_location('profile_overlay',ROOT/'experimental/device-profiles/native_overlay.py')
+                    overlay=importlib.util.module_from_spec(spec);spec.loader.exec_module(overlay)
+                    expected=overlay.patch_index(expected.decode(),(ROOT/'experimental/device-profiles/dispatcher-hook.php.inc').read_text()).encode()
+                self.assertEqual(data[path][1],expected)
             for name in ['dpi-saved.schema.json','strategy.schema.json','share-envelope.schema.json','report.schema.json',
                          'strategy-v2.schema.json','resources.schema.json','dns-share.schema.json','share-v4.schema.json']:
                 path='opt/share/nfqws2-asus/'+name

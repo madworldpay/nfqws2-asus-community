@@ -150,6 +150,34 @@ export const RequirementsDialog = ({
         <Typography variant="body2" sx={{ mb: 2 }}>
           {t('requirements.quick.detector')}
         </Typography>
+        <Accordion disableGutters sx={{ mb: 2 }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="body2">
+              {t('requirements.device_profiles.title')}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack spacing={2}>
+              {(
+                [
+                  'intro',
+                  'setup',
+                  'apply',
+                  'limits',
+                  'devices',
+                  'recover',
+                ] as const
+              ).map((item) => (
+                <Typography variant="body2" key={item}>
+                  {t(`requirements.device_profiles.${item}`)}
+                </Typography>
+              ))}
+              <Link href="/device-profiles-lab/device-profiles-lab.html">
+                {t('requirements.device_profiles.open')}
+              </Link>
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
         <Accordion disableGutters sx={{ mb: 3 }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="body2">{t('requirements.details')}</Typography>

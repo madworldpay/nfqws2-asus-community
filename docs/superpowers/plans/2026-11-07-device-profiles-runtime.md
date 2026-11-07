@@ -4,7 +4,7 @@
 
 **Goal:** Finish and install the owner-authorized per-device experiment on the RT-AC87U, with actual activation and rollback rather than a draft-only editor.
 
-**Architecture:** Keep the existing authenticated standalone editor and saved drafts. Run separate procd NFQWS2 instances for distinct selected strategies, with explicit first-match `goto` dispatch inside the existing native capture table. The normal configuration remains the fallback and is never overwritten. Keep all experimental changes on this local branch and on 87U only, based on published Build 97.
+**Architecture:** Keep the existing authenticated standalone editor and saved drafts. Run separate procd NFQWS2 instances for distinct selected strategies, with explicit first-match `goto` dispatch inside the existing native capture table. The normal configuration remains the fallback and is never overwritten. Keep changes isolated from frozen published Build97. Add a platform adapter for Entware, integrate into every package, reserve Build98 only after real feature validation.
 
 **Tech Stack:** Existing PHP, POSIX shell/procd, nftables, plain JavaScript. No new installed package dependencies.
 
@@ -12,7 +12,7 @@
 
 ## Global constraints
 
-- Main ASUS is outside this experiment; no public experiment release or topology/firmware changes.
+- Scope expanded by owner: install on main ASUS and87U, then publish all22 supported architectures with the new optional mode clearly marked beta. No topology/firmware changes.
 - Common remains the default. Saving/previewing never applies traffic. Activation requires an explicit apply button.
 - Preserve normal configuration/resources, IPv6 OFF and original service state during installation. Temporary runtime checks must clean up only their own objects.
 - Use a maximum of four distinct additional strategy processes, eight library entries and sixteen ordered cards. Explain resource limits before activation.
@@ -67,3 +67,25 @@ Files: existing standalone HTML/JS/CSS, `test_frontend.mjs`, private deployment/
 Ruling: separate per-strategy processes replace the earlier single-engine mark compiler — independent Lua globals and blob definitions can coexist without rewriting user scripts; the cost is a clearly bounded four additional processes on the test router.
 
 Ruling: user opted out of further questions and explicitly authorized finishing/installing the experiment on 87U; execute inline and review once at the end. Preserve the published 97 release unchanged.
+
+## Scope extension — explicit owner instructions
+
+Ruling: owner expanded from87U to bothASUS targets, then allarchitectures, and requested mainASUS installation. Publish one coherent Build98 for all22 supported packages only after real common/split/failure recovery and client packet tests. Clearly say beta in update notes and UI; default remains common, never auto-assign devices. Existing Build97 artifacts stay immutable.
+
+Ruling: the new independent Entware adapter is delegated under dispatching-parallel-agents while the executor finishes shared PHP/native integration. The independent agent owns only Entware shell/overlay/tests; no shared PHP or builders. Native audit is read-only. One whole-branch fresh review still runs at end.
+
+### 4. Entware adapter and packaged integration
+- [ ] Prove symlinked firmware /opt reads/writes through one pinned boundary; share literal config parser and isolated imports, preserving allnormalconfig/files.
+- [ ] Implement owned extra daemon lifecycle, ordered iptables goto selectors/reply and oldkernel validation; verify real packet classification and failed-start restoration.
+- [ ] Package auth dispatcher, standalonebeta UI and permanent hook manifest for bothASUS and allOpenWrt packages; visible panel link, brief beginnerhelp and beta release notes.
+- [ ] Full regression +22package build/reproduction, fresh whole-feature review, install and prove on mainASUS/87U, then publish and verify signed feed.
+
+
+## Verified implementation checkpoint — Build98
+
+- Planner, isolated library, native/Entware adapters, authenticated UI and package integration implemented.
+- Targeted shared suite68 PASS; Entware ownership fixtures7 PASS; both browser behavior suites PASS. Fresh whole-feature review closed all Important findings, including incomplete discovery fallback.
+- Real nativeARMv7 and ASUSAArch64 traffic demonstrated original/reply dispatch, priority/current routing, unlisted fallback and failed-start recovery. Evidence is private, not published with addresses or identities.
+- Returned both owner routers to Common; primary service ON, spare OFF. Existing configuration hashes preserved. Latest owner instruction confirms Common with the new build.
+- All22 packages rebuilt twice byte-for-byte; signatures and source archive inventory verified. Full core regression2004 checks PASS (166 environment-dependent skips); normal package deployment is tracked separately until it finishes.
+- Physical reboot and ISP bypass performance are not claimed by these tests. IPv6 remains OFF on the spare at the owner's setting.

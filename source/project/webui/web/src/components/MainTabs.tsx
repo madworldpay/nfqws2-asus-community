@@ -1,5 +1,6 @@
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import DevicesOtherOutlinedIcon from '@mui/icons-material/DevicesOtherOutlined';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
@@ -10,6 +11,8 @@ import { mainTabsValues, type MainTabsValues } from '@/types/types';
 
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
+
+const deviceProfilesHref = '/device-profiles-lab/device-profiles-lab.html';
 
 export const MainTabs = () => {
   const navigate = useNavigate();
@@ -45,6 +48,7 @@ export const MainTabs = () => {
         <Tabs
           value={currentTab}
           onChange={(_, value) => {
+            if (value === deviceProfilesHref) return;
             void navigate({ to: value === 'settings' ? '/' : `/${value}` });
           }}
           variant="scrollable"
@@ -97,6 +101,16 @@ export const MainTabs = () => {
             icon={<DnsOutlinedIcon fontSize="small" />}
             iconPosition="start"
             label="SmartDNS"
+            sx={{ minHeight: 50, fontSize: 14 }}
+          />
+
+          <Tab
+            component="a"
+            href={deviceProfilesHref}
+            value={deviceProfilesHref}
+            icon={<DevicesOtherOutlinedIcon fontSize="small" />}
+            iconPosition="start"
+            label={t('tabs.devices_beta')}
             sx={{ minHeight: 50, fontSize: 14 }}
           />
 

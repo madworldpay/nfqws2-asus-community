@@ -53,6 +53,13 @@ class LabTests(unittest.TestCase):
         self.assertEqual(result.stderr, '')
         return json.loads(result.stdout)
 
+    def test_truncated_observation_file_is_marked_incomplete(self):
+        path=Path(self.temp.name)/'large-leases';path.write_bytes(b'x'*131073)
+        code="require $argv[1].'/platform.php';require $argv[2];try{echo json_encode(NfqwsDeviceProfilesLab::observationFile($argv[3],131072));}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"
+        result=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(HERE/'device-profiles-lab.php'),str(path)],capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr);value=json.loads(result.stdout)
+        self.assertFalse(value.get('complete',True));self.assertEqual(len(value['content']),131072)
+
     def test_default_is_common_and_does_not_claim_applied(self):
         result = self.call('status')
         self.assertEqual(result.get('draft', {}).get('mode'), 'common')

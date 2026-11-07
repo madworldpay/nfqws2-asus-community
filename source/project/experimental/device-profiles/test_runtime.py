@@ -25,12 +25,12 @@ class AddressSafety(unittest.TestCase):
 
 
 class RuntimePlan(unittest.TestCase):
-    def invoke(self, value=None, discovery=None, configs=None, operation='compile'):
+    def invoke(self, value=None, discovery=None, configs=None, operation='compile',base_queue=300):
         config = {'TCP_PORTS': '80,443', 'UDP_PORTS': '443', 'USER': 'nobody',
                   'NFQWS_ARGS': '--filter-tcp=80,443', 'IPV6_ENABLED': '0'}
-        request = {'draft': value or draft(), 'discovery': discovery or {'devices': []},
+        request = {'draft': value or draft(), 'discovery': {'state':'available',**(discovery or {'devices': []})},
                    'strategies': configs or {'current': config, 'stock': config},
-                   'base_queue': 300, 'operation': operation}
+                   'base_queue': base_queue, 'operation': operation}
         code = '''try {
         $file=$argv[1].'/device-profiles-plan.php';
         if(!is_file($file)){echo json_encode(['error'=>'missing_planner']);exit;}
@@ -51,6 +51,21 @@ class RuntimePlan(unittest.TestCase):
         self.assertNotIn('error', result)
         self.assertEqual(result['instances'], [])
         self.assertEqual(result['selectors'], [])
+
+    def test_reserved_extra_queue_is_valid_in_ordinary_common_mode(self):
+        self.assertNotIn('error',self.invoke(draft('common'),base_queue=41000))
+        self.assertEqual(self.invoke(draft('split'),base_queue=41000),{'error':'queue_conflict'})
+
+    def test_truncated_real_discovery_never_assigns_a_mac_to_hidden_conflicting_owner(self):
+        fixture=lab.LabTests();fixture.setUp();self.addCleanup(fixture.tearDown)
+        leases=['2147483647 02:11:22:33:44:55 192.168.50.20 stale *']
+        for i in range(127):leases.append('2147483647 02:00:01:00:%02x:%02x 192.168.50.%d extra *'%(i//256,i%256,30+i))
+        sources={'interfaces':['br-lan'],'subnets':['192.168.50.0/24'],'complete':True,'leases':'\n'.join(leases),
+                 'neighbors':'192.168.50.20 dev br-lan lladdr 02:11:22:33:44:66 REACHABLE','arp':''}
+        discovery=fixture.call('status',sources=sources)['discovery'];self.assertEqual(discovery['state'],'partial')
+        value=draft();value['devices'][0]['mac']='02:11:22:33:44:55'
+        result=self.invoke(value,discovery);self.assertEqual(result['selectors'][0]['addresses4'],[])
+        self.assertIn('incomplete_discovery',result['warnings'])
 
     def test_ordered_current_card_uses_main_queue_and_stock_is_separate(self):
         value = draft();value['profiles'].insert(0, profile('profile-00000002', strategy='current'))
@@ -78,6 +93,14 @@ class RuntimePlan(unittest.TestCase):
         result=self.invoke(value,observed)
         self.assertNotIn('error',result)
         self.assertEqual(result['selectors'][0]['addresses4'], [])
+        self.assertIn('ambiguous_address',result['warnings'])
+
+    def test_ip_conflict_with_unsaved_observed_device_is_never_assigned(self):
+        value=draft();value['devices'][0]['mac']='02:11:22:33:44:55'
+        observed={'devices':[{'mac':'02:11:22:33:44:55','addresses':['192.168.50.99']},
+                             {'mac':'02:11:22:33:44:66','addresses':['192.168.50.99']}]}
+        result=self.invoke(value,observed)
+        self.assertEqual(result['selectors'][0]['addresses4'],[])
         self.assertIn('ambiguous_address',result['warnings'])
 
     def test_duplicate_strategy_cards_share_an_instance_and_disabled_cards_cost_nothing(self):

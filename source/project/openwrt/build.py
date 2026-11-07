@@ -27,6 +27,8 @@ spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platfo
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
 blob_spec=importlib.util.spec_from_file_location('nfqws_blob_bundle',ROOT/'asus/blob_bundle.py')
 blob_bundle=importlib.util.module_from_spec(blob_spec);blob_spec.loader.exec_module(blob_bundle)
+profiles_spec=importlib.util.spec_from_file_location('nfqws_device_profiles_payload',ROOT/'experimental/device-profiles/package_payload.py')
+device_profiles=importlib.util.module_from_spec(profiles_spec);profiles_spec.loader.exec_module(device_profiles)
 PACKAGE_LICENSE='Multiple (MIT, GPL-2.0, GPL-3.0, LGPL-2.1, BSD-3-Clause and others); see THIRD-PARTY-NOTICES.txt'
 DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi',
               'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd','libopenssl3','libgcc']
@@ -351,7 +353,8 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
     target=native_metadata(series,package_arch,release);output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
     source=source_payload(cache,offline);engine=prepare_engine(target,source,upx)
     with tempfile.TemporaryDirectory(prefix='nfqws-native-package-')as td:
-        stage=Path(td)/'payload';write_files(stage,payload_files(target,engine,source)|web_payload()|smartdns_payload(target,cache,offline))
+        payload=device_profiles.integrate(payload_files(target,engine,source)|web_payload()|smartdns_payload(target,cache,offline),'openwrt')
+        stage=Path(td)/'payload';write_files(stage,payload)
         hooks={key:package_hook(target,action)for key,action in [('preinst','preinstall'),('postinst','postinstall'),('prerm','preremove'),('postrm','postremove')]}
         if target['format']=='ipk':
             metadata='Package: nfqws2-native\nVersion: '+target['version']+'\nArchitecture: '+target['arch']+'\nDepends: '+', '.join(target['dependencies'])+'\nMaintainer: madworldpay\nSection: net\nLicense: '+PACKAGE_LICENSE+'\nDescription: NFQWS2 community native OpenWrt service\n'

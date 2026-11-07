@@ -1,15 +1,9 @@
-# Device profiles experiment — 7 November 2026
+# Device profiles beta
 
-Owner-authorized standalone prototype for RT-AC87U, using the existing panel authentication. This directory is excluded from release integration: no public build or automatic migration is requested. Working traffic is never changed through this prototype.
+This directory contains the shared beta editor, strict planner, isolated strategy library, activation journal and platform adapters included by the ASUS/Entware and OpenWrt package builders. The default remains Common; saving or previewing a draft never applies traffic. See [the user guide](../../docs/DEVICE-PROFILES.md).
 
-The experiment presents Common mode by default, discovers known LAN devices, permits manual named IP/MAC entries, and exposes ordered per-device profiles only in Split mode. Profile cards are reordered by drag handle or up/down actions. An explicit draft save persists the order and manual device identities; a separate preview explains enabled matching profiles and the existing current-strategy fallback. The first applicable strategy is a proposed runtime rule; no traffic-application claim is made.
+Distinct selected strategies run as separate engines, with at most four additional NFQUEUE queues41000–41003. Ordered goto dispatch makes the first matching card own the selected device's traffic; the normal service configuration stays the fallback. Native procd/nftables and ASUS daemon/iptables adapters use the ordinary service/update leases and verify process/socket ownership. Imports use the existing bounded document validator and isolated resource copies; DNS is shared.
 
-Tasks:
+The journal records original state before mutation, phases, the original failure and verified recovery. A detached worker and guard outlive the page. Before upgrading while split routing is active, users apply Common. Package integration is generated from exact known hook layouts and carries a manifest; unknown layouts abort the build.
 
-- [x] Back up the 87U config/resources/index and firewall state.
-- [x] Implement strict bounded PHP draft validation, atomic revision-checked storage, LAN-only discovery, and priority preview. Test validation, stale writes, private storage boundaries, exclusion of WAN, offline/known status, duplicate identities, and stable order.
-- [x] Implement a responsive standalone frontend using the authenticated normal dispatcher, with distinct Save draft and Preview controls. Browser-check manual entry, mode switching, dragging, mobile controls, persistence and errors.
-- [x] Validate a compiler experiment with actual installed nfqws2 --dry-run: mark every internal --new block, keep reserved flags/global Lua/blob definitions scoped correctly, and reject conflicting dependencies. Do not install firewall rules or start a daemon for this validation.
-- [x] Review and deploy only the experimental page/module and an authenticated dispatcher hook on 87U. Preserve owner main router and all original config/resources/firewall; verify API, screenshots and cleanup of the sole owned SSH session. Save exact installation evidence privately.
-
-Result: installed only as an experiment on 87U. Authenticated live-browser save/reload/drag/preview and mobile captures passed. Seventeen PHP/Python tests and the isolated browser suite passed. Native current+stock+fallback argument validation passed; an isolated network namespace confirmed first-match order, fallback and exclusion without changing host firewall tables or physical topology. Traffic application, general catalog-profile import, DHCP-driven runtime reconciliation, and safe migration/update integration are deliberately not enabled by this prototype.
+The earlier compile_probe.py is a historical single-engine mark feasibility probe. It is not the shipped multi-process runtime. Tests cover validators, file boundaries, priorities, imports, failure recovery, native/Entware rendering, packaging and the browser. Hardware checks and deployment evidence are maintained privately rather than embedded in public source.

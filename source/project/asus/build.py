@@ -24,6 +24,9 @@ ROOT = Path(__file__).resolve().parents[1]
 _blob_spec = importlib.util.spec_from_file_location('nfqws_blob_bundle', ROOT/'asus/blob_bundle.py')
 blob_bundle = importlib.util.module_from_spec(_blob_spec)
 _blob_spec.loader.exec_module(blob_bundle)
+_profiles_spec = importlib.util.spec_from_file_location('nfqws_device_profiles_payload', ROOT/'experimental/device-profiles/package_payload.py')
+device_profiles = importlib.util.module_from_spec(_profiles_spec)
+_profiles_spec.loader.exec_module(device_profiles)
 TARGETS = {
     'armv7-3.2': {'opkg_arch': 'all', 'filename_arch': 'armv7', 'family': 'armv7', 'elf_class': 1, 'elf_machine': 40,
                  'engine_asset': 'nfqws2-keenetic_1.3.3_all_entware.ipk',
@@ -475,7 +478,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     overlap = core.keys() & web.keys()
     if overlap:
         raise RuntimeError(f'Overlapping core/web payload: {sorted(overlap)}')
-    payload = {**core, **web}
+    payload = device_profiles.integrate({**core, **web}, 'asus-entware')
     package(output, 'nfqws2-asus', package_version(build_number),
             'iptables, flock, php8-cgi, php8-mod-session, php8-mod-openssl, ca-bundle, libc, libssp, librt, libpthread, libpcre2, libnettle',
             'nfqws2-keenetic, nfqws-keenetic, tpws-keenetic, nfqws-keenetic-web, nfqws-asus-web',

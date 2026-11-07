@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 97:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build97) · [change history](CHANGELOG.md). Service checks explicitly select local or system DNS, distinguish DNS/TLS/HTTP observations and download the exact TXT to your device. New Entware MTProxy installations survive the installing SSH session; new native/Docker commands redact the key from upstream logs. The Rostelecom / Far East import profile separates measured public-copy and learned personal-profile results. [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
+**Build 98:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build98) · [change history](CHANGELOG.md). **Devices · beta** assigns separate strategies to selected devices with ordered priorities. Common mode remains the default; saving a draft does not apply it. [Guide and limits](docs/DEVICE-PROFILES.en.md). [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get
@@ -30,6 +30,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 | **Access to services without a VPN** | Find a DPI bypass for YouTube, Instagram, Discord and other services while keeping a direct connection without a VPN tunnel |
 | **Browser-based management** | Start, stop, devices, strategies and logs in one panel; everyday setup does not require editing configuration files over SSH |
 | **Router-level setup** | Process traffic from your whole home network or only selected devices |
+| **Device profiles · beta** | Separate strategies, local discovery, manual IP/MAC and ordered priorities; [guide](docs/DEVICE-PROFILES.en.md) |
 | **DNS for specific sites** | SmartDNS assigns separate DoT/DoH servers or fixed IP addresses to sites |
 | **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, services stop before the backup and installation, then return to their previous state |
 | **DPI Detector in the panel** | The original menu with phone controls, TXT downloads and separate Facebook, YouTube and Discord control-URL checks; original Detector support depends on the architecture |

@@ -146,6 +146,7 @@ export function PackageUpdateDialog({
     'core_stop_failed',
     'web_stop_failed',
     'settings_changed',
+    'experimental_runtime_active',
     'rollback_unavailable',
     'update_rolled_back',
     'rollback_failed',

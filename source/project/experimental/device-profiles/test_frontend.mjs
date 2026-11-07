@@ -1,12 +1,12 @@
 /**
  * Focused browser verification of the isolated draft UI; no router or real API.
- * Run: /usr/lib/chatgpt/resources/cua_node/bin/node source/project/experimental/device-profiles/test_frontend.mjs
+ * Run: node source/project/experimental/device-profiles/test_frontend.mjs
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/home/profy13/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
 const directory = fileURLToPath(new URL('.', import.meta.url));
 const empty = () => ({ schema_version: 1, mode: 'common', devices: [], profiles: [] });

@@ -34,23 +34,27 @@ final class NfqwsDeviceProfilesPlan
     public static function compile(array $draft,array $discovery,array $strategies,int $baseQueue):array
     {
         $draft=NfqwsDeviceProfilesLab::normalize($draft);
-        if($baseQueue<0||$baseQueue>65535||($baseQueue>=41000&&$baseQueue<=41003))throw new RuntimeException('queue_conflict');
+        if($baseQueue<0||$baseQueue>65535)throw new RuntimeException('queue_conflict');
         if(!is_array($strategies['current']??null))throw new RuntimeException('strategy_unavailable');
         $base=$strategies['current'];$tcp=[self::ports($base['TCP_PORTS']??'80,443')];$udp=[self::ports($base['UDP_PORTS']??'443')];
         $out=['mode'=>$draft['mode'],'instances'=>[],'selectors'=>[],'warnings'=>[],
               'flow_tcp'=>$tcp[0],'flow_udp'=>$udp[0]];
         if($draft['mode']==='common')return $out;
-        $observed=[];
+        if($baseQueue>=41000&&$baseQueue<=41003)throw new RuntimeException('queue_conflict');
+        $observed=[];$observedOwners=[];
         foreach(array_slice((array)($discovery['devices']??[]),0,128) as $row){
             if(!is_array($row)||!is_string($row['mac']??null)||!is_array($row['addresses']??null))continue;
             foreach(array_slice($row['addresses'],0,16)as $address){
                 try{$ip=NfqwsDeviceProfilesLab::address($address);}catch(Throwable $e){continue;}
-                $observed[strtolower($row['mac'])][$ip]=true;
+                $mac=strtolower($row['mac']);if($mac==='')continue;
+                $observed[$mac][$ip]=true;$observedOwners[$ip][$mac]=true;
             }
         }
         $addresses=[];$owners=[];
         foreach($draft['devices']as $device){
-            $ips=$device['mac']===''?$device['addresses']:array_keys($observed[$device['mac']]??[]);
+            $complete=($discovery['state']??'unavailable')==='available';
+            $ips=$device['mac']===''?$device['addresses']:($complete?array_keys($observed[$device['mac']]??[]):[]);
+            if($device['mac']!==''&&!$complete)$out['warnings'][]='incomplete_discovery';
             if($device['mac']!==''&&!$ips)$out['warnings'][]='unresolved_mac';
             $addresses[$device['id']]=$ips;
             foreach($ips as $ip)$owners[$ip][$device['id']]=true;
@@ -68,14 +72,14 @@ final class NfqwsDeviceProfilesPlan
             }
             $a4=[];$a6=[];
             foreach($profile['device_ids']as $deviceId)foreach($addresses[$deviceId]as $ip){
-                if(count($owners[$ip])!==1){$out['warnings'][]='ambiguous_address';continue;}
+                if(count($owners[$ip])!==1||count($observedOwners[$ip]??[])>1){$out['warnings'][]='ambiguous_address';continue;}
                 if(str_contains($ip,':'))$a6[$ip]=true;else $a4[$ip]=true;
             }
             $out['selectors'][]=['profile_id'=>$profile['id'],'queue'=>$queues[$id],
                 'addresses4'=>array_keys($a4),'addresses6'=>array_keys($a6),'tcp'=>$pTcp,'udp'=>$pUdp];
             $tcp[]=$pTcp;$udp[]=$pUdp;
         }
-        $out['flow_tcp']=self::unionPorts($tcp);$out['flow_udp']=self::unionPorts($udp);
+        $out['flow_tcp']=self::ports(self::unionPorts($tcp));$out['flow_udp']=self::ports(self::unionPorts($udp));
         $out['warnings']=array_values(array_unique($out['warnings']));
         if(strlen(json_encode($out,JSON_THROW_ON_ERROR))>262144)throw new RuntimeException('runtime_limit');
         return $out;
@@ -104,6 +108,36 @@ final class NfqwsDeviceProfilesPlan
         if(count($args)>8192||strlen(implode(' ',$args))>131072)throw new RuntimeException('runtime_limit');
         return $args;
     }
+    /** iptables-restore fragment, inserted only into the application's chains. */
+    public static function entwareRules(array $plan,int $family):string
+    {
+        if(!in_array($family,[4,6],true))throw new RuntimeException('invalid_request');$out='';
+        foreach($plan['selectors']as $i=>$p)foreach(['in','out']as $dir)$out.=':nfqa_dp_'.$i.'_'.$dir.' - [0:0]' . "\n-F nfqa_dp_".$i.'_'.$dir."\n";
+        foreach($plan['selectors']as $i=>$p)foreach(['in','out']as $dir){
+            $chain='nfqa_dp_'.$i.'_'.$dir;$direction=$dir==='out'?'original':'reply';$port=$dir==='out'?'--dports':'--sports';
+            foreach(['tcp','udp']as $protocol){
+                $chunks=[];$chunk=[];$count=0;
+                foreach(explode(',',self::ports($p[$protocol]))as $range){
+                    if($range==='')continue;$cost=str_contains($range,':')?2:1;
+                    if($count+$cost>15){$chunks[]=implode(',',$chunk);$chunk=[];$count=0;}
+                    $chunk[]=$range;$count+=$cost;
+                }
+                if($chunk)$chunks[]=implode(',',$chunk);
+                foreach($chunks as $ports){
+                    $base='-A '.$chain.' -p '.$protocol.' -m multiport '.$port.' '.$ports;
+                    $queue=' -j NFQUEUE --queue-num '.$p['queue'].' --queue-bypass';
+                    $out.=$base.' -m connbytes --connbytes-dir '.$direction.' --connbytes-mode packets --connbytes 1:15'.$queue."\n";
+                    if($protocol==='tcp'){
+                        foreach(['FIN FIN','RST RST']as $flags)$out.=$base.' --tcp-flags '.$flags.$queue."\n";
+                        if($dir==='in')$out.=$base.' --tcp-flags SYN,ACK SYN,ACK'.$queue."\n";
+                    }
+                }
+            }
+            $out.='-A '.$chain.' -j RETURN'."\n";
+            foreach($p['addresses'.$family]as $ip)$out.='-A nfqa_'.$dir.' -m conntrack --ctorigsrc '.$ip.' -g '.$chain."\n";
+        }
+        if(strlen($out)>524288)throw new RuntimeException('runtime_limit');return $out;
+    }
     public static function rules(array $plan):array
     {
         $out=['definitions'=>'','original'=>'','reply'=>''];
@@ -111,7 +145,7 @@ final class NfqwsDeviceProfilesPlan
             foreach([4,6]as $family){
                 $name='dp_'.$i.'_'.$family;$ips=$p['addresses'.$family];
                 $out['definitions'].=' set '.$name.' { type ipv'.$family.'_addr;'.($ips?' elements = { '.implode(', ',$ips).' };':'')." }\n";
-                if($ips)foreach(['original','reply']as $direction)$out[$direction].='  ct original '.($family===4?'ip':'ip6').' saddr @'.$name.' goto dp_'.$i.'_'.$direction."\n";
+                foreach(['original','reply']as $direction)$out[$direction].='  ct original '.($family===4?'ip':'ip6').' saddr @'.$name.' goto dp_'.$i.'_'.$direction."\n";
             }
             foreach(['original','reply']as $direction){
                 $port=$direction==='original'?'dport':'sport';$out['definitions'].=' chain dp_'.$i.'_'.$direction." {\n";

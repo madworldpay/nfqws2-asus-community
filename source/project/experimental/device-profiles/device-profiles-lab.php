@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/device-profiles-paths.php';
 /** Isolated draft experiment. No operation here changes traffic or services. */
 if (!class_exists('NfqwsPlatform', false)) require_once __DIR__.'/platform.php';
 
@@ -82,15 +83,15 @@ final class NfqwsDeviceProfilesLab
         if($s===false&&!$create)return false;
         if($s===false){
             $parent=dirname($this->root);
-            try{NfqwsPlatform::guardFile($parent,basename($this->root),$this->owner);}catch(Throwable $e){throw new RuntimeException('storage_unavailable');}
+            try{NfqwsDeviceProfilesPaths::guard($parent,basename($this->root),$this->owner);}catch(Throwable $e){throw new RuntimeException('storage_unavailable');}
             $mask=umask(0077);try{if(!@mkdir($this->root,0700))throw new RuntimeException('storage_unavailable');}finally{umask($mask);}
         }
-        try{NfqwsPlatform::guardFile($this->root,'draft.json',$this->owner);}catch(Throwable $e){throw new RuntimeException('storage_unavailable');}
+        try{NfqwsDeviceProfilesPaths::guard($this->root,'draft.json',$this->owner);}catch(Throwable $e){throw new RuntimeException('storage_unavailable');}
         return true;
     }
     private function safeFile(string $name):string
     {
-        try{return NfqwsPlatform::guardFile($this->root,$name,$this->owner);}catch(Throwable $e){throw new RuntimeException('storage_unavailable');}
+        try{return NfqwsDeviceProfilesPaths::guard($this->root,$name,$this->owner);}catch(Throwable $e){throw new RuntimeException('storage_unavailable');}
     }
     private function read():array
     {
@@ -132,7 +133,7 @@ final class NfqwsDeviceProfilesLab
         if($draft['mode']==='split'&&!$profiles)$warnings[]='no_profiles';
         foreach($draft['devices'] as $d){
             $matches=[];if($draft['mode']==='split')foreach($profiles as $p)if($p['enabled']&&in_array($d['id'],$p['device_ids'],true))$matches[]=$p['id'];
-            if($d['mac']!==''&&!$d['addresses']&&!isset($resolved[$d['mac']]))$warnings[]='unresolved_mac';
+            if($d['mac']!==''&&!isset($resolved[$d['mac']]))$warnings[]='unresolved_mac';
             $assignments[]=['device_id'=>$d['id'],'profile_ids'=>$matches,'fallback'=>'current'];
         }
         return ['schema_version'=>1,'mode'=>$draft['mode'],'applied'=>false,'profiles'=>$profiles,'assignments'=>$assignments,'warnings'=>array_values(array_unique($warnings))];
@@ -155,7 +156,7 @@ final class NfqwsDeviceProfilesLab
             try{$ip=self::address($ip);$mac=self::mac($mac);}catch(Throwable $e){return;}
             if($mac==='')return;$id='mac-'.str_replace(':','',$mac);
             if(!isset($map[$id])){if(count($map)>=128){$partial=true;return;}$map[$id]=['id'=>$id,'name'=>'','mac'=>$mac,'addresses'=>[],'sources'=>[],'seen'=>'known'];}
-            if(!in_array($ip,$map[$id]['addresses'],true)&&count($map[$id]['addresses'])<16)$map[$id]['addresses'][]=$ip;
+            if(!in_array($ip,$map[$id]['addresses'],true)){if(count($map[$id]['addresses'])<16)$map[$id]['addresses'][]=$ip;else $partial=true;}
             if(!in_array($source,$map[$id]['sources'],true))$map[$id]['sources'][]=$source;
             if($name!==''&&$name!=='*'&&preg_match('/^[^\x00-\x1f\x7f]{1,64}$/uD',$name))$map[$id]['name']=$name;
             if($reachable)$map[$id]['seen']='reachable';
@@ -173,6 +174,13 @@ final class NfqwsDeviceProfilesLab
         // Keep every valid saved draft loadable even with a full neighbor table.
         while(strlen(self::encode($out))>49152){array_pop($out['devices']);$out['state']='partial';}
         return $out;
+    }
+    public static function observationFile(string $path,int $limit):array
+    {
+        if($limit<1||$limit>262144)throw new RuntimeException('invalid_request');
+        $raw=@file_get_contents($path,false,null,0,$limit+1);
+        return ['content'=>is_string($raw)?substr($raw,0,$limit):'',
+            'complete'=>is_string($raw)&&strlen($raw)<=$limit];
     }
     private function localSources():array
     {
@@ -199,9 +207,10 @@ final class NfqwsDeviceProfilesLab
             }
         }
         $out['interfaces']=array_values(array_unique($out['interfaces']));
+        if(count($out['interfaces'])>32)$out['complete']=false;
         $r=NfqwsPlatform::run([$ip,'neigh','show'],2,[],262144);$out['neighbors']=implode("\n",$r['output']);if($r['status']!==0)$out['complete']=false;
-        foreach(['/tmp/dhcp.leases','/var/lib/misc/dnsmasq.leases','/tmp/var/lib/misc/dnsmasq.leases','/opt/var/lib/misc/dnsmasq.leases'] as $path)if(is_file($path)){$raw=@file_get_contents($path,false,null,0,131072);if(is_string($raw))$out['leases'].=$raw."\n";else $out['complete']=false;if(strlen($out['leases'])>262144){$out['complete']=false;break;}}
-        $raw=@file_get_contents('/proc/net/arp',false,null,0,131072);if(is_string($raw))$out['arp']=$raw;
+        foreach(['/tmp/dhcp.leases','/var/lib/misc/dnsmasq.leases','/tmp/var/lib/misc/dnsmasq.leases','/opt/var/lib/misc/dnsmasq.leases'] as $path)if(is_file($path)){$read=self::observationFile($path,131072);$out['leases'].=$read['content']."\n";if(!$read['complete'])$out['complete']=false;if(strlen($out['leases'])>262144){$out['complete']=false;break;}}
+        $read=self::observationFile('/proc/net/arp',131072);$out['arp']=$read['content'];if(!$read['complete'])$out['complete']=false;
         return $out;
     }
     public static function validateRequest(array $p):void

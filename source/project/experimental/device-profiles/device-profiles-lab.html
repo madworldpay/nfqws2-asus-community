@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Профили устройств · Пробная панель</title>
+  <title>Профили устройств · Бета</title>
   <link rel="stylesheet" href="device-profiles-lab.css">
   <script src="device-profiles-lab.js" defer></script>
 </head>
@@ -12,11 +12,11 @@
   <main class="shell">
     <header class="page-header">
       <a class="back-link" href="/">← В панель</a>
-      <div class="title-row"><h1>Профили устройств</h1><span class="badge">Эксперимент</span></div>
+      <div class="title-row"><h1>Профили устройств</h1><span class="badge">Бета</span></div>
       <p class="intro">Общая стратегия для всех или отдельные профили для выбранных устройств.</p>
     </header>
 
-    <aside class="draft-banner"><strong>Пробная панель.</strong> Сохраняется черновик; рабочая стратегия пока не изменяется.</aside>
+    <aside class="draft-banner"><strong>Бета-функция.</strong> Сначала сохраните черновик, затем примените его отдельной кнопкой. Приоритеты действуют для трафика, проходящего через этот роутер.</aside>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
     <div id="stale-notice" class="notice warning" role="alert" hidden>Сохранённый черновик изменился в другой вкладке. Ваши правки сохранены на странице. Загрузите сохранённый вариант, чтобы продолжить; перед заменой появится подтверждение.</div>
 
@@ -29,12 +29,41 @@
       </div>
     </section>
 
+    <section class="panel runtime-panel" aria-labelledby="runtime-title">
+      <div class="section-heading"><h2 id="runtime-title">Рабочий режим</h2><button id="runtime-refresh" type="button">Обновить состояние</button></div>
+      <p id="runtime-info" role="status" aria-live="polite">Получаем состояние…</p>
+      <progress id="runtime-progress" max="100" value="0" hidden aria-label="Этап применения"></progress>
+      <pre id="job-details" class="job-details" hidden></pre>
+      <div class="runtime-actions">
+        <label class="checkbox-label"><input id="start-after" type="checkbox">Запустить службу после применения</label>
+        <button id="apply" class="primary" type="button" disabled>Применить сохранённый режим</button>
+        <button id="copy-error" type="button" hidden>Скопировать причину</button>
+      </div>
+      <p class="subtle">Сохранение черновика отделено от применения. При ошибке запуска восстанавливается прежний режим и состояние службы. Перед обновлением основного пакета примените «Общий» режим.</p>
+    </section>
+
+    <details id="library-section" class="panel library-panel">
+      <summary>Библиотека стратегий</summary>
+      <p class="muted">Сохраните текущую стратегию, загрузите единый JSON-экспорт или выберите профиль из нашего каталога. У каждого сохранённого варианта свои ресурсы и auto.list. DNS остаётся общим для всех устройств.</p>
+      <label class="field-label">Название стратегии<input id="strategy-name" maxlength="64" placeholder="Например, для телевизора"></label>
+      <div class="runtime-actions"><button id="capture-current" type="button">Сохранить текущую стратегию</button></div>
+      <label class="field-label">JSON-экспорт<input id="strategy-file" type="file" accept=".json,application/json"></label>
+      <label class="checkbox-label"><input id="trust-lua" type="checkbox">Доверять Lua из выбранного файла или каталога</label>
+      <div class="runtime-actions"><button id="library-import" type="button">Добавить из файла</button><button id="catalog-load" type="button">Открыть каталог</button></div>
+      <div id="catalog-controls" hidden>
+        <label class="field-label">Профиль каталога<select id="catalog-profile"><option value="">Выберите профиль</option></select></label>
+        <p id="catalog-description" class="subtle"></p>
+        <button id="catalog-add" type="button" disabled>Добавить в библиотеку</button>
+      </div>
+      <p id="library-count" class="subtle">В библиотеке — до 8 стратегий. Одновременно можно использовать до 4 отличающихся стратегий помимо общей.</p>
+    </details>
+
     <fieldset id="editor" disabled>
       <legend class="sr-only">Настройки черновика</legend>
       <section class="panel mode-panel" aria-labelledby="mode-title">
         <h2 id="mode-title">Режим</h2>
         <div class="mode-options">
-          <label class="mode-option"><input type="radio" name="mode" value="common" checked><span><strong>Общий</strong><small>Одна стратегия для выбранных устройств.</small></span></label>
+          <label class="mode-option"><input type="radio" name="mode" value="common" checked><span><strong>Общий</strong><small>Одна рабочая стратегия без отдельных профилей.</small></span></label>
           <label class="mode-option"><input type="radio" name="mode" value="split"><span><strong>По устройствам</strong><small>Профили с собственным порядком приоритетов.</small></span></label>
         </div>
         <p id="common-note" class="muted">Для общего режима профили не нужны. Список устройств можно подготовить заранее.</p>
@@ -65,7 +94,7 @@
       <section id="profiles-section" class="panel" aria-labelledby="profiles-title" hidden>
         <div class="section-heading"><div><h2 id="profiles-title">Приоритеты профилей</h2><p class="muted">Выше — раньше при проверке. Перетаскивайте за ручку или используйте кнопки ↑ и ↓.</p></div><button id="add-profile" type="button">+ Профиль</button></div>
         <div id="profiles" class="profiles"></div>
-        <div class="fallback"><span class="order-number">↳</span><div><strong>Для остальных — текущая стратегия</strong><p>Последний вариант после всех включённых профилей. Этот порядок виден только в черновике.</p></div></div>
+        <div class="fallback"><span class="order-number">↳</span><div><strong>Для остальных — текущая стратегия</strong><p>Устройство использует первый включённый профиль, в котором оно отмечено. Остальные устройства используют общую стратегию. Действующие исключения сохраняются.</p></div></div>
       </section>
     </fieldset>
 
@@ -73,7 +102,7 @@
       <div class="section-heading"><div><h2 id="preview-title">Предпросмотр черновика</h2><p id="preview-caption" class="muted">Правила не применены.</p></div><button id="close-preview" type="button" aria-label="Закрыть предпросмотр">Закрыть</button></div>
       <div id="preview-content"></div>
     </section>
-    <footer>Экспериментальная страница. Сохранение черновика не запускает и не перезапускает службу.</footer>
+    <footer>Экспериментальная страница. Применение продолжается после закрытия вкладки. Сохранение черновика само по себе службу не перезапускает.</footer>
   </main>
 </body>
 </html>

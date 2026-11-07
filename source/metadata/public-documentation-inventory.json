@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 57319,
-      "sha256": "c5d86fd1ae888408d3a78640345efd6b7861dab6f12546e8f225e1fcf9889b68"
+      "bytes": 59518,
+      "sha256": "50e3823bb3e1aa6409ddf468425b887ca3c020b3f7fddc65c4b9ee02d2e45f94"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 25716,
-      "sha256": "bcca545804cba067d89d44b15670cf7b012b9a9648111b84536249d056822cae"
+      "bytes": 25693,
+      "sha256": "4037c2554b2d8046287e6ea1d53fc51cb3d6b0fa5c9e3b6f6db1934fb0f28ca7"
     },
     {
       "file": "README.md",
-      "bytes": 42904,
-      "sha256": "c43708d6775d4be41ac8a307ab94566f76f7bf29edc8b7feddc7d83316e18d12"
+      "bytes": 42947,
+      "sha256": "a14db2c3fcf5a55e2e63c029d0afc5122bdda9880646bc90d067cd9b211efa75"
     },
     {
       "file": "ROADMAP.en.md",
@@ -229,6 +229,16 @@
       "file": "docs/DETECTOR-COMPARISON.md",
       "bytes": 12858,
       "sha256": "dd1bde1d49ade3e3b602826677868be3cad37edcbd712bd17d5a025ed1fb388b"
+    },
+    {
+      "file": "docs/DEVICE-PROFILES.en.md",
+      "bytes": 2221,
+      "sha256": "b62996032600bbe6b33fa71533cce1f3b5bb9fce700a796b5d097db981350ab4"
+    },
+    {
+      "file": "docs/DEVICE-PROFILES.md",
+      "bytes": 10620,
+      "sha256": "609ebf8e4b93505d179bdd01df62f14c5a5a8c6f6c1aeeca760c6a5a941d8284"
     },
     {
       "file": "images/cloud-catalog.jpg",

@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 3,
-    "sha256": "969eeff1eaac226a228cc61503effa46ea87d872ef3174365befc7c36ffa3c48"
+    "sha256": "4960a9ce196ee53a9ae6f2b038ebf5bb7949312406eabe79835e766b4a3d0d88"
   },
   {
     "path": "LICENSE",
@@ -11,8 +11,8 @@
   },
   {
     "path": "README.md",
-    "bytes": 1457,
-    "sha256": "52a3813992323cda2b910cf71676fc4427879e06a0968309cb42f96e60130cd7"
+    "bytes": 1695,
+    "sha256": "12afbce264553a19a2fcae400edb60d2a6cb06dded3a0133414b1bb8cec5d47e"
   },
   {
     "path": "THIRD-PARTY-NOTICES.txt",
@@ -126,8 +126,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 31418,
-    "sha256": "66f344af5e092757ee9867eeba6e366569e9ce2583e017559d31172a8168cd2f"
+    "bytes": 31723,
+    "sha256": "eec546684e7f2117455754eab467524c5674fe04b9ce68be261759589a5234c6"
   },
   {
     "path": "asus/compatibility.sh",
@@ -905,6 +905,16 @@
     "sha256": "f5d922c8b3605f1186bcbc9e40c5b57e9862e054f2464d83dffcab6c98137051"
   },
   {
+    "path": "docs/DEVICE-PROFILES.en.md",
+    "bytes": 2221,
+    "sha256": "b62996032600bbe6b33fa71533cce1f3b5bb9fce700a796b5d097db981350ab4"
+  },
+  {
+    "path": "docs/DEVICE-PROFILES.md",
+    "bytes": 10620,
+    "sha256": "609ebf8e4b93505d179bdd01df62f14c5a5a8c6f6c1aeeca760c6a5a941d8284"
+  },
+  {
     "path": "docs/IMPORT.md",
     "bytes": 12015,
     "sha256": "9aa7756966e0fa5acae3d29303465345ec265d1254d18b5b1e50a413b647370f"
@@ -918,6 +928,156 @@
     "path": "docs/USAGE.md",
     "bytes": 10203,
     "sha256": "5f9f9b88c814aa93f3ae2288a959cf6e46c855b1bb646ae491b36b54dc7d2a5e"
+  },
+  {
+    "path": "experimental/device-profiles/PLAN.md",
+    "bytes": 1535,
+    "sha256": "997e3700ffb55119b4c9e5a2651c9cc620a8acac3c1488f4c340b07bc68b68cd"
+  },
+  {
+    "path": "experimental/device-profiles/compile_probe.py",
+    "bytes": 4190,
+    "sha256": "231f7772e045cd7ff238353d3cdb99a2f18c192d2f61cb661137c5a672a62991"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-entware.sh",
+    "bytes": 14926,
+    "sha256": "7e3255aad2d42c1d83cb4e00b4c877f918f601fa3d225aeff725a24cf974ed5d"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-lab.css",
+    "bytes": 11327,
+    "sha256": "0eaa2532f9929e7b9f4af1b18c3555c2cccc91726585229ccdbc262d22ba4597"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-lab.html",
+    "bytes": 10308,
+    "sha256": "47aa4d8d569d7f1b76e7551ad4235fca2557747e484b41910c4a6af68e73e768"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-lab.js",
+    "bytes": 43406,
+    "sha256": "d0e9034b65203a4e0ecf3585fc8239bcdc7981d59f0e72942708b5b2fe45d637"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-lab.php",
+    "bytes": 17008,
+    "sha256": "8f7d87d7153f9b1f7f481c984a7a961d4e45d73592b0ef381862d01363760521"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-library.php",
+    "bytes": 12139,
+    "sha256": "2e76559dc3a32b5ef098edc1c7279e85f799cb206f2275b2a5985d87dc98f045"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-native.sh",
+    "bytes": 4131,
+    "sha256": "35a8b6476d355e9f63cd1b8799fe52da82ff1da11d121105e19919e90366ce64"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-paths.php",
+    "bytes": 3549,
+    "sha256": "3f6ac93312a0229856d5827c590c4a7de52c2b3dcaf107d2ea669ad1301a2300"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-plan.php",
+    "bytes": 10315,
+    "sha256": "e093cd089be8322ff0ba78f2ee39631bc63495b81064cfc51d6a35fd874bf050"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-queues.php",
+    "bytes": 3009,
+    "sha256": "d06514fc865f078cd5ae9ef0929f6f43ee19987ed8c8a5f94fc48610930cb940"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-runtime.php",
+    "bytes": 30837,
+    "sha256": "8bed082a802b1d19b064797cbc1d8820f2fb31b678ca2ec6964a3ec85f75d386"
+  },
+  {
+    "path": "experimental/device-profiles/device-profiles-transaction.php",
+    "bytes": 8302,
+    "sha256": "e855f2801eb376459603dbe06e6b1796625723670a796e7b85a8bc700559adda"
+  },
+  {
+    "path": "experimental/device-profiles/dispatcher-hook.php.inc",
+    "bytes": 2561,
+    "sha256": "7cb34c5058541210a5d86a48383d694bf2b3b6c224ce64ea9d8030f4f7750bde"
+  },
+  {
+    "path": "experimental/device-profiles/entware_overlay.py",
+    "bytes": 3929,
+    "sha256": "b7b9b4f945d4db80dea242e85f8e3d23899e631d87114f1a30fbdc8288c48b06"
+  },
+  {
+    "path": "experimental/device-profiles/native_overlay.py",
+    "bytes": 3629,
+    "sha256": "e3466687f064ae4059e10009f8e762ea0667094246f15c39d6756126b4cf0ae7"
+  },
+  {
+    "path": "experimental/device-profiles/package_payload.py",
+    "bytes": 4640,
+    "sha256": "8d82e41b49c7dda1726e1d53c70bd811f62d7bad341aec7775c40d50724c9cf1"
+  },
+  {
+    "path": "experimental/device-profiles/test_compiler.py",
+    "bytes": 3231,
+    "sha256": "9043aba937ad29617caa40756ad609e8451ab2f996a8ccfe0d5c86a448d4a31d"
+  },
+  {
+    "path": "experimental/device-profiles/test_entware.py",
+    "bytes": 10596,
+    "sha256": "64a1651ba1bcdb3e164140064dbeff162336161568ecb6b175a9c832d9a767f4"
+  },
+  {
+    "path": "experimental/device-profiles/test_frontend.mjs",
+    "bytes": 11549,
+    "sha256": "99b26ecaf4290ebbbba00aab4845c32399cd0c78eb4e5e33e3cbff9d680bfe5a"
+  },
+  {
+    "path": "experimental/device-profiles/test_frontend_runtime.mjs",
+    "bytes": 6982,
+    "sha256": "4a0d61d464d221632732eff6ba769449bcbabced910f91dda22f059d2c89148d"
+  },
+  {
+    "path": "experimental/device-profiles/test_lab.py",
+    "bytes": 10532,
+    "sha256": "fb567ddefbc1e9f04bb87acaffd2caf2d420c9b90f76ab89eb7a7cc825a7c356"
+  },
+  {
+    "path": "experimental/device-profiles/test_library.py",
+    "bytes": 7515,
+    "sha256": "0160eaa2aad6c1108f92f2529856854a9e7d3539fbfaddbec7108fe7f95f3cf9"
+  },
+  {
+    "path": "experimental/device-profiles/test_native_runtime.py",
+    "bytes": 3192,
+    "sha256": "097d362b97745f19286b3ec17fd37c4c7dca790b235e3169ab3b6c575177a045"
+  },
+  {
+    "path": "experimental/device-profiles/test_overlay.py",
+    "bytes": 3699,
+    "sha256": "aa27f4b3eb13c8635110f6b0f17b778ec64f359d0c889e67737f9f190817e72f"
+  },
+  {
+    "path": "experimental/device-profiles/test_packaging.py",
+    "bytes": 11132,
+    "sha256": "59870d67d651af1e16068ac960c19dc36607ef66c89d875f1df935f78dea6d0f"
+  },
+  {
+    "path": "experimental/device-profiles/test_portable.py",
+    "bytes": 3172,
+    "sha256": "5404f125777aa3544f80e9ef840e228a25dec9e5c1c667077827dddcb5e65026"
+  },
+  {
+    "path": "experimental/device-profiles/test_runtime.py",
+    "bytes": 9316,
+    "sha256": "90df6ea18b55cce55173f8bb62aaa0c0365b09c042df3b52c9eb9c0819968dd0"
+  },
+  {
+    "path": "experimental/device-profiles/test_transaction.py",
+    "bytes": 6144,
+    "sha256": "c02f002c347cd9a7376c5781749bb431a38f6c962e4cb55af3ce9bbe90234f5c"
   },
   {
     "path": "ip-health/control.sh",
@@ -991,8 +1151,8 @@
   },
   {
     "path": "openwrt/build.py",
-    "bytes": 30213,
-    "sha256": "ba05b5edb91e1a16eac61ead09627adcaa5c157a317bc6b4abd1376b6d9781f0"
+    "bytes": 30528,
+    "sha256": "d3e3581f6f3f59490eb10d20c407485a3f0a5977991d036b4dd73e7a0fca05a7"
   },
   {
     "path": "openwrt/config-cli.php",
@@ -2706,8 +2866,8 @@
   },
   {
     "path": "tests/test_packages.py",
-    "bytes": 23537,
-    "sha256": "43e7b6464122ee3d330929630856fe98b82cbadf5899efd0db8f16a7bb74399a"
+    "bytes": 24038,
+    "sha256": "f3f11e643102034a682009a8dbc6ce8ec5966ec535806102f13a6a29bceb82d4"
   },
   {
     "path": "tests/test_platform.py",
@@ -3171,8 +3331,8 @@
   },
   {
     "path": "tests/test_support_mail_dependencies.py",
-    "bytes": 5985,
-    "sha256": "7be51ee394717a769c2400d93afd6154f59c6b6a0c339725e310889754bf82bb"
+    "bytes": 6491,
+    "sha256": "a8c87ecc7120803879d1e1e58d6e630c8018a7b3c0085451a3c030a9a05021ab"
   },
   {
     "path": "tests/test_support_mail_router_http.py",
@@ -3561,8 +3721,8 @@
   },
   {
     "path": "webui/web/.yarn/install-state.gz",
-    "bytes": 519977,
-    "sha256": "ca389a5d971d57c54354841b90ec3e5dfec2dcd4d8ca7f55b176fc6042d59ebc"
+    "bytes": 563299,
+    "sha256": "72a9d0bd48081695c32320ddb5459fc475b04d4774ea81b1768059018baaf8b5"
   },
   {
     "path": "webui/web/.yarn/releases/yarn-4.12.0.cjs",
@@ -4071,8 +4231,8 @@
   },
   {
     "path": "webui/web/public/share-resources.php",
-    "bytes": 6907,
-    "sha256": "49d0f3ddbeb858d1ea157f5051e2eef19cce4a11401ac29dadcee0818d5d2bff"
+    "bytes": 6946,
+    "sha256": "5bd40be3c3b76d22b51193832c970b1be75ecd05a51a57eeb59dc19a83d65f52"
   },
   {
     "path": "webui/web/public/share-source.php",
@@ -4676,8 +4836,8 @@
   },
   {
     "path": "webui/web/src/components/MainTabs.tsx",
-    "bytes": 3862,
-    "sha256": "80ea97be5efec822fc1b92aa3bf432694c3f8e081812d2b38093d3b3b544bde4"
+    "bytes": 4396,
+    "sha256": "2aa74e95d2af3f3694e2bff825362b576d910e02ff39257d5efa7ab7fab60ff3"
   },
   {
     "path": "webui/web/src/components/MtprotoInstallDialog.tsx",
@@ -4691,8 +4851,8 @@
   },
   {
     "path": "webui/web/src/components/PackageUpdateDialog.tsx",
-    "bytes": 14583,
-    "sha256": "5d0b689d47c8cdad3426a7393c80ede9a9f374634e190e5dd297e1ee843d3c08"
+    "bytes": 14618,
+    "sha256": "f887e9a478e65cb2a2d844d52c2377c1fe949cdbedb58e03c253407e498817a3"
   },
   {
     "path": "webui/web/src/components/PasswordDialog.tsx",
@@ -4716,8 +4876,8 @@
   },
   {
     "path": "webui/web/src/components/RequirementsDialog.tsx",
-    "bytes": 7980,
-    "sha256": "90c7b8f1b17243a3e5bdfba7ed50d5cdd89c45f3b3a1b0f65977f6a1d90a564c"
+    "bytes": 8957,
+    "sha256": "9e2f537c1db421eccbab167b5a3214c3369c1da274a67da1a404bbef8a3cdd36"
   },
   {
     "path": "webui/web/src/components/RestartScheduleDialog.tsx",
@@ -4926,13 +5086,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 97984,
-    "sha256": "5326fdf6737f2bba68afa805e25fd78407a2f2e32facbbbcbea15a3e7c87ac37"
+    "bytes": 99830,
+    "sha256": "2e0f82beac5fc4c65244dcfccbccdaf3d164abc3092dda3baa8e284869ed144c"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 158334,
-    "sha256": "534169fa47bdcf29da1a6103563390bdead378ee26ba7163ad060e4e8ea5e436"
+    "bytes": 161765,
+    "sha256": "42959ef1e11b1e77ee1dd34dc7360d2f12ee7ae55a1fa76ba1215891842a110d"
   },
   {
     "path": "webui/web/src/types/types.ts",

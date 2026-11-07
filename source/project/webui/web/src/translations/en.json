@@ -45,6 +45,7 @@
     "lists": "Lists",
     "logs": "Logs",
     "scripts": "Scripts",
+    "devices_beta": "Devices · beta",
     "ip_health": "Unavailable IPs"
   },
   "restart_schedule": {
@@ -296,6 +297,16 @@
       "keenetic_help": "You can always ask for help choosing strategies in the",
       "keenetic_chat": "NFQWS2 Keenetic chat"
     },
+    "device_profiles": {
+      "title": "Device profiles · beta (optional)",
+      "intro": "Common mode is the default and uses your regular strategy. Per-device mode assigns another strategy to selected clients; other devices keep the common strategy.",
+      "setup": "Open Devices · beta and add clients from the LAN list or enter an IP/MAC manually. Save the current strategy in the library, import JSON or choose a catalog entry. Create profiles and select devices: the first enabled profile from the top wins. Drag profiles or use ↑/↓ to change their order.",
+      "apply": "Preview and Save draft do not change traffic handling. Click Apply saved mode to explicitly activate it. Start the service after applying controls whether the service should run after the operation.",
+      "limits": "Up to 8 saved strategies, 16 profile cards and 4 additional NFQWS2 processes for strategies other than the common one. Extra processes consume RAM. DNS remains shared by all devices.",
+      "devices": "The list comes from local DHCP and neighbor tables; it does not prove a client is online. MAC selection needs IP addresses found in the current LAN check; an old IP from the draft is not substituted. Refresh the list and reapply after an address changes.",
+      "recover": "On failure, recovery attempts to restore the previous mode and service state. Check the final result; Copy reason copies the error details. To disable profiles, choose Common, save and apply. Before updating the beta package, apply Common mode first: automatic migration of the active mode is not guaranteed.",
+      "open": "Open device profiles · beta"
+    },
     "details": "Details and limits",
     "open_ark": "Review ASUS preparation",
     "progress": {
@@ -536,6 +547,7 @@
     "request_failed": "The panel is temporarily unavailable. Status checks will resume; installation is never repeated automatically.",
     "core_start_failed": "The package was installed, but service startup is not confirmed. Check its status.",
     "core_stop_failed": "The service could not be stopped during the update. Keep the operation log.",
+    "experimental_runtime_active": "Open Devices · beta, save and apply Common mode, then prepare the update again. Saved strategies remain in the library.",
     "settings_changed": "Settings or resources differ from the verified state. Prepare the package again.",
     "previous_attempt": "Previous attempt:",
     "rollback_unavailable": "A verified backup could not be prepared. Package replacement has not started.",

@@ -731,3 +731,13 @@ footer {
     transition:background .12s,border-color .12s;
   }
 }
+/* Runtime and library share the standalone panel's normal document scrolling. */
+.runtime-actions{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin:.8rem 0}
+.runtime-panel progress{display:block;width:100%;height:.7rem;margin:.8rem 0;accent-color:var(--accent,#9bbbd9)}
+.runtime-panel progress[hidden]{display:none}
+.job-details{white-space:pre-wrap;overflow-wrap:anywhere;max-height:15rem;overflow:auto;font:inherit;font-size:.875rem;padding:.8rem;border:1px solid #60758b;border-radius:.6rem}
+.library-panel>summary{font-size:1.1rem;font-weight:650;cursor:pointer}
+.library-panel>.field-label,.library-panel #catalog-controls>.field-label{display:flex;flex-direction:column;gap:.45rem;margin:1rem 0}
+.library-panel input[type=file]{max-width:100%;min-width:0}
+.library-panel select{width:100%;max-width:100%;min-width:0}
+@media(max-width:600px){.runtime-actions{align-items:stretch;flex-direction:column}.runtime-actions button{width:100%}.runtime-panel .section-heading{align-items:stretch;flex-wrap:wrap}.runtime-panel .section-heading button{max-width:100%}}

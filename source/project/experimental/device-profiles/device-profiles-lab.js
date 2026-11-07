@@ -7,8 +7,10 @@
     draft: { schema_version: 1, mode: 'common', devices: [], profiles: [] },
     saved: '', revision: null, discovery: null, loaded: false,
     busy: false, stale: false, version: 0, previewVersion: null, dragId: null,
+    runtime: null, runtimeKnown: false, startInitialized: false, pollTimer: null, catalog: [],
   };
-  const strategyNames = { current: 'Текущая стратегия', stock: 'Стоковая стратегия' };
+  let strategyNames = { current: 'Текущая стратегия', stock: 'Стоковая стратегия' };
+  let requestChain = Promise.resolve();
   const errors = {
     unauthorized: 'Сеанс панели истёк. Откройте основную панель и войдите, затем повторите действие. Правки остаются здесь.',
     forbidden: 'Панель не разрешила запрос. Откройте основную панель, проверьте вход и повторите действие. Правки остаются здесь.',
@@ -20,6 +22,15 @@
     invalid_response: 'Панель вернула неожиданный ответ. Проверьте вход в основную панель и повторите действие.',
     network: 'Нет ответа от панели. Проверьте соединение и повторите действие. Ваши правки остаются на странице.',
     timeout: 'Панель не ответила вовремя. Повторите действие; ваши правки остаются на странице.',
+    runtime_unavailable: 'Для применения нужна актуальная экспериментальная установка на этом роутере. Черновик и библиотека сохранены.',
+    runtime_profile_limit: 'Одновременно можно использовать до четырёх отличающихся стратегий помимо общей.',
+    runtime_limit: 'Профиль превышает ограничения экспериментальной версии. Уменьшите количество ресурсов или устройств.',
+    library_limit: 'В библиотеке уже восемь сохранённых стратегий.',
+    unresolved_profile_resource: 'Стратегия ссылается на отсутствующий или недоступный ресурс. Проверьте зависимости в обычном импорте.',
+    profile_import_incomplete: 'В экспорте не удалось подтвердить все зависимости стратегии. Проверьте его в обычном импорте.',
+    lua_trust: 'Чтобы добавить профиль с Lua, подтвердите доверие к его коду галочкой в библиотеке.',
+    source_changed: 'Рабочая конфигурация изменилась во время подготовки. Обновите состояние и повторите действие.',
+    strategy_unavailable: 'Выбранная стратегия отсутствует в библиотеке. Выберите доступный вариант.',
   };
 
   function element(tag, className, content) {
@@ -53,13 +64,19 @@
     sync();
   }
   function sync() {
-    $('editor').disabled = state.busy || !state.loaded;
+    const pending = jobPending();
+    $('editor').disabled = state.busy || pending || !state.loaded;
     $('reload').disabled = state.busy;
     $('preview').disabled = state.busy || !state.loaded;
-    $('save').disabled = state.busy || !state.loaded || !dirty() || state.stale;
+    $('save').disabled = state.busy || pending || !state.loaded || !dirty() || state.stale;
     $('refresh').disabled = state.busy || !state.loaded;
     $('add-profile').disabled = state.busy || state.draft.profiles.length >= 16;
     $('stale-notice').hidden = !state.stale;
+    $('apply').disabled = !!state.busy || pending || !state.loaded || dirty() || state.stale || !state.runtime?.available;
+    $('start-after').disabled = !!state.busy || pending || !state.runtime?.available;
+    for (const id of ['capture-current', 'library-import', 'catalog-load']) $(id).disabled = !!state.busy || pending || !state.loaded || !state.runtime?.available;
+    $('catalog-add').disabled = !!state.busy || pending || !$('catalog-profile').value || !state.runtime?.available;
+    $('runtime-refresh').disabled = !!state.busy || !state.runtimeKnown;
     if (state.busy) {
       $('save-state').textContent = state.busy;
       $('save-hint').textContent = 'Дождитесь ответа панели.';
@@ -70,6 +87,7 @@
       $('save-state').textContent = dirty() ? 'Есть несохранённые изменения' : 'Черновик сохранён';
       $('save-hint').textContent = state.stale ? 'Обнаружена другая версия черновика.' : 'Рабочая стратегия не изменяется.';
     }
+    renderRuntime();
     if (state.previewVersion !== null) {
       $('preview-caption').textContent = state.previewVersion !== state.version
         ? 'Черновик изменён после предпросмотра. Обновите предпросмотр. Правила не применены.'
@@ -91,7 +109,7 @@
       if (response.status === 403) throw problem('forbidden');
       if (!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') || '')) throw problem('invalid_response');
       const text = await response.text();
-      if (text.length > 1048576) throw problem('invalid_response');
+      if (text.length > (cmd === 'importcatalogload' ? 6291456 : 1048576)) throw problem('invalid_response');
       let result;
       try { result = JSON.parse(text); } catch { throw problem('invalid_response'); }
       if (!result || typeof result !== 'object') throw problem('invalid_response');
@@ -104,9 +122,14 @@
     } finally { clearTimeout(timeout); }
   }
   async function request(cmd, params = {}) {
-    const status = await post('status');
-    if (typeof status.csrf_token !== 'string' || !status.csrf_token) throw problem('unauthorized');
-    return post(cmd, { csrf_token: status.csrf_token, ...params });
+    const run = async () => {
+      const status = await post('status');
+      if (typeof status.csrf_token !== 'string' || !status.csrf_token) throw problem('unauthorized');
+      return post(cmd, { csrf_token: status.csrf_token, ...params });
+    };
+    const pending = requestChain.then(run, run);
+    requestChain = pending.catch(() => {});
+    return pending;
   }
   function checkedStatus(data) {
     const draft = data.draft;
@@ -115,12 +138,121 @@
         !Array.isArray(draft.devices) || !Array.isArray(draft.profiles) ||
         draft.devices.length > 128 || draft.profiles.length > 16 ||
         draft.devices.some((d) => !d || typeof d.id !== 'string' || typeof d.name !== 'string' || typeof d.mac !== 'string' || !Array.isArray(d.addresses) || d.addresses.some((a) => typeof a !== 'string')) ||
-        draft.profiles.some((p) => !p || typeof p.id !== 'string' || typeof p.name !== 'string' || typeof p.enabled !== 'boolean' || !['current', 'stock'].includes(p.strategy) || !Array.isArray(p.device_ids)) ||
+        draft.profiles.some((p) => !p || typeof p.id !== 'string' || typeof p.name !== 'string' || typeof p.enabled !== 'boolean' || !/^(?:current|stock|saved-[a-f0-9]{16})$/.test(p.strategy) || !Array.isArray(p.device_ids)) ||
         !data.discovery || !['available', 'partial', 'unavailable'].includes(data.discovery.state) || !Array.isArray(data.discovery.devices) ||
         data.discovery.devices.some((d) => !d || typeof d.id !== 'string' || typeof d.name !== 'string' || typeof d.mac !== 'string' || !Array.isArray(d.addresses) || !Array.isArray(d.sources))) {
       throw problem('invalid_response');
     }
     return data;
+  }
+  function acceptTemplates(rows = []) {
+    if (!Array.isArray(rows) || rows.length > 10 || rows.some((r) => !r || !/^(?:current|stock|saved-[a-f0-9]{16})$/.test(r.id) || typeof r.name !== 'string' || r.name.length > 256)) throw problem('invalid_response');
+    strategyNames = { current: 'Текущая стратегия', stock: 'Стоковая стратегия' };
+    rows.forEach((r) => { strategyNames[r.id] = r.name; });
+    $('library-count').textContent = `В библиотеке: ${rows.filter((r) => r.id.startsWith('saved-')).length} / 8. Одновременно — до четырёх отличающихся стратегий помимо общей.`;
+  }
+  function acceptRuntime(data) {
+    if (!data || typeof data.available !== 'boolean' || typeof data.running !== 'boolean' || !['common', 'split'].includes(data.mode) ||
+      (data.job !== null && (!data.job || !/^[a-f0-9]{32}$/.test(data.job.id) || !['queued', 'running', 'succeeded', 'failed'].includes(data.job.state) || typeof data.job.phase !== 'string'))) throw problem('invalid_response');
+    state.runtime = data; state.runtimeKnown = true;
+    if (!state.startInitialized) { $('start-after').checked = data.running; state.startInitialized = true; }
+  }
+  function jobPending() { return ['queued', 'running'].includes(state.runtime?.job?.state); }
+  const phaseNames = { queued: 'Ожидание запуска', validating: 'Проверка стратегий и правил', stopping: 'Остановка службы', applying: 'Сохранение рабочего режима', starting: 'Запуск службы', checking: 'Проверка процессов и очередей', restoring: 'Восстановление прежнего режима', finished: 'Завершено' };
+  const causeNames = { queue_conflict: 'Очередь занята другим процессом.', invalid_profile_engine: 'NFQWS2 отклонил параметры или ресурсы стратегии.', profile_validation_failed: 'Не прошла проверка параметров или правил захвата.', profile_start_failed: 'Не удалось подтвердить запуск всех экземпляров службы.', profile_stop_failed: 'Не удалось подтвердить остановку службы.', queue_unavailable: 'Не подтверждена привязка очереди.', worker_interrupted: 'Рабочий процесс был прерван.', worker_start_failed: 'Рабочий процесс не запустился.', recovery_required: 'Автоматическое восстановление не подтверждено.', package_operation_active: 'Выполняется обновление основного пакета.' };
+  function failureText() {
+    const job = state.runtime?.job;
+    if (!job || job.state !== 'failed') return '';
+    return `Этап: ${phaseNames[job.phase] || job.phase}\nПричина: ${causeNames[job.code] || errors[job.code] || job.code || 'Неизвестная ошибка'}\nКод: ${job.code || 'unknown'}\nИсходный код: ${job.original_code || job.code || 'unknown'}\n${job.recovered === true ? 'Восстановлен прежний режим и состояние службы.' : job.recovered === false ? 'Восстановление не подтверждено.' : 'Изменение рабочего режима не подтверждено.'}\nОперация: ${job.id}`;
+  }
+  function renderRuntime() {
+    const data = state.runtime; const job = data?.job;
+    if (!data || !data.available) $('runtime-info').textContent = 'Применение недоступно: требуется актуальная экспериментальная установка. Черновик можно редактировать и сохранять.';
+    else if (jobPending()) $('runtime-info').textContent = phaseNames[job.phase] || 'Применение выполняется…';
+    else {
+      const prefix = job?.state === 'succeeded' ? 'Применено: ' : 'Рабочий режим: ';
+      $('runtime-info').textContent = prefix + (data.mode === 'split' ? 'по устройствам.' : 'общий.') + (data.running ? ' Служба включена.' : data.core_running ? ' Готовность отдельных очередей не подтверждена.' : ' Служба выключена.');
+    }
+    $('runtime-progress').hidden = !jobPending();
+    $('runtime-progress').value = ({ queued: 0, validating: 10, stopping: 35, applying: 55, starting: 70, checking: 90, restoring: 45, finished: 100 })[job?.phase] || 0;
+    const details = failureText(); $('job-details').textContent = details; $('job-details').hidden = !details; $('copy-error').hidden = !details;
+  }
+  function schedulePoll() {
+    clearTimeout(state.pollTimer);
+    if (!state.runtimeKnown || document.hidden) return;
+    state.pollTimer = setTimeout(async () => {
+      if (state.busy) { schedulePoll(); return; }
+      try { acceptRuntime(await request('deviceprofilesruntime')); sync(); }
+      catch (error) { report(error); }
+      finally { schedulePoll(); }
+    }, jobPending() ? 1200 : 15000);
+  }
+  async function refreshLibrary() {
+    const data = checkedStatus(await request('deviceprofilesstatus'));
+    acceptTemplates(data.templates); if (data.runtime) acceptRuntime(data.runtime);
+    if (data.revision !== state.revision) state.stale = true;
+    renderProfiles(); sync(); schedulePoll();
+  }
+  async function activate() {
+    if (dirty() || state.stale || jobPending() || !state.runtime?.available) return;
+    await perform('Подготовка применения…', async () => {
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      const request_id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+      const job = await request('deviceprofilesapply', { revision: state.revision, request_id, consent: 'apply', start_after: $('start-after').checked ? '1' : '0' });
+      acceptRuntime({ ...state.runtime, job }); schedulePoll();
+      notice('Применение запущено. Операция продолжится после закрытия вкладки.');
+    });
+  }
+  async function captureCurrent() {
+    const name = $('strategy-name').value.trim();
+    if (!name) { notice('Укажите название стратегии.', 'error'); return; }
+    await perform('Сохранение стратегии…', async () => {
+      await request('deviceprofilescapture', { name }); await refreshLibrary();
+      notice('Текущая стратегия добавлена в библиотеку. Теперь её можно выбрать в профиле.');
+    });
+  }
+  async function importDocument(document, name) {
+    if (typeof document !== 'string' || new TextEncoder().encode(document).length > 4194304) throw userError('JSON-экспорт превышает 4 МБ.');
+    await request('deviceprofilesimport', { name: name.slice(0, 64), document, trusted_lua: $('trust-lua').checked ? '1' : '0' });
+    await refreshLibrary(); notice('Стратегия добавлена в библиотеку. Выберите её в нужном профиле.');
+  }
+  async function importFile() {
+    const file = $('strategy-file').files?.[0];
+    if (!file) { notice('Выберите единый JSON-экспорт стратегии.', 'error'); return; }
+    await perform('Чтение JSON-экспорта…', async () => {
+      if (file.size > 4194304) throw userError('JSON-экспорт превышает 4 МБ.');
+      await importDocument(await file.text(), $('strategy-name').value.trim() || file.name.replace(/\.json$/i, ''));
+    });
+  }
+  async function loadCatalog() {
+    await perform('Загрузка каталога…', async () => {
+      const data = await request('importcatalog');
+      if (!Array.isArray(data.profiles) || data.profiles.length > 128 || data.profiles.some((p) => !p || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(p.id) || !/^[a-f0-9]{64}$/.test(p.sha256) || typeof p.title !== 'string' || typeof p.description !== 'string')) throw problem('invalid_response');
+      state.catalog = data.profiles;
+      $('catalog-profile').replaceChildren(element('option', '', 'Выберите профиль'));
+      $('catalog-profile').options[0].value = '';
+      state.catalog.forEach((profile) => { const option = element('option', '', profile.title); option.value = profile.id; $('catalog-profile').append(option); });
+      $('catalog-controls').hidden = false; $('catalog-description').textContent = '';
+      notice('Каталог загружен. Выберите профиль и проверьте его описание.');
+    });
+  }
+  async function addCatalog() {
+    const selected = state.catalog.find((p) => p.id === $('catalog-profile').value); if (!selected) return;
+    await perform('Загрузка выбранной стратегии…', async () => {
+      const result = await request('importcatalogload', { id: selected.id, sha256: selected.sha256 });
+      await importDocument(result.document, selected.title);
+    });
+  }
+  async function copyFailure() {
+    const text = failureText(); if (!text) return;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+      else {
+        const field = document.createElement('textarea'); field.value = text; field.readOnly = true; field.style.position = 'fixed'; field.style.opacity = '0';
+        document.body.append(field); field.select(); const copied = document.execCommand('copy'); field.remove(); if (!copied) throw problem('copy_failed');
+      }
+      notice('Причина отказа скопирована.');
+    } catch { notice('Выделите и скопируйте текст причины в блоке выше.', 'error'); }
   }
   async function perform(label, action) {
     if (state.busy) return;
@@ -130,6 +262,7 @@
     finally { state.busy = false; sync(); }
   }
   function acceptStatus(data) {
+    acceptTemplates(data.templates || []); if (data.runtime) acceptRuntime(data.runtime);
     state.draft = clone(data.draft);
     state.saved = serialized();
     state.revision = data.revision;
@@ -140,6 +273,7 @@
     state.previewVersion = null;
     $('preview-section').hidden = true;
     render();
+    schedulePoll();
   }
   async function reload() {
     if (dirty() && !confirm('Заменить ваши несохранённые правки сохранённым черновиком?')) return;
@@ -372,6 +506,9 @@
         const option = element('option', '', label); option.value = value; strategy.append(option);
       }
       strategy.value = profile.strategy;
+      if (!Object.hasOwn(strategyNames, profile.strategy)) {
+        const missing = element('option', '', 'Недоступная стратегия'); missing.value = profile.strategy; missing.disabled = true; missing.selected = true; strategy.append(missing);
+      }
       strategy.addEventListener('change', () => { profile.strategy = strategy.value; changed(); });
       strategyLabel.append(strategy);
       fields.append(nameLabel, strategyLabel);
@@ -447,6 +584,16 @@
   $('refresh').addEventListener('click', refreshDiscovery);
   $('preview').addEventListener('click', preview);
   $('save').addEventListener('click', save);
+  $('apply').addEventListener('click', activate);
+  $('runtime-refresh').addEventListener('click', () => perform('Обновление состояния…', async () => { acceptRuntime(await request('deviceprofilesruntime')); sync(); schedulePoll(); }));
+  $('capture-current').addEventListener('click', captureCurrent);
+  $('library-import').addEventListener('click', importFile);
+  $('catalog-load').addEventListener('click', loadCatalog);
+  $('catalog-add').addEventListener('click', addCatalog);
+  $('catalog-profile').addEventListener('change', () => { $('catalog-description').textContent = state.catalog.find((p) => p.id === $('catalog-profile').value)?.description || ''; sync(); });
+  $('copy-error').addEventListener('click', copyFailure);
+  document.addEventListener('visibilitychange', schedulePoll);
+  window.addEventListener('pagehide', () => clearTimeout(state.pollTimer));
   $('close-preview').addEventListener('click', () => { $('preview-section').hidden = true; });
   $('add-profile').addEventListener('click', () => {
     if (state.draft.profiles.length >= 16) return;
