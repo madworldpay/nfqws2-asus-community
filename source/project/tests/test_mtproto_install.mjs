@@ -172,7 +172,7 @@ try {
     platform: "node",
     format: "esm",
     logLevel: "silent",
-    loader: { ".sh": "text" },
+    loader: { ".sh": "text", ".py": "text" },
   });
   const api = await import(pathToFileURL(join(dir, "install.mjs")));
   const bytes = Uint8Array.from({ length: 16 }, (_, i) => i + 1);
@@ -375,6 +375,32 @@ try {
   );
   assert.equal(appArgs[appArgs.indexOf("--secret") + 1], fixedKey);
   assert.equal(definition.environment.CFPROXY_DOMAIN, "pclead.co.uk");
+  const proxyModule = join(dir, 'docker-good', 'proxy', 'tg_ws_proxy.py');
+  await writeFile(join(dir, 'docker-good', 'proxy', '_fixture_direct.py'), 'READY=True\n');
+  await writeFile(proxyModule, `import logging,os,_fixture_direct
+logging.basicConfig(level=logging.INFO)
+def main():
+    key=os.environ['PROXY_SECRET']
+    logging.info('secret %s', key)
+    logging.info('https://t.me/proxy?secret=dd%s', key)
+    try:
+        raise ValueError('key='+key)
+    except ValueError:
+        logging.exception('upstream error')
+    logging.info('service ready')
+if __name__ == '__main__':
+    main()
+`);
+  const codeIndex = appArgs.indexOf('-c');
+  assert.ok(codeIndex >= 0, 'Docker runner installs the secret-safe logging prelude');
+  const logged = spawnSync('/usr/bin/python3', ['-c', appArgs[codeIndex + 1], ...appArgs.slice(codeIndex + 2)], {
+    encoding:'utf8', cwd:join(dir,'docker-good'), env:{...process.env, ...definition.environment, PYTHONPATH:join(dir,'docker-good')},
+  });
+  assert.equal(logged.status, 0, logged.stderr);
+  assert.match(logged.stderr, /service ready/);
+  assert.ok(!logged.stderr.includes(fixedKey), 'Docker startup logs do not expose the key');
+  assert.match(logged.stderr, /\[redacted\]/);
+
   assert.ok(
     definition.healthcheck?.test?.length,
     "Compose must test genuine upstream readiness",

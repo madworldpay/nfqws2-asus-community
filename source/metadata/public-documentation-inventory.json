@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 54673,
-      "sha256": "21638828f273e91281e571f9737ae71bdb097c3427922ef5b396cbc3b3a60557"
+      "bytes": 57319,
+      "sha256": "c5d86fd1ae888408d3a78640345efd6b7861dab6f12546e8f225e1fcf9889b68"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -32,13 +32,13 @@
     },
     {
       "file": "DIAGNOSTICS.en.md",
-      "bytes": 5494,
-      "sha256": "bda7ddf7c1c7e91e5de358a77e3c575a5cadd219dddc1a17f92a72e4f8589225"
+      "bytes": 5782,
+      "sha256": "be66aeede2b4e475819ff6103ad989b1cef2c02555423a9a920115e10c602a0f"
     },
     {
       "file": "DIAGNOSTICS.md",
-      "bytes": 9455,
-      "sha256": "b4d3566f1b7eb8039a759887a436cb4d34d7aba21f7abe59f925b40f5615a1a0"
+      "bytes": 10001,
+      "sha256": "f34ede1a96d03229739f2c2d7762ef6717c9c6bf34700b0f0e410218c26385aa"
     },
     {
       "file": "DOMRU.en.md",
@@ -62,23 +62,23 @@
     },
     {
       "file": "DPI-DETECTOR.en.md",
-      "bytes": 6974,
-      "sha256": "0c7c0d0d703ac16244a976cf7599f0934c1a11cb33fbdc71e6687c7a296f62f0"
+      "bytes": 8072,
+      "sha256": "3c38201769cb2669a3aa1b37de3398fd672e5659bfc6d559ec011f973b007602"
     },
     {
       "file": "DPI-DETECTOR.md",
-      "bytes": 12425,
-      "sha256": "6c9983511d05f8f854eaacb92da07be9a88939a58f0bb96f2a544da770e6c62d"
+      "bytes": 14174,
+      "sha256": "6415dd3db478e1977f6176b04c79b566b14bce4631ba9e10865f85ad04220fc8"
     },
     {
       "file": "IMPORT.en.md",
-      "bytes": 6573,
-      "sha256": "c54ce928e2361751cd7182fa3c83590936cae3c8d8ecd96d092c01468da574fa"
+      "bytes": 8519,
+      "sha256": "7abeafb4d8423c53f91e69abb1d4128c6c0d00cc9be0fb153967c565701c001b"
     },
     {
       "file": "IMPORT.md",
-      "bytes": 11584,
-      "sha256": "463033fd66825db494c53304855ce3eecabbe00399f9d85eab4e721ee572bacb"
+      "bytes": 15337,
+      "sha256": "b0001443717e797d5fdb42b55846ea2a386dc1daa4c2ef2cbc8b81747f057365"
     },
     {
       "file": "INSTALL.en.md",
@@ -122,23 +122,23 @@
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 9695,
-      "sha256": "831bd1b413a0fa2b076d27cc21759e8e10ac0d98681c9581d37dfbeb6ffc68dc"
+      "bytes": 13180,
+      "sha256": "302fd2ee3e490d9b96e74dbb7c1df9631ec686b8f9ee340dc48e588ff29ee8e1"
     },
     {
       "file": "PACKAGE-UPDATES.md",
       "bytes": 23983,
-      "sha256": "8a6d6fd748c5b964e236b1c9e8768eefbc3ebe3a0188ee6cc00b09f83989a2fe"
+      "sha256": "208ee5ff8bd19da45c142814c096908c3c7dcf8b92213a74a64a1409e9caca04"
     },
     {
       "file": "PRESETS.en.md",
-      "bytes": 2153,
-      "sha256": "cebbecbfc497c2a48bd80de03bd8245bf4e8ecef4b2b4237b7b1003e8ccf44d8"
+      "bytes": 3996,
+      "sha256": "194915959bd86808353972f668b619ceee4c14320822d5c82f70c360537ea0e0"
     },
     {
       "file": "PRESETS.md",
-      "bytes": 3665,
-      "sha256": "e0e9bd78bd1bdb5ee2dc0022a18375f9027eaec2ca3db623be754241ddce7832"
+      "bytes": 6647,
+      "sha256": "7e7751bb558a5ee0a7f6bcd6c1fa558a3a488068f929c181157e99f87b5d5370"
     },
     {
       "file": "QUICKSTART.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 24133,
-      "sha256": "44024ec99c421bc3eacb5bba1ff66664b2ea4d81e0f8e1eb2f6b22e1fbc24ef2"
+      "bytes": 25716,
+      "sha256": "bcca545804cba067d89d44b15670cf7b012b9a9648111b84536249d056822cae"
     },
     {
       "file": "README.md",
-      "bytes": 40276,
-      "sha256": "44033fe16f56c64d56ed5b64122f04785f22b10c92f5a7daa2f836548ef76ae0"
+      "bytes": 42904,
+      "sha256": "c43708d6775d4be41ac8a307ab94566f76f7bf29edc8b7feddc7d83316e18d12"
     },
     {
       "file": "ROADMAP.en.md",
@@ -172,48 +172,48 @@
     },
     {
       "file": "SCREENSHOTS.en.md",
-      "bytes": 9682,
-      "sha256": "a077accd1ad46b50d5274daa5004c49e79005babeb5bc1ad020fa6f489a2bc1b"
+      "bytes": 18261,
+      "sha256": "9d2ef6c4a8f8b761777318af0a4e6d28b60098c973419b4fce57e4f212688a43"
     },
     {
       "file": "SCREENSHOTS.md",
-      "bytes": 15872,
-      "sha256": "c6bc8ad98b99685327361b318d0c5fb1df23f69b6f53b15c91f8fa410050bfc6"
+      "bytes": 28309,
+      "sha256": "32e413e32f00184ddb010998428bebda0e390f5deb7e1a08bdf02ccf7df5cc3c"
     },
     {
       "file": "SMARTDNS.en.md",
-      "bytes": 5961,
-      "sha256": "c82931c21f362c2152cb62aa73e00a2e13574a88243a5498c04c1bc7c1cee210"
+      "bytes": 6528,
+      "sha256": "b41c6f9ca84df82ea1a225eb2174d4c755f46c11c35e2fee34f97ad4d69cf05e"
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 10014,
-      "sha256": "73821de5430ede0f2d5caff1dcf104e704b97ed424f30c74bf8804077977a184"
+      "bytes": 11145,
+      "sha256": "3378332ab879ca37db6bae35462500603f443efd6c3d5d80b1500edb59a9f6ce"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
-      "bytes": 4155293,
-      "sha256": "e2cdd17417cb301aa0e8f8203cd0173163ed5eb2f169ad5bbdbf5ceb1b15915e"
+      "bytes": 4158075,
+      "sha256": "84ff565150d3013deefe46cf80f42cba1953701c983db11b24a398f5140d9522"
     },
     {
       "file": "UPSTREAM.en.md",
-      "bytes": 8743,
-      "sha256": "1f734cd0b5188cf3ec0a80e1d1c351011645f751ee263dcb30e38bd4672d8870"
+      "bytes": 9137,
+      "sha256": "09f44b477c7daec0d6e8a6984fbcc93796026e432de72806c2f2936199d2bd8b"
     },
     {
       "file": "UPSTREAM.md",
-      "bytes": 11918,
-      "sha256": "5f9dbca90563656b6eeeb0f4659e5f4082a60ab0f790fe1be22c81a2c60be433"
+      "bytes": 12446,
+      "sha256": "c064f8eece2f680446279d920c29c069948ec373bf7c334f3279cb4a2b399a49"
     },
     {
       "file": "USAGE.en.md",
-      "bytes": 7197,
-      "sha256": "0416e02f93405f3fd7ab75621d3cda7cf5237ce25c36877fbc45557cbb40707a"
+      "bytes": 8337,
+      "sha256": "7ef68abc6ea26cba92ac24926b8e3730095818546a83349fad1d50cec66cf49f"
     },
     {
       "file": "USAGE.md",
-      "bytes": 12367,
-      "sha256": "c28352626f21947acae3a12d0ed31cff6a54cf88194b9255a0e9f4c6e2da7343"
+      "bytes": 14542,
+      "sha256": "6c17aad8a1436f7fc0974cef4284d9ce1fb48b691389968f0aa95a1db11f6e79"
     },
     {
       "file": "build.svg",
@@ -222,13 +222,13 @@
     },
     {
       "file": "docs/DETECTOR-COMPARISON.en.md",
-      "bytes": 7126,
-      "sha256": "f6cb6b42bb5f2ddbc1282b997c10237b2266accde430e5b7e1e69469ff72c216"
+      "bytes": 7626,
+      "sha256": "cbbdcdd9b26420e065b1a804bd7a927bd747161e6b7505da80d0c39c012c44db"
     },
     {
       "file": "docs/DETECTOR-COMPARISON.md",
-      "bytes": 12049,
-      "sha256": "d558312a3b6385adc3656b405e67ad82d49db06e1eb9463bcbb386c4abea4474"
+      "bytes": 12858,
+      "sha256": "dd1bde1d49ade3e3b602826677868be3cad37edcbd712bd17d5a025ed1fb388b"
     },
     {
       "file": "images/cloud-catalog.jpg",
@@ -249,6 +249,101 @@
       "file": "images/more-screenshots-ru.svg",
       "bytes": 513,
       "sha256": "5c5355e28d9df9c9c46081ec3ead6bd2ab858613aec3c0c16f3b6bca01f0189e"
+    },
+    {
+      "file": "images/screenshots/blob-picker-en.jpg",
+      "bytes": 59469,
+      "sha256": "4815631d8a458c1af913e16f0e6bc9efcfe8f1ff418bc38e86d52b11877311fd"
+    },
+    {
+      "file": "images/screenshots/blob-picker-ru.jpg",
+      "bytes": 62602,
+      "sha256": "98e701d57a30dad6e09bfef4f0e21fc98da50ad590258d8818b34609514766c1"
+    },
+    {
+      "file": "images/screenshots/build96-detector-remove-ru.png",
+      "bytes": 25129,
+      "sha256": "6759ac617a475b7e7828e26370648c100bebe13e544026a829ba15aa58f9e746"
+    },
+    {
+      "file": "images/screenshots/build96-footer-mobile-expanded-ru.png",
+      "bytes": 27605,
+      "sha256": "985ecfae1049df53f8a2cd3372d94e6401861c0214fe56c3143f0c448256d4da"
+    },
+    {
+      "file": "images/screenshots/build96-import-addons-preview-ru.png",
+      "bytes": 70246,
+      "sha256": "1115aa384e711f4371d2db89285210127064a5a4760395e8036d4eff2699e22a"
+    },
+    {
+      "file": "images/screenshots/build96-import-addons-ru.png",
+      "bytes": 108989,
+      "sha256": "ca240e23c37b1580a066ef817a3011a9aa15f56440c5c186b2e3c6ef0da1e0c3"
+    },
+    {
+      "file": "images/screenshots/build96-layout-mobile-landscape-ru.png",
+      "bytes": 86227,
+      "sha256": "b85cf7bec658451d3384748f4f50b08fc6494fb11ebaa38542d3d3534a9a6472"
+    },
+    {
+      "file": "images/screenshots/build96-layout-mobile-landscape-scroll-ru.png",
+      "bytes": 129275,
+      "sha256": "40212ef26a76ed0b119889e647f04a567a2d4e6cc3fcbca6522cd0c61fcd7d4f"
+    },
+    {
+      "file": "images/screenshots/build96-layout-mobile-portrait-en.png",
+      "bytes": 144970,
+      "sha256": "26f47e96243dc02923e464a781382e264d550ef55170f18c4389a3b4bd7cc992"
+    },
+    {
+      "file": "images/screenshots/build96-layout-mobile-portrait-ru.png",
+      "bytes": 144054,
+      "sha256": "945c7c1c4d145ca96f0c14d88eb69553b6f014dac7dd646392242abf4798bed2"
+    },
+    {
+      "file": "images/screenshots/build96-panel-overview-en.png",
+      "bytes": 337161,
+      "sha256": "ed161bc4ba19b82f399b49014ee6d93bbd6de7b8aad7f11dc87b2ccc9d4ac7e1"
+    },
+    {
+      "file": "images/screenshots/build96-panel-overview-ru.png",
+      "bytes": 339725,
+      "sha256": "a7b8eb365a048c4974c63bfab335b834860b93944b229d544ffbb9d5d6060a44"
+    },
+    {
+      "file": "images/screenshots/build96-service-checks-en.png",
+      "bytes": 54196,
+      "sha256": "98833fa02fd23b555b6c0466095650e14140da543e37983ffad8cb4ee8770e99"
+    },
+    {
+      "file": "images/screenshots/build96-service-checks-ru.png",
+      "bytes": 61007,
+      "sha256": "965f8cf0cef1adcd367f098a079fdbc9e51a22015f5c61e54d2586891f0369f7"
+    },
+    {
+      "file": "images/screenshots/build96-smartdns-editor-ru.png",
+      "bytes": 50949,
+      "sha256": "a31629dfcc7efa526a3e84534463db930061e943bb33f88c5af37985a8d060be"
+    },
+    {
+      "file": "images/screenshots/build96-updates-en.png",
+      "bytes": 29057,
+      "sha256": "a55fedd1b41cc4a7c1d273f9b1c21b769aa6bae4cd30e37c05c578bcbb71c578"
+    },
+    {
+      "file": "images/screenshots/build96-updates-ru.png",
+      "bytes": 33155,
+      "sha256": "78c610e386bbf8698afde22d17966af92a3db49d7767e760a8602ddab031aba8"
+    },
+    {
+      "file": "images/screenshots/catalog6-beeline-moskva-ru.png",
+      "bytes": 31683,
+      "sha256": "d69b7d13aa41c973b73f746a5f41f1629b409519f842c16054d11625a5e4d92c"
+    },
+    {
+      "file": "images/screenshots/catalog6-domru-results-ru.png",
+      "bytes": 37286,
+      "sha256": "d9c015c8d58fa951ed883ded459511da5e2d7c3a2301bc0dc448273be1810963"
     },
     {
       "file": "images/screenshots/detector-comparison-personal-01.png",
@@ -311,6 +406,116 @@
       "sha256": "7873e019cbb5e65bcd4eb02f5055be41b38f8b5c8f58b9293ddf2ddbc99a0fa8"
     },
     {
+      "file": "images/screenshots/devices-en.jpg",
+      "bytes": 81324,
+      "sha256": "8abafb8859049cb1c1197058555b2a5e0a36b4ab1bbdeec42a456ebf993bf449"
+    },
+    {
+      "file": "images/screenshots/devices-ru.jpg",
+      "bytes": 86015,
+      "sha256": "8dc431b00bf9f59df2cfcfe60f87d19889e82ba8e3ab026feb7cce6afb67294f"
+    },
+    {
+      "file": "images/screenshots/diagnostics-en.jpg",
+      "bytes": 53904,
+      "sha256": "5f6dd3cd720cf83cab9251e7b2720e23151296900b0b8f2e067626e18837da12"
+    },
+    {
+      "file": "images/screenshots/diagnostics-ru.jpg",
+      "bytes": 61321,
+      "sha256": "b5451ea231a0b7ca4c33262367ddc3c80b207073f27b1f3d8c8b65b4169c63ee"
+    },
+    {
+      "file": "images/screenshots/dns-rules-en.jpg",
+      "bytes": 53134,
+      "sha256": "d86324e43550302a035e4d44f9e36fa836fe62aa742dd72e0ae88880cea910f2"
+    },
+    {
+      "file": "images/screenshots/dns-rules-ru.jpg",
+      "bytes": 53227,
+      "sha256": "e9b6b3b9b5f5d8dfe24fffe0e77f2d1da7feb12b857e828df22fc5d1e4f5b80e"
+    },
+    {
+      "file": "images/screenshots/domain-lists-en.jpg",
+      "bytes": 39362,
+      "sha256": "4f0f9ec8df9351701430c4a96cdf78c9fd0d90f22a2ddc9ddcbc66d5c3341593"
+    },
+    {
+      "file": "images/screenshots/domain-lists-ru.jpg",
+      "bytes": 39643,
+      "sha256": "e2713d308647fd02ef0bce65a0084760f72d73a82b130911cf7a80fcc34d906e"
+    },
+    {
+      "file": "images/screenshots/fixed-dns-en.jpg",
+      "bytes": 54336,
+      "sha256": "cfeb704f46a1d26eefd53afb7d5f4e82d18ca229c56771e88907381254e9f89b"
+    },
+    {
+      "file": "images/screenshots/fixed-dns-ru.jpg",
+      "bytes": 55688,
+      "sha256": "71288dd7f5555e086b62c0c9e4a40dd67824bf86f8563f349d2c6cfeee75c78c"
+    },
+    {
+      "file": "images/screenshots/getting-started-en.jpg",
+      "bytes": 55141,
+      "sha256": "664276d47935a9e158dc85cc4fe8ba51023e51b6765af89ff4220691abc71495"
+    },
+    {
+      "file": "images/screenshots/getting-started-ru.jpg",
+      "bytes": 52367,
+      "sha256": "984b203100ff0b2d759d605cafd9a9065d2000a9b1f5e5d18b7284392747cd1d"
+    },
+    {
+      "file": "images/screenshots/import-preview-en.jpg",
+      "bytes": 30730,
+      "sha256": "6df8d75360360caf754fe66f7c24261d457c6b09304a11f26247f00c991a45f9"
+    },
+    {
+      "file": "images/screenshots/import-preview-ru.jpg",
+      "bytes": 33483,
+      "sha256": "0a96437c3da3a70936234b4d9f890fae648938dc197d2b5be0f9d66b87309e8a"
+    },
+    {
+      "file": "images/screenshots/keenetic-import-en.jpg",
+      "bytes": 45520,
+      "sha256": "614fd5ee7a90363d9a644dda7b899f16559972c192fad7c7ec6df821c426165d"
+    },
+    {
+      "file": "images/screenshots/keenetic-import-ru.jpg",
+      "bytes": 50872,
+      "sha256": "25846f7e253bc87ddea0c37e9035c967d8ea00c6919bcf8a4f54c982e701056f"
+    },
+    {
+      "file": "images/screenshots/mtproto-docker-en.jpg",
+      "bytes": 46255,
+      "sha256": "452171170060279b50c8075f5040d0e7b58be78ee6a6044bea925fbdb6c19874"
+    },
+    {
+      "file": "images/screenshots/mtproto-docker-ru.jpg",
+      "bytes": 49566,
+      "sha256": "532cf38cf5ff3ebca16c51cdb5071299b20cc40d9aec126e3bdd936efbc5f42a"
+    },
+    {
+      "file": "images/screenshots/mtproto-entware-en.jpg",
+      "bytes": 46168,
+      "sha256": "327e5f63bf70fe1ee6524ec17954ebae2c2afe002cbb27cf1900fd1524c7c792"
+    },
+    {
+      "file": "images/screenshots/mtproto-entware-ru.jpg",
+      "bytes": 45051,
+      "sha256": "42f8ae3176540f14f6b21b01eb9d7095c9ea9aab0eca02df2745e21cfb4557f2"
+    },
+    {
+      "file": "images/screenshots/mtproto-link-en.jpg",
+      "bytes": 43190,
+      "sha256": "f1158bc0b9a2ae8d2a8df0f1ac98808e34360aac9a739b999794f3860bf092d8"
+    },
+    {
+      "file": "images/screenshots/mtproto-link-ru.jpg",
+      "bytes": 51049,
+      "sha256": "7fef6cc6c22d4448c60df539cdbbf8d470e8b0d186d5768cc08fee8c8c8fc012"
+    },
+    {
       "file": "images/screenshots/panel-overview-en.jpg",
       "bytes": 75552,
       "sha256": "62afaca05ae922f427a79937d951fdaabbcabe178aca11640512acd8fea451cc"
@@ -319,6 +524,96 @@
       "file": "images/screenshots/panel-overview-ru.jpg",
       "bytes": 82534,
       "sha256": "f1ff92339b0e4090c8bd7493ea8474856710f90e6e914a9030d0ee0188b3b5ff"
+    },
+    {
+      "file": "images/screenshots/profile-catalog-en.jpg",
+      "bytes": 47377,
+      "sha256": "301d4999fba473343fccdc6e8cc737df47ada934927c4aeb490c8f6e2e4d5c07"
+    },
+    {
+      "file": "images/screenshots/profile-catalog-ru.jpg",
+      "bytes": 50409,
+      "sha256": "bfe333c651f648ad69c0e3b7ba15f42f1c41469f5feffc625a33ecb752ea76ab"
+    },
+    {
+      "file": "images/screenshots/profile-sharing-en.jpg",
+      "bytes": 57047,
+      "sha256": "c02d82a52e00aa4dd696c438df8a7d5c9dd9bc0275304a3c8ab38d32fead871e"
+    },
+    {
+      "file": "images/screenshots/profile-sharing-ru.jpg",
+      "bytes": 62228,
+      "sha256": "9ae492734ebbc121690b828d1054f9a019979f3a38c0ca5ae150a0cb93e620b5"
+    },
+    {
+      "file": "images/screenshots/restart-timer-en.jpg",
+      "bytes": 18424,
+      "sha256": "2eb5ae78e0fb33ea7b89613314ab733787651def56e1a6866fd7ee3ac1740d92"
+    },
+    {
+      "file": "images/screenshots/restart-timer-ru.jpg",
+      "bytes": 20747,
+      "sha256": "bcb7f15935c346cf6d627a1ca3bfe21b934995024b2f8e72052da906fa7e3f4f"
+    },
+    {
+      "file": "images/screenshots/service-watchdog-en.jpg",
+      "bytes": 21721,
+      "sha256": "5d4f7f0bf5be1fb07cdb79e9db0a1bbaaa357ad0728f6fd7eb50571b6738f0e3"
+    },
+    {
+      "file": "images/screenshots/service-watchdog-ru.jpg",
+      "bytes": 23911,
+      "sha256": "9a0d63f874de1c789df6cb46be9ffef1c8c5b997d362ed119adc18cd9140b8bb"
+    },
+    {
+      "file": "images/screenshots/smartdns-en.jpg",
+      "bytes": 60738,
+      "sha256": "23213d4fff5ae9d412896942e0673ded38fe2a3f15e548bc7994a2cbeabfa7a0"
+    },
+    {
+      "file": "images/screenshots/smartdns-ru.jpg",
+      "bytes": 66407,
+      "sha256": "1d64f7352abb0229272d508324e3ae99356cc32cb2b0de7e0f478b1d47079ce5"
+    },
+    {
+      "file": "images/screenshots/strategy-editor-en.jpg",
+      "bytes": 69105,
+      "sha256": "b7177981fb5a14fd40fe8b04a8063b10b2a388dd388acca3007eb628b2e14085"
+    },
+    {
+      "file": "images/screenshots/strategy-editor-ru.jpg",
+      "bytes": 70959,
+      "sha256": "62d3188979c97f25a59d2297bd0047c80a09b945d6beccfaf81546211442efd6"
+    },
+    {
+      "file": "images/screenshots/technical-channel-en.jpg",
+      "bytes": 25090,
+      "sha256": "ce471c878b6e0baadb1d4b4b24f81f22c475bc3de6bc2330aa8d73d8b3e343ad"
+    },
+    {
+      "file": "images/screenshots/technical-channel-ru.jpg",
+      "bytes": 28041,
+      "sha256": "75f588d7e19a5e109367cd709eb9697b81e8c5f398f72f99acbfc40df30f362e"
+    },
+    {
+      "file": "images/screenshots/unavailable-ips-en.jpg",
+      "bytes": 59474,
+      "sha256": "549f010aa2e0acfe163618c0743d4057361793a97c76965ea9ed25e56fb836a3"
+    },
+    {
+      "file": "images/screenshots/unavailable-ips-ru.jpg",
+      "bytes": 64417,
+      "sha256": "1c8e43164b7a9247a5834fd56617a4f8d8e47e92d2da9bded4dd751893ec6cde"
+    },
+    {
+      "file": "images/screenshots/updates-en.jpg",
+      "bytes": 36671,
+      "sha256": "592e0a02921b4f7d8e37691123e8a099a89480248898573b42895c570c72c1a3"
+    },
+    {
+      "file": "images/screenshots/updates-ru.jpg",
+      "bytes": 41155,
+      "sha256": "040816d07ad7143ec25548c66db6477d9397745a7012f05edca16daeb3710d95"
     },
     {
       "file": "images/smartdns.png",

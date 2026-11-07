@@ -46,7 +46,7 @@ try {
       else if (cmd === 'dpiterminalresize') body = terminal();
       else if (cmd === 'dpiterminalstop') { const id = post.get('terminal_id'); body = { ...terminal('stopped'), terminal_id:id }; owner = null; }
       else if (cmd === 'dpisitecheck') {
-        assert.deepEqual([...post.keys()].sort(), ['cmd','csrf_token','target']);
+        assert.deepEqual([...post.keys()].sort(), ['cmd','csrf_token','dns_scope','target']);
         assert.equal(post.get('csrf_token'), 'fixture-csrf');
         assert.equal(await page.locator('.xterm').count(), 0, 'control request must unmount native terminal first');
         if (busyOnce) { busyOnce = false; status = 409; body = {error:'terminal_busy'}; }
@@ -57,7 +57,7 @@ try {
           const before = { nfqws:'running', mode:'auto', config_sha256:'a'.repeat(64) };
           const after = target.endsWith('mobile') ? {nfqws:'stopped',mode:'all',config_sha256:'b'.repeat(64)} : before;
           const unknown = target.endsWith('cdn');
-          body = {type:'nfqws2_dpi_site_check',schema_version:1,target,url:urls[target],started_at:1793952000,finished_at:1793952001,context:{before:unknown?{nfqws:'unknown',mode:'unknown',config_sha256:null}:before,after,changed:unknown?null:target.endsWith('mobile')},response:{outcome:'response',http_status:target.endsWith('main')?400:target.endsWith('cdn')?403:302,bytes_read:125,body_limited:false,redirect:target.endsWith('mobile')?'https://www.facebook.com/login/':null,elapsed_ms:451,error_code:null},full_service_verified:false,dns_scope:'system_resolver'};
+          body = {type:'nfqws2_dpi_site_check',schema_version:1,target,url:urls[target],started_at:1793952000,finished_at:1793952001,context:{before:unknown?{nfqws:'unknown',mode:'unknown',config_sha256:null}:before,after,changed:unknown?null:target.endsWith('mobile')},response:{outcome:'response',http_status:target.endsWith('main')?400:target.endsWith('cdn')?403:302,bytes_read:125,body_limited:false,redirect:target.endsWith('mobile')?'https://www.facebook.com/login/':null,elapsed_ms:451,error_code:null},full_service_verified:false,dns_scope:post.get('dns_scope')};
           if (target === 'facebook-main') body.finished_at = body.started_at - 30;
           if (target === 'youtube-main') body.response = {...body.response,outcome:'timeout',http_status:null,bytes_read:0,error_code:'deadline'};
           if (target === 'youtube-images') body.response = {...body.response,outcome:'tls_error',http_status:null,bytes_read:0,error_code:'tls_failed'};
@@ -77,6 +77,7 @@ try {
     await tab().click();
     await page.waitForFunction(() => !document.querySelector('.xterm'));
     assert.equal(calls.filter(x => x === 'dpiterminalstop').length, 1);
+    assert.equal(await page.getByRole('button',{name:t('dpi_site_check.dns_button_local_resolver'),exact:true}).getAttribute('aria-pressed'), 'true');
     const run = () => page.getByRole('button', {name:t('dpi_site_check.run'),exact:true});
     assert.ok(await run().evaluate(button => button.getBoundingClientRect().bottom <= document.querySelector('.MuiDialogActions-root').getBoundingClientRect().top), 'service run button should fit the initial mobile view without duplicated native descriptions');
     await run().click();
@@ -118,7 +119,7 @@ try {
       await page.locator(`[data-dpi-site-result="${expected[2]}"]`).waitFor();
       await run().waitFor({state:'visible'});
       assert.deepEqual(targets.slice(-3),expected,'selected service owns its three fixed target IDs');
-      const keys = service === 'youtube' ? ['outcome_timeout','outcome_tls_error','read_limited'] : ['http_error','http_error','outcome_connection_error'];
+      const keys = service === 'youtube' ? ['outcome_timeout','outcome_tls_error','read_limited'] : ['http_error','endpoint_response','outcome_connection_error'];
       for (let i=0;i<3;i++) assert.ok((await page.locator(`[data-dpi-site-result="${expected[i]}"]`).innerText()).includes(t(`dpi_site_check.${keys[i]}`)));
     }
     await page.getByRole('tab',{name:t('dpi_site_check.native_view'),exact:true}).click();

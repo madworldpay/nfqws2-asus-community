@@ -29,6 +29,8 @@ class SiteCheckPackagingTests(unittest.TestCase):
                     payload = builder.web_payload(dist)
                     self.assertEqual(payload[prefix + source.name],
                                      (source.read_bytes(), 0o644))
+                    dns = public / 'openwrt-dns-probe.php'
+                    self.assertEqual(payload[prefix + dns.name], (dns.read_bytes(), 0o644))
 
 
 if __name__ == '__main__':

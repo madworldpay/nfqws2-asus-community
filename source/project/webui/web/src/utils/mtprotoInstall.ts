@@ -1,4 +1,5 @@
 import installer from './mtproto-install.sh?raw';
+import logRedaction from './mtproto-log-redaction.py?raw';
 
 export type MtprotoMethod = 'docker' | 'entware' | 'linux';
 export type MtprotoValues = { server: string; port: string; secret: string };
@@ -34,7 +35,9 @@ export const MTPROTO_DOCKER_IMAGE =
 // pclead.co.uk is already in that image's relay pool. Owners can change the ENV
 // value if this relay is unavailable. MTProto payload encryption is unchanged.
 export const MTPROTO_DOCKER_LAUNCHER =
-  'set -eu; set -- --host "$PROXY_HOST" --port "$PROXY_PORT" --secret "$PROXY_SECRET" --pool-size "$PROXY_POOL_SIZE" --no-secure --cfproxy-domain "$CFPROXY_DOMAIN"; for dc in $PROXY_DC_IPS; do set -- "$@" --dc-ip "$dc"; done; exec /opt/venv/bin/python -u proxy/tg_ws_proxy.py "$@"';
+  'set -eu; set -- --host "$PROXY_HOST" --port "$PROXY_PORT" --secret "$PROXY_SECRET" --pool-size "$PROXY_POOL_SIZE" --no-secure --cfproxy-domain "$CFPROXY_DOMAIN"; for dc in $PROXY_DC_IPS; do set -- "$@" --dc-ip "$dc"; done; exec /opt/venv/bin/python -u -c ' +
+  shellQuote('import os, sys, runpy\nsecret = os.environ["PROXY_SECRET"]\n' + logRedaction + '\nsys.path.insert(0, os.path.abspath("proxy"))\nrunpy.run_path("proxy/tg_ws_proxy.py", run_name="__main__")\n') +
+  ' "$@"';
 
 // This asks Telegram for an unauthenticated resPQ and checks its nonce. An open
 // listener alone cannot pass. No Telegram account, owner key or nonce is logged.
@@ -178,6 +181,7 @@ export function buildMtprotoInstall(
     .replace('@@MTPROTO_DOCKER_IMAGE@@', MTPROTO_DOCKER_IMAGE)
     .replace('@@MTPROTO_DOCKER_LAUNCHER@@', MTPROTO_DOCKER_LAUNCHER)
     .replace('@@MTPROTO_READINESS@@', MTPROTO_READINESS)
+    .replace('@@MTPROTO_LOG_REDACTION@@', logRedaction)
     .replace(
       '@@MTPROTO_HEALTH_COMMAND@@',
       'exec /opt/venv/bin/python -c ' +

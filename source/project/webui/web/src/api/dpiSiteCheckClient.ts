@@ -18,6 +18,7 @@ export const DPI_SITE_TARGETS = {
   'discord-gateway': 'https://gateway.discord.gg/',
 } as const;
 export type DpiSiteTarget = keyof typeof DPI_SITE_TARGETS;
+export type DpiSiteDnsScope = 'system_resolver' | 'local_resolver';
 export type DpiSiteContext = {
   nfqws: 'running' | 'stopped' | 'unknown';
   mode: 'auto' | 'all' | 'list' | 'unknown';
@@ -52,7 +53,7 @@ export type DpiSiteCheck = {
     error_code: string | null;
   };
   full_service_verified: false;
-  dns_scope: 'system_resolver';
+  dns_scope: DpiSiteDnsScope;
 };
 
 function shape(
@@ -107,6 +108,7 @@ function contextChange(before: DpiSiteContext, after: DpiSiteContext) {
 export function validateDpiSiteCheck(
   value: unknown,
   target: DpiSiteTarget,
+  expectedScope?: DpiSiteDnsScope,
 ): DpiSiteCheck {
   if (
     !shape(value, [
@@ -133,7 +135,9 @@ export function validateDpiSiteCheck(
     !integer(value.started_at) ||
     !integer(value.finished_at) ||
     value.full_service_verified !== false ||
-    value.dns_scope !== 'system_resolver' ||
+    typeof value.dns_scope !== 'string' ||
+    !['system_resolver', 'local_resolver'].includes(value.dns_scope) ||
+    (expectedScope !== undefined && value.dns_scope !== expectedScope) ||
     !shape(c, ['before', 'after', 'changed']) ||
     !context(c.before) ||
     !context(c.after) ||
@@ -182,14 +186,17 @@ export function validateDpiSiteCheck(
 export async function checkDpiSite(
   csrfToken: string,
   target: DpiSiteTarget,
+  dnsScope?: DpiSiteDnsScope,
 ): Promise<DpiSiteCheck> {
   if (
     typeof target !== 'string' ||
-    !Object.prototype.hasOwnProperty.call(DPI_SITE_TARGETS, target)
+    !Object.prototype.hasOwnProperty.call(DPI_SITE_TARGETS, target) ||
+    (dnsScope !== undefined && !['system_resolver', 'local_resolver'].includes(dnsScope))
   )
     throw new DpiError('invalid_request');
   // The server owns the 10 second probe deadline; the common transport bounds
   // JSON size and gives the server up to 15 seconds to return/clean up.
-  const { value } = await request(csrfToken, 'dpisitecheck', { target }, 16384);
-  return validateDpiSiteCheck(value, target);
+  const fields: Record<string, string> = dnsScope === undefined ? { target } : { target, dns_scope: dnsScope };
+  const { value } = await request(csrfToken, 'dpisitecheck', fields, 16384);
+  return validateDpiSiteCheck(value, target, dnsScope ?? 'system_resolver');
 }

@@ -43,18 +43,18 @@ class DpiSiteCheckTests(unittest.TestCase):
         self.assertEqual(result.stderr, '')
         return json.loads(result.stdout)
 
-    def check(self, target='facebook-main', deadline=None):
+    def check(self, target='facebook-main', deadline=None, scope='system_resolver'):
         return self.php('''$file=$argv[1].'/dpi-site-check.php';
         if(!is_file($file)){echo json_encode(['error'=>'missing_implementation']);exit;}
         require $file;try {
           $deps=['config_path'=>$argv[2].'/nfqws2.conf','proc_root'=>$argv[2].'/proc',
-            'worker_argv'=>fn($target)=>[$argv[3],'-n','-f',$argv[2].'/worker.php','--',$target]];
+            'worker_argv'=>fn($target,$scope='system_resolver')=>[$argv[3],'-n','-f',$argv[2].'/worker.php','--',$target,$scope]];
           if($argv[5]!=='')$deps['deadline_seconds']=(float)$argv[5];
           $s=new AsusDpiStore($argv[2].'/state',getmyuid());
           $g=new AsusDpiTerminalLifecycle($argv[2].'/terminal',getmyuid());
-          echo json_encode((new AsusDpiSiteCheck($s,$g,$deps))->check($argv[4]));
+          echo json_encode((new AsusDpiSiteCheck($s,$g,$deps))->check($argv[4],$argv[6]));
         }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}''', PHP, target,
-                        '' if deadline is None else deadline)
+                        '' if deadline is None else deadline, scope)
 
     def worker(self, port=None, addresses=None, before='', ca=None):
         # Only this trusted CLI fixture reroutes the pinned public destination
@@ -62,7 +62,7 @@ class DpiSiteCheckTests(unittest.TestCase):
         source = '''<?php require %s;file_put_contents(%s,(string)getmypid());%s
         $deps=['resolve'=>fn($host)=>%s,'ca'=>%s];
         %s
-        echo json_encode((new AsusDpiSiteCheckProbe($deps))->run($argv[1]));'''
+        echo json_encode((new AsusDpiSiteCheckProbe($deps))->run($argv[1],$argv[2]??'system_resolver'));'''
         opening = '' if port is None else '''$deps['open']=static function($url,$context){
           file_put_contents(%s,json_encode([$url,stream_context_get_options($context)]));
           return stream_socket_client('tls://127.0.0.1:%d',$errno,$error,3,STREAM_CLIENT_CONNECT,$context);
@@ -149,6 +149,80 @@ class DpiSiteCheckTests(unittest.TestCase):
         self.assertTrue(options[1]['ssl']['verify_peer_name'])
         self.assertEqual(options[1]['ssl']['peer_name'], 'www.facebook.com')
         self.assertNotIn(b'Cookie:', seen[0])
+
+    def test_local_dns_scope_is_explicit_validated_and_returned(self):
+        post = {'cmd': 'dpisitecheck', 'csrf_token': 'token', 'target': 'facebook-main'}
+        self.assertEqual(self.validate(post | {'dns_scope': 'local_resolver'}), {'valid': True})
+        for scope in ['8.8.8.8', 'http://127.0.0.1', '', [], None]:
+            self.assertEqual(self.validate(post | {'dns_scope': scope}), {'error': 'invalid_request'})
+        self.worker(addresses=[])
+        value = self.check(scope='local_resolver')
+        self.assertEqual(value.get('dns_scope'), 'local_resolver', value)
+
+    def test_literal_mode_matches_exact_unambiguous_safe_definitions_only(self):
+        cases = [
+            ('MODE_AUTO="--hostlist-auto=/opt/auto.list"\nMODE_LIST="--hostlist=/opt/user.list"\nMODE_ALL="--new"\nNFQWS_EXTRA_ARGS="--hostlist-auto=/opt/auto.list"\n', 'auto'),
+            ("MODE_LIST='--hostlist=/opt/user.list'\nNFQWS_EXTRA_ARGS='--hostlist=/opt/user.list'\n", 'list'),
+            ('MODE_ALL="--new"\nNFQWS_EXTRA_ARGS="--new"\n', 'all'),
+            ('MODE_AUTO="same"\nMODE_ALL="same"\nNFQWS_EXTRA_ARGS="same"\n', 'unknown'),
+            ('MODE_AUTO="$OTHER"\nNFQWS_EXTRA_ARGS="$OTHER"\n', 'unknown'),
+            ('MODE_AUTO="value"\nMODE_AUTO="value"\nNFQWS_EXTRA_ARGS="value"\n', 'unknown'),
+            ('MODE_AUTO=""\nNFQWS_EXTRA_ARGS=""\n', 'unknown'),
+            ('MODE_AUTO="--new"\nNFQWS_EXTRA_ARGS="--new "\n', 'unknown'),
+        ]
+        self.worker(addresses=[])
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                self.config.write_text(raw)
+                self.assertEqual(self.check()['context']['before']['mode'], expected)
+
+    def test_local_dns_performs_correlated_query_without_system_fallback(self):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        listener.bind(('127.0.0.1', 0))
+        listener.settimeout(3)
+        port = listener.getsockname()[1]
+        seen = []
+        def serve():
+            try:
+                packet, address = listener.recvfrom(4096)
+                seen.append(packet)
+                # Valid matching NXDOMAIN. System resolver callback must not run.
+                reply = packet[:2] + b'\x81\x83\x00\x01\x00\x00\x00\x00\x00\x00' + packet[12:]
+                listener.sendto(reply, address)
+            finally:
+                listener.close()
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        result = self.php('''require $argv[1].'/dpi-site-check.php';
+          $deps=['dns_port'=>(int)$argv[3],'ca'=>$argv[2].'/cert.pem',
+            'resolve'=>function($host)use($argv){file_put_contents($argv[2].'/fallback','bad');return ['93.184.216.34'];}];
+          echo json_encode((new AsusDpiSiteCheckProbe($deps))->run('facebook-main','local_resolver'));''', port)
+        thread.join(timeout=4)
+        self.assertEqual(result['error_code'], 'dns_failed', result)
+        self.assertEqual(len(seen), 1)
+        self.assertFalse((self.base / 'fallback').exists())
+
+    def test_local_dns_private_answers_are_blocked_before_tls(self):
+        listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        listener.bind(('127.0.0.1', 0))
+        listener.settimeout(3)
+        port = listener.getsockname()[1]
+        def serve():
+            try:
+                packet, address = listener.recvfrom(4096)
+                answer = b'\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04\x7f\x00\x00\x01'
+                listener.sendto(packet[:2] + b'\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00' + packet[12:] + answer, address)
+            finally:
+                listener.close()
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        result = self.php('''require $argv[1].'/dpi-site-check.php';
+          $deps=['dns_port'=>(int)$argv[3],'ca'=>$argv[2].'/cert.pem',
+          'open'=>function()use($argv){file_put_contents($argv[2].'/tls-opened','bad');return false;}];
+          echo json_encode((new AsusDpiSiteCheckProbe($deps))->run('facebook-main','local_resolver'));''', port)
+        thread.join(timeout=4)
+        self.assertEqual(result['outcome'], 'blocked_address', result)
+        self.assertFalse((self.base / 'tls-opened').exists())
 
     def test_redirect_is_bounded_information_and_is_never_followed(self):
         location = 'http://127.0.0.1/private?' + 'x' * 2100

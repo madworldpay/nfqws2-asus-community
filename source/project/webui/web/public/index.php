@@ -302,7 +302,7 @@ function main(): void
       if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();}
       session_write_close();
       require_once __DIR__.'/update-guard.php';$siteLease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
-      $siteValue=(new AsusDpiSiteCheck())->check($_POST['target']);$siteRaw=json_encode($siteValue,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);
+      $siteValue=(new AsusDpiSiteCheck())->check($_POST['target'],$_POST['dns_scope']??'system_resolver');$siteRaw=json_encode($siteValue,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES);
       if(strlen($siteRaw)>16384)throw new RuntimeException('invalid_state');
       http_response_code(200);echo $siteRaw;
     }catch(Throwable $e){

@@ -31,7 +31,7 @@ try {
     const route=createRootRoute({component:Fixture});
     const router=createRouter({routeTree:route}); window.fixture={refresh:()=>API.invalidateStatus()};
     createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>);
-  ` }, bundle: true, platform: 'browser', format: 'iife', write: false, jsx: 'automatic',
+  ` }, bundle: true, platform: 'browser', format: 'iife', outfile: 'fixture.js', write: false, jsx: 'automatic',
     tsconfig: join(web, 'tsconfig.app.json'), logLevel: 'silent', define: { 'process.env.APP_VERSION': '"0.1.4"' },
     plugins: process.env.NFQWS_RESTART_BASELINE_HEADER ? [{ name: 'baseline-header', setup(builder) {
       builder.onLoad({ filter: /\/components\/Header\.tsx$/ }, async () => ({ contents: await readFile(process.env.NFQWS_RESTART_BASELINE_HEADER, 'utf8'), loader: 'tsx', resolveDir: join(web, 'src/components') }));
@@ -42,8 +42,9 @@ try {
       if (['/community/export-e9a226cd.png', '/community/import-937c2946.png'].includes(req.url)) {
         res.setHeader('Content-Type', 'image/png'); res.end(await readFile(join(web, 'public', req.url))); return;
       }
-      res.setHeader('Content-Type', req.url.startsWith('/fixture.js') ? 'text/javascript' : 'text/html');
-      res.end(req.url.startsWith('/fixture.js') ? result.outputFiles[0].contents : '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><div id="root"></div><script src="/fixture.js"></script></body></html>');
+      const asset = req.url.startsWith('/fixture.js') ? result.outputFiles.find(f => f.path.endsWith('.js')) : req.url === '/fixture.css' ? result.outputFiles.find(f => f.path.endsWith('.css')) : null;
+      res.setHeader('Content-Type', asset ? req.url.endsWith('.css') ? 'text/css' : 'text/javascript' : 'text/html');
+      res.end(asset ? asset.contents : '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/fixture.css"></head><body><div id="root"></div><script src="/fixture.js"></script></body></html>');
       return;
     }
     const fixture = fixtures.get(req.headers['x-fixture']);
@@ -489,11 +490,9 @@ try {
     });
     await run('anonymous-basic-service-controls', { auth: false, running: false }, async (page, f) => {
       const common = locales[lang].common;
-      const menu = () => page.getByRole('button', { name: locales[lang].restart_schedule.menu, exact: true });
       for (const width of [1280, 360]) {
         await page.setViewportSize({ width, height: 800 });
-        await menu().click();
-        await page.getByRole('menuitem', { name: common.start, exact: true }).click();
+        await page.getByRole('button', { name: common.start, exact: true }).click();
         await page.getByText('Done', { exact: true }).waitFor();
         await page.getByRole('dialog').getByRole('button', { name: p.close, exact: true }).click();
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && !b.disabled), p.restart);
@@ -502,8 +501,7 @@ try {
         await page.getByRole('button', { name: p.restart, exact: true }).click();
         await page.getByText('Done', { exact: true }).waitFor();
         await page.getByRole('dialog').getByRole('button', { name: p.close, exact: true }).click();
-        await menu().click();
-        await page.getByRole('menuitem', { name: common.stop, exact: true }).click();
+        await page.getByRole('button', { name: common.stop, exact: true }).click();
         await page.getByText('Done', { exact: true }).waitFor();
         await page.getByRole('dialog').getByRole('button', { name: p.close, exact: true }).click();
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), p.restart);
