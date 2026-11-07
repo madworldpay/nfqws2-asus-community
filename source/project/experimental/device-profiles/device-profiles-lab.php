@@ -23,13 +23,13 @@ final class NfqwsDeviceProfilesLab
         if(!is_string($v)||!preg_match('/^[^\x00-\x1f\x7f]{1,64}$/uD',$v)||trim($v)==='')throw new RuntimeException('invalid_draft');
         return trim($v);
     }
-    private static function address(mixed $v):string
+    public static function address(mixed $v):string
     {
         if(!is_string($v)||strlen($v)>45||str_contains($v,'%'))throw new RuntimeException('invalid_draft');
         $packed=@inet_pton($v);
-        if($packed===false||in_array($v,['0.0.0.0','255.255.255.255','::','::1'],true)||
-            (strlen($packed)===4&&(ord($packed[0])===127||ord($packed[0])>=224))||
-            (strlen($packed)===16&&ord($packed[0])===255))throw new RuntimeException('invalid_draft');
+        if($packed===false||$packed===str_repeat("\0",16)||$packed===str_repeat("\0",15)."\1"||
+            (strlen($packed)===4&&(ord($packed[0])===0||ord($packed[0])===127||ord($packed[0])>=224))||
+            (strlen($packed)===16&&(ord($packed[0])===255||substr($packed,0,12)===str_repeat("\0",10)."\xff\xff")))throw new RuntimeException('invalid_draft');
         return strtolower(inet_ntop($packed));
     }
     private static function mac(mixed $v):string
@@ -67,7 +67,7 @@ final class NfqwsDeviceProfilesLab
             if(!is_array($p))throw new RuntimeException('invalid_draft');
             self::keys($p,['id','name','enabled','strategy','device_ids']);
             if(!is_string($p['id'])||!preg_match('/^profile-[a-f0-9]{8}$/D',$p['id'])||isset($pids[$p['id']])||!is_bool($p['enabled'])||
-                !in_array($p['strategy'],['current','stock'],true)||!is_array($p['device_ids'])||!array_is_list($p['device_ids'])||count($p['device_ids'])>128)throw new RuntimeException('invalid_draft');
+                !is_string($p['strategy'])||!preg_match('/^(?:current|stock|saved-[a-f0-9]{16})$/D',$p['strategy'])||!is_array($p['device_ids'])||!array_is_list($p['device_ids'])||count($p['device_ids'])>128)throw new RuntimeException('invalid_draft');
             $seen=[];foreach($p['device_ids'] as $id){if(!is_string($id)||!isset($ids[$id])||isset($seen[$id]))throw new RuntimeException('invalid_draft');$seen[$id]=true;}
             $pids[$p['id']]=true;$profiles[]=['id'=>$p['id'],'name'=>self::name($p['name']),'enabled'=>$p['enabled'],'strategy'=>$p['strategy'],'device_ids'=>$p['device_ids']];
         }
