@@ -6,12 +6,18 @@ require_once __DIR__.'/update-deadline.php';
 require_once __DIR__.'/support-report-platform.php';
 
 require_once __DIR__.'/update-package.php';
+require_once __DIR__.'/update-snapshot-limits.php';
 
 final class AsusUpdateSnapshot
 {
     private static function ownerAllowed(string $relative,array $stat,int $owner): bool
     {
-        return $stat['uid']===$owner||($stat['uid']===65534&&($stat['mode']&0170000)===0100000&&preg_match('~^etc/nfqws2/lists/[a-zA-Z0-9_.-]+$~D',$relative)===1);
+        if($stat['uid']===$owner)return true;
+        if($stat['uid']!==65534||($stat['mode']&0170000)!==0100000)return false;
+        if(preg_match('~^etc/nfqws2/lists/[a-zA-Z0-9_.-]+$~D',$relative)===1)return true;
+        // Isolated strategies learn as nobody too. Only their bounded list
+        // namespace is delegated; metadata, Lua and directories remain root-owned.
+        return ($stat['mode']&0022)===0&&preg_match('~^etc/nfqws2/device-profiles/(?:stock|saved-[a-f0-9]{16})/lists/[a-zA-Z0-9_.-]{1,128}$~D',$relative)===1;
     }
     private static function collect(string $opt,int $owner): array
     {
@@ -19,7 +25,7 @@ final class AsusUpdateSnapshot
         $scan=function(string $relative)use(&$scan,&$files,&$total,$opt,$owner){$p=$opt.'/'.$relative;AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s)return;
             if(!self::ownerAllowed($relative,$s,$owner))throw new RuntimeException('invalid_state');$type=$s['mode']&0170000;
             if($type===0040000){$names=@scandir($p);if(!is_array($names))throw new RuntimeException('invalid_state');foreach($names as $name)if($name!=='.'&&$name!=='..'){if(!preg_match('/^[a-zA-Z0-9_.-]{1,128}$/D',$name))throw new RuntimeException('invalid_state');$scan($relative.'/'.$name);}return;}
-            if($type!==0100000||$s['nlink']!==1||($s['mode']&07000)!==0||$s['size']>8388608||count($files)>=512)throw new RuntimeException('invalid_state');$total+=$s['size'];if($total>33554432)throw new RuntimeException('output_limit');
+            if($type!==0100000||$s['nlink']!==1||($s['mode']&07000)!==0||$s['size']>8388608||count($files)>=NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException('invalid_state');$total+=$s['size'];if($total>NfqwsUpdateSnapshotLimits::BYTES)throw new RuntimeException('output_limit');
             $hash=hash_file('sha256',$p);if($hash===false)throw new RuntimeException('invalid_state');$files[$relative]=['mode'=>$s['mode']&0777,'size'=>$s['size'],'sha256'=>$hash,'uid'=>$s['uid'],'gid'=>$s['gid']];
         };
         $scan('etc/nfqws2');foreach(['auth.json','support-relay.json','update-channel.json'] as $n)$scan('etc/nfqws-asus-web/'.$n);ksort($files);
@@ -42,7 +48,10 @@ final class AsusUpdateSnapshot
                 }
             }ksort($resources);
         }
-        return ['files'=>$files,'total'=>$total,'package_resources'=>$resources];
+        $manifest=['files'=>$files,'total'=>$total,'package_resources'=>$resources];
+        // Estimate must prove that the later backup can also be verified.
+        if(strlen(json_encode($manifest,JSON_THROW_ON_ERROR))>NfqwsUpdateSnapshotLimits::JSON)throw new RuntimeException('output_limit');
+        return $manifest;
     }
     public static function estimate(string $opt,int $owner=0): int
     {require_once __DIR__.'/ip-health-store.php';return (new NfqwsIpHealthStore($opt.'/etc/nfqws2/ip-health'))->withStableState(fn()=>self::collect($opt,$owner)['total']);}
@@ -71,7 +80,7 @@ final class AsusUpdateSnapshot
     }
     public static function verify(string $opt,string $destination,int $owner=0,bool $allowPackageDefaults=false): bool
     {
-        AsusUpdateStore::noLinks($destination);$p=$destination.'/snapshot.json';$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||($s['mode']&0777)!==0600||$s['nlink']!==1||$s['size']>131072)throw new RuntimeException('invalid_state');
+        AsusUpdateStore::noLinks($destination);$p=$destination.'/snapshot.json';$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||($s['mode']&0777)!==0600||$s['nlink']!==1||$s['size']>NfqwsUpdateSnapshotLimits::JSON)throw new RuntimeException('invalid_state');
         try{$manifest=json_decode(file_get_contents($p),true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
         $current=self::collect($opt,$owner);
         if($allowPackageDefaults){

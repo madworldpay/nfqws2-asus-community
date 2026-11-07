@@ -17,7 +17,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 98:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build98) · [change history](CHANGELOG.md). **Devices · beta** assigns separate strategies to selected devices with ordered priorities. Common mode remains the default; saving a draft does not apply it. [Guide and limits](docs/DEVICE-PROFILES.en.md). [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
+**Build 99:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build99) · [change history](CHANGELOG.md). **Devices · beta** assigns separate strategies to selected devices with ordered priorities. Common mode remains the default; saving a draft does not apply it. [Guide and limits](docs/DEVICE-PROFILES.en.md). [Historical comparison of real Detector runs](docs/DETECTOR-COMPARISON.en.md).
 
 
 ## What you get

@@ -146,7 +146,7 @@ final class NfqwsOpenWrtUpdateWorker
                         // A partial backup is not a partial installed package.
                         // Use protected identities, not incomplete copied bytes,
                         // only after the entire old payload is proven unchanged.
-                        $raw=$this->store->readFile($base.'/quiesced-settings.json',131072)??$this->store->readFile($base.'/original-settings.json',131072);
+                        $raw=$this->store->readFile($base.'/quiesced-settings.json',NfqwsUpdateSnapshotLimits::JSON)??$this->store->readFile($base.'/original-settings.json',NfqwsUpdateSnapshotLimits::JSON);
                         if($raw===null)throw new RuntimeException('invalid_state');
                         NfqwsOpenWrtUpdateSnapshot::verifyState(json_decode($raw,true,32,JSON_THROW_ON_ERROR),$root);
                         $after=$this->recoveryEnvironment($environment);if($after['installed']!==$environment['installed'])throw new RuntimeException('version_mismatch');

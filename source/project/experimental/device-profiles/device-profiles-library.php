@@ -137,6 +137,7 @@ final class NfqwsDeviceProfilesLibrary
             }
             $value=implode(' ',$kept);
         }unset($value);
+        if(count($files)>256)throw new RuntimeException('runtime_limit');
         $config['USER']='nobody';$config['LOG_LEVEL']='0';
         $this->directory($this->resources,0755);$this->directory($dir,0755);$created=[];$temporary=null;
         try{

@@ -350,7 +350,7 @@ final class AsusUpdateRollback
             self::tar($destination.'/package.ipk',$outer,$owner);
             if(self::listed($opt,$owner,$currentIndexes,$conffiles)!==$files||$currentIndexes!==$indexes)throw new RuntimeException('settings_changed');AsusUpdateSnapshot::verify($opt,$settings,$owner);
             if(self::captureAux($opt,$destination,$owner)!==$aux)throw new RuntimeException('settings_changed');
-            $manifest=['schema'=>1,'version'=>$own['Version'],'architecture'=>$own['Architecture'],'foreign'=>$foreign,'payload'=>$files,'metadata'=>$metadata,'conffiles'=>$conffiles,'aux'=>$aux,'settings'=>self::file($settings.'/snapshot.json',$owner,131072),'defaults'=>$defaults,'package'=>self::file($destination.'/package.ipk',$owner)];
+            $manifest=['schema'=>1,'version'=>$own['Version'],'architecture'=>$own['Architecture'],'foreign'=>$foreign,'payload'=>$files,'metadata'=>$metadata,'conffiles'=>$conffiles,'aux'=>$aux,'settings'=>self::file($settings.'/snapshot.json',$owner,NfqwsUpdateSnapshotLimits::JSON),'defaults'=>$defaults,'package'=>self::file($destination.'/package.ipk',$owner)];
             self::write($destination.'/snapshot.json',json_encode($manifest,JSON_THROW_ON_ERROR));
         }finally{umask($mask);}self::index($destination,$owner);if(!unlink($destination.'/staging.json'))throw new RuntimeException('rollback_unavailable');return self::load($destination,$owner);
     }
@@ -419,9 +419,9 @@ final class AsusUpdateRollback
     private static function settings(string $settings,array $m,int $owner):array
     {
         try{
-            if(self::file($settings.'/snapshot.json',$owner,131072)!==$m['settings'])throw new RuntimeException();
+            if(self::file($settings.'/snapshot.json',$owner,NfqwsUpdateSnapshotLimits::JSON)!==$m['settings'])throw new RuntimeException();
             $record=json_decode(file_get_contents($settings.'/snapshot.json'),true,32,JSON_THROW_ON_ERROR);
-            if(!is_array($record['files']??null)||count($record['files'])>512)throw new RuntimeException();
+            if(!is_array($record['files']??null)||count($record['files'])>NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException();
             foreach($record['files'] as $name=>$meta){
                 if(!is_string($name)||!preg_match('~^etc/(?:nfqws2/[a-zA-Z0-9_./-]+|nfqws-asus-web/(?:auth|support-relay|update-channel)\.json)$~D',$name)||array_intersect(explode('/',$name),['.','..']))throw new RuntimeException();
                 self::meta($meta);AsusUpdateStore::noLinks($settings.'/'.$name);$s=lstat($settings.'/'.$name);

@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 59518,
-      "sha256": "50e3823bb3e1aa6409ddf468425b887ca3c020b3f7fddc65c4b9ee02d2e45f94"
+      "bytes": 60963,
+      "sha256": "298de7a4b7707c63569e55b05582a74c24561b1bd80b8937adb72b73475dd494"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -153,12 +153,12 @@
     {
       "file": "README.en.md",
       "bytes": 25693,
-      "sha256": "4037c2554b2d8046287e6ea1d53fc51cb3d6b0fa5c9e3b6f6db1934fb0f28ca7"
+      "sha256": "4e4e5d8ef4de24ee849710f91198a57f1bbb4716c48a9ac90db3f28a3a018850"
     },
     {
       "file": "README.md",
       "bytes": 42947,
-      "sha256": "a14db2c3fcf5a55e2e63c029d0afc5122bdda9880646bc90d067cd9b211efa75"
+      "sha256": "8f185a8ea058f3f9f5f1372864fb2568cc29fd72f1450810a8afbdfca668e368"
     },
     {
       "file": "ROADMAP.en.md",
@@ -232,13 +232,13 @@
     },
     {
       "file": "docs/DEVICE-PROFILES.en.md",
-      "bytes": 2221,
-      "sha256": "b62996032600bbe6b33fa71533cce1f3b5bb9fce700a796b5d097db981350ab4"
+      "bytes": 2366,
+      "sha256": "3b0aa46efde0c586a63aaa6696a1dc1404edf631a3a20c55e7796d8753632798"
     },
     {
       "file": "docs/DEVICE-PROFILES.md",
-      "bytes": 10620,
-      "sha256": "609ebf8e4b93505d179bdd01df62f14c5a5a8c6f6c1aeeca760c6a5a941d8284"
+      "bytes": 10926,
+      "sha256": "dcb37d8db539f8b36e7c963a7459efc4ab50f88311820085f576f52b408be4f1"
     },
     {
       "file": "images/cloud-catalog.jpg",

@@ -60,7 +60,7 @@ final class NfqwsOpenWrtUpdateHook
         if($action==='capture'){
             if($this->store->readFile($base.'/quiesced.json',1024)===null)$this->store->update($id,['phase'=>'backing_up']);
             // Save the post-DNS-stop identity before any backup copy can fail.
-            $root=$this->options['root']??'/';$saved=$this->store->readFile($base.'/quiesced-settings.json',131072);
+            $root=$this->options['root']??'/';$saved=$this->store->readFile($base.'/quiesced-settings.json',NfqwsUpdateSnapshotLimits::JSON);
             if($saved===null)$this->store->writeFile($base.'/quiesced-settings.json',json_encode(NfqwsOpenWrtUpdateSnapshot::state($root),JSON_THROW_ON_ERROR));
             else NfqwsOpenWrtUpdateSnapshot::verifyState(json_decode($saved,true,32,JSON_THROW_ON_ERROR),$root);
             $backup=$this->store->path($base.'/backup');$root=$this->options['root']??'/';

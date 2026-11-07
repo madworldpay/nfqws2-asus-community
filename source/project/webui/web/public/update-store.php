@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/dpi-store.php';
+require_once __DIR__.'/update-snapshot-limits.php';
 
 /** Private transaction journal. Paths come from trusted code, never HTTP fields. */
 final class AsusUpdateStore
@@ -40,14 +41,16 @@ final class AsusUpdateStore
         clearstatcache(true,$path);$s=@lstat($path);if(!$s)return null;
         if(($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||($s['mode']&0777)!==0600||$s['nlink']!==1||$s['size']>$max)throw new RuntimeException('invalid_state');return $s;
     }
-    public function readFile(string $name,int $max=131072): ?string
+    public function readFile(string $name,?int $max=null): ?string
     {
-        $p=$this->path($name);$s=$this->regular($p,$max);if(!$s)return null;$f=@fopen($p,'rb');if(!$f)throw new RuntimeException('invalid_state');
+        $max??=self::fileLimit($name);$p=$this->path($name);$s=$this->regular($p,$max);if(!$s)return null;$f=@fopen($p,'rb');if(!$f)throw new RuntimeException('invalid_state');
         try{$a=fstat($f);if($s['ino']!==$a['ino']||$s['dev']!==$a['dev'])throw new RuntimeException('invalid_state');$v=stream_get_contents($f,$max+1);if(!is_string($v)||strlen($v)>$max)throw new RuntimeException('invalid_state');return $v;}finally{fclose($f);}
     }
+    private static function fileLimit(string $name):int
+    {return preg_match('~^operations/[a-f0-9]{32}/(?:(?:original-settings|quiesced-settings)\\.json|(?:backup|quiesced-backup)/(?:snapshot|native-snapshot|staging)\\.json)$~D',$name)===1?NfqwsUpdateSnapshotLimits::JSON:131072;}
     public function writeFile(string $name,string $raw): void
     {
-        if(strlen($raw)>131072)throw new RuntimeException('output_limit');$p=$this->path($name);$this->regular($p,131072);
+        $limit=self::fileLimit($name);if(strlen($raw)>$limit)throw new RuntimeException('output_limit');$p=$this->path($name);$this->regular($p,$limit);
         $dir=dirname($p);$s=@lstat($dir);if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$this->owner||($s['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
         $tmp=$dir.'/.write-'.bin2hex(random_bytes(12));$mask=umask(0077);try{$f=@fopen($tmp,'xb');}finally{umask($mask);}if(!$f)throw new RuntimeException('invalid_state');
         try{if(!chmod($tmp,0600)||fwrite($f,$raw)!==strlen($raw)||!fflush($f))throw new RuntimeException('invalid_state');fclose($f);$f=null;if(!rename($tmp,$p))throw new RuntimeException('invalid_state');}finally{if(is_resource($f))fclose($f);@unlink($tmp);}
@@ -109,10 +112,10 @@ final class AsusUpdateStore
         $backup='operations/'.$id.'/backup';
         if(is_dir($this->path($backup))){$backupDir=$this->directory($backup);$temporary=$backupDir.'/.stage-staging.json';$s=@lstat($temporary);
             // No copy starts until this bounded private index is renamed.
-            if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1&&($s['mode']&0777)===0600&&$s['size']<=131072)@unlink($temporary);}
-        if($this->readFile($backup.'/staging.json')!==null)$this->pruneTree($backup,'staging.json',true,false,false,513);
-        $this->pruneTree('operations/'.$id.'/backup','snapshot.json');
-        $this->pruneTree('operations/'.$id.'/quiesced-backup','snapshot.json');
+            if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1&&($s['mode']&0777)===0600&&$s['size']<=NfqwsUpdateSnapshotLimits::JSON)@unlink($temporary);}
+        if($this->readFile($backup.'/staging.json')!==null)$this->pruneTree($backup,'staging.json',true,false,false,NfqwsUpdateSnapshotLimits::FILES+2);
+        $this->pruneTree('operations/'.$id.'/backup','snapshot.json',false,false,false,NfqwsUpdateSnapshotLimits::FILES+1);
+        $this->pruneTree('operations/'.$id.'/quiesced-backup','snapshot.json',false,false,false,NfqwsUpdateSnapshotLimits::FILES+1);
         if($this->readFile('operations/'.$id.'/service-state/staging.json')!==null)$this->pruneTree('operations/'.$id.'/service-state','staging.json',true);
         $this->pruneTree('operations/'.$id.'/service-state','cleanup-index.json');
         if($this->readFile('operations/'.$id.'/rollback/staging.json')!==null)$this->pruneTree('operations/'.$id.'/rollback','staging.json',true,false,true);

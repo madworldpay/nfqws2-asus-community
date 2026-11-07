@@ -11,3 +11,5 @@ Open **Devices · beta** in the panel. **Common** is the default: the ordinary c
 The beta supports up to128 devices,16 ordered cards,8 saved strategies and4 distinct additional strategy processes. Duplicate cards using the same saved strategy share one process. Additional engines consume RAM; importing a profile does not guarantee that every router has enough memory to run it. IPv6 capture follows the existing global IPv6 setting.
 
 To disable per-device routing, save and apply **Common**. Before updating the package while this beta is active, apply Common first. Saved library entries and drafts are kept; verify the service and chosen mode after the update.
+
+Each strategy copy is limited to 256 resource files and 2 MiB, including generated learning lists. Oversized copies are rejected before saving.

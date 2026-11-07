@@ -29,6 +29,23 @@ class PackageUpdateStoreTests(unittest.TestCase):
     def reserve(self, n=1, revision='a'*64):
         return ['reserve',[revision,f'{n:032x}',{'revision':revision,'package_version':'1.3.1-asus6+b11'}]]
 
+    def test_only_snapshot_journals_accept_the_larger_bounded_payload(self):
+        job=self.call([self.reserve()])[0]['id'];raw='x'*150000
+        name='operations/'+job+'/original-settings.json'
+        self.assertIsInstance(self.call([['writeFile',[name,raw]]]),list)
+        self.assertEqual(self.call([['readFile',[name]]]),[raw])
+        self.assertEqual(self.call([['writeFile',['unrelated.json',raw]]]),{'error':'output_limit'})
+    def test_rotation_prunes_large_profile_backup_and_preserves_unknown_files(self):
+        import hashlib
+        job=self.call([self.reserve()])[0]['id'];backup=self.root/'operations'/job/'backup';backup.mkdir(mode=0o700);files={}
+        for n in range(600):
+            name='etc/nfqws2/device-profiles/saved-0123456789abcdef/lists/'+str(n).zfill(3)+'x'*100
+            p=backup/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b'X');p.chmod(0o644);files[name]={'mode':0o644,'size':1,'sha256':hashlib.sha256(b'X').hexdigest()}
+        raw=json.dumps({'files':files,'total':600});self.assertGreater(len(raw),131072)
+        index=backup/'snapshot.json';index.write_text(raw);index.chmod(0o600);note=backup/'operator-note';note.write_text('KEEP')
+        self.call([['update',[job,{'state':'failed','code':'download_hash'}]]])
+        for n in [2,3]:self.call([self.reserve(n),['update',['LAST',{'state':'failed','code':'download_hash'}]]])
+        self.assertFalse(index.exists());self.assertEqual(note.read_text(),'KEEP');self.assertFalse(any((backup/name).exists()for name in files))
     def test_same_pair_is_idempotent_and_second_active_request_is_busy(self):
         r=self.call([self.reserve(),self.reserve()]);self.assertIsInstance(r,list)
         self.assertEqual(r[0]['id'],r[1]['id']);self.assertEqual(r[0]['state'],'preparing')

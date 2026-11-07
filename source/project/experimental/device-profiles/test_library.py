@@ -43,6 +43,12 @@ class Library(unittest.TestCase):
         self.assertTrue(p.stdout.lstrip().startswith(('{','[')),p.stdout)
         return json.loads(p.stdout)
 
+    def test_missing_learning_lists_cannot_exceed_snapshot_file_budget(self):
+        args='--filter-tcp=443 '+' '.join('--hostlist-auto=/etc/nfqws2/lists/learn'+str(i)+'.list'for i in range(257))
+        (self.root/'config/nfqws2.conf').write_text('NFQWS_ARGS="'+args+'"\n')
+        self.assertEqual(self.call(),{'error':'runtime_limit'})
+        self.assertEqual(self.call('list'),[])
+        self.assertFalse(any((self.root/'engines').iterdir()))
     def test_snapshot_isolated_resources_survive_changes_of_global_files(self):
         result=self.call();self.assertNotIn('error',result)
         ident=result['id'];self.assertRegex(ident,r'^saved-[a-f0-9]{16}$')

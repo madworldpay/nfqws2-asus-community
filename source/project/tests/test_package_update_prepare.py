@@ -100,6 +100,7 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         require $argv[1].'/update-prepare.php';$p=json_decode(stream_get_contents(STDIN),true);
         try{if($p['action']==='inspect')$v=AsusUpdatePackage::inspect($argv[2],$p['candidate'],$p['status'],$p['abi'],$p['machine'],$argv[3],(int)$argv[5]);
         elseif($p['action']==='space')$v=AsusUpdatePackage::space($p['free'],$p['ipk'],$p['snapshot'],$p['runtime']);
+        elseif($p['action']==='estimate')$v=AsusUpdateSnapshot::estimate($argv[3],(int)$argv[5]);
         elseif($p['action']==='snapshot')$v=AsusUpdateSnapshot::capture($argv[3],$argv[4],(int)$argv[5]);
         else $v=AsusUpdateSnapshot::verify($argv[3],$argv[4],(int)$argv[5],$p['allow_defaults']??false);echo json_encode(['value'=>$v]);
         }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
@@ -389,6 +390,41 @@ class PackageUpdatePrepareTests(unittest.TestCase):
 
     def test_only_engine_owned_list_files_are_accepted_as_delegated_settings(self):
         code="require $argv[1].'/update-prepare.php';if(!method_exists('AsusUpdateSnapshot','ownerAllowed')){echo 'missing';exit;} $m=new ReflectionMethod('AsusUpdateSnapshot','ownerAllowed');echo json_encode([$m->invoke(null,'etc/nfqws2/lists/auto.list',['uid'=>65534,'mode'=>0100766],0),$m->invoke(null,'etc/nfqws2/lists/auto.list-opkg.backup',['uid'=>65534,'mode'=>0100766],0),$m->invoke(null,'etc/nfqws2/nfqws2.conf',['uid'=>65534,'mode'=>0100644],0),$m->invoke(null,'etc/nfqws-asus-web/auth.json',['uid'=>65534,'mode'=>0100600],0),$m->invoke(null,'etc/nfqws2/lists',['uid'=>65534,'mode'=>0040755],0),$m->invoke(null,'etc/nfqws2/lists/user.list',['uid'=>123,'mode'=>0100644],0)]);"
+        r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],capture_output=True,text=True,timeout=5)
+        self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(r.stdout,'[true,true,false,false,false,false]')
+    def profile_library(self, per_profile, length):
+        opt,config,web=self.fixture()
+        for slot in range(4):
+            folder=config/'device-profiles'/('saved-'+format(slot,'016x'))/'lists';folder.mkdir(parents=True)
+            for i in range(per_profile):
+                name=str(i).zfill(3)+'x'*(length-3);(folder/name).write_text('example.org\n')
+        return opt
+    def test_library_snapshot_over_512_files_is_verifiable(self):
+        self.profile_library(128,32)
+        self.assertIn('value',self.call('snapshot'));self.assertEqual(self.call('verify'),{'value':True})
+    def test_large_library_manifest_is_verifiable_and_estimated_before_capture(self):
+        self.profile_library(120,128)
+        self.assertIn('value',self.call('snapshot'))
+        self.assertGreater((self.base/'backup/snapshot.json').stat().st_size,131072)
+        self.assertEqual(self.call('verify'),{'value':True})
+    def test_large_library_snapshot_is_accepted_by_rollback_settings_validator(self):
+        self.profile_library(120,128);self.assertIn('value',self.call('snapshot'))
+        code="require $argv[1].'/update-prepare.php';require $argv[1].'/update-rollback.php';$p=$argv[2].'/snapshot.json';$s=stat($p);$meta=['mode'=>$s['mode']&0777,'size'=>$s['size'],'sha256'=>hash_file('sha256',$p),'uid'=>$s['uid'],'gid'=>$s['gid']];$m=new ReflectionMethod('AsusUpdateRollback','settings');try{$v=$m->invoke(null,$argv[2],['settings'=>$meta],(int)$argv[3]);echo count($v['files']);}catch(Throwable $e){echo $e->getMessage();}"
+        r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(self.base/'backup'),str(os.getuid())],capture_output=True,text=True,timeout=10)
+        self.assertEqual(r.returncode,0,r.stderr);self.assertGreater(int(r.stdout),480)
+    def test_snapshot_file_budget_is_rejected_before_backup_creation(self):
+        opt,config,web=self.fixture();folder=config/'bounded';folder.mkdir()
+        for n in range(4097):(folder/str(n)).write_bytes(b'')
+        self.assertEqual(self.call('estimate'),{'error':'invalid_state'})
+        self.assertEqual(self.call('snapshot'),{'error':'invalid_state'});self.assertFalse((self.base/'backup').exists())
+    def test_snapshot_json_budget_is_rejected_before_backup_creation(self):
+        opt,config,web=self.fixture();folder=config
+        for n in range(12):folder=folder/('d'*120+str(n));folder.mkdir()
+        for n in range(1300):(folder/(str(n).zfill(3)+'x'*120)).write_bytes(b'')
+        self.assertEqual(self.call('estimate'),{'error':'output_limit'})
+        self.assertEqual(self.call('snapshot'),{'error':'output_limit'});self.assertFalse((self.base/'backup').exists())
+    def test_profile_learning_lists_are_preserved_without_accepting_other_delegated_files(self):
+        code="require $argv[1].'/update-prepare.php';$m=new ReflectionMethod('AsusUpdateSnapshot','ownerAllowed');$base='etc/nfqws2/device-profiles/';$out=[];foreach([['saved-0123456789abcdef/lists/auto.list',0100644],['stock/lists/custom-auto.list',0100644],['saved-0123456789abcdef/lua/injected.lua',0100644],['bad-id/lists/auto.list',0100644],['saved-0123456789abcdef/lists/auto.list',0100666],['saved-0123456789abcdef/lists',0040755]]as [$p,$mode])$out[]=$m->invoke(null,$base.$p,['uid'=>65534,'mode'=>$mode],0);echo json_encode($out);"
         r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],capture_output=True,text=True,timeout=5)
         self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(r.stdout,'[true,true,false,false,false,false]')
     def test_snapshot_tracks_original_owner_and_group_but_keeps_backup_private(self):

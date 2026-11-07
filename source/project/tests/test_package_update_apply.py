@@ -103,7 +103,7 @@ class PackageUpdateApplyTests(unittest.TestCase):
         $health=isset($c['health_run'])?['web_run'=>$c['health_run'],'health_port'=>$c['health_port']]:['web_health'=>fn()=>true];
         $worker=new AsusUpdateWorker($s,$prepare,new AsusUpdateLifecycle($c['service']),array_merge(['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'dns_resume_options'=>['php'=>PHP_BINARY,'script'=>$c['env']['opt'].'/lib/nfqws2-asus/smartdns/control.php','owner'=>$c['env']['owner']]],$health));
         if($argv[1]==='authorize'){exit((new AsusUpdateGuard($s,$c['env']['owner'],$c['opkg']))->authorize($argv[2])?0:1);}
-        if($argv[1]==='client-apply'){require __DIR__.'/app/update-dispatch.php';$j=$s->readOperation($argv[2]);echo json_encode((new AsusUpdateDispatch($s,$prepare,['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'busybox'=>'/usr/bin/busybox']))->apply($j['id'],$j['revision'],str_repeat('e',32)));exit;}
+        if($argv[1]==='client-apply'){require __DIR__.'/app/update-dispatch.php';try{$j=$s->readOperation($argv[2]);echo json_encode((new AsusUpdateDispatch($s,$prepare,['owner'=>$c['env']['owner'],'opkg'=>$c['opkg'],'busybox'=>'/usr/bin/busybox']))->apply($j['id'],$j['revision'],str_repeat('e',32)));}catch(RuntimeException $e){if($e->getMessage()!=='busy')throw $e;echo json_encode(['error'=>'busy']);}exit;}
         if($argv[1]==='guard-apply'){require __DIR__.'/app/update-watchdog.php';(new AsusUpdateWatchdog($s,$c['env']['owner']))->run($argv[2],[PHP_BINARY,'-n',__FILE__,'apply',$argv[2]],AsusUpdateStore::uptime()+(float)($c['deadline']??10),[PHP_BINARY,'-n',__FILE__,'restore-before-install',$argv[2]]);exit;}
         if($argv[1]==='setup'){$j=$s->reserve('''+json.dumps(revision)+''',str_repeat('b',32),json_decode(file_get_contents($base.'/state/operations/'''+self.id+'''/candidate.json'),true));
             // reserve generated an id; replace it with this protected native fixture id.
@@ -315,8 +315,25 @@ class PackageUpdateApplyTests(unittest.TestCase):
         self.make_ready();self.service.running();self.execute('client-apply')
         job=self.await_finished();self.assertEqual(job['state'],'succeeded',job);self.assertEqual(self.commands(),['stop','start'])
     def test_duplicate_apply_does_not_launch_another_installer(self):
-        self.make_ready();(self.base/'pending-check').touch();first=self.execute('client-apply');second=self.execute('client-apply')
+        self.make_ready();(self.base/'pending-check').touch();first=self.client_apply();second=self.client_apply()
         self.assertEqual(first['id'],second['id']);self.assertEqual(self.await_finished()['state'],'succeeded');self.assertEqual((self.base/'installs').read_text(),'opkg')
+    def test_apply_client_reports_busy_without_launching_and_can_retry_same_request(self):
+        self.make_ready()
+        with (self.state/'control.lock').open('a+')as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX)
+            self.assertEqual(self.execute('client-apply'),{'error':'busy'})
+            self.assertFalse((self.base/'installs').exists())
+        first=self.client_apply();second=self.client_apply()
+        self.assertEqual(first['id'],second['id']);self.assertEqual(self.await_finished()['state'],'succeeded');self.assertEqual((self.base/'installs').read_text(),'opkg')
+    def client_apply(self):
+        # The HTTP API maps a short nonblocking journal lock to 409 busy.
+        # Reuse the same request ID just as a client retry does.
+        end=time.monotonic()+3
+        while time.monotonic()<end:
+            result=self.execute('client-apply')
+            if result.get('error')!='busy':return result
+            time.sleep(.01)
+        self.fail('apply journal remained busy')
     def await_check(self):
         end=time.monotonic()+5
         while time.monotonic()<end:

@@ -52,7 +52,7 @@ fails(fn()=>NfqwsOpenWrtUpdateSnapshot::state($system,$owner),'invalid_state');p
 $linkedRoot=$root.'/linked-parent';mkdir($linkedRoot,0700);mkdir($linkedRoot.'/etc',0700);put($root.'/external/auth.json','must not follow a linked parent');symlink($root.'/external',$linkedRoot.'/etc/nfqws2-web');
 fails(fn()=>NfqwsOpenWrtUpdateSnapshot::state($linkedRoot,$owner),'invalid_state');
 $largeRoot=$root.'/large-identity';mkdir($largeRoot,0700);mkdir($largeRoot.'/etc/nfqws2',0700,true);
-for($i=0;$i<64;$i++)symlink(str_repeat('x',2048),$largeRoot.'/etc/nfqws2/link-'.$i);
+for($i=0;$i<1024;$i++)symlink(str_repeat('x',2048),$largeRoot.'/etc/nfqws2/link-'.$i);
 fails(fn()=>NfqwsOpenWrtUpdateSnapshot::state($largeRoot,$owner),'output_limit');
 chmod($system.'/etc/nfqws2/nfqws2.conf',0400);fails(fn()=>NfqwsOpenWrtUpdateSnapshot::verifyState($state,$system,$owner),'settings_changed');chmod($system.'/etc/nfqws2/nfqws2.conf',0600);
 $snapshot=$root.'/backup';$v=NfqwsOpenWrtUpdateSnapshot::capture($snapshot,$system,$owner);

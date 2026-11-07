@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PUBLIC=ROOT/'webui/web/public'
 MODULES=[PUBLIC/name for name in [
     'platform.php','support-json-schema.php','update-manifest.php',
-    'openwrt-update-manifest.php','update-store.php','update-lifecycle.php','update-package.php','openwrt-manual-context.php',
+    'openwrt-update-manifest.php','update-snapshot-limits.php','update-store.php','update-lifecycle.php','update-package.php','openwrt-manual-context.php',
     'openwrt-update-environment.php','openwrt-update-package.php',
     'openwrt-update-manager.php','openwrt-apk-trust.php','update-github.php',
 ]]+[ROOT/'openwrt/install-plan.php',ROOT/'openwrt/install-state.php',ROOT/'openwrt/install-prepare.php',ROOT/'openwrt/install-execute.php']
