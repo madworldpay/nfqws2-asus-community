@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Профили устройств · Пробная панель</title>
+  <link rel="stylesheet" href="device-profiles-lab.css">
+  <script src="device-profiles-lab.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="page-header">
+      <a class="back-link" href="/">← В панель</a>
+      <div class="title-row"><h1>Профили устройств</h1><span class="badge">Эксперимент</span></div>
+      <p class="intro">Общая стратегия для всех или отдельные профили для выбранных устройств.</p>
+    </header>
+
+    <aside class="draft-banner"><strong>Пробная панель.</strong> Сохраняется черновик; рабочая стратегия пока не изменяется.</aside>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="stale-notice" class="notice warning" role="alert" hidden>Сохранённый черновик изменился в другой вкладке. Ваши правки сохранены на странице. Загрузите сохранённый вариант, чтобы продолжить; перед заменой появится подтверждение.</div>
+
+    <section class="toolbar" aria-label="Действия с черновиком">
+      <div><strong id="save-state" aria-live="polite">Загрузка черновика…</strong><p id="save-hint">Подключаемся к панели.</p></div>
+      <div class="actions">
+        <button id="reload" type="button">Загрузить сохранённый</button>
+        <button id="preview" type="button">Предпросмотр</button>
+        <button id="save" class="primary" type="button">Сохранить черновик</button>
+      </div>
+    </section>
+
+    <fieldset id="editor" disabled>
+      <legend class="sr-only">Настройки черновика</legend>
+      <section class="panel mode-panel" aria-labelledby="mode-title">
+        <h2 id="mode-title">Режим</h2>
+        <div class="mode-options">
+          <label class="mode-option"><input type="radio" name="mode" value="common" checked><span><strong>Общий</strong><small>Одна стратегия для выбранных устройств.</small></span></label>
+          <label class="mode-option"><input type="radio" name="mode" value="split"><span><strong>По устройствам</strong><small>Профили с собственным порядком приоритетов.</small></span></label>
+        </div>
+        <p id="common-note" class="muted">Для общего режима профили не нужны. Список устройств можно подготовить заранее.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="devices-title">
+        <div class="section-heading"><div><h2 id="devices-title">Устройства</h2><p class="muted">Добавьте нужные устройства в черновик, затем отметьте их в профилях.</p></div><span id="device-count" class="count">0 / 128</span></div>
+        <div id="draft-devices" class="draft-devices"></div>
+        <details id="discovery-section" open>
+          <summary>Известные роутеру устройства</summary>
+          <div class="discovery-heading"><p id="discovery-status" class="muted">Получаем список…</p><button id="refresh" type="button">Обновить список</button></div>
+          <p class="subtle">DHCP и таблица соседей могут хранить ранее замеченные устройства. Наличие в списке не означает, что устройство сейчас в сети.</p>
+          <div id="discovery-devices" class="discovery-devices"></div>
+        </details>
+        <details id="manual-section">
+          <summary>Добавить вручную по IP или MAC</summary>
+          <form id="manual-form" class="manual-form">
+            <label>Название<input id="manual-name" name="name" maxlength="64" required placeholder="Например, телевизор"></label>
+            <label>IP-адрес<input id="manual-ip" name="ip" autocomplete="off" spellcheck="false" placeholder="IPv4 или IPv6"></label>
+            <label>MAC-адрес<input id="manual-mac" name="mac" autocomplete="off" spellcheck="false" placeholder="aa:bb:cc:dd:ee:ff"></label>
+            <button type="submit">Добавить устройство</button>
+            <p class="subtle form-note">Укажите IP, MAC или оба значения. Адреса подсетей не поддерживаются.</p>
+            <p id="manual-error" class="inline-error" role="alert" hidden></p>
+          </form>
+        </details>
+      </section>
+
+      <section id="profiles-section" class="panel" aria-labelledby="profiles-title" hidden>
+        <div class="section-heading"><div><h2 id="profiles-title">Приоритеты профилей</h2><p class="muted">Выше — раньше при проверке. Перетаскивайте за ручку или используйте кнопки ↑ и ↓.</p></div><button id="add-profile" type="button">+ Профиль</button></div>
+        <div id="profiles" class="profiles"></div>
+        <div class="fallback"><span class="order-number">↳</span><div><strong>Для остальных — текущая стратегия</strong><p>Последний вариант после всех включённых профилей. Этот порядок виден только в черновике.</p></div></div>
+      </section>
+    </fieldset>
+
+    <section id="preview-section" class="panel preview-panel" aria-labelledby="preview-title" hidden>
+      <div class="section-heading"><div><h2 id="preview-title">Предпросмотр черновика</h2><p id="preview-caption" class="muted">Правила не применены.</p></div><button id="close-preview" type="button" aria-label="Закрыть предпросмотр">Закрыть</button></div>
+      <div id="preview-content"></div>
+    </section>
+    <footer>Экспериментальная страница. Сохранение черновика не запускает и не перезапускает службу.</footer>
+  </main>
+</body>
+</html>
