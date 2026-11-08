@@ -1,6 +1,6 @@
 # NFQWS2 ASUS Community
 
-**[Quick start](#quick-start)**
+**[Quick start without the preamble](#quick-start)**
 
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
