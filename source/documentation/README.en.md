@@ -1,5 +1,7 @@
 # NFQWS2 ASUS Community
 
+**[Quick start](#quick-start)**
+
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
 Start with **Import profile**: choose a ready-made cloud strategy, your own JSON
