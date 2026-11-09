@@ -1,5 +1,7 @@
 # NFQWS2 ASUS Community
 
+![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
+
 **[Quick start without the preamble](#quick-start)**
 
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
@@ -122,7 +124,7 @@ Updates preserve settings and the previous service state.
 
 **Import profile → From cloud** loads the selected entry from the signed catalog. Review the strategy blocks, lists, blobs and before/after preview. Unneeded parts can be deselected; resolve missing dependencies before applying. Your own JSON uses the same preview, while **Paste Keenetic strategy** converts NFQWS2 text and checks file references. DNS is selected separately and is not enabled automatically.
 
-The catalog updates **DOM.RU · Тульская область** and adds **Билайн · Москва**. Descriptions include short Detector results and their measurement conditions; [how to choose these profiles](PRESETS.en.md#profiles-with-detector-results).
+The catalog includes custom profiles **DOM.RU · Тульская область**, **Билайн · Москва**, **Ростелеком · Дальний Восток**, and general strategies. Descriptions include short Detector results and measurement conditions; [how to choose profiles and compare before/after results](PRESETS.en.md#profiles-with-detector-results).
 
 Since Build 92, the **Add-ons · Beta** section below the base strategy offers optional domain collections from a separate signed catalog with a fixed GitHub fallback. Checkboxes start off. **Riot** adds web domains to the selected base strategy; game UDP and voice functionality are not asserted. The combined preview shows added domains, rules and affected blocks; incompatible combinations receive an explanation. Changing the base strategy clears the add-on selection. [Using add-ons](IMPORT.en.md#add-ons--beta).
 
