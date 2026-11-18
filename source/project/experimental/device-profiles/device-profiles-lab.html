@@ -45,7 +45,7 @@
     <details id="library-section" class="panel library-panel">
       <summary>Библиотека стратегий</summary>
       <p class="muted">Сохраните текущую стратегию, загрузите единый JSON-экспорт или выберите профиль из нашего каталога. У каждого сохранённого варианта свои ресурсы и auto.list. DNS остаётся общим для всех устройств.</p>
-      <label class="field-label">Название стратегии<input id="strategy-name" maxlength="64" placeholder="Например, для телевизора"></label>
+      <label class="field-label">Название стратегии<input id="strategy-name" maxlength="64" placeholder="Например, для Android-приставки"></label>
       <div class="runtime-actions"><button id="capture-current" type="button">Сохранить текущую стратегию</button></div>
       <label class="field-label">JSON-экспорт<input id="strategy-file" type="file" accept=".json,application/json"></label>
       <label class="checkbox-label"><input id="trust-lua" type="checkbox">Доверять Lua из выбранного файла или каталога</label>
@@ -81,7 +81,7 @@
         <details id="manual-section">
           <summary>Добавить вручную по IP или MAC</summary>
           <form id="manual-form" class="manual-form">
-            <label>Название<input id="manual-name" name="name" maxlength="64" required placeholder="Например, телевизор"></label>
+            <label>Название<input id="manual-name" name="name" maxlength="64" required placeholder="Например, Android-приставка"></label>
             <label>IP-адрес<input id="manual-ip" name="ip" autocomplete="off" spellcheck="false" placeholder="IPv4 или IPv6"></label>
             <label>MAC-адрес<input id="manual-mac" name="mac" autocomplete="off" spellcheck="false" placeholder="aa:bb:cc:dd:ee:ff"></label>
             <button type="submit">Добавить устройство</button>

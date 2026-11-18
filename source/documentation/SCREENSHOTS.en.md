@@ -10,7 +10,7 @@ Expand a screenshot and click it for full size. Static images have no animation;
 
 ## Build 100
 
-Searching for “TV” finds two strategies with matching personal notes in the library.
+Searching for “ATV” finds two strategies with personal notes for an Android TV box.
 
 ![Searching personal notes in the import library](images/screenshots/build100-import-notes-en.png)
 
@@ -58,7 +58,7 @@ Devices appears in the main tab row. Swipe that row horizontally on narrow scree
 
 **Common** remains the default. **Per device** assigns strategies to selected clients with ordered priorities; current and stock strategies are available. The library adds separate copies, JSON with resources and signed catalog profiles. DNS remains shared. [Steps and limits](docs/DEVICE-PROFILES.en.md). The device profiles page currently uses Russian labels.
 
-The first capture shows the actual common mode. TV and phone cards are an **unsaved example** with demonstration names and addresses. Preview was checked, but the example was neither saved nor applied: the active mode remained Common and the service remained stopped. It illustrates controls, not measured traffic from these example devices.
+The first capture shows the actual common mode. The two device cards are an **unsaved example** with demonstration names and addresses. Preview was checked, but the example was neither saved nor applied: the active mode remained Common and the service remained stopped. It illustrates controls, not measured traffic from these example devices.
 
 <details>
 <summary>Show common mode and strategy library — Russian UI</summary>
@@ -72,7 +72,7 @@ The first capture shows the actual common mode. TV and phone cards are an **unsa
 <details>
 <summary>Show per-device strategy cards and preview — Russian UI</summary>
 
-[![Build 99 unsaved TV and phone example — Russian UI](images/screenshots/build99-device-profiles-draft-ru.jpg)](images/screenshots/build99-device-profiles-draft-ru.jpg)
+[![Build 99 unsaved two-device example — Russian UI](images/screenshots/build99-device-profiles-draft-ru.jpg)](images/screenshots/build99-device-profiles-draft-ru.jpg)
 
 [![Build 99 assignment preview without applying — Russian UI](images/screenshots/build99-device-profiles-preview-ru.jpg)](images/screenshots/build99-device-profiles-preview-ru.jpg)
 

@@ -153,7 +153,7 @@ try {
       for(const lang of ['ru','en']){
         await open(page,'library',lang);
         const list=page.getByRole('list',{name:lang==='ru'?'Библиотека Zapret2':'Zapret2 library'});
-        const word=lang==='ru'?'Телевизор':'TV';
+        const word='ATV';
         await note(page,'ALL TCP & UDP YTDisBystro_3_4_v1',lang).fill(word+' · '+(lang==='ru'?'проверить вечером':'try this evening'));
         await note(page,'ALL TCP & UDP multisplit_sni',lang).fill(word+' · '+(lang==='ru'?'запасной вариант':'second choice'));
         await search.fill(word);assert.equal(await list.getByRole('textbox').count(),2);

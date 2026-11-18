@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 30228,
-      "sha256": "c0a27a79bee48b02b6bb0cf7762208e173633da61afc37908e26a79ec4ee82f8"
+      "bytes": 30811,
+      "sha256": "1b294e0b0388c91038bdc8bd041dae8e4c8437bd5d7bd8abc5bbf591b2846f27"
     },
     {
       "file": "README.md",
-      "bytes": 49451,
-      "sha256": "639534d695fa5afc795d9a459d0b9126de3dd511272b5f7b83082c4d1ea040ea"
+      "bytes": 49943,
+      "sha256": "c058e7846e4ef67e857df5a38eea8bdc36f539cabb7ece42c80649e6466dfa44"
     },
     {
       "file": "ROADMAP.en.md",
@@ -172,13 +172,13 @@
     },
     {
       "file": "SCREENSHOTS.en.md",
-      "bytes": 23888,
-      "sha256": "ea3b350e8362b4abeabd779eab6832c873830c2c113912acab946fe909aeb4d8"
+      "bytes": 23887,
+      "sha256": "132d52d3a72b0f645285bb8afcab7f33835828f3cbde0880fc96ab0c613752ab"
     },
     {
       "file": "SCREENSHOTS.md",
-      "bytes": 36699,
-      "sha256": "a76c3947cc1d97360585c90e351c136c53d388f4328894a8a078f80c29b7f4f6"
+      "bytes": 36630,
+      "sha256": "e501628d53c55673c53ebf905fc04cfe693b5b5faf8d2a9f7a4fd4e14ed5b14d"
     },
     {
       "file": "SMARTDNS.en.md",
@@ -207,13 +207,13 @@
     },
     {
       "file": "USAGE.en.md",
-      "bytes": 10553,
-      "sha256": "4c90ed0c75d059fb3a4e3fe35fc0dc874df4c449b489839cfe39febbf7ddeb5f"
+      "bytes": 10568,
+      "sha256": "2853965f5ff45f74606404a230c87720bed3a927bc3b7bd7e9378aec25081024"
     },
     {
       "file": "USAGE.md",
-      "bytes": 18648,
-      "sha256": "f451409f5166f3706d7fd345813e0a4fc9b755b4d4e15ed2dc76d018ae16bdff"
+      "bytes": 18640,
+      "sha256": "5a6a07c86b70e3e7adc500b1aac6c0e707e80f05b2484e2d4bc1c8af058a10b1"
     },
     {
       "file": "build.svg",
@@ -287,13 +287,13 @@
     },
     {
       "file": "images/screenshots/build100-import-notes-en.png",
-      "bytes": 41894,
-      "sha256": "f3b88f686e6f3b7357603baaf7a64c8fa5df6fcf40b27e80997cfb33328906d9"
+      "bytes": 42560,
+      "sha256": "dff63cb71ad001bb2a46eff3ab0ec436ede1bf2cefde3b2dd3369fbbf89a1cca"
     },
     {
       "file": "images/screenshots/build100-import-notes-ru.png",
-      "bytes": 45392,
-      "sha256": "fb4c4770c659b59ba3cea04b2fa35dbaec57b77fad38120f7600e1c8396c454d"
+      "bytes": 43886,
+      "sha256": "36d1ff365f15f26fdbb7bee17798d1e3362252d92ca4aa05f513ca479940ab5a"
     },
     {
       "file": "images/screenshots/build100-mtproto-en.png",

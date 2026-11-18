@@ -73,8 +73,8 @@ does not guarantee that every block will be recognized.
 
 The selected mode does not override TCP/UDP port settings, protocols, or strategy filters.
 Mode supplies domain lists to the main TCP and QUIC blocks. Separate UDP blocks, the custom strategy and IP-list processing use their own filters and are not automatically restricted by this choice.
-**All does not mean all devices:** if only a TV is selected, this mode
-applies to the TV's matching traffic.
+**All does not mean all devices:** if only an Android TV box is selected, this mode
+applies to the box’s matching traffic.
 
 ## Devices and the router's own traffic
 
@@ -86,7 +86,7 @@ In **Process traffic**, choose which devices NFQWS2 works for:
 | **Only listed devices** | Processes only the added IP addresses or subnets; other devices pass through without NFQWS2 processing |
 | **All except listed devices** | Excludes the added IP addresses or subnets; other devices are processed |
 
-You can add a phone, TV, PC, set-top box, or another device by its
+You can add a phone, Android TV box, PC, or another device by its
 local IP address. For example, **Only listed devices** with two addresses
 enables processing only for those two devices. In exclusion mode, the same
 addresses instead remain without NFQWS2 processing. This does not disable their internet access.

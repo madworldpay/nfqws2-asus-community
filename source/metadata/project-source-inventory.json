@@ -986,8 +986,8 @@
   },
   {
     "path": "experimental/device-profiles/device-profiles-lab.html",
-    "bytes": 10219,
-    "sha256": "22bdd8ebecb7b4972974c02c6f4202b972e57f4247570168dbb97412cb27287f"
+    "bytes": 10233,
+    "sha256": "e00eaae4348c9e555c35df53b52402a75ea204366b72aa556350e3f3f8950d14"
   },
   {
     "path": "experimental/device-profiles/device-profiles-lab.js",
@@ -2331,8 +2331,8 @@
   },
   {
     "path": "tests/test_import_catalog_ui.mjs",
-    "bytes": 18046,
-    "sha256": "3c04ba308ddbf413d6723697a4213332fd35966ff9cbb1b8208ec7f4c38131b6"
+    "bytes": 18014,
+    "sha256": "b260491ec17411bc4e0b51d6d89d8b4d6d1c7d3625b907bc824f90f708b6c809"
   },
   {
     "path": "tests/test_import_client.mjs",

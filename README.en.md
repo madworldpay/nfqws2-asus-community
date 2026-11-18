@@ -2,15 +2,22 @@
 
 [Русский](README.md)
 
-**Install** · [Download Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [Choose a package](DOWNLOADS.en.md) · [Quick start](QUICKSTART.en.md) · [ASUS / Entware](INSTALL.en.md) · [OpenWrt](OPENWRT.en.md) · [Changelog](CHANGELOG.md)
+[Download Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
+
+<details>
+<summary>All project links</summary>
+
+**Install** · [Choose a package](DOWNLOADS.en.md) · [Quick start](QUICKSTART.en.md) · [ASUS / Entware](INSTALL.en.md) · [OpenWrt](OPENWRT.en.md) · [Changelog](CHANGELOG.md)
 
 **Panel** · [Import](IMPORT.en.md) · [Strategies](PRESETS.en.md) · [Device profiles](docs/DEVICE-PROFILES.en.md) · [Generator (beta)](docs/LOCAL-STRATEGY-PICKER.en.md) · [SmartDNS](SMARTDNS.en.md) · [MTProto](#telegram-proxy-guide) · [DPI Detector](DPI-DETECTOR.en.md)
 
-**Guides** · [Compatibility](COMPATIBILITY.en.md) · [Updates](PACKAGE-UPDATES.en.md) · [Troubleshooting](DIAGNOSTICS.en.md) · [Screenshots](SCREENSHOTS.en.md#build100) · [All guides](#project-guides)
+**Guides** · [Compatibility](COMPATIBILITY.en.md) · [Updates](PACKAGE-UPDATES.en.md) · [Troubleshooting](DIAGNOSTICS.en.md) · [Screenshots](SCREENSHOTS.en.md#build100)
 
-**Contact** · [Telegram community chat](https://t.me/nfqws2AsusCommunityChat) · [Message Frank](https://t.me/Profy13) · [Report an issue](https://github.com/madworldpay/nfqws2-asus-community/issues)
+**Contact** · [Message Frank](https://t.me/Profy13) · [Report an issue](https://github.com/madworldpay/nfqws2-asus-community/issues)
 
 **Donate** · [YooMoney](https://yoomoney.ru/to/4100119670967911) · [Boosty](https://boosty.to/madworldpay/donate) · [TRON (USDT)](#wallet-tron) · [Ethereum](#wallet-ethereum) · [Solana](#wallet-solana) · [Bitcoin](#wallet-bitcoin)
+
+</details>
 
 ![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
 
@@ -23,7 +30,7 @@
 Start with **Import profile**: choose a ready-made cloud strategy, your own JSON
 or NFQWS2 text from Keenetic. Review its blocks, lists and blobs in the preview,
 save the changes and select home-network devices. NFQWS2 processes traffic on
-the router; your TV, phone or PC does not need a separate client.
+the router; your Android TV box, phone or PC does not need a separate client.
 
 Test video playback, seeking and voice calls separately.
 
@@ -36,7 +43,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 **Strategy generator (beta).** Choose 2–10 runs and compare results in 1–6 columns or let them fit the window. The panel restores the original settings afterwards. Applying and exporting are separate actions. [Panel workflow](docs/LOCAL-STRATEGY-PICKER.en.md).
 
-**Different strategies for different devices.** Common remains the default. Devices lets you select a separate strategy for a TV, phone or PC, order priorities and review assignments before applying. [Setup guide](docs/DEVICE-PROFILES.en.md) · [real screenshots](SCREENSHOTS.en.md#build99-device-profiles). The device profiles page currently uses Russian labels.
+**Different strategies for different devices.** Common remains the default. Devices lets you select a separate strategy for an Android TV box, phone or PC, order priorities and review assignments before applying. [Setup guide](docs/DEVICE-PROFILES.en.md) · [real screenshots](SCREENSHOTS.en.md#build99-device-profiles). The device profiles page currently uses Russian labels.
 
 **The built-in DPI Detector helps check the result.** Repeat the same tests before and after changing a strategy, save TXT to your PC or phone and check the actual services. [How to use it](DPI-DETECTOR.en.md) · [large real comparison screenshots](docs/DETECTOR-COMPARISON.en.md).
 
@@ -168,11 +175,11 @@ Mode supplies domain lists to the main TCP and QUIC blocks. Separate UDP blocks,
 | “Process traffic” | Devices covered |
 | --- | --- |
 | **All devices** | All clients whose traffic passes through the configured router |
-| **Only listed devices** | For example, only the TV and phone whose local IP addresses you added |
+| **Only listed devices** | For example, only the Android TV box and phone whose local IP addresses you added |
 | **All except listed devices** | All other clients; added IP addresses are excluded from processing |
 
-**Example:** `List` + **Only listed devices** + the TV's IP address —
-the TV gets DPI processing for listed domains; other devices use the network without NFQWS2 processing.
+**Example:** `List` + **Only listed devices** + the Android TV box’s IP address —
+the Android TV box gets DPI processing for listed domains; other devices use the network without NFQWS2 processing.
 
 You can enter individual IP addresses or a subnet. Separate addresses with spaces;
 reserve IP addresses in DHCP for selected devices. IPv6 is enabled and selected separately.
@@ -298,6 +305,8 @@ for a reproducible bug report. You can send settings and diagnostics to the deve
 after reviewing them in the panel preview.
 
 An independent community port. Packages are free, and participation is voluntary.
+
+<a id="project-support"></a>
 
 ## Support the project
 
