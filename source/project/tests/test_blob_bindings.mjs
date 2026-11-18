@@ -29,5 +29,7 @@ try {
   assert.throws(() => replace(source + ' --debug=1', parsed.bindings[0], '/opt/etc/nfqws2/blobs/new.bin'), /stale_binding/);
   assert.throws(() => replace(source, parsed.bindings[0], '/tmp/evil.bin'), /invalid_path/);
   assert.throws(() => replace(source, parsed.bindings[0], '/opt/etc/nfqws2/blobs/../evil.bin'), /invalid_path/);
+  assert.match(replace(source,parsed.bindings[0],'/opt/etc/nfqws2/blobs/imported/'+'a'.repeat(64)+'.bin'),/blobs\/imported\/a{64}\.bin/);
+  assert.throws(()=>replace(source,parsed.bindings[0],'/opt/etc/nfqws2/blobs/imported/not-a-hash.bin'),/invalid_path/);
   console.log('PASS named blob bindings: quoted/split/escaped operands, exact surrounding layout, duplicates, unsupported syntax and stale edits');
 } finally { await rm(dir, { recursive: true, force: true }); }

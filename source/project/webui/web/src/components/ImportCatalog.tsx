@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import en from '@/translations/en.json';
 import {
   Alert,
@@ -8,6 +8,7 @@ import {
   ListItemButton,
   ListItemText,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 
@@ -18,8 +19,18 @@ import {
 } from '@/api/profileCatalogClient';
 import { ShareError } from '@/api/shareClient';
 
+import {
+  catalogDescription,
+  CatalogEntryDetails,
+} from '@/components/CatalogEntryDetails';
 import { InlineHelp } from '@/components/InlineHelp';
+import { StrategyNoteRow } from '@/components/StrategyNoteRow';
 
+import {
+  matchesStrategy,
+  strategyNumber,
+  useStrategyNotes,
+} from '@/hooks/useStrategyNotes';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const catalogErrorCodes = Object.keys(
@@ -35,10 +46,34 @@ export const ImportCatalog = ({
   disabled: boolean;
   onSelect: (profile: CatalogProfile) => void;
 }) => {
-  const { t, langcode } = useTranslation();
+  const { t } = useTranslation();
   const [catalog, setCatalog] = useState<ProfileCatalog>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [query, setQuery] = useState('');
+  const [editing, setEditing] = useState<string | null>(null);
+  const { notes, write, failed: notesFailed } = useStrategyNotes();
+  const numbered = useMemo(
+    () =>
+      catalog?.profiles.map((profile) => ({
+        profile,
+        number: strategyNumber('cloud', profile.id),
+      })) ?? [],
+    [catalog],
+  );
+  const words = query.trim().toLocaleLowerCase().split(/\s+/);
+  const visible = numbered.filter(
+    ({ profile, number }) =>
+      number === editing ||
+      matchesStrategy(words, [
+        profile.title,
+        profile.provider,
+        profile.region,
+        profile.attribution,
+        catalogDescription(profile.description),
+        notes[number],
+      ]),
+  );
   const generation = useRef(0);
   const pending = useRef(false);
   const refresh = useCallback(async () => {
@@ -101,9 +136,31 @@ export const ImportCatalog = ({
       {catalog?.profiles.length === 0 && (
         <Typography variant="body2">{t('import.catalog.empty')}</Typography>
       )}
+      {numbered.length > 0 && (
+        <>
+          <TextField
+            size="small"
+            type="search"
+            fullWidth
+            label={t('import.catalog.search')}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <Typography variant="caption">{t('import.notes.local')}</Typography>
+          {notesFailed && (
+            <Alert severity="warning">{t('import.notes.unavailable')}</Alert>
+          )}
+          {!visible.length && (
+            <Typography variant="body2" role="status">
+              {t('import.notes.no_matches')}
+            </Typography>
+          )}
+        </>
+      )}
       {(['provider', 'global'] as const).map((category) => {
-        const profiles =
-          catalog?.profiles.filter((p) => p.category === category) ?? [];
+        const profiles = visible.filter(
+          ({ profile }) => profile.category === category,
+        );
         return (
           profiles.length > 0 && (
             <Stack key={category} spacing={0.5}>
@@ -111,69 +168,45 @@ export const ImportCatalog = ({
                 {t(`import.catalog.${category}`)}
               </Typography>
               <List disablePadding>
-                {profiles.map((profile) => {
+                {profiles.map(({ profile, number }) => {
                   const needsUpdate = profile.min_build > (catalog?.build ?? 0);
                   return (
-                    <ListItemButton
+                    <StrategyNoteRow
                       key={profile.id}
-                      component="button"
-                      disabled={disabled || busy || needsUpdate}
-                      onClick={() => onSelect(profile)}
-                      sx={{ width: '100%', textAlign: 'left' }}
+                      number={number}
+                      title={profile.title}
+                      value={notes[number] ?? ''}
+                      onChange={write}
+                      onEdit={setEditing}
                     >
-                      <ListItemText
-                        primary={profile.title}
-                        secondary={
-                          <>
-                            {[profile.provider, profile.region]
-                              .filter(Boolean)
-                              .join(' · ')}
-                            <Typography
-                              component="span"
-                              display="block"
-                              variant="body2"
-                            >
-                              {profile.description}
-                            </Typography>
-                            <Typography
-                              component="time"
-                              dateTime={profile.updated_at}
-                              display="block"
-                              variant="caption"
-                            >
-                              {t('import.catalog.updated')}:{' '}
-                              {new Date(profile.updated_at).toLocaleDateString(
-                                langcode === 'en' ? 'en-GB' : 'ru-RU',
-                                {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  timeZone: 'UTC',
-                                },
-                              )}
-                            </Typography>
-                            {needsUpdate && (
-                              <Typography
-                                component="span"
-                                display="block"
-                                variant="caption"
-                              >
-                                {t('import.catalog.update')}
-                              </Typography>
-                            )}
-                            {profile.attribution && (
-                              <Typography
-                                component="span"
-                                display="block"
-                                variant="caption"
-                              >
-                                {profile.attribution}
-                              </Typography>
-                            )}
-                          </>
-                        }
-                      />
-                    </ListItemButton>
+                      <ListItemButton
+                        component="button"
+                        disabled={disabled || busy || needsUpdate}
+                        onClick={() => onSelect(profile)}
+                        sx={{ width: '100%', textAlign: 'left' }}
+                      >
+                        <ListItemText
+                          primary={profile.title}
+                          secondary={
+                            <>
+                              {[profile.provider, profile.region]
+                                .filter(Boolean)
+                                .join(' · ')}
+                              <CatalogEntryDetails
+                                description={profile.description}
+                                date={profile.updated_at}
+                                attribution={profile.attribution}
+                                note={
+                                  needsUpdate
+                                    ? t('import.catalog.update')
+                                    : undefined
+                                }
+                              />
+                            </>
+                          }
+                        />
+                      </ListItemButton>
+                    </StrategyNoteRow>
                   );
                 })}
               </List>

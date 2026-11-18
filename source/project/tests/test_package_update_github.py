@@ -75,7 +75,7 @@ class GithubUpdateTransportTests(unittest.TestCase):
                                  self.asset: (200, self.body, {})}
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True);self.thread.start();self.addCleanup(self.stop)
         self.app = self.base/'app';self.app.mkdir()
-        for name in ['update-transport.php', 'update-github.php', 'update-manifest.php', 'dpi-store.php', 'dpi-options.php', 'support-json-schema.php', 'platform.php']:
+        for name in ['update-transport.php', 'update-github.php', 'update-manifest.php', 'dpi-store.php', 'dpi-options.php','dpi-load-policy.php', 'support-json-schema.php', 'platform.php']:
             source = ROOT/'webui/web/public'/name
             if source.exists():shutil.copy2(source, self.app/name)
         (self.base/'resources').mkdir()

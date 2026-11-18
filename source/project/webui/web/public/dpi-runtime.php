@@ -29,6 +29,8 @@ final class AsusDpiRuntime
         if(!preg_match('/^[0-9a-f]{32}$/D',$jobId)||!in_array($kind,['run','install'],true))throw new RuntimeException('invalid_request');
         $store=new AsusDpiStore();$job=$store->status()['active'];
         if(($job['id']??null)!==$jobId||$job['kind']!==$kind)throw new RuntimeException('missing_job');
+        $load=$kind==='run'?AsusDpiLoadPolicy::runtime($store->readOptions($jobId)):AsusDpiLoadPolicy::plan(50,0,0);
+        if(!$load['available'])throw new RuntimeException($load['code']);
         $root=self::root().'/runs';if(is_link($root))throw new RuntimeException('invalid_state');
         if(!is_dir($root)&&!mkdir($root,0700))throw new RuntimeException('invalid_state');
         $run=$root.'/'.$jobId;
@@ -39,6 +41,11 @@ final class AsusDpiRuntime
             throw new RuntimeException('interrupted');
         }
         if(!mkdir($run,0700))throw new RuntimeException('invalid_state');
+        if($load['worker_threads']!==null){
+            $f=fopen($run.'/load.plan','xb');if(!$f)throw new RuntimeException('invalid_state');
+            $raw=$load['worker_threads'].' '.$load['memory_floor_kib']."\n";
+            try{if(!chmod($run.'/load.plan',0600)||fwrite($f,$raw)!==strlen($raw)||!fflush($f)||(function_exists('fsync')&&!fsync($f)))throw new RuntimeException('insufficient_space');}finally{fclose($f);}
+        }
         $deadline=(float)explode(' ',file_get_contents('/proc/uptime'))[0]+($kind==='install'?120:($store->readOptions($jobId)['limits']['total_seconds']));
         file_put_contents($run.'/deadline',(string)$deadline."\n",LOCK_EX);chmod($run.'/deadline',0600);
         $p=@proc_open([self::busybox(),'start-stop-daemon','-S','-b','-p',$run.'/unused-guard-lookup.pid','-x',self::busybox(),'--','sh',NfqwsPlatform::translate('/opt/lib/nfqws2-asus/dpi/guard.sh'),$jobId],
@@ -94,7 +101,7 @@ final class AsusDpiRuntime
         return ['exit'=>$exit,'stdout'=>$out,'stderr'=>$err];
     }
     private static function endingReason(string $run): string
-    {$reason=is_link($run.'/ending.reason')?'':trim((string)@file_get_contents($run.'/ending.reason',false,null,0,32));return in_array($reason,['timed_out','output_limit','cancelled'],true)?$reason:'interrupted';}
+    {$reason=is_link($run.'/ending.reason')?'':trim((string)@file_get_contents($run.'/ending.reason',false,null,0,32));return in_array($reason,['timed_out','output_limit','cancelled','insufficient_memory'],true)?$reason:'interrupted';}
     public function stop(string $jobId): array
     {
         if(!preg_match('/^[a-f0-9]{32}$/D',$jobId))throw new RuntimeException('invalid_request');

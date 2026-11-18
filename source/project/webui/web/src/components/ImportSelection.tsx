@@ -30,6 +30,7 @@ import {
 import { STRATEGY_KEYS } from '@/api/shareClient';
 import { resourceBytes } from '@/api/shareResourcesClient';
 
+import { catalogDescription } from '@/components/CatalogEntryDetails';
 import { FormEditor } from '@/components/FormEditor';
 import { ShareDnsSection } from '@/components/ShareDnsSection';
 
@@ -42,6 +43,7 @@ export const ImportSelectionView = ({
   csrfToken,
   onChange,
   onError,
+  needsLuaTrust = false,
 }: {
   document: ImportDocument;
   value: ImportSelection;
@@ -49,10 +51,15 @@ export const ImportSelectionView = ({
   csrfToken: string;
   onChange: (value: ImportSelection) => void;
   onError: (e: unknown) => void;
+  needsLuaTrust?: boolean;
 }) => {
   const { t } = useTranslation();
   const [showStrategies, setShowStrategies] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
+  const dependencies = [
+    ...document.resources,
+    ...(document.package_files ?? []),
+  ];
   const label = (key: string) =>
     Object.prototype.hasOwnProperty.call(en.form, key)
       ? t(`form.${key}` as TranslationKey)
@@ -108,10 +115,9 @@ export const ImportSelectionView = ({
                 ) : (
                   <FormEditor
                     label={label(key)}
-                    value={displayImportValue(pick.value, document.resources)}
+                    value={displayImportValue(pick.value, dependencies)}
                     description={
-                      unresolvedImportAliases(pick.value, document.resources)
-                        .length
+                      unresolvedImportAliases(pick.value, dependencies).length
                         ? t('import.paths_missing')
                         : undefined
                     }
@@ -123,10 +129,7 @@ export const ImportSelectionView = ({
                           v.key === key
                             ? {
                                 ...v,
-                                value: encodeImportValue(
-                                  text,
-                                  document.resources,
-                                ),
+                                value: encodeImportValue(text, dependencies),
                               }
                             : v,
                         ),
@@ -173,14 +176,14 @@ export const ImportSelectionView = ({
         <Stack spacing={0.5}>
           {(['purpose', 'operator', 'region'] as const).map((key) =>
             typeof document.context?.[key] === 'string' &&
-            document.context[key] ? (
+            catalogDescription(String(document.context[key])).trim() ? (
               <Typography
                 variant="body2"
                 key={key}
                 sx={{ overflowWrap: 'anywhere' }}
               >
                 <strong>{t(`import.context.${key}`)}:</strong>{' '}
-                {String(document.context[key])}
+                {catalogDescription(String(document.context[key]))}
               </Typography>
             ) : null,
           )}
@@ -202,7 +205,11 @@ export const ImportSelectionView = ({
             >
               {JSON.stringify(
                 { context: document.context, source: document.source },
-                null,
+                (key, entry) =>
+                  ['comment', 'description', 'purpose'].includes(key) &&
+                  typeof entry === 'string'
+                    ? catalogDescription(entry) || undefined
+                    : entry,
                 2,
               )}
             </Typography>
@@ -245,7 +252,30 @@ export const ImportSelectionView = ({
           </AccordionDetails>
         </Accordion>
       )}
-      {document.resources.some((f) => f.kind !== 'lua') && (
+      {!!document.package_files?.length && (
+        <Alert severity="info">
+          {t('import.package_files')}:{' '}
+          {document.package_files.map((f) => f.name).join(', ')}
+        </Alert>
+      )}
+      {(needsLuaTrust ||
+        document.resources.some(
+          (f) => f.kind === 'lua' && value.files.some((p) => p.id === f.id),
+        )) && (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={value.trusted_lua}
+              disabled={disabled}
+              onChange={(_, checked) =>
+                onChange({ ...value, trusted_lua: checked })
+              }
+            />
+          }
+          label={t('import.trust_lua')}
+        />
+      )}
+      {!!document.resources.length && (
         <Stack spacing={1}>
           <Typography variant="subtitle1">{t('import.files')}</Typography>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
@@ -269,7 +299,7 @@ export const ImportSelectionView = ({
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               {t('import.files')} · {value.files.length}/
-              {document.resources.filter((f) => f.kind !== 'lua').length}
+              {document.resources.length}
             </AccordionSummary>
             <AccordionDetails>
               <Stack spacing={1}>
@@ -280,74 +310,70 @@ export const ImportSelectionView = ({
                 >
                   {t(showFiles ? 'import.hide_files' : 'import.show_files')}
                 </Button>
-                {document.resources
-                  .filter((f) => f.kind !== 'lua')
-                  .map((file) => {
-                    const pick = value.files.find((v) => v.id === file.id);
-                    return (
-                      <Stack key={file.id} spacing={1}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={!!pick}
-                              disabled={disabled}
-                              onChange={(_, checked) =>
-                                onChange({
-                                  ...value,
-                                  files: checked
-                                    ? [...value.files, { id: file.id }]
-                                    : value.files.filter(
-                                        (f) => f.id !== file.id,
-                                      ),
-                                })
-                              }
-                            />
-                          }
-                          label={
-                            <Typography sx={{ overflowWrap: 'anywhere' }}>
-                              {file.kind}/{file.name} · {file.byte_length} B
-                            </Typography>
-                          }
-                        />
-                        {pick && showFiles && file.encoding === 'utf8' && (
-                          <TextField
-                            multiline
-                            fullWidth
-                            minRows={3}
-                            maxRows={12}
-                            label={file.name}
+                {document.resources.map((file) => {
+                  const pick = value.files.find((v) => v.id === file.id);
+                  return (
+                    <Stack key={file.id} spacing={1}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={!!pick}
                             disabled={disabled}
-                            value={
-                              pick.text ??
-                              new TextDecoder('utf-8', { fatal: true }).decode(
-                                resourceBytes(file),
-                              )
-                            }
-                            onChange={(e) =>
+                            onChange={(_, checked) =>
                               onChange({
                                 ...value,
-                                files: value.files.map((f) =>
-                                  f.id === file.id
-                                    ? { ...f, text: e.target.value }
-                                    : f,
-                                ),
+                                files: checked
+                                  ? [...value.files, { id: file.id }]
+                                  : value.files.filter((f) => f.id !== file.id),
                               })
                             }
-                            slotProps={{
-                              input: {
-                                sx: { fontFamily: 'monospace', fontSize: 13 },
-                              },
-                            }}
                           />
-                        )}
-                        {pick && showFiles && file.encoding === 'base64' && (
-                          <Typography variant="caption">
-                            {t('import.binary')} · SHA256 {file.sha256}
+                        }
+                        label={
+                          <Typography sx={{ overflowWrap: 'anywhere' }}>
+                            {file.kind}/{file.name} · {file.byte_length} B
                           </Typography>
-                        )}
-                      </Stack>
-                    );
-                  })}
+                        }
+                      />
+                      {pick && showFiles && file.encoding === 'utf8' && (
+                        <TextField
+                          multiline
+                          fullWidth
+                          minRows={3}
+                          maxRows={12}
+                          label={file.name}
+                          disabled={disabled}
+                          value={
+                            pick.text ??
+                            new TextDecoder('utf-8', { fatal: true }).decode(
+                              resourceBytes(file),
+                            )
+                          }
+                          onChange={(e) =>
+                            onChange({
+                              ...value,
+                              files: value.files.map((f) =>
+                                f.id === file.id
+                                  ? { ...f, text: e.target.value }
+                                  : f,
+                              ),
+                            })
+                          }
+                          slotProps={{
+                            input: {
+                              sx: { fontFamily: 'monospace', fontSize: 13 },
+                            },
+                          }}
+                        />
+                      )}
+                      {pick && showFiles && file.encoding === 'base64' && (
+                        <Typography variant="caption">
+                          {t('import.binary')} · SHA256 {file.sha256}
+                        </Typography>
+                      )}
+                    </Stack>
+                  );
+                })}
               </Stack>
             </AccordionDetails>
           </Accordion>

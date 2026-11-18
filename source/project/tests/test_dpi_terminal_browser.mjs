@@ -80,6 +80,11 @@ try {
       nativeState = "running",
       issued = 0,
       terminalId;
+    const savedRows = ['a','b'].map((letter,index) => ({
+      id: letter.repeat(32), sha256: letter.repeat(64), bytes: 16,
+      filename: 'dpi_detector_results-20261118-12000' + index + '.txt',
+    }));
+    const deleteIds = [];
     const result = (state = nativeState, text = "") => ({
       terminal_id: terminalId,
       state,
@@ -107,7 +112,13 @@ try {
       if (cmd === "dpiterminalinfo")
         body = { available: true, installed: true, code: null };
       else if (cmd === "sharesavedrefresh")
-        body = { code: "ok", reports: [], skipped: 0, scan_truncated: false };
+        body = { code: "ready", reports: savedRows, skipped: 0, scan_truncated: false };
+      else if (cmd === "sharesaveddelete") {
+        const id = post.get('id'); deleteIds.push(id);
+        assert.equal(post.get('csrf_token'),'fixture-csrf');
+        const index = savedRows.findIndex((row) => row.id === id);
+        assert.ok(index >= 0); savedRows.splice(index,1); body = { deleted: true };
+      }
       else if (cmd === "dpiterminalstart") {
         if (owner) {
           status = 409;
@@ -163,6 +174,17 @@ try {
         ?.textContent.includes("Native Detector menu"),
     );
     await page.waitForTimeout(500);
+    const first = savedRows[0].filename, second = savedRows[1].filename;
+    const row = page.getByRole('listitem').filter({hasText:first});
+    const cross = row.getByRole('button',{name:'Delete '+first,exact:true});
+    const download = row.getByRole('button',{name:'Download TXT: '+first,exact:true});
+    await cross.scrollIntoViewIfNeeded();
+    const x = await cross.boundingBox(), right = await download.boundingBox();
+    assert.ok(right.x - (x.x+x.width) >= 6 && Math.abs(x.y+x.height/2-right.y-right.height/2) < 2);
+    await cross.click();
+    await row.waitFor({state:'detached'});
+    assert.deepEqual(deleteIds,['a'.repeat(32)]);
+    assert.equal(await page.getByText(second,{exact:true}).count(),1);
     if (process.env.NFQWS_TERMINAL_DEBUG) {
       console.log(
         "INITIAL",

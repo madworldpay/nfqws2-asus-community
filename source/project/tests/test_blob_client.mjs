@@ -20,6 +20,7 @@ try {
   assert.deepEqual(await api.loadBlobInventory('csrf'), inventory);
   assert.deepEqual(calls[0].post, { cmd: 'blobinventory', csrf_token: 'csrf' });
   assert.equal(calls[0].opts.credentials, 'same-origin');
+  const managed={...file,name:'imported/'+hash+'.bin',path:'/etc/nfqws2/blobs/imported/'+hash+'.bin'};globalThis.fetch=async()=>Response.json({...inventory,files:[managed]});assert.deepEqual((await api.loadBlobInventory('csrf')).files,[managed]);
   const unavailable = { ...file, state: 'unavailable', sha256: null, byte_length: 0, format: 'other', label: null, bundled: false };
   globalThis.fetch = async () => Response.json({ files: [unavailable], skipped: 1, scan_truncated: true });
   assert.equal((await api.loadBlobInventory('csrf')).files[0].state, 'unavailable');

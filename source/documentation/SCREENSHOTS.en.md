@@ -1,20 +1,36 @@
 # Panel screenshots
 
-The gallery starts with **real Build 99 screenshots**: desktop and phone panels, per-device strategies, built-in DPI Detector and updates. Build 96 reference screens and the Build 85 archive are retained separately. Historical Detector measurements remain tied to Build 89 and November 5, 2026.
+The first three screenshots show new features in Build 100. The galleries below show installed panels from Build 99 and earlier releases.
 
 Expand a screenshot and click it for full size. Static images have no animation; collapsed sections keep the gallery compact on phones.
 
 [Русский](SCREENSHOTS.md) · [Documentation](README.en.md)
 
+<a id="build100"></a>
+
+## Build 100
+
+Searching for “TV” finds two strategies with matching personal notes in the library.
+
+![Searching personal notes in the import library](images/screenshots/build100-import-notes-en.png)
+
+The strategy generator (beta) is showing two columns. This example report uses sample data.
+
+![Example comparison of two strategy variants](images/screenshots/build100-results-en.png)
+
+On ASUS routers with Entware, the panel can install MTProto directly on the router.
+
+![Button for installing MTProto on the router](images/screenshots/build100-mtproto-en.png)
+
 <a id="build99"></a>
 
 ## Real Build 99 screenshots
 
-Captured on November 7, 2026 from the installed ASUS/Entware and native OpenWrt panels on ASUS hardware. Main panels show the actual installed version and service state. Click an image for full size. The beta page and some captures use Russian labels, as identified below.
+Captured on November 7, 2026 from the installed ASUS/Entware and native OpenWrt panels on ASUS hardware. Main panels show the actual installed version and service state. Click an image for full size. The device profiles page and some captures use Russian labels, as identified below.
 
 ### Main panel and phones
 
-Devices · beta appears in the main tab row. Swipe that row horizontally on narrow screens. Language, theme and links are in the collapsible lower panel.
+Devices appears in the main tab row. Swipe that row horizontally on narrow screens. Language, theme and links are in the collapsible lower panel.
 
 <details>
 <summary>Show the Build 99 main panel — English UI</summary>
@@ -38,9 +54,9 @@ Devices · beta appears in the main tab row. Swipe that row horizontally on narr
 
 <a id="build99-device-profiles"></a>
 
-### Different strategies for different devices · beta
+### Different strategies for different devices
 
-**Common** remains the default. **Per device** assigns strategies to selected clients with ordered priorities; current and stock strategies are available. The library adds separate copies, JSON with resources and signed catalog profiles. DNS remains shared. [Steps and limits](docs/DEVICE-PROFILES.en.md). The beta page currently uses Russian labels.
+**Common** remains the default. **Per device** assigns strategies to selected clients with ordered priorities; current and stock strategies are available. The library adds separate copies, JSON with resources and signed catalog profiles. DNS remains shared. [Steps and limits](docs/DEVICE-PROFILES.en.md). The device profiles page currently uses Russian labels.
 
 The first capture shows the actual common mode. TV and phone cards are an **unsaved example** with demonstration names and addresses. Preview was checked, but the example was neither saved nor applied: the active mode remained Common and the service remained stopped. It illustrates controls, not measured traffic from these example devices.
 
@@ -99,7 +115,7 @@ The capture shows the completed Build 99 installation and current-version messag
 | Compact phone header, aligned buttons, portrait/landscape scrolling; language and theme in the collapsible lower panel | [Layout and controls](USAGE.en.md) |
 | One original Detector terminal, TXT reports downloaded to a PC/phone, and removal through More with separate confirmation; reports are retained by default | [Detector and reports](DPI-DETECTOR.en.md) |
 | Service checks: three control HTTPS URLs for the selected Facebook, YouTube or Discord service, HTTP codes and errors, and a separate TXT with request context | [Check limits](DPI-DETECTOR.en.md#service-checks) |
-| Add-ons · Beta: Riot web domains and a separate tracker-website rule; checkboxes start off, and changes appear in the combined preview | [Import add-ons](IMPORT.en.md#add-ons--beta) |
+| Add-ons: Riot web domains and a separate tracker-website rule; checkboxes start off, and changes appear in the combined preview | [Import add-ons](IMPORT.en.md#add-ons) |
 | Loading the imported SmartDNS draft while preserving unsaved manual edits | [SmartDNS editor](SMARTDNS.en.md) |
 | Update phases, failure reason and log, slow-USB allowance, retained settings and previous service state | [Updates and recovery](PACKAGE-UPDATES.en.md) |
 
@@ -183,14 +199,14 @@ Published revision 6 contains 30 profiles. These are two actual cards from the B
 
 </details>
 
-### Add-ons · Beta
+### Add-ons
 
-Optional Riot and the separate tracker-website rule appear below the base strategy. Checkboxes start off; a selected add-on joins the base profile in the combined preview. Riot covers web domains, without verified game UDP functionality. [Contents and limits](IMPORT.en.md#add-ons--beta).
+Optional Riot and the separate tracker-website rule appear below the base strategy. Checkboxes start off; a selected add-on joins the base profile in the combined preview. Riot covers web domains, without verified game UDP functionality. [Contents and limits](IMPORT.en.md#add-ons).
 
 <details>
 <summary>Show add-on selection — Russian UI</summary>
 
-[![Build 96 Riot and tracker websites in Add-ons · Beta — Russian UI](images/screenshots/build96-import-addons-ru.png)](images/screenshots/build96-import-addons-ru.png)
+[![Build 96 Riot and tracker websites in Add-ons — Russian UI](images/screenshots/build96-import-addons-ru.png)](images/screenshots/build96-import-addons-ru.png)
 
 The combined preview shows added Riot domains, extended base-strategy scope and files that would be replaced. The screenshot shows prepared changes; **Save selection** was not clicked.
 

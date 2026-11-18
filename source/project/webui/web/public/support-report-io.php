@@ -156,7 +156,12 @@ class AsusReportIO
         foreach($entries as $pid)if(preg_match('/^[1-9][0-9]{0,8}$/D',$pid)&&(int)$pid>1) {
             if(++$count>1024||$this->now()>=$until){$state='truncated';break;}
             $r=$this->readProcess((int)$pid,'comm',64);
-            if($r['state']!=='available'){if(is_dir($this->roots['proc'].'/'.$pid))$state='partial';continue;}
+            if($r['state']!=='available'){
+                // A task may exit after scandir/readProcess. Recheck the live
+                // entry instead of treating a cached directory as unreadable.
+                $path=$this->roots['proc'].'/'.$pid;clearstatcache(true,$path);
+                if(@lstat($path)!==false)$state='partial';continue;
+            }
             $name=trim($r['value']);
             if(in_array($name,$allowed,true))$names[]=$name==='dnscrypt-proxy2'?'dnscrypt-proxy':$name;
             if($withMemory && ($name==='dnsmasq' || in_array($name,$allowed,true))) {
@@ -221,14 +226,28 @@ class AsusReportIO
         $walk = $root;
         foreach (explode('/', $dirs[$kind]) as $part) { $walk .= '/'.$part; if (is_link($walk)) { $this->resourceStates[$kind]='denied';return []; } }
         $out = []; $h = @opendir($dir); if (!$h) { $this->resourceStates[$kind]='denied';return []; }
-        while (($name = readdir($h)) !== false) { if ($name !== '.' && $name !== '..') $out[] = $name; if (count($out) >= 129) break; }
+        while (($name = readdir($h)) !== false) {
+            if($name==='.'||$name==='..')continue;
+            if($name==='imported'&&in_array($kind,['lua','blob'],true)){
+                require_once __DIR__.'/resource-paths.php';
+                $managed=$dir.'/imported';
+                if(is_link($managed)||!is_dir($managed)){$this->resourceStates[$kind]='denied';continue;}
+                $names=@scandir($managed);if(!is_array($names)||count($names)>514){$this->resourceStates[$kind]='truncated';continue;}
+                foreach($names as $file)if(NfqwsResourcePaths::relative(($kind==='blob'?'blobs':$kind).'/imported/'.$file)!==null){$out[]='imported/'.$file;if(count($out)>=129)break;}
+            }else $out[]=$name;
+            if(count($out)>=129)break;
+        }
         closedir($h); sort($out);if(count($out)>128)$this->resourceStates[$kind]='truncated'; return $out;
     }
     public function resourcesState(string $kind): string { return $this->resourceStates[$kind]??'available'; }
     public function readResource(string $kind, string $basename, int $limit = 262144): array
     {
         $dirs = ['list'=>'etc/nfqws2/lists','lua'=>'etc/nfqws2/lua','blob'=>'etc/nfqws2/blobs','opkg'=>'etc/opkg'];
-        if (!isset($dirs[$kind]) || $basename === '' || preg_match('/[\/\\\\\x00-\x1f]/', $basename) || str_contains($basename, '..')) return $this->result('denied');
+        if (!isset($dirs[$kind]) || $basename === '' || str_contains($basename, '..') || preg_match('/[\\\\\x00-\x1f]/', $basename)) return $this->result('denied');
+        if(str_contains($basename,'/')){
+            require_once __DIR__.'/resource-paths.php';
+            if(!in_array($kind,['lua','blob'],true)||NfqwsResourcePaths::relative(($kind==='blob'?'blobs':$kind).'/'.$basename)===null)return $this->result('denied');
+        }
         $result = $this->boundedFile($this->safePath($this->roots['opt'], $dirs[$kind].'/'.$basename), $limit);
         if ($result['state'] !== 'available' || !str_ends_with($basename, '.gz')) return $result;
         if (!function_exists('gzdecode')) return $this->result('unsupported');

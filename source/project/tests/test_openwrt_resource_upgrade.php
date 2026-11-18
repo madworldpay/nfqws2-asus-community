@@ -6,6 +6,9 @@ function rejects(callable $fn):void{try{$fn();}catch(RuntimeException $e){return
 $root=sys_get_temp_dir().'/nfqws-stock-'.bin2hex(random_bytes(8));mkdir($root,0700);
 foreach(['active','defaults']as $base)foreach(['lua','blobs']as $kind)mkdir($root.'/'.$base.'/'.$kind,0755,true);
 $baseline=['resources'=>[]];
+$listHash=hash('sha256','stock list');
+$listKey='lists/z2-pack-'.$listHash.'.list.gz';
+$baseline['resources'][$listKey]=['bytes'=>10,'sha256'=>$listHash];
 $predicate=file_get_contents(__DIR__.'/../asus/lua/local-tls13-stun.lua');
 foreach(['lua/stock.lua'=>['old','new','old'],'lua/edited.lua'=>['original','updated','my edit'],'lua/local-tls13-stun.lua'=>['-- old packaged predicate',$predicate,'-- owner predicate edit'],'blob/test.bin'=>["old\0blob","new\0blob","old\0blob"]]as $key=>[$old,$new,$current]){
  $path=preg_replace('~^blob/~','blobs/',$key);
@@ -30,6 +33,7 @@ try{
  check(file_get_contents($root.'/active/lua/custom.lua')==='mine','link target changed');
  unlink($root.'/active/lua/stock.lua');file_put_contents($root.'/active/lua/stock.lua','old');
  $bad=$baseline;$bad['resources']['lua/edited.lua']['sha256']='bad';file_put_contents($previous,json_encode($bad));rejects($apply);
+ $bad=$baseline;$bad['resources'][$listKey]['sha256']=str_repeat('0',64);file_put_contents($previous,json_encode($bad));rejects($apply);
  check(file_get_contents($root.'/active/lua/stock.lua')==='old','bad manifest must fail before any mutation');
  echo "Native stock resource updates preserve user edits, binary content and CAS boundaries\n";
 }finally{

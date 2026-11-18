@@ -48,32 +48,34 @@ final class AsusShareContributions
         // checked by the audit; prepare() then verifies those bytes again.
         $inventory=$hasStrategy?$this->resources->inventory():null;
         $audit=$hasStrategy?AsusShareDependencies::analyze($selection['strategy'],$workingConfig,$inventory,$ids):['scope'=>'files_only','references'=>[],'missing'=>[],'unresolved'=>[],'blob_bindings'=>(object)[],'complete'=>true];
-        // Byte-identical package Lua is already supplied by the receiving IPK.
-        // Retain only its canonical package path; never attach its bytes unless
-        // explicitly selected. Custom/changed Lua keeps an unresolved alias.
-        $native=[];$packageIds=[];
-        foreach($bindings as $alias=>$binding) {
-            if($binding['kind']!=='file')continue;
-            $path=str_starts_with($binding['value'],'@')?substr($binding['value'],1):$binding['value'];
-            $path=NfqwsResourcePaths::canonical($path)??$path;
-            if(!preg_match('~^/opt/etc/nfqws2/lua/([^/]+)$~D',$path,$m))continue;
-            $resource=substr(hash('sha256',"lua\0".$m[1]),0,32);
-            foreach($inventory['files'] as $file)if($file['id']===$resource&&($file['bundled_lua']??false)===true) {
-                $name=$file['bundled_name']??$file['name'];
-                if(!preg_match('/^[A-Za-z0-9_.-]+\.lua$/D',$name))continue;
-                $native[$alias]='@/opt/etc/nfqws2/lua/'.$name;$packageIds[$resource]=true;break;
-            }
+        foreach($audit['unresolved'] as $row)if($row['kind']==='global_lua_outside_selection')throw new RuntimeException('strategy_scope_incomplete');
+        // A portable strategy collects its referenced Lua/blob bytes. Lists
+        // remain an explicit choice: they can contain private browsing data.
+        $byInventory=[];foreach($inventory['files']??[] as $file)$byInventory[$file['id']]=$file;
+        $automatic=[];
+        if($hasStrategy)foreach($audit['references'] as $ref) {
+            $file=$byInventory[$ref['resource_id']??'']??null;
+            if(in_array($ref['option'],['--lua-init','--blob'],true)&&($ref['state']!=='available'||$file===null))throw new RuntimeException('resource_unavailable');
+            if($file===null||!in_array($file['kind'],['lua','blobs'],true)||in_array($file['id'],$ids,true))continue;
+            if($file['state']!=='available')throw new RuntimeException('resource_unavailable');
+            $automatic[]=['id'=>$file['id'],'source_sha256'=>$file['sha256']];$ids[]=$file['id'];
         }
-        if($native!==[]) {
-            $rewrite=static fn($value)=>preg_replace_callback('/\bRESOURCE_[1-9][0-9]*\b/',static fn($m)=>$native[$m[0]]??$m[0],$value);
-            if(isset($strategy['config']))$strategy['config']=$rewrite($strategy['config']);
-            foreach($strategy['blocks']??[] as $i=>$block)$strategy['blocks'][$i]['value']=$rewrite($block['value']);
-            foreach($strategy['shared']??[] as $key=>$value)$strategy['shared'][$key]=$rewrite($value);
-            $strategy['dependencies']=array_values(array_filter($strategy['dependencies'],static fn($dep)=>!isset($native[$dep['id']])));
-            $bindings=array_diff_key($bindings,$native);
+        if($automatic)$chosen=array_merge($chosen,$this->resources->prepare($automatic));
+        if(count($chosen)>AsusShareResources::COUNT_LIMIT||array_sum(array_column($chosen,'byte_length'))>AsusShareResources::TOTAL_LIMIT)throw new RuntimeException('output_limit');
+        if($hasStrategy){
+            $reviewed=$inventory;$sent=[];foreach($chosen as $file)$sent[$file['id']]=$file;
+            foreach($reviewed['files'] as &$row)if(isset($sent[$row['id']])){
+                $file=$sent[$row['id']];if($file['sha256']!==$row['sha256']||$file['byte_length']!==$row['byte_length']){unset($row['bundled_lua'],$row['bundled_resource'],$row['bundled_name']);$row['sha256']=$file['sha256'];$row['byte_length']=$file['byte_length'];}
+            }unset($row);
+            $audit=AsusShareDependencies::analyze($selection['strategy'],$workingConfig,$reviewed,$ids);
         }
-        // Selection is the only authority for attached bytes. Dependencies
-        // describe completeness, but never force uploads or explanations.
+        $packageIds=[];
+        if($hasStrategy)foreach($chosen as $file) {
+            $original=$byInventory[$file['id']]??null;
+            if(($original['bundled_resource']??false)===true&&$file['sha256']===$original['sha256']&&$file['byte_length']===$original['byte_length'])$packageIds[$file['id']]=$original['bundled_name'];
+        }
+        // All aliases bind either exact embedded bytes or an explicit package
+        // content reference; neither can invent a receiver filesystem path.
         $byId=[];foreach($chosen as $i=>&$file){$file['aliases']=[];$byId[$file['id']]=$i;}unset($file);
         $refAliases=[];$blobRefs=(array)$audit['blob_bindings'];
         foreach($bindings as $alias=>$binding) {
@@ -82,7 +84,8 @@ final class AsusShareContributions
                 $path=str_starts_with($binding['value'],'@')?substr($binding['value'],1):$binding['value'];
             $path=NfqwsResourcePaths::canonical($path)??$path;
                 $ref=substr(hash('sha256',$path),0,32);$refAliases[$ref][]=$alias;
-                if(preg_match('~^/opt/etc/nfqws2/(lists|lua|blobs)/([^/]+)$~D',$path,$m))$resourceId=substr(hash('sha256',$m[1]."\0".$m[2]),0,32);
+                $relative=str_starts_with($path,'/opt/etc/nfqws2/')?NfqwsResourcePaths::relative(substr($path,strlen('/opt/etc/nfqws2/'))):null;
+                if($relative!==null)$resourceId=substr(hash('sha256',$relative['kind']."\0".$relative['name']),0,32);
             }elseif($binding['kind']==='blob') {
                 $resourceId=$blobRefs[$binding['value']]??null;
                 if($resourceId!==null)foreach($audit['references'] as $ref)if($ref['resource_id']===$resourceId)$refAliases[$ref['id']][]=$alias;
@@ -93,7 +96,6 @@ final class AsusShareContributions
         if($strategy!==null)foreach($strategy['dependencies'] as &$dep)$dep['included']=isset($included[$dep['id']]);unset($dep);
         $refs=[];
         foreach($audit['references'] as $i=>$ref) {
-            if(isset($packageIds[$ref['resource_id']??'']))continue;
             $present=$ref['resource_id']!==null&&isset($byId[$ref['resource_id']]);
             $refs[]=['id'=>'dependency_'.($i+1),'aliases'=>$refAliases[$ref['id']]??[],'resource_id'=>$present?$ref['resource_id']:null,
                 'state'=>$present?'included':($ref['state']==='available'?'not_selected':$ref['state'])];
@@ -104,7 +106,18 @@ final class AsusShareContributions
         $wireAudit=['scope'=>$audit['scope'],'references'=>$refs,'unresolved'=>$unresolved,'missing_reason'=>$reason,'complete'=>$complete];
         $out=[];
         if($strategy!==null)$out['strategy']=self::raw($strategy,65536);
-        if($chosen!==[])$out['resources']=self::raw(['type'=>'nfqws2_resources','schema_version'=>1,'context'=>$context,'files'=>$chosen,'audit'=>$wireAudit],786432);
+        if($chosen!==[]) {
+            $package=[];$embedded=[];
+            foreach($chosen as $file) {
+                if(isset($packageIds[$file['id']])&&$file['aliases']!==[]) {
+                    $package[]=['id'=>$file['id'],'kind'=>$file['kind'],'name'=>$packageIds[$file['id']],
+                        'byte_length'=>$file['byte_length'],'sha256'=>$file['sha256'],'aliases'=>$file['aliases']];
+                }else $embedded[]=$file;
+            }
+            $resources=['type'=>'nfqws2_resources','schema_version'=>$hasStrategy?2:1,'context'=>$context,'files'=>$embedded,'audit'=>$wireAudit];
+            if($hasStrategy)$resources['package_files']=$package;
+            $out['resources']=self::raw($resources,786432);
+        }
         if($hasDns) {
             if(!is_array($selection['dns']))throw new RuntimeException('invalid_request');$dns=$this->dns->prepare($selection['dns']);
             $out['dns']=self::raw(['type'=>'nfqws2_dns','schema_version'=>1,'context'=>$context]+$dns,131072);

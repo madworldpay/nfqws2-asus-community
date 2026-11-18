@@ -72,6 +72,7 @@ final class AsusSupportSchema
         if(!isset($files[$kind]))throw new RuntimeException('invalid_request');
         [$name,$max,$code]=$files[$kind];$v=self::decode($raw,$max,$code);
         if($kind==='dpi'&&is_object($v)&&($v->schema_version??null)===2)$name='dpi-analysis-v2.schema.json';
+        if($kind==='resources'&&is_object($v)&&($v->schema_version??null)===2)$name='resources-v2.schema.json';
         $root=dirname(__DIR__,3).'/support';
         $file=NfqwsPlatform::sharedFile($name,$root.'/'.$name);
         $schema=json_decode(file_get_contents($file),true,128,JSON_THROW_ON_ERROR);

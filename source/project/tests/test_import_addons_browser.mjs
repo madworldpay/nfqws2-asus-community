@@ -59,7 +59,7 @@ try {
     await open(page, lang);
     await page.getByRole('button', { name: texts.import.catalog.choose, exact: true }).click();
     await page.getByRole('button', { name: /Provider fixture/ }).click();
-    const group = page.getByRole('region', { name: lang === 'ru' ? 'Дополнения · Бета' : 'Add-ons · Beta', exact: true });
+    const group = page.getByRole('region', { name: lang === 'ru' ? 'Дополнения' : 'Add-ons', exact: true });
     await group.waitFor();
     const choice = group.getByRole('checkbox', { name: 'Riot web', exact: true });
     await choice.waitFor(); assert.equal(await choice.isChecked(), false, 'cloud add-ons start unselected');
@@ -90,7 +90,7 @@ try {
     assert.equal(await choice.isChecked(), false, 'changing the base clears generic selections');
     const torrent = group.getByRole('checkbox', { name: texts.import.torrent_sites.label, exact: true });
     assert.equal(await torrent.isChecked(), false);
-    assert.equal(await page.getByRole('checkbox', { name: texts.import.torrent_sites.label, exact: true }).count(), 1, 'torrent option appears once within Beta');
+    assert.equal(await page.getByRole('checkbox', { name: texts.import.torrent_sites.label, exact: true }).count(), 1, 'torrent option appears once within add-ons');
     await torrent.check(); await choice.check();
     await local(page);
     await choice.waitFor(); assert.equal(await choice.isChecked(), false, 'local source clears cloud selections');
@@ -118,7 +118,7 @@ try {
     let next = addon;
     const { selections } = await attach(page, () => ({ body: catalog([next]) }));
     await open(page, 'en'); await local(page);
-    const group = page.getByRole('region', { name: 'Add-ons · Beta', exact: true });
+    const group = page.getByRole('region', { name: 'Add-ons', exact: true });
     const choice = group.getByRole('checkbox', { name: 'Riot web', exact: true }); await choice.check();
     const preview = page.getByRole('button', { name: 'Preview', exact: true }).first();
     await preview.click(); await page.getByText('riotgames.com, riotcdn.net', { exact: true }).waitFor();
@@ -149,7 +149,7 @@ try {
     let index = catalog();
     const { selections } = await attach(page, () => ({ body: index }));
     await open(page, 'en'); await local(page);
-    const group = page.getByRole('region', { name: 'Add-ons · Beta', exact: true });
+    const group = page.getByRole('region', { name: 'Add-ons', exact: true });
     const choice = group.getByRole('checkbox', { name: 'Riot web', exact: true }); await choice.check();
     const preview = page.getByRole('button', { name: 'Preview', exact: true }).first();
     const save = page.getByRole('button', { name: 'Save selection', exact: true });
@@ -185,7 +185,7 @@ try {
     let unavailable = true;
     const { selections } = await attach(page, () => unavailable ? { status: 503, body: { error: 'addon_catalog_unavailable' } } : { body: catalog() });
     await open(page, 'en'); await local(page);
-    const group = page.getByRole('region', { name: 'Add-ons · Beta', exact: true });
+    const group = page.getByRole('region', { name: 'Add-ons', exact: true });
     await group.getByRole('alert').waitFor();
     const preview = page.getByRole('button', { name: 'Preview', exact: true }).first(); assert.equal(await preview.isEnabled(), true, 'catalog failure does not block base import');
     await preview.click(); await page.getByRole('button', { name: 'Save selection', exact: true }).waitFor();
@@ -206,7 +206,7 @@ try {
     await open(page, 'en'); await local(page);
     await page.waitForFunction(() => document.querySelector('[role="region"] [role="progressbar"]'));
     await local(page);
-    const group = page.getByRole('region', { name: 'Add-ons · Beta', exact: true });
+    const group = page.getByRole('region', { name: 'Add-ons', exact: true });
     await group.getByRole('checkbox', { name: 'Fresh module', exact: true }).waitFor();
     releaseOld({ body: catalog([{ ...addon, id: 'old', title: 'Stale module' }]) });
     await page.waitForLoadState('networkidle');
@@ -214,5 +214,5 @@ try {
     assert.equal(await group.getByRole('checkbox', { name: 'Fresh module', exact: true }).isChecked(), false);
     await page.close();
   }
-  console.log('PASS import add-ons RU/EN desktop/mobile: Beta, unchecked defaults, combined preview, source reset, escaped text, build gate, local JSON, failure isolation and stale reply');
+  console.log('PASS import add-ons RU/EN desktop/mobile: unchecked defaults, combined preview, source reset, escaped text, build gate, local JSON, failure isolation and stale reply');
 } finally { await browser?.close(); if (server) await new Promise(resolve => server.close(resolve)); await rm(dir, { recursive: true, force: true }); }

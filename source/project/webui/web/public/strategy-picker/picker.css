@@ -1,0 +1,47 @@
+:root{color-scheme:dark;font:15px/1.55 system-ui,sans-serif;background:#0d1522;color:#d5dfeb}*{box-sizing:border-box}body{margin:0}main{max-width:1000px;margin:0 auto;padding:22px}header,.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between}a{color:#9fc8eb}h1{font-size:26px;margin:24px 0 12px}h2{font-size:18px;margin:0 0 10px}small{font-size:12px;border:1px solid #6885a1;border-radius:5px;padding:2px 6px;vertical-align:middle;color:#afc5db}section{background:#142133;border:1px solid #304156;border-radius:12px;margin:16px 0;padding:20px}p{margin:8px 0 14px}button{background:#20394f;border:1px solid #739dbf;color:#e2efff;padding:10px 16px;border-radius:8px;font:inherit;cursor:pointer;min-height:42px}button:disabled{opacity:.5;cursor:default}button:hover:enabled{background:#2b4d69}button#cancel{border-color:#c7a788}input{accent-color:#a6cae7;margin-right:9px}label{display:flex;align-items:baseline}progress{width:100%;height:12px;accent-color:#9fc8eb}.result{border-top:1px solid #3b4a5e;padding:16px 0}.result h3{margin:0 0 8px;font-size:16px}.metrics{display:flex;gap:8px 24px;flex-wrap:wrap;font-variant-numeric:tabular-nums}.metrics span{white-space:nowrap}#error{color:#e5b8ad;white-space:pre-wrap}#extended-help,footer{color:#a3b3c5;font-size:13px}details{margin-top:18px}li{overflow-wrap:anywhere}footer{padding:14px 2px 28px}[hidden]{display:none!important}@media(max-width:600px){main{padding:12px}section{padding:14px}h1{font-size:21px}.actions{gap:8px}button{font-size:14px;padding:9px 11px}.metrics{gap:6px 15px}}
+
+fieldset{border:1px solid #3b4a5e;border-radius:8px;margin:16px 0 10px;padding:12px}legend{padding:0 6px}.service-choices{display:flex;gap:10px 24px;flex-wrap:wrap;margin-top:10px}fieldset:disabled{opacity:.7}.focused{color:#b8d7ef;font-weight:600;font-size:14px;overflow-wrap:anywhere}#goal-help{font-size:13px;color:#a3b3c5}
+
+select{background:#142133;color:#d5dfeb;border:1px solid #739dbf;border-radius:7px;font:inherit;padding:9px;max-width:100%;min-height:42px}label:has(select){display:flex;gap:12px;align-items:center;flex-wrap:wrap}#search-help,#matrix{font-size:13px;color:#a3b3c5}#generation{border-left:3px solid #9fc8eb;padding:8px 12px}#generation:empty{display:none}
+
+.live-metrics{border-top:1px solid #304156;padding-top:8px;font-size:13px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.live-metrics p{margin:4px 0}#metric-freshness{color:#a3b3c5}.live-metrics.stale #metric-freshness{color:#e5b8ad}
+
+#tradeoffs{border-left:3px solid #d1ad74;background:#29271f;color:#f0d7af;padding:10px 12px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+textarea{display:block;width:100%;max-width:100%;min-height:125px;resize:vertical;background:#0d1522;color:#d5dfeb;border:1px solid #739dbf;border-radius:7px;font:16px/1.5 system-ui,sans-serif;padding:10px;margin:8px 0 14px}#custom-help,#custom-budget,.custom-metrics{font-size:13px;overflow-wrap:anywhere}#custom-errors{color:#e5b8ad;white-space:pre-wrap}#custom-summary{border-left:3px solid #9fc8eb;padding:8px 12px;font-variant-numeric:tabular-nums}.custom-metrics{margin:6px 0}#measured-goal,#confirmation-text{overflow-wrap:anywhere}
+#supplement-error{color:#e5b8ad}#supplement-rules{white-space:pre-wrap;overflow-wrap:anywhere;background:#0d1522;border:1px solid #3b4a5e;border-radius:7px;padding:12px;font-size:13px}#supplement-help,#supplement-note{font-size:13px;color:#a3b3c5}#supplement-scope{overflow-wrap:anywhere}
+.pool-modes{display:flex;gap:8px 24px;flex-wrap:wrap}#pool-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 16px;align-items:center;margin-top:12px}#pool-controls label{min-width:0}#pool-value{font:16px system-ui;background:#0d1522;color:#d5dfeb;border:1px solid #739dbf;border-radius:7px;padding:8px;width:100%;max-width:9em;margin:0}#pool-step{width:100%;min-width:0;margin:0;min-height:40px}#pool-help,#pool-selected{font-size:13px;overflow-wrap:anywhere}#pool-error{color:#e5b8ad}input:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #b8d7ef;outline-offset:3px}
+
+#pool-step-label,#pool-step,.pool-reference,#pool-reference-help{grid-column:1/-1}.pool-reference{position:relative;height:5.8em;font-size:12px;color:#a3b3c5}.pool-reference span{position:absolute;top:0;max-width:48%;border-left:1px solid #739dbf;padding-left:4px}#pool-ref-small{left:1.5%}#pool-ref-large{left:49.5%}#pool-reference-help{font-size:12px;color:#a3b3c5}
+
+.assembled-final h3 strong{font-weight:850;color:#d5ecff}.assembled-final{border-left:3px solid #739dbf;padding-left:12px}#repeat-hint{font-size:13px;color:#b8d7ef}
+main{max-width:2080px}
+main>:not(#results-section){max-width:956px;margin-inline:auto}
+#results-section{container:strategy-results / inline-size}
+.result-layout{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:10px 0}
+#result-column-count,.result-table thead,.result-table .totals-title{color:#a3b3c5}
+#results{
+  --fitting-columns:1;
+  display:grid;
+  grid-template-columns:repeat(min(var(--fitting-columns),var(--preferred-columns,6)),minmax(0,1fr));
+  gap:8px;
+}
+.result-columns-1{--preferred-columns:1}
+.result-columns-2{--preferred-columns:2}
+.result-columns-3{--preferred-columns:3}
+.result-columns-4{--preferred-columns:4}
+.result-columns-5{--preferred-columns:5}
+.result-columns-6{--preferred-columns:6}
+#results>.result{min-width:0;padding:8px;border:1px solid #3b4a5e;border-radius:7px;overflow-wrap:anywhere}
+#results>.assembled-final{border-left:3px solid #739dbf}
+.result-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.result-table th,.result-table td{padding:2px;text-align:center;font-weight:400;overflow-wrap:anywhere}
+.result-table th:first-child,.result-table tfoot td{text-align:left}
+.result-table th:first-child{width:32%}
+.result-table thead,.result-table tbody{border-bottom:1px solid #3b4a5e}
+.result-table .metrics{gap:2px 10px}
+@media(min-width:1200px){main{padding-inline:12px}#results-section{padding-inline:10px}}
+@container strategy-results (min-width:760px){#results{--fitting-columns:2}}
+@container strategy-results (min-width:950px){#results{--fitting-columns:3}}
+@container strategy-results (min-width:1250px){#results{--fitting-columns:4}}
+@container strategy-results (min-width:1550px){#results{--fitting-columns:5}}
+@container strategy-results (min-width:1850px){#results{--fitting-columns:6}}

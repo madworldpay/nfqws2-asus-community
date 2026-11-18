@@ -223,11 +223,17 @@ class SmartDnsRecoveryTests(unittest.TestCase):
 
     def test_restored_config_accepts_public_numeric_upstreams_with_interface(self):
         include=self.root/'external.conf';include.touch(mode=0o600)
-        for line in ['server="1.1.1.1"#53@awg0','server=2606:4700:4700::1111#53@awg0',
-                     'server=/private.example/8.8.8.8','rev-server=192.0.2.0/24,8.8.8.8']:
+        for line in ['server="1.1.1.1"#53@awg0','server=2606:4700:4700::1111#53@awg0']:
             with self.subTest(line=line):
                 include.write_text(line+'\n')
                 self.assertEqual(self.config_check('conf-file='+str(include)+'\n').returncode,0)
+
+    def test_scoped_upstreams_survive_restoration_alongside_a_default(self):
+        for line in ['server=/private.example/8.8.8.8','rev-server=192.0.2.0/24,8.8.8.8']:
+            with self.subTest(line=line):
+                scoped='no-resolv\n'+line+'\n'
+                self.assertNotEqual(self.config_check(scoped).returncode,0)
+                self.assertEqual(self.config_check(scoped+'server=1.1.1.1\n').returncode,0)
 
     def test_restored_config_rejects_include_cycles(self):
         first=self.root/'first.conf';second=self.root/'second.conf'
@@ -283,9 +289,15 @@ class SmartDnsRecoveryTests(unittest.TestCase):
         script='. "'+str(self.jffs/'native-common.sh')+'"; sd_state_load && sd_install_hook'
         r=subprocess.run(['/bin/sh','-c',script],capture_output=True,timeout=3)
         self.assertEqual(r.returncode,0,r.stderr)
-        self.assertEqual(self.hook.read_bytes(),original)
+        foreign=original.replace(self.block,b'')
+        expected=foreign+self.block
+        self.assertEqual(self.hook.read_bytes(),expected)
+        (self.jffs/'hook-original').write_bytes(expected)
+        r=subprocess.run(['/bin/sh','-c',script],capture_output=True,timeout=3)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(self.hook.read_bytes(),expected)
         self.assertEqual(self.run_recovery('rollback')[0],0)
-        self.assertNotIn(b'NFQWS2 SMARTDNS MANAGED',self.hook.read_bytes())
+        self.assertEqual(self.hook.read_bytes(),foreign)
 
     def test_pid_reuse_cannot_stop_an_unrelated_process(self):
         self.state(runtime_ticks=str(int(self.ticks)+1))

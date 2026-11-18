@@ -1,4 +1,5 @@
 import os
+import fcntl
 from pathlib import Path
 import subprocess
 import shlex
@@ -140,6 +141,36 @@ asus_check() { asus_validate && printf '%s|%s|%s\\n' "$NFQUEUE_NUM" "$USER" "$LO
         asus_lock; echo RESULT=$?
         ''')
         self.assertIn('RESULT=75', r.stdout)
+
+    def test_picker_waits_for_real_core_lease_without_changing_default_conflicts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            code = '''. "$LIB"
+stat() { if [ "$1" = -t ] && [ "$2" = "$WORK" ]; then printf 'x 4096 8 41c0 0\\n'; else command stat "$@"; fi; }
+RUN_DIR=$WORK
+echo ATTEMPT
+asus_lock || exit $?
+echo ACQUIRED
+asus_lock; echo RECURSIVE=$?
+'''
+            with (root / 'control.lock').open('w+') as holder:
+                fcntl.flock(holder, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                env = {**os.environ, 'LIB': str(LIB), 'WORK': tmp}
+                default = subprocess.run(['sh', '-c', code], env=env,
+                                         text=True, capture_output=True, timeout=3)
+                self.assertEqual((default.returncode, default.stdout, default.stderr),
+                                 (75, 'ATTEMPT\n', ''))
+                with subprocess.Popen(['sh', '-c', code], env=env | {'NFQWS_CORE_LOCK_WAIT': '1'},
+                                      text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as picker:
+                    self.assertEqual(picker.stdout.readline(), 'ATTEMPT\n')
+                    try:
+                        with self.assertRaises(subprocess.TimeoutExpired):
+                            picker.wait(timeout=0.15)
+                    finally:
+                        fcntl.flock(holder, fcntl.LOCK_UN)
+                    out, err = picker.communicate(timeout=3)
+                self.assertEqual((picker.returncode, out, err),
+                                 (0, 'ACQUIRED\nRECURSIVE=75\n', ''))
 
     def test_restore_supports_entware_iptables_1_4_21(self):
         r = self.run_sh('''

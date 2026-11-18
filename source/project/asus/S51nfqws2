@@ -27,6 +27,13 @@ fi
 asus_read_compatibility || :
 . /opt/lib/nfqws2-asus/args.sh
 
+# Restore an interrupted local comparison before loading its temporary config.
+if [ -f /opt/share/nfqws-asus-web/strategy-picker-runtime.php ]; then
+    case "$1" in start|restart|check|reconcile)
+        /opt/bin/php-cgi -n -d register_argc_argv=1 -q -f /opt/share/nfqws-asus-web/strategy-picker-runtime.php -- boot || exit $?;;
+    esac
+fi
+
 case "$1" in
     start|restart|check) config=$CONFFILE ;;
     status|reconcile) config=$RUN_DIR/runtime.conf ;;

@@ -4,9 +4,36 @@ require_once __DIR__.'/platform.php';
 final class NfqwsResourcePaths
 {
     private const FILE_OPTIONS=['--hostlist','--hostlist-exclude','--hostlist-auto','--ipset','--ipset-exclude'];
+    /** Import recognizes these packaged lists. Updates preserve the active copies as settings. */
+    public static function isPackageListPin(mixed $key,mixed $record):bool
+    {
+        return is_string($key) && preg_match('~^lists/z2-pack-([a-f0-9]{64})\.list\.gz$~D',$key,$match) === 1
+            && is_array($record) && ($record['sha256'] ?? null) === $match[1]
+            && is_int($record['bytes'] ?? null) && $record['bytes'] > 0 && $record['bytes'] <= 262144;
+    }
+    /** Only the legacy flat namespace and content-addressed imported assets. */
+    public static function relative(string $path):?array
+    {
+        if(preg_match('~^(lists|lua|blobs)/([A-Za-z0-9_.-]{1,128})$~D',$path,$m)&&!in_array($m[2],['.','..'],true))return ['kind'=>$m[1],'name'=>$m[2]];
+        if(preg_match('~^(lua|blobs)/(imported/[a-f0-9]{64}\\.(lua|bin))$~D',$path,$m)&&$m[3]===($m[1]==='lua'?'lua':'bin'))return ['kind'=>$m[1],'name'=>$m[2]];
+        return null;
+    }
+    public static function imported(string $kind,string $sha):string
+    {
+        if(!in_array($kind,['lua','blobs'],true)||!preg_match('/^[a-f0-9]{64}$/D',$sha))throw new RuntimeException('invalid_resource');
+        return 'imported/'.$sha.($kind==='lua'?'.lua':'.bin');
+    }
+    /** Report references stay metadata-only and use the same closed identity. */
+    public static function references(string $text):array
+    {
+        preg_match_all('~(?<![A-Za-z0-9_./-])(?:/opt)?/etc/nfqws2/([A-Za-z0-9_./-]+)~',$text,$matches,PREG_SET_ORDER);
+        $valid=[];$invalid=0;
+        foreach($matches as $match){$identity=self::relative($match[1]);if($identity===null)$invalid++;else $valid[]=$identity;}
+        return ['valid'=>$valid,'invalid'=>$invalid];
+    }
     public static function canonical(string $path):?string
     {
-        if(!preg_match('~^(?:/opt)?/etc/nfqws2/((?:lists|lua|blobs)/([A-Za-z0-9_.-]{1,128}))$~D',$path,$m)||in_array($m[2],['.','..'],true))return null;
+        if(!preg_match('~^(?:/opt)?/etc/nfqws2/(.+)$~D',$path,$m)||self::relative($m[1])===null)return null;
         return '/opt/etc/nfqws2/'.$m[1];
     }
     public static function forms(string $path):array

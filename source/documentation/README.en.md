@@ -4,6 +4,15 @@
 
 **[Quick start without the preamble](#quick-start)**
 
+[![Release](https://img.shields.io/github/v/release/madworldpay/nfqws2-asus-community?label=release&color=79b548)](https://github.com/madworldpay/nfqws2-asus-community/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/madworldpay/nfqws2-asus-community?style=flat&logo=github)](https://github.com/madworldpay/nfqws2-asus-community/stargazers)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
+<br>
+[![Telegram · community](https://img.shields.io/badge/Telegram-community-229ED9?logo=telegram&logoColor=white)](https://t.me/nfqws2AsusCommunityChat)
+[![YooMoney](https://img.shields.io/badge/support-YooMoney-8B3FFD)](https://yoomoney.ru/to/4100119670967911)
+[![Boosty](https://img.shields.io/badge/support-Boosty-F15F2C)](https://boosty.to/madworldpay/donate)
+[![Crypto](https://img.shields.io/badge/support-USDT_·_USDC_·_BTC-3478B9)](#support-the-project)
+
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
 Start with **Import profile**: choose a ready-made cloud strategy, your own JSON
@@ -11,8 +20,7 @@ or NFQWS2 text from Keenetic. Review its blocks, lists and blobs in the preview,
 save the changes and select home-network devices. NFQWS2 processes traffic on
 the router; your TV, phone or PC does not need a separate client.
 
-Results depend on your provider's restrictions and a suitable strategy;
-test video playback, seeking and voice calls separately.
+Test video playback, seeking and voice calls separately.
 
 **This is an application for an installed firmware:** an ASUS package for Asuswrt-Merlin/Entware
 or a native OpenWrt package. Installing the application itself does not require flashing your router.
@@ -21,11 +29,17 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
 
-**Build 99:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build99) · [change history](CHANGELOG.md).
+**Build 100:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [change history](CHANGELOG.md).
 
-**Different strategies for different devices · beta.** Common remains the default. Devices · beta lets you select a separate strategy for a TV, phone or PC, order priorities and review assignments before applying. [Setup guide](docs/DEVICE-PROFILES.en.md) · [real screenshots](SCREENSHOTS.en.md#build99-device-profiles). The beta page currently uses Russian labels.
+**Strategy import.** Open “Zapret2 library”, select “Full presets”, and choose one of the 98 ready-made strategies. Each preset includes its rules. Select “Preview” and then “Save selection”. Starting or restarting the service is a separate step. Add a personal note beside any strategy in the Zapret2 library or cloud catalog and search by its text. Notes stay in this browser across panel updates. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+
+**Strategy generator (beta).** Choose 2–10 runs and compare results in 1–6 columns or let them fit the window. The panel restores the original settings afterwards. Applying and exporting are separate actions. [Panel workflow](docs/LOCAL-STRATEGY-PICKER.en.md).
+
+**Different strategies for different devices.** Common remains the default. Devices lets you select a separate strategy for a TV, phone or PC, order priorities and review assignments before applying. [Setup guide](docs/DEVICE-PROFILES.en.md) · [real screenshots](SCREENSHOTS.en.md#build99-device-profiles). The device profiles page currently uses Russian labels.
 
 **The built-in DPI Detector helps check the result.** Repeat the same tests before and after changing a strategy, save TXT to your PC or phone and check the actual services. [How to use it](DPI-DETECTOR.en.md) · [large real comparison screenshots](docs/DETECTOR-COMPARISON.en.md).
+
+**SmartDNS alongside XrayUI.** [Check shared DNS hooks and permissions](SMARTDNS.en.md#using-smartdns-with-xrayui) if SmartDNS refuses to connect.
 
 [Installation](#quick-start) · [Import](#import-a-profile-and-all-required-files) · [Device profiles](docs/DEVICE-PROFILES.en.md) · [Gallery](SCREENSHOTS.en.md)
 
@@ -39,7 +53,7 @@ or a native OpenWrt package. Installing the application itself does not require 
 | **Access to services without a VPN** | Find a DPI bypass for YouTube, Instagram, Discord and other services while keeping a direct connection without a VPN tunnel |
 | **Browser-based management** | Start, stop, devices, strategies and logs in one panel; everyday setup does not require editing configuration files over SSH |
 | **Router-level setup** | Process traffic from your whole home network or only selected devices |
-| **Device profiles · beta** | Separate strategies, local discovery, manual IP/MAC and ordered priorities; [guide](docs/DEVICE-PROFILES.en.md) |
+| **Device profiles** | Separate strategies, local discovery, manual IP/MAC and ordered priorities; [guide](docs/DEVICE-PROFILES.en.md) |
 | **DNS for specific sites** | SmartDNS assigns separate DoT/DoH servers or fixed IP addresses to sites |
 | **Diagnostics and updates in the panel** | Packet and error checks, signed updates; on ASUS, services stop before the backup and installation, then return to their previous state |
 | **DPI Detector in the panel** | The original menu with phone controls, TXT downloads and separate Facebook, YouTube and Discord control-URL checks; original Detector support depends on the architecture |
@@ -51,7 +65,6 @@ methods come from upstream [NFQWS2 / zapret2](https://github.com/bol-van/zapret2
 this package adds router integration and convenient management.
 
 **SmartDNS and DPI Detector are installed separately using panel buttons**, when needed.
-A ready-made profile is a starting point: results depend on your provider and chosen services.
 
 ## Quick start
 
@@ -81,7 +94,7 @@ The command is shared by ASUS/Entware and OpenWrt. Paste it into the router’s 
 )
 ```
 
-**Manual ASUS installation:** download the IPK for your architecture and transfer it using WinSCP/SCP
+**If you need to install ASUS manually:** download the IPK for your architecture and transfer it using WinSCP/SCP
 or the USB drive's Samba share. [Manual installation with File Explorer examples](MANUAL-INSTALL.en.md).
 
 ### OpenWrt
@@ -126,7 +139,7 @@ Updates preserve settings and the previous service state.
 
 The catalog includes custom profiles **DOM.RU · Тульская область**, **Билайн · Москва**, **Ростелеком · Дальний Восток**, and general strategies. Descriptions include short Detector results and measurement conditions; [how to choose profiles and compare before/after results](PRESETS.en.md#profiles-with-detector-results).
 
-Since Build 92, the **Add-ons · Beta** section below the base strategy offers optional domain collections from a separate signed catalog with a fixed GitHub fallback. Checkboxes start off. **Riot** adds web domains to the selected base strategy; game UDP and voice functionality are not asserted. The combined preview shows added domains, rules and affected blocks; incompatible combinations receive an explanation. Changing the base strategy clears the add-on selection. [Using add-ons](IMPORT.en.md#add-ons--beta).
+Since Build 92, the **Add-ons** section below the base strategy offers optional domain collections from a separate signed catalog with a fixed GitHub fallback. Checkboxes start off. **Riot** adds web domains to the selected base strategy; game UDP and voice functionality are not asserted. The combined preview shows added domains, rules and affected blocks; incompatible combinations receive an explanation. Changing the base strategy clears the add-on selection. [Using add-ons](IMPORT.en.md#add-ons).
 
 Since Build 88, compatible **general strategies from the signed cloud catalog** offer **Add bypass for torrent tracker websites**, unchecked by default. It adds a separate rule for the HTTPS websites **nnmclub.to, rutracker.org, rutor.info and tapochek.net** on TCP 443 only; the sites and rule are shown in the preview. It does not promise peer/DHT or all BitTorrent traffic. Unsupported settings or incompatible files cause the addition to be rejected. With the checkbox off, the original profile is imported.
 
@@ -142,7 +155,7 @@ The [annotated gallery](SCREENSHOTS.en.md) now starts with real **Build 99** cap
 
 ## Which sites and devices to process
 
-The common configuration has **two independent choices**: which sites to process and which devices they come from. Separate strategies are configured in Devices · beta, described below.
+The common configuration has **two independent choices**: which sites to process and which devices they come from. Separate strategies are configured in Devices, described below.
 
 | “Mode” | Meaning |
 | --- | --- |
@@ -166,11 +179,11 @@ You can enter individual IP addresses or a subnet. Separate addresses with space
 reserve IP addresses in DHCP for selected devices. IPv6 is enabled and selected separately.
 This selection applies to NFQWS2; SmartDNS is configured separately.
 
-## Different strategies for different devices · beta
+## Different strategies for different devices
 
-Keep **Common** when one strategy is sufficient. Otherwise open **Devices · beta**, add a device from local observations or by IP/MAC and select a strategy. Cards are checked from top to bottom; drag them or use ↑/↓. Devices without a separate assignment use the common strategy; existing exclusions still apply.
+Keep **Common** when one strategy is sufficient. Otherwise open **Devices**, add a device from local observations or by IP/MAC and select a strategy. Cards are checked from top to bottom; drag them or use ↑/↓. Devices without a separate assignment use the common strategy; existing exclusions still apply.
 
-The library accepts a copy of the current strategy, a complete JSON export with resources, or a signed catalog profile. **Preview → Save draft → Apply saved mode** are separate actions. DNS remains shared, and extra strategies require router memory. Before updating the package from an active per-device mode, apply Common first. The beta page currently uses Russian labels; the guide maps the controls.
+The library accepts a copy of the current strategy, a complete JSON export with resources, or a signed catalog profile. **Preview → Save draft → Apply saved mode** are separate actions. DNS remains shared, and extra strategies require router memory. Before updating the package from an active per-device mode, apply Common first. The device profiles page currently uses Russian labels; the guide maps the controls.
 
 [Steps and limits](docs/DEVICE-PROFILES.en.md) · [Library, cards and preview screenshots](SCREENSHOTS.en.md#build99-device-profiles)
 
@@ -200,7 +213,7 @@ VPN capabilities depend on your firmware and chosen client.
 
 | Feature | What you can do |
 | --- | --- |
-| **Per-device strategies · beta** | Common or separate strategies; local discovery, manual IP/MAC, priorities and a library. Saving and applying are separate; DNS remains shared — [guide](docs/DEVICE-PROFILES.en.md) |
+| **Per-device strategies** | Common or separate strategies; local discovery, manual IP/MAC, priorities and a library. Saving and applying are separate; DNS remains shared — [guide](docs/DEVICE-PROFILES.en.md) |
 | Strategies and devices | Select WAN, process all or selected devices, configure IPv6 separately |
 | Strategy editor | Highlighting, quote checks, visual line wrapping and restoring default strategies |
 | Local JSON and cloud presets | Provider profiles and global strategies; all JSON contents are initially selected, and unwanted parts can be deselected |
@@ -237,7 +250,7 @@ Excluded devices are unaffected. Restrictions stop taking effect when the worker
 
 ### Telegram proxy
 
-The **MTProto for Telegram** button at the bottom of the panel prepares installation with Docker, on ASUS with Entware, or on Linux with systemd. Suggested ASUS or AI Board addresses remain editable. A `dd` secret, connection link and command are generated automatically, with copy buttons and a script download. Docker offers a Portainer stack (`compose.yaml`) or a terminal command, both using a pinned [LordArrin image based on Flowseal](https://github.com/LordArrin/tg-ws-proxy-docker) for x86-64 / ARM64. Access away from home requires an externally reachable address and port. The installer reports success after checking a real Telegram response and preserves an existing proxy and NFQWS settings.
+On an ASUS router with Entware, sign in to the panel with an administrator password, open **MTProto for Telegram** and choose **Install on this router**. The panel offers a connection link once Telegram replies through the new proxy. A separate Linux server can use the downloadable script. For Docker, choose the terminal command or the Portainer stack. Access from outside your home requires an externally reachable address and port.
 
 Run the command on the selected device. For Portainer choose **Docker → Portainer**, then **Stacks → Add stack → Web editor → Deploy the stack**; choose **Docker → Terminal** for the script. Without Docker, use a free TCP port from 1024–65535 and run as root: ASUS requires Entware, while Linux requires systemd, Python 3.8+ and python3-venv. The installer does not open the firewall; configure port access separately. A link using the router’s local IP works within its network; CGNAT prevents direct incoming access through the provider’s address without an additional solution.
 
@@ -287,8 +300,27 @@ An independent community port. Packages are free, and participation is voluntary
 
 ## Support the project
 
-If the panel has been useful to you, you can support its development with
-[a voluntary contribution via YooMoney](https://yoomoney.ru/to/4100119670967911) ♡
+If you would like to support NFQWS2_ASUS development, any contribution is welcome.
+Donations help pay for AI tokens used in development, and your support motivates
+me to keep releasing updates. Thank you for using the project!
+
+[![YooMoney](https://img.shields.io/badge/YooMoney-4100119670967911-8B3FFD)](https://yoomoney.ru/to/4100119670967911)
+[![Boosty · support](https://img.shields.io/badge/Boosty-support-F15F2C)](https://boosty.to/madworldpay/donate)
+· [Ask the administrator about other options](https://t.me/madworldpay)
+
+<details>
+<summary>Crypto · USDT / USDC / ETH / SOL / BTC</summary>
+
+| Network | Asset | Address |
+| --- | --- | --- |
+| TRON · TRC20 | USDT | `TUZf9Ap4Z47FZdmpavtPdqMTsxfSD2cELA` |
+| Ethereum | ETH · USDT / USDC (ERC20) | `0xb2acf70b01394617e52e5d1e0b25256429fcb4da` |
+| Solana | SOL · USDC | `92AfAH7YfobQC4RTDv1pSQY6og9DVDKhqcAWZ4RM6XsF` |
+| Bitcoin | BTC | `1C1VXdi5JaEiHYJaTPWXcHwxwxok1dBJwn` |
+
+Use the network shown next to each address.
+
+</details>
 
 Feedback, working strategies and helping other community members are valuable too.
 
@@ -329,6 +361,7 @@ Start with your task; each guide contains its main steps on the page itself.
 | Choose a file for manual installation | [Packages](DOWNLOADS.en.md) · [IPK installation](MANUAL-INSTALL.en.md) |
 | Configure the application | [Panel and devices](USAGE.en.md) · [Import and profile sharing](IMPORT.en.md) |
 | Choose a ready-made strategy or DNS | [Profile catalog](PRESETS.en.md) · [SmartDNS](SMARTDNS.en.md) |
+| Strategy generator | [Strategy selection: panel workflow and results](docs/LOCAL-STRATEGY-PICKER.en.md) |
 | Update the application | [Updates](PACKAGE-UPDATES.en.md) |
 | Troubleshoot a problem | [Diagnostics](DIAGNOSTICS.en.md) · [DPI Detector](DPI-DETECTOR.en.md) |
 | Check compatibility | [ASUS / Entware](COMPATIBILITY.en.md) · [OpenWrt](OPENWRT.en.md) |

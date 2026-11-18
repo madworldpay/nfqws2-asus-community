@@ -53,7 +53,11 @@ function blobFile(value: unknown): BlobFile {
     ]) ||
     typeof value.name !== 'string' ||
     value.name.length > 128 ||
-    !/^[A-Za-z0-9][A-Za-z0-9_.-]*\.bin$/i.test(value.name) ||
+    hasControl(value.name) ||
+    !(
+      /^[A-Za-z0-9][A-Za-z0-9_.-]*\.bin$/i.test(value.name) ||
+      /^imported\/[a-f0-9]{64}\.bin$/.test(value.name)
+    ) ||
     (value.path !== `/opt/etc/nfqws2/blobs/${value.name}` &&
       value.path !== `/etc/nfqws2/blobs/${value.name}`) ||
     !integer(value.byte_length, 0) ||

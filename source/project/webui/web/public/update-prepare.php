@@ -7,6 +7,7 @@ require_once __DIR__.'/support-report-platform.php';
 
 require_once __DIR__.'/update-package.php';
 require_once __DIR__.'/update-snapshot-limits.php';
+require_once __DIR__.'/resource-paths.php';
 
 final class AsusUpdateSnapshot
 {
@@ -35,7 +36,9 @@ final class AsusUpdateSnapshot
         if($bs){if(($bs['mode']&0170000)!==0100000||$bs['uid']!==$owner||$bs['nlink']!==1||($bs['mode']&0022)!==0||$bs['size']>131072)throw new RuntimeException('invalid_state');
             try{$b=json_decode(file_get_contents($baseline),true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
             if(($b['schema_version']??null)!==1||!is_array($b['resources']??null)||count($b['resources'])>512)throw new RuntimeException('invalid_state');
-            foreach($b['resources'] as $name=>$r){if(!preg_match('~^(lua|blob)/[a-zA-Z0-9_.-]+$~D',(string)$name)||!is_array($r)||!is_int($r['bytes']??null)||$r['bytes']<0||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256']??''))throw new RuntimeException('invalid_state');
+            foreach($b['resources'] as $name=>$r){
+                if(NfqwsResourcePaths::isPackageListPin($name,$r))continue;
+                if(!preg_match('~^(lua|blob)/[a-zA-Z0-9_.-]+$~D',(string)$name)||!is_array($r)||!is_int($r['bytes']??null)||$r['bytes']<0||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256']??''))throw new RuntimeException('invalid_state');
                 $path='etc/nfqws2/'.(str_starts_with($name,'blob/')?'blobs/'.substr($name,5):$name);$f=$files[$path]??null;
                 if(!$f)throw new RuntimeException('settings_changed');
                 if($f['size']===$r['bytes']&&$f['sha256']===$r['sha256'])$resources[$path]=$r;

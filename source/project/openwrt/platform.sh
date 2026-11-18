@@ -60,6 +60,9 @@ nfqws_runtime_directory() {
 
 nfqws_load_config() {
     local file lib=${NFQWS_LIB:-/usr/lib/nfqws2} run=${NFQWS_RUN:-/var/run/nfqws2-native}
+    if [ -f /usr/share/nfqws2-web/strategy-picker-runtime.php ]; then
+        /usr/bin/php-cgi -n -d register_argc_argv=1 -q -f /usr/share/nfqws2-web/strategy-picker-runtime.php -- boot || return $?
+    fi
     nfqws_runtime_directory || return 1
     file=$(mktemp "$run/config.XXXXXX") || return 1
     if ! /usr/bin/php-cgi -n -d register_argc_argv=1 -q -f "$lib/config-cli.php" /etc/nfqws2/nfqws2.conf > "$file"; then

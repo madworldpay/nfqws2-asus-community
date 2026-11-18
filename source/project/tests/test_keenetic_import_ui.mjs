@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const ru=JSON.parse(readFileSync(new URL('../webui/web/src/translations/ru.json',import.meta.url),'utf8'));
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { build } from '../webui/web/node_modules/esbuild/lib/main.js';
@@ -32,7 +34,8 @@ try {
   });
   await page.goto(`http://127.0.0.1:${server.address().port}`);
   await page.getByRole('button', { name: 'Вставить стратегию Keenetic', exact: true }).click();
-  await page.getByText('Вставьте текст стратегии NFQWS2 с Keenetic. Пути к файлам будут адаптированы под ASUS. Проверьте результат перед сохранением.', { exact: true }).waitFor();
+  await page.getByText(ru.import.keenetic.hint, { exact: true }).waitFor();
+  assert.match(ru.import.keenetic.hint,/только текст.*Lua, BIN/,'the current paste hint explicitly limits transfer to text and names external assets');
   assert.equal(calls.includes('importconvert'), false, 'Opening the editor never starts conversion');
   const editor = page.locator('.cm-content').first();
   const text = '--filter-tcp=443 --hostlist=/opt/etc/nfqws/user.list\n--lua-desync=fake:blob=tls';

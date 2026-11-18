@@ -21,7 +21,7 @@ final class AsusSmartDnsHook
         // exec or return anywhere needs manual review, even in a function.
         $commands=preg_replace('/^[\t ]*#.*$/m','',$clean);
         if (preg_match('/(?:^|[^A-Za-z0-9_])(?:exit|exec|return)(?:[^A-Za-z0-9_]|$)/',$commands)) throw new RuntimeException('hook_conflict');
-        $out=$clean===$text?$text.self::BLOCK:$text;
+        $out=$clean.self::BLOCK;
         self::text($out,'hook_conflict');return $out;
     }
 
@@ -30,11 +30,37 @@ final class AsusSmartDnsHook
         self::text($text,'hook_conflict');
         if (!str_contains($text,'NFQWS2 SMARTDNS MANAGED')) return $text;
         if (substr_count($text,self::BLOCK)!==1) throw new RuntimeException('hook_conflict');
-        $clean=str_replace(self::BLOCK,'',$text);
+        $at=strpos($text,self::BLOCK);$before=substr($text,0,$at);$after=substr($text,$at+strlen(self::BLOCK));
+        // Keep the command separator previously supplied by our block when
+        // another addon appended a command after a hook without a final LF.
+        $separator=$before!=='' && $after!=='' && !str_ends_with($before,"\n") && !str_starts_with($after,"\n")?"\n":'';
+        $clean=$before.$separator.$after;
         if (str_contains($clean,'NFQWS2 SMARTDNS MANAGED')) throw new RuntimeException('hook_conflict');
         return $clean;
     }
 
+    /** Firmware single-label service rule, not a default resolver. */
+    private static function serviceRoute(string $value): bool
+    {
+        if (!preg_match('~^/[A-Za-z0-9_-]{1,63}/((?:[0-9]{1,3}\.){3}[0-9]{1,3})$~D',$value,$m)) return false;
+        return filter_var($m[1],FILTER_VALIDATE_IP,FILTER_FLAG_IPV4)!==false && !str_starts_with($m[1],'127.') && $m[1]!=='0.0.0.0';
+    }
+    /** Retain only service rules tied to a real default in the same native file. */
+    public static function nativeServiceRoutes(string $text): array
+    {
+        self::text($text,'existing_dns_rules');$defaults=[];$routes=[];
+        foreach (explode("\n",$text) as $line) {
+            $line=trim($line);if ($line==='' || str_starts_with($line,'#')) continue;
+            if (!preg_match('/^server\s*=\s*([^\s]+)$/D',$line,$m)) throw new RuntimeException('existing_dns_rules');
+            if (str_starts_with($m[1],'/')) {
+                if (!self::serviceRoute($m[1])) throw new RuntimeException('existing_dns_rules');
+                $routes[]=$m[1];
+            } elseif (preg_match('/^[^\/\s#][^\/\s]*$/D',$m[1])) $defaults[$m[1]]=true;
+            else throw new RuntimeException('existing_dns_rules');
+        }
+        foreach ($routes as $route) if (!isset($defaults[substr($route,strrpos($route,'/')+1)])) throw new RuntimeException('existing_dns_rules');
+        return array_map(static fn($route)=>'server='.$route,$routes);
+    }
     /** Keep local names/DHCP; never silently discard a conditional DNS route. */
     public static function forwarding(string $text, array $serverFiles): string
     {
@@ -44,17 +70,17 @@ final class AsusSmartDnsHook
             $directive=trim($line);
             if ($directive==='' || str_starts_with($directive,'#')) { $kept[]=$line; continue; }
             if (preg_match('/^(conf-file|conf-dir|conf-script)\s*(?:=|$)/',$directive)) throw new RuntimeException('existing_dns_rules');
-            if (preg_match('/^server\s*=\s*\//',$directive)) throw new RuntimeException('existing_dns_rules');
+            if (preg_match('/^server\s*=\s*(\/.*)$/D',$directive,$m)) {
+                $allowed=[];foreach ($serverFiles as $data) {try {$allowed=array_merge($allowed,self::nativeServiceRoutes($data));}catch (Throwable $e) {}}
+                if (!in_array('server='.$m[1],$allowed,true)) throw new RuntimeException('existing_dns_rules');
+                $kept[]=$line;continue;
+            }
             if (preg_match('/^rev-server\s*(?:=|$)/',$directive)) throw new RuntimeException('existing_dns_rules');
             if (preg_match('/^servers-file\s*=\s*(.+)$/D',$directive,$match)) {
                 $path=trim($match[1]);
                 if (!isset($serverFiles[$path]) || !is_string($serverFiles[$path])) throw new RuntimeException('existing_dns_rules');
                 self::text($serverFiles[$path],'existing_dns_rules');
-                foreach (explode("\n",$serverFiles[$path]) as $server) {
-                    $server=trim($server);
-                    if ($server==='' || str_starts_with($server,'#')) continue;
-                    if (!preg_match('/^server\s*=\s*[^\/\s#][^\/\s]*$/D',$server)) throw new RuntimeException('existing_dns_rules');
-                }
+                $kept=array_merge($kept,self::nativeServiceRoutes($serverFiles[$path]));
                 continue;
             }
             if (preg_match('/^(?:server|resolv-file)\s*=/',$directive) || preg_match('/^(?:no-resolv|all-servers|strict-order)\s*$/D',$directive)) continue;
@@ -71,6 +97,7 @@ final class AsusSmartDnsHook
             $line=trim($line);if ($line==='' || str_starts_with($line,'#')) continue;
             if ($line==='no-resolv') {$noResolve++;continue;}
             if (preg_match('/^server\s*=/',$line)) {
+                if (preg_match('/^server\s*=\s*(\/.*)$/D',$line,$m) && self::serviceRoute($m[1])) continue;
                 if ($line!=='server=127.0.0.1#6054') return false;
                 $servers++;continue;
             }
@@ -86,7 +113,7 @@ final class AsusSmartDnsHook
         foreach ($profile['upstreams'] as $server) $wanted=array_merge($wanted,$server['domains']);
         foreach (explode("\n",$text) as $line) {
             $line=trim($line);if ($line==='' || str_starts_with($line,'#')) continue;
-            if (preg_match('/^(address|local)\s*=\s*(\/.*)$/D',$line,$m)) {
+            if (preg_match('/^(address|local|server)\s*=\s*(\/.*)$/D',$line,$m)) {
                 $domains=array_slice(explode('/',$m[2]),1,-1);
                 foreach ($domains as $name) {
                     if ($name==='#') return false;

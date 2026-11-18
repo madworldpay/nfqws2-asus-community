@@ -85,14 +85,40 @@ final class AsusImportPlan
         foreach($selection['files']as $row){if(!is_array($row)||array_diff(array_keys($row),['id','text'])||!is_string($row['id']??null)||!isset($available[$row['id']])||isset($filePicks[$row['id']]))throw new RuntimeException('invalid_import_selection');$filePicks[$row['id']]=$row;}
         $local=[];foreach($inventory['files']??[] as $row)if(($row['state']??null)==='available')$local[$row['kind'].'/'.$row['name']]=$row;
         $aliases=[];$targets=[];$files=[];$total=0;$fingerprints=[];$virtual=$inventory['files']??[];$selectedTargets=[];
+        // Resolve only package operands in the effective selected scope, including
+        // omitted shared values required by the selected blocks.
+        $packageScope=$blocks+$shared;
+        if($blocks)foreach(['NFQWS_BASE_ARGS','NFQWS_EXTRA_ARGS','NFQWS_ARGS_IPSET'] as $key)if(!isset($packageScope[$key])&&isset($document['values'][$key]))$packageScope[$key]=$document['values'][$key];
+        $packageText=implode(' ',$packageScope);
+        if($blocks||$shared)foreach($document['package_files']??[] as $file){
+            $used=false;foreach($file['aliases'] as $alias)if(preg_match('/\b'.preg_quote($alias,'/').'\b/',$packageText)){$used=true;break;}if(!$used)continue;
+            $candidate=null;
+            foreach($local as $row)if($row['kind']===$file['kind']&&($row['bundled_resource']??false)===true&&
+                ($row['bundled_name']??null)===$file['name']&&$row['sha256']===$file['sha256']&&$row['byte_length']===$file['byte_length']){
+                $candidate=$row;if($row['name']===$file['name'])break;
+            }
+            if($candidate===null){$problems[]=['code'=>'package_resource_unavailable','name'=>$file['name']];continue;}
+            $path='/opt/etc/nfqws2/'.$candidate['kind'].'/'.$candidate['name'];
+            foreach($file['aliases'] as $alias)$aliases[$alias]=$path;
+            $fingerprints[$path]=$candidate['sha256'];
+        }
         foreach($available as $id=>$file) {
             $raw=base64_decode($file['data_base64'],true);$pick=$filePicks[$id]??null;
             if($pick!==null&&array_key_exists('text',$pick)){if($file['encoding']!=='utf8'||!is_string($pick['text'])||strlen($pick['text'])>262144||preg_match('//u',$pick['text'])!==1||str_contains($pick['text'],"\0"))throw new RuntimeException('invalid_resource');$raw=$pick['text'];}
             $hash=hash('sha256',$raw);$name=$file['name'];
-            if($file['kind']==='lua')foreach($local as $candidate)if($candidate['kind']==='lua'&&($candidate['bundled_lua']??false)===true&&$candidate['sha256']===$hash){$canonical=$candidate['bundled_name']??$candidate['name'];$name=isset($local['lua/'.$canonical])&&$local['lua/'.$canonical]['sha256']===$hash?$canonical:$candidate['name'];break;}
-            $key=$file['kind'].'/'.$name;
             if(!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D',$name)||$name==='.'||$name==='..'){if($pick!==null)$problems[]=['code'=>'invalid_file_name','name'=>$name];continue;}
+            if(in_array($file['kind'],['lua','blobs'],true)){
+                $name=NfqwsResourcePaths::imported($file['kind'],$hash);
+                foreach($local as $candidate)if($candidate['kind']===$file['kind']&&
+                    (($candidate['bundled_resource']??false)===true||$file['kind']==='lua'&&($candidate['bundled_lua']??false)===true)&&
+                    $candidate['sha256']===$hash&&$candidate['byte_length']===strlen($raw)){
+                    $canonical=$candidate['bundled_name']??$candidate['name'];$stock=$local[$file['kind'].'/'.$canonical]??null;
+                    $name=$stock!==null&&$stock['sha256']===$hash?$canonical:$candidate['name'];break;
+                }
+            }
+            $key=$file['kind'].'/'.$name;
             $reuse=isset($local[$key])&&$local[$key]['sha256']===$hash;$replace=isset($local[$key])&&!$reuse;$path='/opt/etc/nfqws2/'.$key;$targets[$id]=['path'=>$path,'selected'=>$pick!==null,'reuse'=>$reuse,'sha256'=>$hash,'kind'=>$file['kind'],'name'=>$name];
+            if($replace&&str_starts_with($name,'imported/'))$problems[]=['code'=>'file_conflict','name'=>$name];
             foreach($file['aliases']as $alias)$aliases[$alias]=$path;
             if($pick!==null){
                 if(isset($selectedTargets[$path])&&$selectedTargets[$path]!==$hash)$problems[]=['code'=>'file_conflict','name'=>$name];
@@ -100,9 +126,21 @@ final class AsusImportPlan
                 $files[]=$file+['path'=>$path,'reuse'=>$reuse,'replace'=>$replace];$n=count($files)-1;$files[$n]['sha256']=$hash;$files[$n]['byte_length']=strlen($raw);$files[$n]['data_base64']=base64_encode($raw);$files[$n]['target_name']=$name;$fingerprints[$path]=$local[$key]['sha256']??null;
                 $virtual=array_values(array_filter($virtual,fn($f)=>($f['kind'].'/'.$f['name'])!==$key));
             }
-            if($pick!==null||$reuse)$virtual[]=['id'=>$id,'kind'=>$file['kind'],'name'=>$name,'byte_length'=>strlen($raw),'sha256'=>$hash,'state'=>'available'];
+            if($pick!==null||$reuse){
+                $row=['id'=>$id,'kind'=>$file['kind'],'name'=>$name,'byte_length'=>strlen($raw),'sha256'=>$hash,'state'=>'available'];
+                // Reusing byte-identical installed stock must retain its verified
+                // package identity. Incoming documents cannot supply this trust.
+                if($reuse&&($local[$key]['bundled_lua']??false)===true){$row['bundled_lua']=true;$row['bundled_name']=$local[$key]['bundled_name']??$name;}
+                $virtual[]=$row;
+            }
         }
         foreach($targets as &$target)if(isset($selectedTargets[$target['path']])&&$selectedTargets[$target['path']]!==$target['sha256'])$target['reuse']=false;unset($target);
+        // A later, unselected duplicate must not replace the selected bytes in
+        // the audit inventory, especially by reintroducing old stock Lua trust.
+        $virtual=array_values(array_filter($virtual,static function($row)use($selectedTargets){
+            $path='/opt/etc/nfqws2/'.$row['kind'].'/'.$row['name'];
+            return !isset($selectedTargets[$path])||$selectedTargets[$path]===($row['sha256']??null);
+        }));
         $current=($blocks||$shared||$ports||$files)?AsusImportConfig::parse($currentConfig):[];$changes=[];
         foreach($blocks+$shared+$ports as $key=>$value)$changes[$key]=self::bind($value,$aliases,$problems,$profile);
         if($addonPicks){

@@ -97,6 +97,7 @@ export const ShareStrategySection = ({
   return (
     <Stack spacing={1.5}>
       <Typography variant="body2">{t('share.strategy_hint')}</Typography>
+      <Alert severity="info">{t('share.portable_hint')}</Alert>
       {!blocksOnly && (
         <ShareContextSection
           csrfToken={csrfToken}

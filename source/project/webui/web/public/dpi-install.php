@@ -80,14 +80,8 @@ final class AsusDpiInstaller
     }
     public static function availableMemoryKiB(string $raw): int
     {
-        // MemFree alone deliberately underestimates availability on old kernels;
-        // reclaimable cache is not counted without trustworthy kernel estimates.
-        foreach(['MemAvailable','MemFree'] as $key){
-            $count=preg_match_all('/^'.$key.':/m',$raw);if($count===0)continue;if($count!==1)return 0;
-            if(preg_match_all('/^'.$key.':\s+([0-9]{1,10}) kB\s*$/m',$raw,$m)!==1)return 0;
-            $value=(float)$m[1][0];return $value<=2147483647?(int)$value:0;
-        }
-        return 0;
+        // Keep the existing public API and the conservative old-kernel fallback.
+        return AsusDpiLoadPolicy::availableMemoryKiB($raw);
     }
     public function cleanupStages(?string $activeJob=null): void
     {
@@ -98,13 +92,22 @@ final class AsusDpiInstaller
             if($s&&($s['mode']&0170000)===0100000&&$s['uid']===$this->owner&&$s['nlink']===1&&$s['size']<=8388608)@unlink($path);
         }
     }
-    public function availability(): array
+    /** CPU, memory and descriptor counts are observations, not capacity limits. */
+    public static function memoryAvailability(int $availableKiB,?array $run=null,?array $artifact=null):array
+    {
+        return ['available'=>true,'code'=>'ready'];
+    }
+    public function availability(?array $run=null): array
     {
         try {
-            $this->primaryArtifact();$cap=(new AsusDpiRuntime())->capabilities();if(!$cap['available'])return $cap;
+            // A retained, pinned executable may differ from the install preference.
+            $artifact=$run===null?$this->primaryArtifact():$this->installedArtifact();
+            $cap=(new AsusDpiRuntime())->capabilities();if(!$cap['available'])return $cap;
             if(time()<1704067200)return ['available'=>false,'code'=>'invalid_clock'];
             if(!extension_loaded('openssl')||!is_readable(NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt')))return ['available'=>false,'code'=>'https_unavailable'];
-            if(self::availableMemoryKiB(file_get_contents('/proc/meminfo'))<65536)return ['available'=>false,'code'=>'insufficient_memory'];
+            $memory=self::memoryAvailability(self::availableMemoryKiB(file_get_contents('/proc/meminfo')),$run,$artifact);
+            if(!$memory['available'])return $memory;
+            if($run!==null){$load=AsusDpiLoadPolicy::runtime($run['options']??[]);if(!$load['available'])return ['available'=>false,'code'=>$load['code']];}
             if((float)@disk_free_space(NfqwsPlatform::native()?'/usr/lib/nfqws2':'/opt')<12582912)return ['available'=>false,'code'=>'insufficient_space'];
             return ['available'=>true,'code'=>'ready'];
         }catch(Throwable $e){return ['available'=>false,'code'=>in_array($e->getMessage(),['unsupported_abi','invalid_state'],true)?$e->getMessage():'unsupported_runtime'];}

@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -24,24 +25,65 @@ class Library(unittest.TestCase):
         (self.root/'config/lua/sample.lua').write_text('sample=true\n')
         (self.root/'config/nfqws2.conf').write_text('NFQWS_BASE_ARGS="--lua-init=@/etc/nfqws2/lua/sample.lua"\nNFQWS_ARGS="--filter-tcp=443 --hostlist=/etc/nfqws2/lists/user.list"\nTCP_PORTS=443\nUDP_PORTS=443\nIPV6_ENABLED=0\n')
 
-    def call(self,operation='capture',name='Телевизор',document=None,trusted=False):
-        request=self.root/'request.json';request.write_text(json.dumps({'operation':operation,'name':name,'document':document,'trusted':trusted}))
+    def call(self,operation='capture',name='Телевизор',document=None,trusted=False,bundled=None):
+        request=self.root/'request.json';request.write_text(json.dumps({'operation':operation,'name':name,'document':document,'trusted':trusted,'bundled':bundled}))
         code='''require $argv[1].'/platform.php';require $argv[1].'/import-config.php';
         require $argv[1].'/share-resources.php';require $argv[1].'/import-plan.php';
         require $argv[2].'/openwrt/config.php';
         $file=$argv[2].'/experimental/device-profiles/device-profiles-library.php';
         if(!is_file($file)){echo json_encode(['error'=>'missing_library']);exit;}
         require $file;
-        try{$s=new NfqwsDeviceProfilesLibrary($argv[3].'/private',$argv[3].'/engines',$argv[3].'/config',(int)$argv[4]);
-        $v=json_decode(file_get_contents($argv[3].'/request.json'),true);
+        try{$v=json_decode(file_get_contents($argv[3].'/request.json'),true);
+        $s=new NfqwsDeviceProfilesLibrary($argv[3].'/private',$argv[3].'/engines',$argv[3].'/config',(int)$argv[4],$v['bundled']);
         $out=match($v['operation']){'list'=>$s->listing(),'import'=>$s->import($v['name'],$v['document'],$v['trusted']),
-          'stock'=>$s->stock($v['document']),default=>$s->capture($v['name'])};
+          'stock'=>$s->stock($v['document']),'synthesis'=>$s->synthesis(['youtube.com','discord.com']),default=>$s->capture($v['name'])};
         echo json_encode($out,JSON_THROW_ON_ERROR);
         }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
         p=subprocess.run([PHP,'-n','-r',code,str(lab.PUBLIC),str(HERE.parents[1]),str(self.root),str(os.getuid())],capture_output=True,text=True,timeout=10)
         self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'')
         self.assertTrue(p.stdout.lstrip().startswith(('{','[')),p.stdout)
         return json.loads(p.stdout)
+
+    def test_synthesis_starts_with_pass_and_fresh_lists_not_original_methods(self):
+        manifest={}
+        for name in ['zapret-lib.lua','zapret-antidpi.lua']:
+            data=('verified '+name).encode();(self.root/'config/lua'/name).write_bytes(data)
+            manifest['lua/'+name]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
+        (self.root/'config/nfqws2.conf').write_text('NFQWS_ARGS="--lua-desync=circular:strategy=9"\nNFQWS_ARGS_CUSTOM="--filter-tcp=5222 --lua-desync=fake:blob=unknown"\nTCP_PORTS=5222\n')
+        before=(self.root/'config/nfqws2.conf').read_bytes()
+        result=self.call('synthesis',bundled=manifest);self.assertNotIn('error',result)
+        meta=json.loads((self.root/'private/library'/f'{result["id"]}.json').read_text())
+        config=meta['config'];raw=' '.join(config.values())
+        self.assertNotIn('circular',raw);self.assertNotIn('5222',raw);self.assertNotIn('blob=unknown',raw)
+        self.assertEqual(config['TCP_PORTS'],'80,443')
+        self.assertEqual(config['NFQWS_ARGS_CUSTOM'],'')
+        self.assertIn('--lua-desync=pass',config['NFQWS_ARGS'])
+        self.assertEqual((self.root/'engines'/result['id']/'lists/synthesis-user.list').read_text(),'discord.com\nyoutube.com\n')
+        self.assertEqual((self.root/'engines'/result['id']/'lists/synthesis-auto.list').read_text(),'')
+        self.assertEqual((self.root/'config/nfqws2.conf').read_bytes(),before)
+
+    def test_synthesis_refuses_modified_or_missing_standard_lua(self):
+        self.assertEqual(self.call('synthesis',bundled={}),{'error':'synthesis_lua_unavailable'})
+
+    def test_empty_kit_uses_only_exact_package_payloads_and_owns_their_copies(self):
+        manifest={}
+        for name in ['zapret-lib.lua','zapret-antidpi.lua']:
+            data=('verified '+name).encode();(self.root/'config/lua'/name).write_bytes(data)
+            manifest['lua/'+name]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
+        good=b'package payload';bad=b'modified package payload'
+        for name,data in [('tls_clienthello_iana_org.bin',good),('quic_initial.bin',bad)]:
+            (self.root/'config/blobs'/name).write_bytes(data)
+            manifest['blob/'+name]={'bytes':len(good),'sha256':hashlib.sha256(good).hexdigest()}
+        before=(self.root/'config/nfqws2.conf').read_bytes()
+        result=self.call('synthesis',bundled=manifest);self.assertNotIn('error',result)
+        meta=json.loads((self.root/'private/library'/f'{result["id"]}.json').read_text())
+        args=meta['config']['NFQWS_BASE_ARGS'];copy=self.root/'engines'/result['id']/'blobs/tls_clienthello_iana_org.bin'
+        self.assertIn('--blob=synthesis_tls_iana:@'+str(copy),args)
+        self.assertNotIn('--blob=synthesis_quic_google:',args)
+        self.assertEqual(copy.read_bytes(),good)
+        (self.root/'config/blobs/tls_clienthello_iana_org.bin').write_bytes(b'changed afterwards')
+        self.assertEqual(copy.read_bytes(),good)
+        self.assertEqual((self.root/'config/nfqws2.conf').read_bytes(),before)
 
     def test_missing_learning_lists_cannot_exceed_snapshot_file_budget(self):
         args='--filter-tcp=443 '+' '.join('--hostlist-auto=/etc/nfqws2/lists/learn'+str(i)+'.list'for i in range(257))
@@ -121,5 +163,16 @@ class Library(unittest.TestCase):
         self.assertEqual(row['mutable_files'],['lists/auto.list'])
         self.assertEqual((self.root/'engines'/result['id']/'lists/auto.list').read_text(),'')
         self.assertNotIn('--hostlist-auto-debug',row['config']['NFQWS_EXTRA_ARGS'])
+
+    def test_verified_packaged_lua_needs_no_new_trust_but_modified_lua_still_does(self):
+        data=(self.root/'config/lua/sample.lua').read_bytes()
+        manifest={'lua/sample.lua':{'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}}
+        document={'type':'nfqws2_strategy','schema_version':2,'versions':{'core':'1.3.2','web':'0.1.4'},
+                  'mode':'blocks','blocks':[{'key':'NFQWS_ARGS','value':'--filter-tcp=443'}],
+                  'shared':{'NFQWS_BASE_ARGS':'--lua-init=@/etc/nfqws2/lua/sample.lua'},'purpose':'Example',
+                  'operator':'Example ISP','comment':'','dependencies':[]}
+        self.assertNotIn('error',self.call('import',document=json.dumps(document),bundled=manifest))
+        (self.root/'config/lua/sample.lua').write_text('changed=true\n')
+        self.assertIn('error',self.call('import',document=json.dumps(document),bundled=manifest))
 
 if __name__=='__main__':unittest.main()

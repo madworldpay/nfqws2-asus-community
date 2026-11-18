@@ -1,6 +1,6 @@
-# Device profiles beta
+# Device profiles
 
-This directory contains the shared beta editor, strict planner, isolated strategy library, activation journal and platform adapters included by the ASUS/Entware and OpenWrt package builders. The default remains Common; saving or previewing a draft never applies traffic. See [the user guide](../../docs/DEVICE-PROFILES.md).
+This directory contains the shared device-profile editor, strict planner, isolated strategy library, activation journal and platform adapters included by the ASUS/Entware and OpenWrt package builders. The default remains Common; saving or previewing a draft never applies traffic. See [the user guide](../../docs/DEVICE-PROFILES.md).
 
 Distinct selected strategies run as separate engines, with at most four additional NFQUEUE queues41000–41003. Ordered goto dispatch makes the first matching card own the selected device's traffic; the normal service configuration stays the fallback. Native procd/nftables and ASUS daemon/iptables adapters use the ordinary service/update leases and verify process/socket ownership. Imports use the existing bounded document validator and isolated resource copies; DNS is shared.
 

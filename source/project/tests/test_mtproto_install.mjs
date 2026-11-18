@@ -471,7 +471,7 @@ if __name__ == '__main__':
   const linux = api.buildMtprotoInstall("linux", input, "en");
   assert.ok(
     linux.includes(
-      "87a38c235d7a4a66d8a3fa50d64e42cc962c11c210a9e65df1469302a6521613",
+      "8e93c7c17074f49ba69f97abae75d196317c215eb278e943d3c5f3b073b4c145",
     ),
   );
   assert.ok(

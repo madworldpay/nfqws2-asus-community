@@ -43,6 +43,9 @@ final class AsusDpiAnalysis
         foreach(['MAX_CONCURRENT'=>'max_concurrent','TIMEOUT'=>'timeout'] as $key=>$name)if(isset($o['config'][$key]))$safe['metrics']->$name=$o['config'][$key];
         $coverage=[];foreach(['dns','domains','tcp','sni','burst_domains','quic_unsupported'] as $k)if(isset($native['coverage'][$k]))$coverage[$k]=$native['coverage'][$k];
         $out=['type'=>'nfqws2_dpi','schema_version'=>2,'detector_version'=>AsusDpiOptions::metadata()['version'],'origin'=>'router','started_at'=>$native['started_at'],'finished_at'=>$native['finished_at'],'state'=>$native['state'],'selected_tests'=>$native['selected_tests'],'groups'=>$groups,'coverage'=>(object)$coverage,'context'=>$native['context'],'settings'=>$safe];
-        $raw=json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";AsusSupportSchema::validate($raw,'dpi');return $raw;
+        $raw=json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
+        // Preserve every projected row within the unchanged schema/byte limit.
+        if(strlen($raw)>262144)$raw=json_encode($out,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
+        AsusSupportSchema::validate($raw,'dpi');return $raw;
     }
 }

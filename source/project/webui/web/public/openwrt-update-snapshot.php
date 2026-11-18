@@ -2,6 +2,7 @@
 require_once __DIR__.'/update-store.php';
 require_once __DIR__.'/smartdns-profile.php';
 require_once __DIR__.'/update-snapshot-limits.php';
+require_once __DIR__.'/resource-paths.php';
 
 /** Last-moment native settings backup; verification never overwrites operator edits. */
 final class NfqwsOpenWrtUpdateSnapshot
@@ -41,7 +42,9 @@ final class NfqwsOpenWrtUpdateSnapshot
         if(!is_file($file)||$s['uid']!==$owner||($s['mode']&0022)!==0||$s['size']>1048576)throw new RuntimeException('invalid_state');
         $v=json_decode((string)file_get_contents($file),true,32,JSON_THROW_ON_ERROR);$out=[];
         if(!is_array($v['resources']??null)||count($v['resources'])>NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException('invalid_state');
-        foreach($v['resources']as $name=>$r){if(!preg_match('~^(lua|blob)/([A-Za-z0-9_.-]{1,128})$~D',$name,$m)||!is_int($r['bytes']??null)||$r['bytes']<0||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256']??''))throw new RuntimeException('invalid_state');
+        foreach($v['resources']as $name=>$r){
+            if(NfqwsResourcePaths::isPackageListPin($name,$r))continue;
+            if(!preg_match('~^(lua|blob)/([A-Za-z0-9_.-]{1,128})$~D',$name,$m)||!is_int($r['bytes']??null)||$r['bytes']<0||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256']??''))throw new RuntimeException('invalid_state');
             $out['etc/nfqws2/'.($m[1]==='blob'?'blobs':'lua').'/'.$m[2]]=['size'=>$r['bytes'],'sha256'=>$r['sha256']];}
         return $out;
     }

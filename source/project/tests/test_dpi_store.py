@@ -113,6 +113,13 @@ class DpiStoreTests(unittest.TestCase):
         self.call([['status',[]]])
         self.assertFalse(orphan.exists());self.assertEqual(canary.read_text(),'keep')
 
+    def test_expired_advanced_run_removes_its_private_load_plan(self):
+        job=self.call([self.reserve(),['update',['LAST',{'state':'failed','finished_at':int(time.time())}]]])[0]['id']
+        run=self.root/'runs'/job;run.mkdir(parents=True,mode=0o700)
+        (run/'load.plan').write_text('4 65536\n');(run/'load.plan').chmod(0o600)
+        self.call([['reconcile',[0,int(time.time())+86401,BOOT]]])
+        self.assertFalse(run.exists(),'expired advanced execution descriptor leaked its run directory')
+
     def test_cleanup_does_not_delete_unmanaged_files(self):
         self.call([self.reserve(),['update',['LAST',{'state':'failed','finished_at':int(time.time())}]]])
         canary=self.root/'unmanaged';canary.write_text('keep')

@@ -11,11 +11,12 @@ final class NfqwsDeviceProfilesLibrary
     private string $resources;
     private string $config;
     private AsusShareRead $reader;
-    public function __construct(?string $private=null,?string $resources=null,?string $config=null,private int $owner=0)
+    public function __construct(?string $private=null,?string $resources=null,?string $config=null,private int $owner=0,private ?array $bundledLua=null)
     {
-        $s=NfqwsPlatform::settings();$this->private=$private??$s['web_config'].'/device-profiles-lab';
+        $s=NfqwsPlatform::settings();$this->private=NfqwsDeviceProfilesPaths::readPath($private??$s['web_config'].'/device-profiles-lab');
         $this->resources=NfqwsDeviceProfilesPaths::readPath($resources??$s['config'].'/device-profiles');$this->config=NfqwsDeviceProfilesPaths::readPath($config??$s['config']);
         $this->reader=NfqwsDeviceProfilesPaths::reader($this->config,$owner);
+        $this->bundledLua??=AsusShareResources::packageLua('/opt',$owner);
     }
     private function directory(string $path,int $mode):void
     {
@@ -27,8 +28,8 @@ final class NfqwsDeviceProfilesLibrary
         $s=@lstat($path);
         if(!$this->reader->directory(NfqwsDeviceProfilesPaths::readPath($path))||!$s||$s['uid']!==$this->owner||($s['mode']&0777)!==$mode)throw new RuntimeException('storage_unavailable');
     }
-    private function id(string $id):void
-    {if(!preg_match('/^(?:stock|saved-[a-f0-9]{16})$/D',$id))throw new RuntimeException('invalid_request');}
+    public static function validId(mixed $id):bool
+    {return is_string($id)&&preg_match('/^(?:stock|saved-[a-f0-9]{16})$/D',$id)===1;}
     private function library(bool $create=false):?string
     {
         if(!$create&&!file_exists($this->private.'/library'))return null;
@@ -42,14 +43,40 @@ final class NfqwsDeviceProfilesLibrary
         }
         if(count($out)>8)throw new RuntimeException('library_limit');return $out;
     }
-    public function entry(string $id):array
+    public function entry(string $id,?array &$observedPin=null):array
     {
-        $this->id($id);$dir=$this->library();if($dir===null)throw new RuntimeException('strategy_unavailable');
+        $observedPin=null;if(!self::validId($id))throw new RuntimeException('invalid_request');
+        $dir=$this->library();if($dir===null)throw new RuntimeException('strategy_unavailable');
         $path=NfqwsDeviceProfilesPaths::guard($dir,$id.'.json',$this->owner);$s=$this->reader->stat($path);
         if(!$s||$s['uid']!==$this->owner||($s['mode']&0777)!==0600)throw new RuntimeException('strategy_unavailable');
-        $row=json_decode($this->reader->bytes($path,262144),true,16,JSON_THROW_ON_ERROR);
+        $fields=array_flip(['dev','ino','mode','uid','gid','nlink','size','mtime','ctime']);$pin=array_intersect_key($s,$fields);
+        $row=json_decode($this->reader->bytes($path,262144),true,32,JSON_THROW_ON_ERROR);
+        if(array_intersect_key($this->reader->stat($path)??[],$fields)!==$pin||!$this->reader->directory($dir))throw new RuntimeException('source_changed');
         if(($row['schema_version']??null)!==1||($row['id']??null)!==$id||!is_string($row['name']??null)||!is_array($row['config']??null)||!is_array($row['files']??null))throw new RuntimeException('strategy_unavailable');
-        return $row;
+        if(array_key_exists('resource_binding_version',$row)||array_key_exists('resource_bindings',$row)){
+            if(($row['resource_binding_version']??null)!==1||!is_array($row['resource_bindings']??null)||
+                array_keys($row['resource_bindings'])!==array_keys($row['files'])||!is_array($row['mutable_files']??null)||!array_is_list($row['mutable_files']))throw new RuntimeException('source_changed');
+            foreach($row['files']as $name=>$sha){
+                $binding=$row['resource_bindings'][$name];$keys=is_array($binding)?array_keys($binding):[];sort($keys);
+                if(NfqwsResourcePaths::relative($name)===null||!is_string($sha)||!preg_match('/^[a-f0-9]{64}$/D',$sha)||$keys!==['identity','parent'])throw new RuntimeException('source_changed');
+                foreach(['identity'=>['ctime','dev','gid','ino','mode','mtime','nlink','size','uid'],'parent'=>['dev','gid','ino','mode','uid']]as $part=>$wanted){
+                    $keys=is_array($binding[$part])?array_keys($binding[$part]):[];sort($keys);if($keys!==$wanted)throw new RuntimeException('source_changed');
+                    foreach($binding[$part]as $value)if(!is_int($value)||$value<0)throw new RuntimeException('source_changed');
+                }
+                $file=$binding['identity'];$owner=in_array($name,$row['mutable_files'],true)&&$this->owner===0?65534:$this->owner;
+                if($file['mode']!==0100644||$file['uid']!==$owner||$file['nlink']!==1||$file['size']>262144||
+                    $binding['parent']['mode']!==0040755||$binding['parent']['uid']!==$this->owner)throw new RuntimeException('source_changed');
+            }
+        }
+        if(array_key_exists('resource_directories',$row)){
+            if(($row['resource_binding_version']??null)!==1||!is_array($row['resource_directories']))throw new RuntimeException('source_changed');
+            $wanted=['..','lists','lua','blobs','.'];foreach(array_keys($row['files'])as $name){$parent=dirname($name);if(!in_array($parent,$wanted,true))$wanted[]=$parent;}sort($wanted);$keys=array_keys($row['resource_directories']);sort($keys);
+            if($keys!==$wanted)throw new RuntimeException('source_changed');
+            foreach($row['resource_directories']as $directory=>$record){$keys=is_array($record)?array_keys($record):[];sort($keys);if($keys!==['dev','gid','ino','mode','uid'])throw new RuntimeException('source_changed');
+                foreach($record as $value)if(!is_int($value)||$value<0)throw new RuntimeException('source_changed');if($record['mode']!==0040755||$record['uid']!==$this->owner)throw new RuntimeException('source_changed');}
+            foreach($row['resource_bindings']as $name=>$record)if($record['parent']!==$row['resource_directories'][dirname($name)])throw new RuntimeException('source_changed');
+        }
+        if(array_intersect_key($this->reader->stat($path)??[],$fields)!==$pin)throw new RuntimeException('source_changed');$observedPin=$pin;return $row;
     }
     private function locked(callable $fn):mixed
     {
@@ -66,6 +93,34 @@ final class NfqwsDeviceProfilesLibrary
     }
     public function capture(string $name):array
     {return $this->locked(function()use($name){$raw=$this->current();return $this->create($name,$raw,[],null,hash('sha256',$raw));});}
+    /** Fresh method-free infrastructure. No stock/catalog/current rules read. */
+    public function synthesis(array $domains):array
+    {
+        $code=is_file(__DIR__.'/strategy-synthesis.php')?__DIR__.'/strategy-synthesis.php':dirname(__DIR__,2).'/webui/web/public/strategy-synthesis.php';require_once $code;
+        return $this->locked(function()use($domains){
+            if(!array_is_list($domains)||!$domains||count($domains)>256)throw new RuntimeException('invalid_request');
+            foreach($domains as $host)if(!is_string($host)||!NfqwsStrategySynthesis::domain($host))throw new RuntimeException('invalid_request');
+            $domains=array_values(array_unique($domains));sort($domains);
+            $source=new AsusShareResources($this->config,$this->owner,$this->bundledLua,$this->reader);$inventory=$source->inventory();$lua=[];$exclude='';$payloads=[];$pins=[];
+            foreach($inventory['files']as $file){
+                if(($file['bundled_lua']??false)&&in_array($file['bundled_name']??null,['zapret-lib.lua','zapret-antidpi.lua'],true))$lua[$file['bundled_name']]='/opt/etc/nfqws2/lua/'.$file['name'];
+                if(($file['bundled_resource']??false)&&$file['kind']==='blobs')foreach(NfqwsStrategySynthesis::packagedPayloads()as $id=>$name)if(($file['bundled_name']??null)===$name){
+                    $path='/opt/etc/nfqws2/blobs/'.$file['name'];$payloads[$id]=$path;$pins[$path]=$file['sha256'];
+                }
+                if(($file['bundled_lua']??false)&&isset($lua[$file['bundled_name']??'']))$pins[$lua[$file['bundled_name']]]=$file['sha256'];
+                if($file['kind']==='lists'&&$file['name']==='exclude.list'&&$file['state']==='available')$exclude=base64_decode($source->read($file['id'],$file['sha256'])['data_base64'],true);
+            }
+            if(count($lua)!==2)throw new RuntimeException('synthesis_lua_unavailable');
+            ksort($payloads);$blobArgs='';foreach($payloads as $id=>$path)$blobArgs.=' --blob=synthesis_'.$id.':@'.$path;
+            $values=NfqwsStrategySynthesis::bind(NfqwsStrategySynthesis::blank(),[
+                'NFQWS_BASE_ARGS'=>'--fastpath-workaround=auto --lua-init=@'.$lua['zapret-lib.lua'].' --lua-init=@'.$lua['zapret-antidpi.lua'].$blobArgs,
+                'NFQWS_EXTRA_ARGS'=>'--hostlist=/opt/etc/nfqws2/lists/synthesis-user.list --hostlist-auto=/opt/etc/nfqws2/lists/synthesis-auto.list --hostlist-exclude=/opt/etc/nfqws2/lists/synthesis-exclude.list',
+                'NFQWS_ARGS_IPSET'=>'','TCP_PORTS'=>'80,443','UDP_PORTS'=>'443']);
+            $imported=[];
+            foreach(['synthesis-user.list'=>implode("\n",$domains)."\n",'synthesis-auto.list'=>'','synthesis-exclude.list'=>$exclude."\nt.me\ntelegram.org\ntelegram.me\ntelesco.pe\n"]as $name=>$bytes)$imported[]=['kind'=>'lists','target_name'=>$name,'data_base64'=>base64_encode($bytes)];
+            return $this->create('Синтез · пустая основа',AsusImportConfig::replace('',$values),$imported,null,null,$pins);
+        });
+    }
     public function stock(?string $trustedTemplate=null):array
     {
         return $this->locked(function()use($trustedTemplate){
@@ -84,14 +139,14 @@ final class NfqwsDeviceProfilesLibrary
             foreach($doc['values']as $key=>$value)$selection[in_array($key,AsusImportConfig::BLOCKS,true)?'blocks':'shared'][]=['key'=>$key,'value'=>$value];
             foreach($doc['ports']as $key=>$value)$selection['ports'][]=['key'=>$key,'value'=>$value];
             foreach($doc['resources']as $file)$selection['files'][]=['id'=>$file['id']];
-            $resources=new AsusShareResources($this->config,$this->owner,null,$this->reader);$inventory=$resources->inventory();
+            $resources=new AsusShareResources($this->config,$this->owner,$this->bundledLua,$this->reader);$inventory=$resources->inventory();
             $plan=AsusImportPlan::prepare($doc,$selection,$this->current(),$inventory,null,NfqwsPlatform::current());
             foreach($plan['warnings']as $warning)if(!$trustedLua||($warning['kind']??null)!=='lua_dependencies_unchecked')throw new RuntimeException('profile_import_incomplete');
             if(!$plan['ready'])throw new RuntimeException(in_array('lua_trust',array_column($plan['problems'],'code'),true)?'lua_trust':'profile_import_incomplete');
-            return $this->create($name,$plan['config'],$plan['files'],null,$plan['fingerprints']['config']);
+            return $this->create($name,$plan['config'],$plan['files'],null,$plan['fingerprints']['config'],$plan['fingerprints']['files']);
         });
     }
-    private function create(string $name,string $raw,array $imported,?string $fixedId=null,?string $expectedSource=null):array
+    private function create(string $name,string $raw,array $imported,?string $fixedId=null,?string $expectedSource=null,?array $expectedResources=null):array
     {
         if(strlen($name)>256||!preg_match('/^[^\x00-\x1f\x7f]{1,64}$/uD',trim($name)))throw new RuntimeException('invalid_request');
         $displayName=trim($name);
@@ -102,9 +157,15 @@ final class NfqwsDeviceProfilesLibrary
         foreach($inventory['files']as $row)if($row['state']==='available'){
             $file=$source->read($row['id'],$row['sha256']);$files[$row['kind'].'/'.$row['name']]=base64_decode($file['data_base64'],true);
         }
+        foreach($expectedResources??[] as $path=>$sha){
+            if(NfqwsResourcePaths::canonical($path)!==$path)throw new RuntimeException('invalid_state');
+            $relative=substr($path,strlen('/opt/etc/nfqws2/'));$actual=isset($files[$relative])?hash('sha256',$files[$relative]):null;
+            if($actual!==$sha)throw new RuntimeException('source_changed');
+        }
         foreach($imported as $file)$files[$file['kind'].'/'.$file['target_name']]=base64_decode($file['data_base64'],true);
         foreach($files as $bytes)if(($total+=strlen($bytes))>2097152)throw new RuntimeException('runtime_limit');
-        $id=$fixedId??'saved-'.bin2hex(random_bytes(8));$this->id($id);$dir=$this->resources.'/'.$id;$mapping=[];$mutable=[];
+        $id=$fixedId??'saved-'.bin2hex(random_bytes(8));if(!self::validId($id))throw new RuntimeException('invalid_request');
+        $dir=$this->resources.'/'.$id;$mapping=[];$mutable=[];
         foreach($files as $name=>$bytes){
             $mapping['/etc/nfqws2/'.$name]=$dir.'/'.$name;$mapping['/opt/etc/nfqws2/'.$name]=$dir.'/'.$name;
         }
@@ -139,33 +200,78 @@ final class NfqwsDeviceProfilesLibrary
         }unset($value);
         if(count($files)>256)throw new RuntimeException('runtime_limit');
         $config['USER']='nobody';$config['LOG_LEVEL']='0';
-        $this->directory($this->resources,0755);$this->directory($dir,0755);$created=[];$temporary=null;
+        $this->directory($this->resources,0755);$this->directory($dir,0755);$created=[];$temporary=null;$temporaryPin=null;$published=false;$bindings=[];
+        $fields=array_flip(['dev','ino','mode','uid','gid','nlink','size','mtime','ctime']);$parentFields=array_flip(['dev','ino','mode','uid','gid']);
         try{
             foreach(['lists','lua','blobs']as $kind)$this->directory($dir.'/'.$kind,0755);
             $hashes=[];
             foreach($files as $name=>$bytes){
-                if(!preg_match('~^(lists|lua|blobs)/[A-Za-z0-9_.-]{1,128}$~D',$name))throw new RuntimeException('unresolved_profile_resource');
+                $identity=NfqwsResourcePaths::relative($name);if($identity===null)throw new RuntimeException('unresolved_profile_resource');
+                if(str_starts_with($identity['name'],'imported/'))$this->directory($dir.'/'.$identity['kind'].'/imported',0755);
                 $path=NfqwsDeviceProfilesPaths::guard(dirname($dir.'/'.$name),basename($name),$this->owner);
-                $f=fopen($path,'xb');if(!$f)throw new RuntimeException('storage_unavailable');$created[]=$path;
-                try{if(fwrite($f,$bytes)!==strlen($bytes)||!fflush($f)||!chmod($path,0644))throw new RuntimeException('insufficient_space');
+                clearstatcache(true,dirname($path));$parent=array_intersect_key(lstat(dirname($path)),$parentFields);
+                $mask=umask(0077);try{$f=fopen($path,'xb');}finally{umask($mask);}if(!$f)throw new RuntimeException('storage_unavailable');
+                $initial=array_intersect_key(fstat($f),$fields);$created[$path]=['pin'=>$initial,'raw'=>$bytes];
+                try{
+                    if(fwrite($f,$bytes)!==strlen($bytes)||!fflush($f))throw new RuntimeException('insufficient_space');
+                    $written=array_intersect_key(fstat($f),$fields);$expected=$initial;
+                    foreach(['size','mtime','ctime']as $key)$expected[$key]=$written[$key];
+                    if($written!==$expected||$written['size']!==strlen($bytes)||array_intersect_key($this->reader->stat($path)??[],$fields)!==$written||
+                        $this->reader->bytes($path,262144)!==$bytes)throw new RuntimeException('source_changed');
+                    $created[$path]['pin']=$written;
+                    if(!chmod($path,0644))throw new RuntimeException('storage_unavailable');
                     if(isset($mutable[$name])&&$this->owner===0&&!chown($path,65534))throw new RuntimeException('storage_unavailable');
+                    if(!fsync($f))throw new RuntimeException('storage_unavailable');$pin=array_intersect_key(fstat($f),$fields);$expected=$written;
+                    $expected['mode']=0100644;$expected['uid']=isset($mutable[$name])&&$this->owner===0?65534:$this->owner;$expected['ctime']=$pin['ctime'];
+                    if($pin!==$expected||array_intersect_key($this->reader->stat($path)??[],$fields)!==$pin||$this->reader->bytes($path,262144)!==$bytes)throw new RuntimeException('source_changed');
+                    $created[$path]['pin']=$pin;
+                    if(!$this->reader->directory(dirname($path)))throw new RuntimeException('source_changed');clearstatcache(true,dirname($path));$ds=lstat(dirname($path));
+                    if(array_intersect_key($ds,$parentFields)!==$parent)throw new RuntimeException('source_changed');$df=fopen(dirname($path),'r');
+                    try{if(!$df||array_intersect_key(fstat($df),$fields)!==array_intersect_key($ds,$fields)||!fsync($df))throw new RuntimeException('storage_unavailable');
+                        clearstatcache(true,dirname($path));if(array_intersect_key(lstat(dirname($path)),$fields)!==array_intersect_key($ds,$fields))throw new RuntimeException('source_changed');
+                    }finally{if(is_resource($df))fclose($df);}
+                    if(array_intersect_key(fstat($f),$fields)!==$pin||array_intersect_key($this->reader->stat($path)??[],$fields)!==$pin)throw new RuntimeException('source_changed');
+                    $bindings[$name]=['identity'=>$pin,'parent'=>$parent];
                 }finally{fclose($f);}
                 $hashes[$name]=hash('sha256',$bytes);
             }
             if(hash('sha256',$this->current())!==$expectedSource)throw new RuntimeException('source_changed');
-            $meta=['schema_version'=>1,'id'=>$id,'name'=>$displayName,'config'=>$config,'files'=>$hashes,'mutable_files'=>array_keys($mutable)];
+            $directories=['..'=>$this->resources,'.'=>$dir,'lists'=>$dir.'/lists','lua'=>$dir.'/lua','blobs'=>$dir.'/blobs'];
+            foreach(array_keys($files)as $name){$parent=dirname($name);$directories[$parent]=$dir.'/'.$parent;}
+            foreach($directories as $relative=>&$record){if(!$this->reader->directory($record))throw new RuntimeException('source_changed');clearstatcache(true,$record);$record=array_intersect_key(lstat($record),$parentFields);}unset($record);
+            foreach($bindings as $name=>$binding)if($binding['parent']!==$directories[dirname($name)])throw new RuntimeException('source_changed');
+            $meta=['schema_version'=>1,'id'=>$id,'name'=>$displayName,'config'=>$config,'files'=>$hashes,'mutable_files'=>array_keys($mutable),
+                'resource_binding_version'=>1,'resource_bindings'=>$bindings,'resource_directories'=>$directories];
             $encoded=json_encode($meta,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
             if(strlen($encoded)>262144)throw new RuntimeException('runtime_limit');
             $temporary=$this->private.'/library/.stage-'.bin2hex(random_bytes(8));$mask=umask(0077);
             try{$f=fopen($temporary,'xb');}finally{umask($mask);}
             if(!$f)throw new RuntimeException('storage_unavailable');
-            try{if(fwrite($f,$encoded)!==strlen($encoded)||!fflush($f)||(function_exists('fsync')&&!fsync($f)))throw new RuntimeException('insufficient_space');}finally{fclose($f);}
+            try{if(fwrite($f,$encoded)!==strlen($encoded)||!fflush($f)||!fsync($f))throw new RuntimeException('insufficient_space');
+                $temporaryPin=array_intersect_key(fstat($f),$fields);
+                if(array_intersect_key($this->reader->stat($temporary)??[],$fields)!==$temporaryPin||$this->reader->bytes($temporary,262144)!==$encoded)throw new RuntimeException('source_changed');
+            }finally{fclose($f);}
+            foreach($created as $path=>$owned)if(array_intersect_key($this->reader->stat($path)??[],$fields)!==$owned['pin']||$this->reader->bytes($path,262144)!==$owned['raw'])throw new RuntimeException('source_changed');
             $target=NfqwsDeviceProfilesPaths::guard($this->private.'/library',$id.'.json',$this->owner);
-            if(!link($temporary,$target))throw new RuntimeException('storage_unavailable');unlink($temporary);$temporary=null;
+            if(!link($temporary,$target))throw new RuntimeException('storage_unavailable');$published=true;
+            if(!unlink($temporary))throw new RuntimeException('storage_unavailable');$temporary=null;
+            $df=fopen($this->private.'/library','r');try{if(!$df||!fsync($df))throw new RuntimeException('storage_unavailable');}finally{if(is_resource($df))fclose($df);}
+            $row=$this->entry($id,$actualPin);$expected=$temporaryPin;$expected['ctime']=$actualPin['ctime'];
+            if($row!==$meta||$actualPin!==$expected)throw new RuntimeException('source_changed');
             return ['id'=>$id,'name'=>$meta['name']];
         }catch(Throwable $e){
-            foreach($created as $path)@unlink($path);
-            foreach(['lists','lua','blobs']as $kind)@rmdir($dir.'/'.$kind);@rmdir($dir);throw $e;
-        }finally{if($temporary!==null)@unlink($temporary);}
+            // A possibly published entry or partial/swapped object is evidence.
+            // Only exact entire buffers on our observed created inode may go.
+            if(!$published){
+                foreach($created as $path=>$owned){try{
+                    if(array_intersect_key($this->reader->stat($path)??[],$fields)===$owned['pin']&&$this->reader->bytes($path,262144)===$owned['raw']&&
+                        array_intersect_key($this->reader->stat($path)??[],$fields)===$owned['pin'])@unlink($path);
+                }catch(Throwable $ignored){/* Preserve unknown bytes or names. */}}
+                foreach(['lua','blobs']as $kind)@rmdir($dir.'/'.$kind.'/imported');
+                foreach(['lists','lua','blobs']as $kind)@rmdir($dir.'/'.$kind);@rmdir($dir);
+            }throw $e;
+        }finally{if(!$published&&$temporary!==null&&$temporaryPin!==null){try{
+            if(array_intersect_key($this->reader->stat($temporary)??[],$fields)===$temporaryPin&&$this->reader->bytes($temporary,262144)===$encoded)@unlink($temporary);
+        }catch(Throwable $ignored){/* Preserve an unknown metadata stage. */}}}
     }
 }

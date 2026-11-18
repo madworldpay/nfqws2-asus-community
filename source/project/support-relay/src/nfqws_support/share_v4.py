@@ -10,9 +10,10 @@ from .dpi_validation import validate_dpi_report
 _envelope=_schema('share-v4.schema.json')
 _strategy=_schema('strategy-v2.schema.json')
 _resources=_schema('resources.schema.json')
+_resources2=_schema('resources-v2.schema.json')
 _dns=_schema('dns-share.schema.json')
 _saved=_schema('dpi-saved.schema.json')
-_LIMITS={'report':1048576,'dpi':262144,'strategy':65536,'resources':786432,'dns':131072}
+_LIMITS={'report':1048576,'dpi':262144,'strategy':65536,'resources':786432,'dns':131072,'artifact':1048576}
 _ORDER={k:i for i,k in enumerate(_LIMITS)}
 
 def _canonical(encoded,limit):
@@ -66,17 +67,27 @@ def _context(value):
     if not value['operator'].strip() or not value['purpose'].strip():raise InvalidReport()
 
 def _check_resources(value):
-    if not _resources.is_valid(value):raise InvalidReport()
+    portable=isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version']==2
+    if not (_resources2 if portable else _resources).is_valid(value):raise InvalidReport()
     _context(value['context']);ids=set();aliases={};total=0
-    for f in value['files']:
+    assets=value['files']+value.get('package_files',[])
+    if len(assets)>128:raise InvalidReport()
+    for f in assets:
         if f['name'] in ('.','..') or f['id'] in ids:raise InvalidReport()
-        ids.add(f['id']);data=_canonical(f['data_base64'],262144)
-        if len(data)!=f['byte_length'] or not hmac.compare_digest(sha256(data).hexdigest(),f['sha256']):raise InvalidReport()
-        if f['encoding']=='utf8':
-            if f['kind']=='blobs' or b'\0' in data:raise InvalidReport()
-            data.decode('utf-8','strict')
-        total+=len(data)
-        if total>524288:raise InvalidReport()
+        ids.add(f['id'])
+        if 'data_base64' in f:
+            data=_canonical(f['data_base64'],262144)
+            if len(data)!=f['byte_length'] or not hmac.compare_digest(sha256(data).hexdigest(),f['sha256']):raise InvalidReport()
+            if f['encoding']=='utf8':
+                if f['kind']=='blobs' or b'\0' in data:raise InvalidReport()
+                data.decode('utf-8','strict')
+            total+=len(data)
+            if total>524288:raise InvalidReport()
+        else:
+            if type(f['byte_length']) is not int:
+                raise InvalidReport()
+            if f['kind'] == 'lists' and (f['byte_length'] < 1 or f['name'] != f"z2-pack-{f['sha256']}.list.gz"):
+                raise InvalidReport()
         for alias in f['aliases']:
             if alias in aliases:raise InvalidReport()
             aliases[alias]=f['id']
@@ -95,7 +106,7 @@ def _check_resources(value):
 
 def _cross(documents):
     resources=documents.get('resources',{});strategy=documents.get('strategy',{})
-    aliases={a:f['id'] for f in resources.get('files',[]) for a in f['aliases']};deps={}
+    aliases={a:f['id'] for f in resources.get('files',[])+resources.get('package_files',[]) for a in f['aliases']};deps={}
     for d in strategy.get('dependencies',[]):
         prefix={'file':'RESOURCE','blob':'BLOB','network':'NETWORK','variable':'VARIABLE'}[d['kind']]
         if d['id'] in deps or not d['id'].startswith(prefix+'_') or d['included']!=(d['id'] in aliases):raise InvalidReport()
@@ -109,10 +120,11 @@ def validate_v4(raw,value,submission_id):
         files=[];manifest=[];documents={};last=-1
         for f in value['files']:
             kind=f['type'];at=_ORDER[kind]
-            if at<=last or not re.fullmatch(r'NFQWS2_[A-Za-z0-9_-]+_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}Z\.json',f['filename']):raise InvalidReport()
+            if at<=last or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}' if kind=='artifact' else r'NFQWS2_[A-Za-z0-9_-]+_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}Z\.json',f['filename']):raise InvalidReport()
             data=_canonical(f['data_base64'],_LIMITS[kind]);digest=sha256(data).hexdigest()
             if not data or len(data)!=f['byte_length'] or not hmac.compare_digest(digest,f['sha256']):raise InvalidReport()
-            if kind=='report':validate_report(data,f['filename'])
+            if kind=='artifact':pass
+            elif kind=='report':validate_report(data,f['filename'])
             else:
                 if not f['filename'].startswith('NFQWS2_'+kind.upper()+'_'):raise InvalidReport()
                 content=_decode(data);documents[kind]=content
@@ -132,6 +144,8 @@ def validate_v4(raw,value,submission_id):
             manifest.append({'type':kind,'filename':f['filename'],'byte_length':len(data),'sha256':digest})
         _cross(documents)
         source=value.get('source');source_json=json.dumps(source,sort_keys=True,separators=(',',':')) if source is not None else None
-        digest=sha256(b'NFQWS2-SHARE\0v4\0'+json.dumps({'files':manifest,'source':source},sort_keys=True,separators=(',',':')).encode('ascii')).hexdigest()
-        return ShareBundle(tuple(files),digest,submission_id,source_json,4)
+        reviewed={'files':manifest,'source':source}
+        if 'comment' in value:reviewed['comment']=value['comment']
+        digest=sha256(b'NFQWS2-SHARE\0v4\0'+json.dumps(reviewed,sort_keys=True,separators=(',',':')).encode('ascii')).hexdigest()
+        return ShareBundle(tuple(files),digest,submission_id,source_json,4,value.get('comment'))
     except (ValueError,TypeError,KeyError,UnicodeError,RecursionError,OverflowError,binascii.Error):raise InvalidReport() from None

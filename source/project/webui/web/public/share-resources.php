@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/dpi-store.php';
 require_once __DIR__.'/share-read.php';
+require_once __DIR__.'/resource-paths.php';
 /** Explicit copies from NFQWS2's resource directories. No execution or writes. */
 final class AsusShareResources
 {
@@ -14,6 +15,9 @@ final class AsusShareResources
     {
         $this->root=$root??AsusDpiStore::optPath('/etc/nfqws2');$this->reader=$reader??($root===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true));
         if($this->bundledLua===null)$this->bundledLua=$root===null?self::packageLua('/opt',$owner):[];
+        // The trusted build manifest uses singular blob/, the runtime directory
+        // is blobs/. This mapping never accepts names from an imported document.
+        foreach($this->bundledLua as $name=>$row)if(str_starts_with($name,'blob/'))$this->bundledLua['blobs/'.substr($name,5)]=$row;
     }
     /** A pinned firmware-owned /opt alias may resolve to USB or internal storage. */
     public static function packageLua(string $alias='/opt',int $owner=0): array
@@ -42,20 +46,24 @@ final class AsusShareResources
         if(!$this->directory($this->root))throw new RuntimeException('resource_unavailable');
         $files=[];$skipped=0;$truncated=false;
         foreach(self::KINDS as $kind) {
-            $dir=$this->root.'/'.$kind;
+          foreach($kind==='lists'?['']:['','imported/'] as $prefix){
+            $dir=$this->root.'/'.$kind.($prefix===''?'':'/imported');
             if(!is_dir($dir)&&!is_link($dir))continue;
             if(!$this->directory($dir)){$skipped++;continue;}
             $handle=@opendir($dir);if(!$handle){$skipped++;continue;}$count=0;
             try {
                 while(($name=readdir($handle))!==false) {
                     if($name==='.'||$name==='..')continue;
+                    if($prefix===''&&$kind!=='lists'&&$name==='imported')continue;
                     if(++$count>512){$truncated=true;break;}
                     if(!self::name($name)||str_contains($name,'.notactive')||str_contains($name,'-opkg')||str_contains($name,'.opkg-')){$skipped++;continue;}
+                    if($prefix!==''&&NfqwsResourcePaths::relative($kind.'/'.$prefix.$name)===null){$skipped++;continue;}
                     $path=$dir.'/'.$name;$s=$this->stat($path);if(!$s){$skipped++;continue;}
                     if(count($files)>=self::COUNT_LIMIT){$truncated=true;break;}
-                    $files[]=['id'=>substr(hash('sha256',$kind."\0".$name),0,32),'kind'=>$kind,'name'=>$name,'byte_length'=>$s['size'],'path'=>$path];
+                    $identity=$prefix.$name;$files[]=['id'=>substr(hash('sha256',$kind."\0".$identity),0,32),'kind'=>$kind,'name'=>$identity,'byte_length'=>$s['size'],'path'=>$path];
                 }
             } finally {closedir($handle);}
+          }
         }
         usort($files,fn($a,$b)=>strcmp($a['kind'].'/'.$a['name'],$b['kind'].'/'.$b['name']));
         return ['files'=>$files,'skipped'=>$skipped,'scan_truncated'=>$truncated];
@@ -64,12 +72,27 @@ final class AsusShareResources
     {
         $out=$this->entries();$remaining=2097152;
         foreach($out['files'] as &$row) {
-            $path=$row['path'];unset($row['path']);$row['sha256']=null;$row['bundled_lua']=false;
+            $path=$row['path'];unset($row['path']);$row['sha256']=null;$row['bundled_lua']=false;$row['bundled_resource']=false;
             if($row['byte_length']>self::FILE_LIMIT){$row['state']='too_large';continue;}
             if($row['byte_length']>$remaining){$row['state']='unavailable';$out['scan_truncated']=true;continue;}
             try{$raw=$this->bytes($path);$row['sha256']=hash('sha256',$raw);$row['state']='available';$remaining-=strlen($raw);}
             catch(RuntimeException $e){$row['state']='unavailable';}
-            if($row['kind']==='lua'&&$row['state']==='available')foreach($this->bundledLua as $name=>$baseline)if(str_starts_with($name,'lua/')&&preg_match('~^lua/[A-Za-z0-9_.-]+$~D',$name)&&is_array($baseline)&&($baseline['bytes']??null)===$row['byte_length']&&($baseline['sha256']??null)===$row['sha256']){$row['bundled_lua']=true;$row['bundled_name']=substr($name,4);break;}
+            if($row['kind']==='lists'&&$row['state']==='available'){
+                $pin=$this->bundledLua['lists/'.$row['name']]??null;
+                if(NfqwsResourcePaths::isPackageListPin('lists/'.$row['name'],$pin)&&
+                    ($pin['sha256']??null)===$row['sha256']&&($pin['bytes']??null)===$row['byte_length']){
+                    $row['bundled_resource']=true;$row['bundled_name']=$row['name'];
+                }
+            }
+            if(in_array($row['kind'],['lua','blobs'],true)&&$row['state']==='available') {
+                // Prefer the actual package name, then a deterministic exact-byte
+                // match for renamed copies. Incoming documents supply no trust.
+                $known=$this->bundledLua;ksort($known);$preferred=$row['kind'].'/'.$row['name'];
+                if(isset($known[$preferred]))$known=[$preferred=>$known[$preferred]]+$known;
+                foreach($known as $name=>$baseline)if(str_starts_with($name,$row['kind'].'/')&&preg_match('~^(lua|blobs)/[A-Za-z0-9_.-]{1,128}$~D',$name)&&is_array($baseline)&&($baseline['bytes']??null)===$row['byte_length']&&($baseline['sha256']??null)===$row['sha256']) {
+                    $row['bundled_resource']=true;$row['bundled_lua']=$row['kind']==='lua';$row['bundled_name']=substr($name,strlen($row['kind'])+1);break;
+                }
+            }
         }
         return $out;
     }
@@ -99,7 +122,7 @@ final class AsusShareResources
                 $raw=$v['text'];
             }
             $total+=strlen($raw);if($total>self::TOTAL_LIMIT)throw new RuntimeException('output_limit');
-            $out[]=['id'=>$row['id'],'kind'=>$row['kind'],'name'=>$row['name'],'encoding'=>$row['encoding'],
+            $out[]=['id'=>$row['id'],'kind'=>$row['kind'],'name'=>basename($row['name']),'encoding'=>$row['encoding'],
                 'source_sha256'=>$row['sha256'],'byte_length'=>strlen($raw),'sha256'=>hash('sha256',$raw),'data_base64'=>base64_encode($raw)];
         }
         return $out;

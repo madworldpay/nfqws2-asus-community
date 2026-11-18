@@ -69,4 +69,20 @@ class DpiOptionsTests(unittest.TestCase):
     def test_profile_does_not_replace_the_native_embedded_domain_list(self):
         self.assertEqual(self.call({'profile':'global'})['coverage']['domains'],35)
 
+    def test_advanced_request_pool_round_trips_without_widening_dns_or_burst(self):
+        v=self.call({'config':{'MAX_CONCURRENT':512,'CONCURRENCY_PRESETS':[100,128,256,512]}})
+        self.assertNotIn('error',v)
+        self.assertEqual(json.loads(v['files']['config.yml'])['MAX_CONCURRENT'],512)
+        self.assertEqual(v['public_settings']['config']['MAX_CONCURRENT'],512)
+        self.assertEqual(v['coverage']['tcp'],110)
+        for pool in [1025,1000000]:
+            with self.subTest(pool=pool):
+                compiled=self.call({'config':{'MAX_CONCURRENT':pool}})
+                self.assertEqual(json.loads(compiled['files']['config.yml'])['MAX_CONCURRENT'],pool)
+                self.assertEqual(compiled['public_settings']['config']['MAX_CONCURRENT'],pool)
+        for options in [{'config':{'MAX_CONCURRENT':1000001}}, {'config':{'MAX_CONCURRENT':'128'}},
+                        {'config':{'DNS_EGRESS_CONCURRENCY':101}}, {'config':{'DNS_ASN_CONCURRENCY':101}},
+                        {'burst':{'connections':101}}]:
+            with self.subTest(options=options):self.assertTrue(self.call(options).get('error','').startswith('invalid_options'))
+
 if __name__=='__main__':unittest.main()

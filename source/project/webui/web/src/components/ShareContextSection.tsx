@@ -117,21 +117,6 @@ export const ShareContextSection = ({
           {t('share.location_unavailable')}
         </Typography>
       )}
-      <TextField
-        multiline
-        minRows={2}
-        maxRows={6}
-        disabled={disabled}
-        label={t('share.comment')}
-        value={value.context.comment}
-        slotProps={{ htmlInput: { maxLength: 2000 } }}
-        onChange={(e) =>
-          onChange((old) => ({
-            ...old,
-            context: { ...old.context, comment: e.target.value },
-          }))
-        }
-      />
     </Stack>
   );
 };

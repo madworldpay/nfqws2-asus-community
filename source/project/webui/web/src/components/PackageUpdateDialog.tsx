@@ -376,6 +376,17 @@ export function PackageUpdateDialog({
                 {t('package_update.done', { version: completedVersion })}
               </Alert>
               <CommunityChatLink copyable />
+              <Link
+                href="https://github.com/madworldpay/nfqws2-asus-community"
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="caption"
+                color="text.secondary"
+                underline="hover"
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                {t('package_update.star_project')}
+              </Link>
             </Stack>
           )}
           {operation?.core_state === 'waiting_for_wan' && (

@@ -46,17 +46,20 @@ class SharePrepareV4Tests(unittest.TestCase):
         self.assertEqual(s['schema_version'],2);self.assertIn('--blob=hello:',s['shared']['NFQWS_BASE_ARGS']);self.assertNotIn('/opt/etc',json.dumps(bodies));self.assertEqual(len(r['files']),3)
         self.assertTrue(all(x['included'] for x in s['dependencies']));self.assertEqual({x['name'] for x in r['files']},{'sites.list','custom.lua','hello.bin'})
         blob=next(f for f in r['files'] if f['kind']=='blobs');self.assertEqual(base64.b64decode(blob['data_base64']),b'\0\xffHELLO')
-    def test_strategy_alone_needs_no_files_or_missing_reason(self):
+    def test_strategy_automatically_carries_assets_but_keeps_lists_explicit(self):
         v=self.call('missing');self.assertNotIn('error',v);self.assertTrue(v['valid'])
-        self.assertEqual([f['type'] for f in v['prepared']['files']],['strategy'])
+        self.assertEqual([f['type'] for f in v['prepared']['files']],['strategy','resources'])
         s=json.loads(base64.b64decode(v['prepared']['files'][0]['data_base64']))
-        self.assertTrue(s['dependencies']);self.assertTrue(all(not dep['included'] for dep in s['dependencies']))
+        r=json.loads(base64.b64decode(v['prepared']['files'][1]['data_base64']))
+        self.assertEqual({f['name'] for f in r['files']},{'hello.bin','custom.lua'})
+        self.assertTrue(any(dep['included'] for dep in s['dependencies']))
+        self.assertFalse(r['audit']['complete'])
     def test_only_selected_file_travels_despite_hundred_other_lists(self):
         for mode in ('one_file','one_file_only'):
             v=self.call(mode);self.assertNotIn('error',v);self.assertTrue(v['valid'])
             bodies={f['type']:json.loads(base64.b64decode(f['data_base64'])) for f in v['prepared']['files']}
             self.assertEqual(set(bodies),{'strategy','resources'} if mode=='one_file' else {'resources'})
-            self.assertEqual([f['name'] for f in bodies['resources']['files']],['sites.list'])
+            self.assertEqual({f['name'] for f in bodies['resources']['files']},{'sites.list','hello.bin','custom.lua'} if mode=='one_file' else {'sites.list'})
             self.assertNotIn('UNSELECTED_CANARY',json.dumps(bodies))
     def test_dns_or_files_are_independent_of_strategy(self):
         for mode,kind in [('resources_only','resources'),('dns_only','dns')]:

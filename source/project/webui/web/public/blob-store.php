@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/dpi-store.php';
 require_once __DIR__.'/share-read.php';
+require_once __DIR__.'/resource-paths.php';
 /** Fixed blob resources are inert bytes. Mounted storage paths stay private. */
 final class AsusBlobStore
 {
@@ -71,10 +72,16 @@ final class AsusBlobStore
     public function inventory(): array
     {
         $out=['files'=>[],'skipped'=>0,'scan_truncated'=>false];if(!$this->directory())return $out;
-        $handle=@opendir($this->directory);if(!$handle)throw new RuntimeException('resource_unavailable');$count=0;$remaining=self::TOTAL_LIMIT;$catalog=$this->metadata();
+        $count=0;$remaining=self::TOTAL_LIMIT;$catalog=$this->metadata();
+        foreach(['','imported/'] as $prefix){
+        $directory=$this->directory.($prefix===''?'':'/imported');clearstatcache(true,$directory);
+        if(@lstat($directory)===false)continue;
+        if(!$this->reader->directory($directory)){$out['skipped']++;continue;}
+        $handle=@opendir($directory);if(!$handle)throw new RuntimeException('resource_unavailable');
         try{while(($name=readdir($handle))!==false){if($name==='.'||$name==='..')continue;
+            if($prefix===''&&$name==='imported')continue;
             if(++$count>self::SCAN_LIMIT){$out['scan_truncated']=true;break;}
-            if(!self::name($name)){$out['skipped']++;continue;}$path=$this->directory.'/'.$name;$stat=$this->reader->stat($path);
+            if(!self::name($name)||$prefix!==''&&NfqwsResourcePaths::relative('blobs/'.$prefix.$name)===null){$out['skipped']++;continue;}$path=$directory.'/'.$name;$stat=$this->reader->stat($path);
             if(!$stat){$out['skipped']++;continue;}if(count($out['files'])>=self::COUNT_LIMIT){$out['scan_truncated']=true;break;}
             $hash=null;$state='unavailable';$size=$stat['size'];
             if($size===0)$state='unavailable';
@@ -83,8 +90,9 @@ final class AsusBlobStore
             else {$limit=min(self::FILE_LIMIT,$remaining);$charged=$limit;
                 try{$raw=$this->reader->bytes($path,$limit);$charged=strlen($raw);$size=$charged;if($size>0){$hash=hash('sha256',$raw);$state='available';}}
                 catch(RuntimeException $e){}finally{$remaining-=$charged;}}
-            $out['files'][]=$this->row($name,$size,$hash,$state,$catalog);
+            $out['files'][]=$this->row($prefix.$name,$size,$hash,$state,$catalog);
         }}finally{closedir($handle);}
+        }
         usort($out['files'],fn($a,$b)=>strcmp($a['name'],$b['name']));return $out;
     }
     private static function same(array $a,array $b,array $fields=['dev','ino','mode','uid','gid','nlink']): bool

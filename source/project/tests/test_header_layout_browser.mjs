@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -7,6 +8,11 @@ import { build } from '../webui/web/node_modules/esbuild/lib/main.js';
 const { chromium } = await import(process.env.NFQWS_PLAYWRIGHT_MODULE || 'playwright');
 const web = fileURLToPath(new URL('../webui/web/', import.meta.url));
 const compact = await readFile(new URL('../webui/web/public/compact-viewport.css', import.meta.url));
+const measuredOnly = process.env.NFQWS_HEADER_MEASURED_IMPORT === '1';
+const measured = { id: '7'.repeat(32), result: '8'.repeat(32) };
+const measuredRaw = '{"fixture":"sealed measurement from the first round"}';
+const measuredHash = createHash('sha256').update(measuredRaw).digest('hex');
+const calls = [];
 const bundle = await build({ stdin: { resolveDir: web, loader: 'tsx', contents: `
   import React from 'react'; import {createRoot} from 'react-dom/client';
   import {QueryClientProvider} from '@tanstack/react-query';
@@ -38,12 +44,72 @@ try {
       ? new URLSearchParams([...await new Response(raw, { headers: { 'Content-Type': req.headers['content-type'] } }).formData()].map(([key, value]) => [key, String(value)]))
       : new URLSearchParams(raw);
     res.setHeader('Content-Type', 'application/json');
-    if (params.get('cmd') === 'status') res.end(JSON.stringify({ status: 0, platform: req.headers['x-platform'], nfqws2: true, anonym: true, authenticated: false, csrf_token: 'fixture', version: '1.3.2-88', service: false }));
+    const cmd = params.get('cmd');
+    if (measuredOnly) calls.push(Object.fromEntries(params));
+    if (cmd === 'status') res.end(JSON.stringify({ status: 0, platform: req.headers['x-platform'], nfqws2: true, anonym: true, authenticated: false, csrf_token: 'fixture', version: '1.3.2-88', service: false }));
+    else if (measuredOnly && cmd === 'pickerexport') res.end(JSON.stringify({
+      raw: measuredRaw, sha256: req.headers['x-damaged'] ? '0'.repeat(64) : measuredHash,
+      filename: `NFQWS2_MEASURED_${measured.result}.json`,
+    }));
+    else if (measuredOnly && cmd === 'importstatus') res.end(JSON.stringify({
+      state: 'idle', id: null, can_undo: false, config_saved: false, dns_draft_saved: false,
+    }));
+    else if (measuredOnly && cmd === 'importinspect') res.end(JSON.stringify({
+      values: { NFQWS_ARGS: '--filter-tcp=443' }, ports: {}, resources: [],
+      dns_sources: [], context: { purpose: 'Замер из первого прогона' },
+      source: null, ignored: [], input_sha256: measuredHash,
+    }));
+    else if (measuredOnly && cmd === 'importprepare') res.end(JSON.stringify({
+      ready: true, problems: [], warnings: [], required: { files: [], shared: [] },
+      affected_blocks: [], config: 'fixture', changes: [{ key: 'NFQWS_ARGS', before: '', after: '--filter-tcp=443' }],
+      files: [], draft: null, old_draft: null, digest: measuredHash, proof: 'fixture',
+    }));
     else { res.statusCode = 400; res.end(JSON.stringify({ error: 'unexpected_command' })); }
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   browser = await chromium.launch({ headless: true, ...(process.env.NFQWS_CHROMIUM_EXECUTABLE ? { executablePath: process.env.NFQWS_CHROMIUM_EXECUTABLE } : {}) });
-  for (const platform of ['asus-entware', 'openwrt']) for (const language of ['ru', 'en']) for (const appearance of ['rabbit', 'classic']) {
+  if (measuredOnly) for (const damaged of [false, true]) {
+    calls.length = 0;
+    const page = await browser.newPage({ extraHTTPHeaders: {
+      'x-platform': 'asus-entware', ...(damaged ? { 'x-damaged': '1' } : {}),
+    } });
+    page.setDefaultTimeout(6000);
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(ref => {
+      sessionStorage.setItem('nfqws-picker-import-v1', JSON.stringify(ref));
+      localStorage.setItem('lang', JSON.stringify('ru'));
+    }, measured);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?picker-import=1`);
+    const dialog = page.getByRole('dialog', { name: 'Импорт профиля' });
+    await dialog.waitFor();
+    const preview = dialog.getByRole('button', { name: 'Предпросмотр', exact: true }).filter({ hasText: 'Предпросмотр' });
+    const save = dialog.getByRole('button', { name: 'Сохранить выбранное', exact: true }).filter({ hasText: 'Сохранить выбранное' });
+    if (damaged) {
+      await dialog.getByRole('alert').waitFor();
+      assert.equal(await preview.isEnabled(), false);
+      assert.equal(calls.some(p => p.cmd === 'importinspect'), false);
+    } else {
+      await preview.and(page.locator(':enabled')).waitFor();
+      assert.deepEqual(calls.filter(p => p.cmd === 'pickerexport'), [
+        { cmd: 'pickerexport', csrf_token: 'fixture', ...measured },
+      ]);
+      assert.deepEqual(calls.filter(p => p.cmd === 'importinspect').map(p => JSON.parse(p.documents)), [[measuredRaw]]);
+      assert.equal(calls.some(p => p.cmd === 'importprepare'), false);
+      assert.equal(await save.isEnabled(), false);
+      await preview.click();
+      await save.and(page.locator(':enabled')).waitFor();
+      assert.deepEqual(calls.filter(p => p.cmd === 'importprepare').map(p => JSON.parse(p.documents)), [[measuredRaw]]);
+    }
+    assert.equal(calls.some(p => p.cmd === 'importapply' || p.cmd === 'pickerapply'), false);
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('nfqws-picker-import-v1')), null);
+    assert.deepEqual(errors, []);
+    await page.close();
+    console.log(damaged ? 'PASS refused a damaged measurement document' : 'PASS explicit Import preview for a sealed earlier measurement');
+  }
+  const platforms = process.env.NFQWS_HEADER_PLATFORM ? [process.env.NFQWS_HEADER_PLATFORM] : ['asus-entware', 'openwrt'];
+  assert.ok(platforms.every(value => ['asus-entware', 'openwrt'].includes(value)));
+  for (const platform of measuredOnly ? [] : platforms) for (const language of ['ru', 'en']) for (const appearance of ['rabbit', 'classic']) {
     const page = await browser.newPage({ extraHTTPHeaders: { 'x-platform': platform } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(({ language, appearance }) => { localStorage.setItem('lang', JSON.stringify(language)); localStorage.setItem('nfqws2-appearance', appearance); }, { language, appearance });
@@ -56,10 +122,18 @@ try {
         const controls = [...header.querySelectorAll('button:not(.rabbit-build-video-trigger),.MuiChip-root')].map(node => { const r = node.getBoundingClientRect(); return { text: node.getAttribute('aria-label') || node.textContent, chip: node.classList.contains('MuiChip-root'), x: r.x, y: r.y, width: r.width, height: r.height }; });
         const sprites = [...header.querySelectorAll('.rabbit-build-sprite')].map(node => { const r = node.getBoundingClientRect(); return { display: getComputedStyle(node).display, top: r.top, bottom: r.bottom }; });
         const r = header.getBoundingClientRect();
-        return { controls, sprites, width: document.documentElement.clientWidth, top: r.top, bottom: r.bottom };
+        const transfers = [...header.querySelectorAll('button img[src^="/community/"]')].map(image => {
+          const r = image.getBoundingClientRect();
+          return { src: image.getAttribute('src'), loaded: image.complete && image.naturalWidth > 0, width: r.width, height: r.height };
+        });
+        return { controls, sprites, transfers, width: document.documentElement.clientWidth, top: r.top, bottom: r.bottom };
       });
       const label = `${platform}/${language}/${appearance}/${viewport.width}x${viewport.height}`;
       assert.ok(result.controls.length >= 10, `${label}: real authorized header controls rendered`);
+      for (const name of ['import-937c2946.png', 'export-e9a226cd.png']) {
+        const image = result.transfers.find(value => value.src.endsWith(name));
+        assert.ok(image?.loaded && image.width >= 28 && image.height >= 28, `${label}: visible loaded rabbit for ${name}`);
+      }
       for (const control of result.controls) {
         assert.ok(Math.abs(control.height - 36) <= 1, `${label}: ${control.text} height ${control.height}`);
         assert.ok(control.x >= -1 && control.x + control.width <= result.width + 1, `${label}: ${control.text} fits the viewport`);
@@ -73,7 +147,7 @@ try {
         assert.ok(result.sprites.every(sprite => sprite.display === (compact ? 'none' : 'block')), `${label}: desktop rabbit retained, compact rabbit hidden`);
         if (!compact) assert.ok(result.sprites.every(sprite => sprite.top >= result.top && sprite.bottom <= result.bottom), `${label}: desktop artwork remains inside the header`);
       }
-      if (process.env.NFQWS_HEADER_SCREENSHOT_DIR && platform === 'openwrt' && language === 'ru' && appearance === 'rabbit') {
+      if (process.env.NFQWS_HEADER_SCREENSHOT_DIR && platform === (process.env.NFQWS_HEADER_PLATFORM || 'openwrt') && language === 'ru' && appearance === 'rabbit') {
         await mkdir(process.env.NFQWS_HEADER_SCREENSHOT_DIR, { recursive: true });
         await page.locator('header').screenshot({ path: `${process.env.NFQWS_HEADER_SCREENSHOT_DIR}/header-${viewport.width}x${viewport.height}.png` });
       }

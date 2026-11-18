@@ -24,3 +24,56 @@ export async function getMtprotoAddresses(
     throw new Error('invalid_response');
   return data;
 }
+
+export type RouterInstallJob = {
+  id: string;
+  state: 'queued' | 'running' | 'failed' | 'completed';
+  port: number;
+  code: string | null;
+};
+
+export async function routerInstallJob(
+  csrf: string,
+  start?: { request_id: string; port: string; secret: string },
+): Promise<RouterInstallJob | null> {
+  const { value } = await request(
+    csrf,
+    start ? 'mtprotoinstall' : 'mtprotoinstallstatus',
+    start ?? {},
+    1024,
+  );
+  const job = (value as { job?: RouterInstallJob })?.job;
+  if (job === null && !start) return null;
+  if (
+    !job ||
+    !/^[a-f0-9]{32}$/.test(job.id) ||
+    (start && job.id !== start.request_id) ||
+    !['queued', 'running', 'failed', 'completed'].includes(job.state) ||
+    !Number.isInteger(job.port) ||
+    job.port < 1024 ||
+    job.port > 65535 ||
+    (job.code !== null && typeof job.code !== 'string')
+  )
+    throw new Error('invalid_response');
+  return job;
+}
+
+export async function routerInstallConnection(csrf: string, id: string) {
+  const { value } = await request(
+    csrf,
+    'mtprotoinstalllink',
+    { request_id: id },
+    512,
+  );
+  const data = value as { port: number; secret: string };
+  if (
+    !data ||
+    !Number.isInteger(data.port) ||
+    data.port < 1024 ||
+    data.port > 65535 ||
+    typeof data.secret !== 'string' ||
+    !/^dd[a-f0-9]{32}$/.test(data.secret)
+  )
+    throw new Error('invalid_response');
+  return { port: String(data.port), secret: data.secret };
+}

@@ -22,7 +22,14 @@ asus_lock() {
     chmod 700 "$RUN_DIR" || return 1
     [ ! -L "$RUN_DIR/control.lock" ] || return 1
     exec 9>"$RUN_DIR/control.lock" || return 1
-    flock -n 9 || return 75
+    # The picker supervises this same process tree for the entire service
+    # action. Let it wait for a concurrent scheduler within that existing
+    # budget; ordinary callers retain the nonblocking conflict response.
+    if [ "${NFQWS_CORE_LOCK_WAIT:-0}" = 1 ]; then
+        flock 9 || return 75
+    else
+        flock -n 9 || return 75
+    fi
     ASUS_LOCK_HELD=1
     # Kernel releases the lease on exit, including SIGKILL; no stale PID lock.
     # Daemon/scheduler children explicitly close FD 9 below.

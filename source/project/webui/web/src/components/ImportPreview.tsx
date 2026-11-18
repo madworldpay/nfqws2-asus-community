@@ -45,6 +45,11 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
             : p.key || p.name || p.field || p.alias || p.id || ''}
         </Alert>
       ))}
+      {plan.problems.some((p) => p.code === 'unresolved_file') && (
+        <Alert severity="info" sx={{ overflowWrap: 'anywhere' }}>
+          {t('import.keenetic.missing_files')}
+        </Alert>
+      )}
       {plan.torrent_sites && (
         <Stack spacing={0.5}>
           <Typography variant="subtitle2">

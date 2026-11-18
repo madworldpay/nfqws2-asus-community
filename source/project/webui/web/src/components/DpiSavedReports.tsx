@@ -1,24 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
   Alert,
   Button,
+  IconButton,
   LinearProgress,
   Stack,
   Typography,
 } from '@mui/material';
 
 import {
+  deleteSaved,
   refreshSaved,
   ShareError,
   type SavedReport,
   type SavedReports,
 } from '@/api/shareClient';
 
+import { FrankShareButton } from '@/components/ShareDialog';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
-import { downloadDpiSavedReport } from '@/utils/dpiSavedDownload';
+import { downloadDpiSavedReport, dpiSavedFile } from '@/utils/dpiSavedDownload';
 
 export const DpiSavedReports = ({
   csrfToken,
@@ -32,6 +37,7 @@ export const DpiSavedReports = ({
   const [refreshIndex, setRefreshIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState('');
+  const [deleting, setDeleting] = useState('');
   const [error, setError] = useState('');
   const pending = useRef(false);
   const mounted = useRef(false);
@@ -89,7 +95,37 @@ export const DpiSavedReports = ({
     'csrf_failed',
     'origin_rejected',
   ].includes(error);
-  const busy = disabled || loading || !!downloading;
+  const remove = async (report: SavedReport) => {
+    if (pending.current || disabled || loading) return;
+    pending.current = true;
+    setDeleting(report.id);
+    setError('');
+    try {
+      await deleteSaved(csrfToken, report.id);
+      if (mounted.current)
+        setSaved(
+          (old) =>
+            old && {
+              ...old,
+              reports: old.reports.filter((item) => item.id !== report.id),
+            },
+        );
+    } catch (failure) {
+      if (mounted.current)
+        setError(
+          failure instanceof ShareError &&
+            ['unauthorized', 'forbidden', 'source_changed'].includes(
+              failure.code,
+            )
+            ? failure.code
+            : 'delete_failed',
+        );
+    } finally {
+      pending.current = false;
+      if (mounted.current) setDeleting('');
+    }
+  };
+  const busy = disabled || loading || !!downloading || !!deleting;
   return (
     <Stack
       component="section"
@@ -129,9 +165,11 @@ export const DpiSavedReports = ({
           {t(
             sessionError
               ? 'dpi_terminal.session_error'
-              : error === 'invalid_response'
-                ? 'dpi_terminal.report_changed'
-                : 'dpi_terminal.reports_failed',
+              : error === 'delete_failed'
+                ? 'dpi_terminal.report_delete_failed'
+                : error === 'source_changed' || error === 'invalid_response'
+                  ? 'dpi_terminal.report_changed'
+                  : 'dpi_terminal.reports_failed',
           )}
         </Alert>
       )}
@@ -171,19 +209,43 @@ export const DpiSavedReports = ({
                   {t('dpi_terminal.report_bytes', { bytes: report.bytes })}
                 </Typography>
               </Stack>
-              <Button
-                size="small"
-                startIcon={<DownloadIcon />}
+              <Stack direction="row" alignItems="center" gap={1}>
+                <IconButton
+                  size="small"
+                  disabled={busy}
+                  aria-label={String(
+                    t('dpi_terminal.report_delete', {
+                      filename: report.filename,
+                    }),
+                  )}
+                  title={String(
+                    t('dpi_terminal.report_delete', {
+                      filename: report.filename,
+                    }),
+                  )}
+                  onClick={() => void remove(report)}
+                  sx={{ '&:hover': { color: 'error.main' } }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+                <Button
+                  size="small"
+                  startIcon={<DownloadIcon />}
+                  disabled={busy}
+                  aria-label={`${t('dpi_terminal.report_download')}: ${report.filename}`}
+                  onClick={() => void download(report)}
+                >
+                  {t(
+                    downloading === report.id
+                      ? 'dpi_terminal.report_downloading'
+                      : 'dpi_terminal.report_download',
+                  )}
+                </Button>
+              </Stack>
+              <FrankShareButton
                 disabled={busy}
-                aria-label={`${t('dpi_terminal.report_download')}: ${report.filename}`}
-                onClick={() => void download(report)}
-              >
-                {t(
-                  downloading === report.id
-                    ? 'dpi_terminal.report_downloading'
-                    : 'dpi_terminal.report_download',
-                )}
-              </Button>
+                load={() => dpiSavedFile(csrfToken, report)}
+              />
             </Stack>
           ))}
         </Stack>

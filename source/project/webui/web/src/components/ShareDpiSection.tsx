@@ -24,6 +24,7 @@ import {
 import { newSupportSubmissionId } from '@/api/supportReport';
 
 import { RouterTrafficHelp } from '@/components/RouterTrafficHelp';
+import { FrankShareButton } from '@/components/ShareDialog';
 
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -230,6 +231,13 @@ export const ShareDpiSection = ({
             >
               {t('share.download_original')}
             </Button>
+            <FrankShareButton
+              disabled={disabled || busy}
+              load={async () => {
+                const f = await read(row);
+                return { blob: f.blob, filename: f.name };
+              }}
+            />
             <Button
               color="error"
               disabled={disabled || busy}

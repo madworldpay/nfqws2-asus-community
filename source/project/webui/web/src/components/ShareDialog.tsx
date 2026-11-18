@@ -14,6 +14,7 @@ import {
   FormControlLabel,
   IconButton,
   Stack,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -25,11 +26,13 @@ import {
   connectShareChannel,
   getShareState,
   getStrategyDraft,
+  openDownloadShare,
   prepareShare,
   saveShare,
   sendShare,
   ShareError,
   strategyContext,
+  type DownloadShareInput,
   type PreparedShare,
   type ShareLocation,
   type ShareSelection,
@@ -73,6 +76,31 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { shareMailUnavailableReason } from '@/utils/shareAvailability';
 
 type ShareErrorCode = keyof TranslationSchema['share']['errors'];
+function FrankComment({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <TextField
+      size="small"
+      fullWidth
+      multiline
+      minRows={2}
+      maxRows={3}
+      label={t('share.frank_comment')}
+      value={value}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      slotProps={{ htmlInput: { maxLength: 2000 } }}
+    />
+  );
+}
 const emptyStrategyForm = (): ShareStrategyForm => ({
   selected: [],
   full: false,
@@ -412,6 +440,9 @@ export const ShareDialog = ({
       const selection: ShareSelection = {
         version: 4,
         link_installation: link,
+        ...(form.context.comment.trim() && {
+          comment: form.context.comment.trim(),
+        }),
       };
       if (reportSelected && report?.proof)
         selection.report = {
@@ -664,6 +695,16 @@ export const ShareDialog = ({
           {error && (
             <Alert severity="error">{t(`share.errors.${error}`)}</Alert>
           )}
+          <FrankComment
+            value={form.context.comment}
+            disabled={disabled}
+            onChange={(comment) =>
+              updateForm((old) => ({
+                ...old,
+                context: { ...old.context, comment },
+              }))
+            }
+          />
           {snapshot && <SharePreview snapshot={snapshot} />}
           {snapshot && (
             <Typography variant="body2">
@@ -769,6 +810,198 @@ export const ShareDialog = ({
           onSave={save}
           onSend={() => void send()}
         />
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+/** Adjacent to a download: opens the same fixed-recipient mail review. */
+export const FrankShareButton = ({
+  load,
+  disabled = false,
+}: {
+  load: () =>
+    | Promise<{ blob: Blob; filename: string }>
+    | { blob: Blob; filename: string };
+  disabled?: boolean;
+}) => {
+  const { t } = useTranslation();
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState('');
+  const pending = useRef(false);
+  return (
+    <>
+      <Button
+        disabled={disabled || working}
+        onClick={() =>
+          void (async () => {
+            if (pending.current) return;
+            pending.current = true;
+            setWorking(true);
+            setError('');
+            try {
+              const file = await load();
+              await openDownloadShare(file.blob, file.filename);
+            } catch (e) {
+              setError(e instanceof ShareError ? e.code : 'unavailable');
+            } finally {
+              pending.current = false;
+              setWorking(false);
+            }
+          })()
+        }
+      >
+        {t('share.send')}
+      </Button>
+      {error && (
+        <Alert severity="warning">
+          {t(
+            error === 'output_limit'
+              ? 'share.artifact_too_large'
+              : 'share.artifact_unavailable',
+          )}
+        </Alert>
+      )}
+    </>
+  );
+};
+
+export const ArtifactShareDialog = ({
+  input,
+  csrfToken,
+  onClose,
+}: {
+  input: DownloadShareInput;
+  csrfToken: string;
+  onClose: () => void;
+}) => {
+  const { t } = useTranslation();
+  const [snapshot, setSnapshot] = useState<PreparedShare | null>(null);
+  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
+  const [comment, setComment] = useState('');
+  const [result, setResult] = useState<SupportMailResult | null>(null);
+  const pending = useRef(false);
+  useEffect(() => {
+    let current = true;
+    void prepareShare({ version: 4, artifact: input }, csrfToken).then(
+      (value) => {
+        if (current) setSnapshot(value);
+      },
+      (failure) => {
+        if (current)
+          setError(
+            failure instanceof ShareError ? failure.code : 'unavailable',
+          );
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [input, csrfToken]);
+  const original = Uint8Array.from(atob(input.data_base64), (c) =>
+    c.charCodeAt(0),
+  );
+  const text =
+    input.media_type.startsWith('text/') ||
+    input.media_type === 'application/json'
+      ? new TextDecoder().decode(original)
+      : null;
+  return (
+    <Dialog
+      open
+      onClose={sending ? undefined : onClose}
+      fullWidth
+      maxWidth="md"
+    >
+      <DialogTitle>{t('share.send')}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={1.5}>
+          <Typography>{t('share.artifact_hint')}</Typography>
+          <Typography sx={{ overflowWrap: 'anywhere' }}>
+            {input.filename} · {original.byteLength} B
+          </Typography>
+          {text === null ? (
+            <Typography>{t('share.artifact_binary')}</Typography>
+          ) : (
+            <Typography
+              component="pre"
+              sx={{
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                maxHeight: '40vh',
+                overflow: 'auto',
+              }}
+            >
+              {text}
+            </Typography>
+          )}
+          <FrankComment
+            value={comment}
+            disabled={sending || result !== null}
+            onChange={setComment}
+          />
+          {!snapshot && !error && <CircularProgress size={24} />}
+          {error && (
+            <Alert severity="warning">
+              {t(
+                error === 'busy'
+                  ? 'share.errors.busy'
+                  : 'share.artifact_unavailable',
+              )}
+            </Alert>
+          )}
+          {result && (
+            <Alert
+              severity={result.state === 'accepted' ? 'success' : 'warning'}
+            >
+              {t(
+                result.state === 'unknown'
+                  ? 'share.delivery_unknown'
+                  : `report.mail_states.${result.state}`,
+              )}
+            </Alert>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button disabled={sending} onClick={onClose}>
+          {t('common.close')}
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!snapshot || sending || result !== null}
+          onClick={() =>
+            void (async () => {
+              if (!snapshot || pending.current) return;
+              pending.current = true;
+              setSending(true);
+              try {
+                const message = comment.trim();
+                const reviewed = message
+                  ? await prepareShare(
+                      { version: 4, artifact: input, comment: message },
+                      csrfToken,
+                    )
+                  : snapshot;
+                setResult(
+                  await sendShare(
+                    reviewed,
+                    csrfToken,
+                    newSupportSubmissionId(),
+                  ),
+                );
+              } catch (e) {
+                setError(e instanceof ShareError ? e.code : 'unavailable');
+              } finally {
+                setSending(false);
+                pending.current = false;
+              }
+            })()
+          }
+        >
+          {t('share.send')}
+        </Button>
       </DialogActions>
     </Dialog>
   );

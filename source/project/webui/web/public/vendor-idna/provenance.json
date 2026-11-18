@@ -1,0 +1,195 @@
+{
+  "license": "MIT",
+  "files": [
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Idn.php",
+      "sha": "2dfefd41beb8ca995add5e04089451ea365e152e",
+      "size": 34747,
+      "destination": "idn/Idn.php",
+      "sha256": "b16f9ed99e1ea7bad346e03bdab6e0347ff990bb2ee677da1a69412959f9f571"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Info.php",
+      "sha": "25c3582b2a64731128adf273acf935532c5bf26f",
+      "size": 493,
+      "destination": "idn/Info.php",
+      "sha256": "92bb7f4240fbec226637cee39f4895184fef4f4c4e7bef7f35c1bb5c6497c095"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "LICENSE",
+      "sha": "fd0a0626a3324bf3fc586d4ca5657e4526c81538",
+      "size": 1114,
+      "destination": "idn/LICENSE.txt",
+      "sha256": "718d02a093edb2e5e3f6bd9ddf16417b27b66c4af62bee7b8aba64ebebfa6da0"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/DisallowedRanges.php",
+      "sha": "83eda60453340d3775d03f7287c3657d408fdaa9",
+      "size": 8850,
+      "destination": "idn/Resources/unidata/DisallowedRanges.php",
+      "sha256": "8daa5073086d50914830818697fdce19780d722b91d326b6bbfdbaf49d7cc40c"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/Regex.php",
+      "sha": "455e2334879c7b65f9734938d469bd3f1a183141",
+      "size": 103556,
+      "destination": "idn/Resources/unidata/Regex.php",
+      "sha256": "eb37395ed0d99a7ea936439fa2534a4ddd5c41ffbe745036b8ab1a2ade89d1da"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/deviation.php",
+      "sha": "0bbd3356774af6db0a19b9c81f397a9e51076389",
+      "size": 83,
+      "destination": "idn/Resources/unidata/deviation.php",
+      "sha256": "99a5e49efead1d6ee1780af3023d1f5fef26c7febb693e1ff9531c40c9dd63a3"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/disallowed.php",
+      "sha": "b5b21886f76983314751409d0c5acfe73082105b",
+      "size": 47229,
+      "destination": "idn/Resources/unidata/disallowed.php",
+      "sha256": "e0dd354f397924fc15a24480d6b35d4f63bfe5cf91baf2bb46be139fb64dd0f8"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/disallowed_STD3_mapped.php",
+      "sha": "54f21cc0cdd646c46f98c4e6feb7fe5ee8fec79a",
+      "size": 5442,
+      "destination": "idn/Resources/unidata/disallowed_STD3_mapped.php",
+      "sha256": "4b0c8682d28c96a7c9d7543d7f2177569d66cb2a47749090ac67ad48359111d3"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/disallowed_STD3_valid.php",
+      "sha": "8bc0954b3d4eb5d6b6aacffe913ff5a8f95d70c6",
+      "size": 916,
+      "destination": "idn/Resources/unidata/disallowed_STD3_valid.php",
+      "sha256": "9d404a4cf4044a11b0865493cd3a5ad793c3c771c2fecf002b09bb92d527f5c5"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/ignored.php",
+      "sha": "c421fe3261f6849aa0bb6dd18c38180f841920c0",
+      "size": 4848,
+      "destination": "idn/Resources/unidata/ignored.php",
+      "sha256": "fff8d116a7efe00a54809e7cb59f1a74193c38e5bf100c8120c0d69612ccd487"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/mapped.php",
+      "sha": "2adf034e7d77b1777952bfdba66142c388bba7bf",
+      "size": 106132,
+      "destination": "idn/Resources/unidata/mapped.php",
+      "sha256": "69e6e7f6ad35e94c337888c794ffe93aaabe9c0149e8f35fadfe12ebbc401484"
+    },
+    {
+      "repo": "polyfill-intl-idn",
+      "commit": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+      "path": "Resources/unidata/virama.php",
+      "sha": "440faceada4930a804d0bec34a8ddb132782820a",
+      "size": 908,
+      "destination": "idn/Resources/unidata/virama.php",
+      "sha256": "b2d2372cb04835a6e4683944a9a1db97d800ff59ff62a567480006695aa5b906"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "LICENSE",
+      "sha": "6e3afce692a768f69de3f66228dc8edda3c58602",
+      "size": 1068,
+      "destination": "normalizer/LICENSE.txt",
+      "sha256": "eaa5d6e59ff1d5322ae36d3ab9124460df72d2d0c8af60a99222e8a90dcbdf31"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Normalizer.php",
+      "sha": "3a3312d8a9c0237b227fb7a7eb61911405e4cfed",
+      "size": 11745,
+      "destination": "normalizer/Normalizer.php",
+      "sha256": "6ac464fc24012207cd73ef50c1390c9fb7aca742c186b91efdd3992092cfcda0"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/stubs/Normalizer.php",
+      "sha": "0fdfc890a2a8c5dee5e9d461ce90f0fdb55f4518",
+      "size": 404,
+      "destination": "normalizer/Resources/stubs/Normalizer.php",
+      "sha256": "f98e9fe75a0e2008e4e16ca369aa132a45408d4034b668e4afea9fcddca69964"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/unidata/canonicalComposition.php",
+      "sha": "db4764419e7e69041699e33c337beaac6cf319f2",
+      "size": 17635,
+      "destination": "normalizer/Resources/unidata/canonicalComposition.php",
+      "sha256": "d05e3b74aebcb4331dfed345c77d096a7036a6d7360f0ff8da288890fa7397f5"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/unidata/canonicalDecomposition.php",
+      "sha": "5a3e8e0969d62e73b1a96cbd3f963382cc0c1111",
+      "size": 39035,
+      "destination": "normalizer/Resources/unidata/canonicalDecomposition.php",
+      "sha256": "1bc87057e04a900531aed8819fb59e7aa8321a9ac62a38b1672759f6464ecc62"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/unidata/combiningClass.php",
+      "sha": "ec90f36eb65c636149d1de8f122e47649cefcbe2",
+      "size": 13636,
+      "destination": "normalizer/Resources/unidata/combiningClass.php",
+      "sha256": "f98aaf043ea59c470359e1fef1792f95ed34a2111fd7781744df926ceea8f2d7"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/unidata/compatibilityDecomposition.php",
+      "sha": "1574902893cc426f0993da8ac3918a90430eb3a7",
+      "size": 66927,
+      "destination": "normalizer/Resources/unidata/compatibilityDecomposition.php",
+      "sha256": "8fdf5cb56ec0a8021db5b090b981fff9250ced89dc2c8bfbaee0fe80b5b644a8"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/unidata/rawCanonicalDecomposition.php",
+      "sha": "5199549df4c5b796c2a67a48d3fda629f876702c",
+      "size": 38635,
+      "destination": "normalizer/Resources/unidata/rawCanonicalDecomposition.php",
+      "sha256": "99dba12f02b63f20049aac915c50799c3e6c9f434a9548ef354d96c0857b5969"
+    },
+    {
+      "repo": "polyfill-intl-normalizer",
+      "commit": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+      "path": "Resources/unidata/rawCompatibilityDecomposition.php",
+      "sha": "6a7eb8af2dc241bfd13e87c66b32961b3cd7629d",
+      "size": 68567,
+      "destination": "normalizer/Resources/unidata/rawCompatibilityDecomposition.php",
+      "sha256": "42db8ebeda91d49cc757a1d0d562c8462f1ab08b4711cf837e1595679f988e3c"
+    }
+  ],
+  "bootstrap": "idna.php loads exact classes; unused global upstream bootstraps omitted"
+}

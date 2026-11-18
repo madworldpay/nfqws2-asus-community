@@ -155,6 +155,65 @@ case "$action" in start) start_service;; stop)
         self.assertEqual(applied.get('state'),'awaiting_confirmation',applied);return applied
     def query(self,name):
         return self.php('require "/usr/share/nfqws2-web/openwrt-dns-probe.php";echo json_encode(NfqwsOpenWrtDnsProbe::query("127.0.0.1",53,'+json.dumps(name)+'));')
+    def test_current_dns_context_follows_primary_through_connect_and_return(self):
+        # An ASUS-shaped file is unrelated to the selected native instance.
+        self.put('/tmp/etc/dnsmasq.conf','server=198.51.100.53\n')
+        before=self.api('smartdnsconfigstatus')['dns']
+        self.assertEqual(before['default_servers'],[self.private_ip+'#11553'])
+        self.assertEqual(before['state'],'partial')  # Unexpanded VPN include.
+        self.assertFalse(before['connectivity_tested'])
+        self.assertFalse(before['client_overrides_observed'])
+        applied=self.begin('5')
+        try:
+            current=self.api('smartdnsconfigstatus')['dns']
+            self.assertEqual(current['default_servers'],['127.0.0.1#6054'])
+            self.assertEqual(current['state'],'available')
+            self.assertEqual(self.query('native.example')['answers'],['1.1.1.1'])
+        finally:
+            self.assertEqual(self.api('smartdnsrollback',request_id=applied['request_id'])['state'],'rolled_back')
+        self.assertEqual(self.api('smartdnsconfigstatus')['dns'],before)
+
+    def test_current_dns_context_reads_fixed_native_resolver_and_dhcp_snapshot(self):
+        # This checks generated configuration data, without querying its DNS.
+        self.put('/tmp/etc/dnsmasq.conf','server=198.51.100.53\n')
+        self.put('/tmp/resolv.conf.d/resolv.conf.auto','nameserver 192.0.2.53\nnameserver 2001:db8::53\n')
+        config=self.sh('cat /var/etc/dnsmasq.conf.nfqws_main').stdout
+        config='\n'.join(line for line in config.splitlines()if line!='no-resolv'and not line.startswith('server=')and not line.startswith('conf-dir='))
+        self.put('/var/etc/dnsmasq.conf.nfqws_main',config+'\nresolv-file=/tmp/resolv.conf.d/resolv.conf.auto\ndhcp-option=tag:lan,6,192.0.2.1\n')
+        current=self.api('smartdnsconfigstatus')['dns']
+        self.assertEqual(current['default_servers'],['192.0.2.53','2001:db8::53'])
+        self.assertEqual(current['dhcp_dns'],[{'scope':'tag:lan','servers':['192.0.2.1']}])
+        self.assertEqual(current['state'],'available')
+        self.assertFalse(current['connectivity_tested'])
+
+    def test_current_dns_context_refuses_unverified_primary_and_unsafe_source(self):
+        self.put('/tmp/etc/dnsmasq.conf','server=198.51.100.53\n')
+        ubus=self.sh('cat /bin/ubus').stdout
+        try:
+            self.put('/bin/ubus','#!/bin/sh\nprintf \'{}\\n\'\n','755')
+            unknown=self.api('smartdnsconfigstatus')['dns']
+            self.assertEqual(unknown['state'],'unknown')
+            self.assertEqual(unknown['default_servers'],[])
+        finally:self.put('/bin/ubus',ubus,'755')
+        self.sh('mv /var/etc/dnsmasq.conf.nfqws_main '+self.base+'/unsafe-source; ln -s '+self.base+'/unsafe-source /var/etc/dnsmasq.conf.nfqws_main')
+        try:
+            unknown=self.api('smartdnsconfigstatus')['dns']
+            self.assertEqual(unknown['state'],'unknown')
+            self.assertEqual(unknown['default_servers'],[])
+        finally:self.sh('rm /var/etc/dnsmasq.conf.nfqws_main; mv '+self.base+'/unsafe-source /var/etc/dnsmasq.conf.nfqws_main')
+
+    def test_current_dns_context_keeps_entware_fixed_sources(self):
+        self.put('/tmp/etc/dnsmasq.conf','server=9.9.9.9\nresolv-file=/tmp/resolv.dnsmasq\ndhcp-option=6,192.0.2.1\n')
+        self.put('/tmp/resolv.dnsmasq','nameserver 192.0.2.53\n')
+        path='/usr/share/nfqws2-web/platform-profile.json'
+        original=self.sh('cat '+path).stdout
+        try:
+            self.put(path,'{"schema_version":1,"platform":"asus-entware"}','644')
+            current=self.php('require "/usr/share/nfqws2-web/smartdns-config-api.php";echo json_encode((new ReflectionMethod(AsusSmartDnsConfigApi::class,"dnsContext"))->invoke(null,new AsusReportIO()));')
+            self.assertEqual(current['state'],'available')
+            self.assertEqual(current['default_servers'],['9.9.9.9','192.0.2.53'])
+            self.assertEqual(current['dhcp_dns'],[{'scope':'','servers':['192.0.2.1']}])
+        finally:self.put(path,original,'644')
     def test_apply_confirm_rollback_preserves_other_instance_and_vpn_routes(self):
         guest=self.sh('cat '+self.base+'/guest.pid').stdout
         before=self.sh('cat /tmp/dnsmasq.nfqws_main.d/vpn.conf').stdout

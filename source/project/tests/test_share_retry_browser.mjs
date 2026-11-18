@@ -25,10 +25,13 @@ try {
     import React from 'react'; import {createRoot} from 'react-dom/client';
     import {TranslationContext} from './src/context/TranslationContext';
     import ru from './src/translations/ru.json'; import en from './src/translations/en.json';
-    import {ShareDialog} from './src/components/ShareDialog';
+    import {ShareDialog,ArtifactShareDialog} from './src/components/ShareDialog';
     const pack=location.search.includes('en')?en:ru;
     const t=(key)=>key.split('.').reduce((v,k)=>v?.[k],pack)||key;
-    createRoot(document.getElementById('root')).render(<TranslationContext.Provider value={{t}}><ShareDialog onClose={()=>{}} onSent={()=>document.body.dataset.accepted='yes'}/></TranslationContext.Provider>);
+    const file={filename:'diagnostic.txt',media_type:'text/plain',data_base64:btoa('Original TXT'+String.fromCharCode(13,10))};
+    createRoot(document.getElementById('root')).render(<TranslationContext.Provider value={{t}}>{location.search.includes('artifact')
+      ? <ArtifactShareDialog csrfToken="fixture" input={file} onClose={()=>{}}/>
+      : <ShareDialog onClose={()=>{}} onSent={()=>document.body.dataset.accepted='yes'}/>}</TranslationContext.Provider>);
   ` }, bundle: true, platform: 'browser', format: 'iife', jsx: 'automatic', outfile: join(dir, 'fixture.js'),
     tsconfig: join(web, 'tsconfig.app.json'), logLevel: 'silent', define: { 'process.env.APP_VERSION': '"0.1.4"' },
     plugins: [{ name: 'status-fixture', setup(b) {
@@ -63,6 +66,13 @@ try {
       case 'sharelocation': value = { available: false }; break;
       case 'shareanalyze': value = { config_sha256: 'a'.repeat(64), audit: { references: [], missing: [], unresolved: [], complete: true } }; break;
       case 'shareprepare': {
+        const artifactSelection=JSON.parse(p.get('selection'));
+        if(artifactSelection.artifact){
+          const f=artifactSelection.artifact,bytes=Buffer.from(f.data_base64,'base64');
+          value={version:4,files:[{type:'artifact',filename:f.filename,byte_length:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),data_base64:f.data_base64}],
+            ...(artifactSelection.comment&&{comment:artifactSelection.comment}),proof:'v4.1000.'+'a'.repeat(32)+'.'+'b'.repeat(64)};
+          break;
+        }
         if (previewFailures.length) {
           const error = previewFailures.shift();
           res.statusCode = error === 'invalid_proof' ? 403 : error === 'source_changed' ? 409 : 503;
@@ -74,12 +84,19 @@ try {
         const body = Buffer.from(JSON.stringify({ type: 'nfqws2_strategy', schema_version: 2, mode: 'config', config: initial, ...selection.context }));
         const file = { type: 'strategy', filename: `NFQWS2_STRATEGY_2026-11-01_11-00-0${prepared}Z.json`, byte_length: body.length, sha256: createHash('sha256').update(body).digest('hex'), data_base64: body.toString('base64') };
         previews.push(file);
-        value = { version: 4, files: [file], source, proof: `v4.1000.${'a'.repeat(32)}.${'b'.repeat(64)}` };
+        value = { version: 4, files: [file], source, ...(selection.comment && {comment:selection.comment}), proof: `v4.1000.${'a'.repeat(32)}.${'b'.repeat(64)}` };
         break;
       }
       case 'sharesend': {
         const envelope = JSON.parse(p.get('envelope')); sends.push(envelope);
+        if(envelope.files[0].type==='artifact'){
+          assert.equal(envelope.files[0].filename,'diagnostic.txt');
+          assert.equal(Buffer.from(envelope.files[0].data_base64,'base64').toString(),'Original TXT\r\n');
+          assert.equal(envelope.comment,'Проверка с телефона.');
+          value={state:'accepted',submission_id:envelope.submission_id,code:'smtp_accepted'};break;
+        }
         assert.deepEqual(envelope.files, [previews.at(-1)]);
+        assert.equal(envelope.comment,'Долго загружается видео.');
         assert.equal(p.get('consent'), 'send');
         if (sends.length % 2 === 1) {
           previewFailures = ['unavailable', 'invalid_proof', 'source_changed'];
@@ -144,7 +161,7 @@ try {
     await guidancePreview.tap();
     const guidanceDownload = guidancePage.getByRole('button', { name: pack.report.download, exact: true });
     await guidancePage.waitForFunction(button => !button.disabled, await guidanceDownload.elementHandle());
-    assert.equal(await guidancePage.getByRole('button', { name: pack.share.send, exact: true }).isDisabled(), true, 'JSON download does not require configured sending');
+    assert.equal(await guidancePage.locator('.MuiDialogActions-root').getByRole('button', { name: pack.share.send, exact: true }).isDisabled(), true, 'JSON download does not require configured sending');
     const sendCount = sends.length;
     const guidanceDownloaded = guidancePage.waitForEvent('download'); await guidanceDownload.tap(); await guidanceDownloaded;
     assert.equal(sends.length, sendCount, 'preview and local download must not auto-deliver');
@@ -164,7 +181,8 @@ try {
     await page.getByLabel(pack.share.purpose, { exact: false }).fill('YouTube');
     await page.getByLabel(pack.share.operator, { exact: false }).fill('Diagnostic ISP');
     const preview = page.getByRole('button', { name: pack.share.preview, exact: true }).first();
-    const send = page.getByRole('button', { name: pack.share.send, exact: true });
+    const send = page.locator('.MuiDialogActions-root').getByRole('button', { name: pack.share.send, exact: true });
+    await page.getByRole('textbox', {name:pack.share.frank_comment}).fill('Долго загружается видео.');
     await preview.click(); await page.waitForFunction(button => !button.disabled, await send.elementHandle());
     assert.equal(await send.isEnabled(), true);
     const before = sends.length;
@@ -203,6 +221,14 @@ try {
     await page.close();
   }
   assert.deepEqual(errors, []);
+  const artifactPage=await browser.newPage();
+  await artifactPage.goto('http://127.0.0.1:'+server.address().port+'/?ru&artifact');
+  const note=artifactPage.getByRole('textbox',{name:'Комментарий для Фрэнка (необязательно)'});
+  const before=sends.length;await note.fill('Проверка с телефона.');assert.equal(sends.length,before);
+  await artifactPage.getByRole('button',{name:'Поделиться с Фрэнком',exact:true}).click();
+  await artifactPage.waitForFunction(()=>document.querySelector('[role="alert"]')!==null);
+  assert.equal(sends.length,before+1);
+  await artifactPage.close();
   console.log('PASS RU/EN initial strategy, lost response, saved JSON, explicit fresh preview/retry, exact bytes and accepted lock on mobile');
 } finally {
   [...heldDrafts.splice(0), ...heldFiles.splice(0)].forEach(resolve => resolve());

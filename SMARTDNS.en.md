@@ -2,6 +2,27 @@
 
 The SmartDNS wizard is available on ASUS/Entware and OpenWrt. The description of the `dnsmasq.postconf` hook and `/opt` paths below applies to ASUS/Entware; native OpenWrt uses its own dnsmasq integration.
 
+## Current DNS and returning to the previous route
+
+**DNS in use** shows addresses read from the router's current DNS configuration,
+separate domain routes and explicit DHCP DNS options. When SmartDNS is connected,
+it also lists resolvers, protocols and addresses from the **active profile**.
+Editing a draft does not switch the DNS that is currently connected.
+
+Router DNS and device DNS can differ. For example, DHCP can send devices to
+AdGuard at a separate LAN address, while AdGuard uses the router with SmartDNS.
+Manual settings, a VPN or browser secure DNS can choose a different path.
+Reconnect devices after changing DHCP DNS so they receive the new settings.
+A configuration snapshot does not verify every DNS query; unreadable sources are
+shown as unknown rather than assigned an assumed resolver.
+
+To disconnect the profile, use **Restore previous DNS** on the same page.
+Wait for the result and check the updated addresses under **DNS in use**.
+This removes our forwarding; it does not change manual device DNS or ASUS
+**LAN → DHCP Server** fields. If you changed those separately, restore their
+saved previous values there. A conflict message means restoration has not been
+confirmed; keep the message and do not assume DNS has been restored.
+
 ## What it is for
 
 **SmartDNS is a separate utility, not a built-in ASUS feature.**
@@ -20,6 +41,52 @@ To use these features, install SmartDNS through our panel. It helps
 obtain the required site addresses, while NFQWS2 processes connections to them.
 If a strategy's result depends on DNS, transfer them together: the same strategy
 with different addresses may produce a different result. A fixed IP address may become outdated.
+
+## Encrypted DNS and checking leaks
+
+DoT and DoH encrypt queries between SmartDNS and the selected resolver. Plain
+UDP/TCP DNS sends them unencrypted: entering `8.8.8.8` alone does not enable
+encryption. Check the **protocol**, default resolvers and site assignments.
+Multiple DoT/DoH options let you choose reachable resolvers and different CDN
+answers; the suitable choice depends on your network. [SmartDNS protocols](https://pymumu.github.io/smartdns/en/config/basic-config/).
+
+**Adding DoH does not disable plain DNS entries in the profile.** A UDP/TCP
+resolver also selected as **Default** or assigned to a site still permits
+an unencrypted path for those queries. Review the entire profile, including fallbacks.
+
+If you do not use SmartDNS, supported ASUS firmware offers stock
+**WAN → Internet Connection → DNS Privacy Protocol → DNS-over-TLS**.
+Set the resolver and certificate hostname using the [official ASUS instructions](https://www.asus.com/us/support/faq/1051428/).
+Stock DoH availability depends on firmware; these instructions cover DoT.
+
+Also check client DNS, IPv6, VPNs and fallback resolvers: some queries may follow
+a different path. Detector's DNS test directly queries public resolvers,
+including over UDP; distinguish its results from the actual path of ordinary
+device queries. Google appearing in that test alone is not proof of a leak.
+
+Change one setting at a time and compare repeated measurements and the service
+you need. DoT/DoH keep your public IP unchanged and do not guarantee a different
+region or lower ping. Changing resolvers can change CDN answers and latency.
+
+## Using SmartDNS with XrayUI
+
+If SmartDNS refuses to connect after XrayUI starts, save the exact panel check
+message. One confirmed cause is another script recreating the shared
+`dnsmasq.postconf` with write permission for everyone (`0777`). The SmartDNS
+safety check rejects that script.
+
+For a permission error, click **“Fix permissions and validate”**. For a regular
+root-owned script with mode `0777`, the panel saves a backup, sets `0755` and
+validates the profile again. Addon commands, ownership and DNS stay unchanged.
+The button leaves files with other owners or modes untouched. If an addon
+recreates the file again, the repair may need to be repeated.
+
+Check the shared script's owner, permissions and contents together: it may
+contain commands from several add-ons. Having XrayUI installed alone does not
+establish this cause; behavior depends on its version and the firmware. If the
+permissions are correct, investigate the specific message and DNS state,
+including any rollback result. Bring the saved log to the
+[community chat](https://t.me/nfqws2AsusCommunityChat).
 
 ## How much you can add
 

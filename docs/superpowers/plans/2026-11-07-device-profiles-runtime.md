@@ -12,7 +12,7 @@
 
 ## Global constraints
 
-- Scope expanded by owner: install on main ASUS and87U, then publish all22 supported architectures with the new optional mode clearly marked beta. No topology/firmware changes.
+- Scope expanded by owner: install on main ASUS and87U, then publish all22 supported architectures with the new optional mode clearly described as optional. No topology/firmware changes.
 - Common remains the default. Saving/previewing never applies traffic. Activation requires an explicit apply button.
 - Preserve normal configuration/resources, IPv6 OFF and original service state during installation. Temporary runtime checks must clean up only their own objects.
 - Use a maximum of four distinct additional strategy processes, eight library entries and sixteen ordered cards. Explain resource limits before activation.
@@ -70,14 +70,14 @@ Ruling: user opted out of further questions and explicitly authorized finishing/
 
 ## Scope extension — explicit owner instructions
 
-Ruling: owner expanded from87U to bothASUS targets, then allarchitectures, and requested mainASUS installation. Publish one coherent Build98 for all22 supported packages only after real common/split/failure recovery and client packet tests. Clearly say beta in update notes and UI; default remains common, never auto-assign devices. Existing Build97 artifacts stay immutable.
+Ruling: owner expanded from87U to bothASUS targets, then allarchitectures, and requested mainASUS installation. Publish one coherent Build98 for all22 supported packages only after real common/split/failure recovery and client packet tests. Describe the optional mode in update notes and UI; default remains common, never auto-assign devices. Existing Build97 artifacts stay immutable.
 
 Ruling: the new independent Entware adapter is delegated under dispatching-parallel-agents while the executor finishes shared PHP/native integration. The independent agent owns only Entware shell/overlay/tests; no shared PHP or builders. Native audit is read-only. One whole-branch fresh review still runs at end.
 
 ### 4. Entware adapter and packaged integration
 - [ ] Prove symlinked firmware /opt reads/writes through one pinned boundary; share literal config parser and isolated imports, preserving allnormalconfig/files.
 - [ ] Implement owned extra daemon lifecycle, ordered iptables goto selectors/reply and oldkernel validation; verify real packet classification and failed-start restoration.
-- [ ] Package auth dispatcher, standalonebeta UI and permanent hook manifest for bothASUS and allOpenWrt packages; visible panel link, brief beginnerhelp and beta release notes.
+- [ ] Package auth dispatcher, standalone UI and permanent hook manifest for bothASUS and allOpenWrt packages; visible panel link, brief beginnerhelp and release notes.
 - [ ] Full regression +22package build/reproduction, fresh whole-feature review, install and prove on mainASUS/87U, then publish and verify signed feed.
 
 

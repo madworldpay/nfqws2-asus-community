@@ -45,6 +45,85 @@ final class AsusSmartDnsLifecycle
             }
         } while (true);
     }
+    /** One bounded, private latest outcome, with no profile or resolver data. */
+    private function recordBoot(int $attempt,string $boot,array $result): void
+    {
+        $root=$this->store->directory(false);
+        if ($root===null) throw new RuntimeException('storage_unavailable');
+        $owner=lstat($root)['uid'];$path=$root.'/boot-status.json';clearstatcache(true,$path);$before=@lstat($path);
+        $valid=static fn($s)=>$s===false || (($s['mode']&0170000)===0100000 && $s['uid']===$owner && $s['nlink']===1 && ($s['mode']&0777)===0600 && $s['size']<=4096);
+        if (!$valid($before)) throw new RuntimeException('invalid_state');
+        $state=$result['state']??'failed';$code=$result['code']??null;
+        if (!in_array($state,['starting','idle','validating','preview_ready','applying','awaiting_confirmation','confirmed','rolling_back','rolled_back','failed','conflict','action_required'],true)) $state='failed';
+        if ($code!==null && (!is_string($code) || !preg_match('/^[a-z][a-z0-9_]{0,63}$/D',$code))) $code='unavailable';
+        $raw=json_encode(['attempt'=>$attempt,'state'=>$state,'code'=>$code,'boot'=>$boot],JSON_THROW_ON_ERROR)."\n";
+        $tmp=$root.'/.boot-'.bin2hex(random_bytes(12));$mask=umask(0077);
+        try {$file=@fopen($tmp,'xb');}finally {umask($mask);}
+        if (!is_resource($file)) throw new RuntimeException('storage_unavailable');
+        try {
+            if (fwrite($file,$raw)!==strlen($raw) || !fflush($file) || function_exists('fsync') && !fsync($file)) throw new RuntimeException('storage_unavailable');
+            fclose($file);$file=null;clearstatcache(true,$path);$after=@lstat($path);
+            if (!$valid($after) || ($before===false)!==($after===false)) throw new RuntimeException('invalid_state');
+            if ($before!==false) foreach (['dev','ino','size','mtime','ctime'] as $key) if ($before[$key]!==$after[$key]) throw new RuntimeException('invalid_state');
+            if (!@rename($tmp,$path)) throw new RuntimeException('storage_unavailable');
+        } finally {if (is_resource($file)) fclose($file);if (is_file($tmp)) unlink($tmp);}
+    }
+    /** Boot callers hold one resume mutex and mutation lease for this entire
+     * bounded series. Manual resume deliberately remains a single attempt. */
+    public function resumeBoot(): array
+    {
+        $intent=$this->store->intent();
+        if ($intent===null) return ['state'=>'idle','code'=>null];
+        $boot=trim((string)@file_get_contents('/proc/sys/kernel/random/boot_id',false,null,0,65));
+        if (!preg_match('/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/D',$boot)) throw new RuntimeException('invalid_state');
+        $origin=$this->store->transaction();$native=$this->backend->state();$active=$this->store->active();
+        if ($active!==null && $active['profile_hash']!==$intent['profile_hash']) return ['state'=>'action_required','code'=>'stale_state'];
+        $oldRestore=$origin!==null && $native!==null && in_array($origin['state'],['confirmed','conflict'],true)
+            && $origin['request_id']===$intent['source_request_id'] && $origin['profile_hash']===$intent['profile_hash']
+            && ($origin['boot']??null)!==$boot && ($origin['boot']??null)===$native['boot_id']
+            && $native['request_id']===$origin['request_id'] && $native['profile_hash']===$intent['profile_hash'];
+        // Reuse the existing native boot budget: four attempts, waits 2/4/6s.
+        // Every operation inside resume has its own bounded deadline.
+        for ($attempt=1;$attempt<=4;$attempt++) {
+            if ($this->store->intent()!==$intent) return ['state'=>'action_required','code'=>'stale_state'];
+            $this->recordBoot($attempt,$boot,['state'=>'starting','code'=>null]);
+            $error=null;
+            try {$result=$this->resume();}
+            catch (Throwable $e) {$error=$e;$result=['state'=>'failed','code'=>$e->getMessage()];}
+            $outcome=$result;
+            if (($result['state']??null)==='conflict' && method_exists($this->backend,'restoreFailure') && $this->backend->restoreFailure()==='dns_restart_failed') $outcome['code']='dns_restart_failed';
+            $this->recordBoot($attempt,$boot,$outcome);
+            $retry=false;
+            if ($attempt<4 && $this->store->intent()===$intent) {
+                $job=$this->store->transaction();$current=$this->backend->state();
+                // This is a retry of restoring the consent-bound previous boot,
+                // never of a new DNS switch. Inspect the native outcome because
+                // rollback's conservative public fallback is hook_conflict.
+                if ($error===null && $oldRestore && ($result['state']??null)==='conflict'
+                    && ($job['request_id']??null)===$origin['request_id'] && ($job['boot']??null)===$origin['boot']
+                    && ($job['profile_hash']??null)===$intent['profile_hash']
+                    && $current!==null && $current['request_id']===$native['request_id']
+                    && $current['profile_hash']===$native['profile_hash'] && $current['boot_id']===$native['boot_id']
+                    && $current['phase']==='conflict' && method_exists($this->backend,'restoreFailure')
+                    && $this->backend->restoreFailure()==='dns_restart_failed') $retry=true;
+                elseif (in_array($result['code']??null,['baseline_unavailable','stale_baseline'],true)
+                    && in_array($result['state']??null,['failed','rolled_back'],true) && $this->store->active()===null) {
+                    $priorNative=$current===null ? $native===null : $native!==null && $current['phase']==='rolled_back'
+                        && $current['request_id']===$native['request_id'] && $current['profile_hash']===$native['profile_hash'] && $current['boot_id']===$native['boot_id'];
+                    $priorJob=$job===null ? $origin===null : $job['profile_hash']===$intent['profile_hash']
+                        && (($job['request_id']===$intent['source_request_id'] && $job['state']==='rolled_back')
+                            || (in_array($job['state'],['failed','preview_ready'],true) && $job['backup_id']===null
+                                && ($job['profile_source']??null)==='confirmed' && ($job['source_request_id']??null)===$intent['source_request_id']
+                                && ($job['engine_sha']??null)===$intent['engine_sha']));
+                    $retry=$priorNative && $priorJob;
+                }
+            }
+            if (!$retry) {if ($error!==null) throw $error;return $result;}
+            if (isset($this->deps['boot_pause'])) ($this->deps['boot_pause'])($attempt*2);
+            else sleep($attempt*2);
+        }
+        throw new RuntimeException('invalid_state');
+    }
     /** Resume only prior explicit consent, same engine, and a freshly tested profile. */
     public function resume(): array
     {

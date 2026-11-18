@@ -3,14 +3,15 @@ require_once __DIR__.'/dpi-install.php';
 require_once __DIR__.'/dpi-normalize.php';
 require_once __DIR__.'/dpi-analysis.php';
 require_once __DIR__.'/dpi-terminal-lifecycle.php';
+require_once __DIR__.'/dpi-dns-context.php';
 /** All dependencies are internal; no browser-selected command, target, path or environment. */
 final class AsusDpiJobs
 {
     private AsusDpiStore $store;
     public function __construct(?AsusDpiStore $store=null,private array $deps=[]){$this->store=$store??new AsusDpiStore();}
-    private function available(): void
+    private function available(string $kind,array $params): void
     {
-        $cap=isset($this->deps['available'])?($this->deps['available'])():(new AsusDpiInstaller())->availability();
+        $cap=isset($this->deps['available'])?($this->deps['available'])($kind,$params):(new AsusDpiInstaller())->availability($kind==='run'?$params:null);
         if(!$cap['available'])throw new RuntimeException($cap['code']);
     }
     private function start(string $request,string $kind,array $params): array
@@ -18,7 +19,7 @@ final class AsusDpiJobs
         return $this->store->mutation(function()use($request,$kind,$params){
         $gate=$this->deps['terminal_gate']??new AsusDpiTerminalLifecycle();
         return $gate->idle(function()use($request,$kind,$params){
-        $this->available();$job=$this->store->reserve($request,$kind,$params);
+        $this->available($kind,$params);$job=$this->store->reserve($request,$kind,$params);
         if($this->store->claimLaunch($job['id'])) {
             try{if(isset($this->deps['launch']))($this->deps['launch'])($job['id'],$kind);else (new AsusDpiRuntime())->launch($job['id'],$kind);}
             catch(Throwable $e){$this->store->update($job['id'],['state'=>'failed','finished_at'=>time(),'code'=>self::code($e->getMessage())]);throw new RuntimeException(self::code($e->getMessage()));}
@@ -53,7 +54,7 @@ final class AsusDpiJobs
     public function active(): ?array{return $this->state()['active'];}
     private function state(): array
     {
-        $s=$this->store->status();$job=$s['active'];
+        $s=$this->store->status(false);$job=$s['active'];
         if($job!==null) {
             $run=NfqwsPlatform::translate('/opt/var/lib/nfqws2-asus/dpi-detector/runs/').$job['id'];$outcome=null;
             if(is_file($run.'/outcome')&&!is_link($run.'/outcome'))$outcome=trim(file_get_contents($run.'/outcome',false,null,0,32));
@@ -68,12 +69,25 @@ final class AsusDpiJobs
                     $endUp=(float)$recorded;$finished=min(time(),$job['started_at']+(int)floor($endUp-$job['started_uptime']));
                 }
                 $patch=['state'=>$state,'finished_at'=>$finished,'finished_uptime'=>$endUp,'code'=>self::code($outcome),'current_group'=>null];
+                // A failed optional report must never keep an orphan active.
+                $this->store->update($job['id'],$patch);$expected=array_replace($job,$patch);
                 if($job['kind']==='run'&&$job['groups']!==[]) {
-                    $before=$job['context_before']??AsusDpiWorker::unknownContext();$after=AsusDpiWorker::context();
-                    if(isset($job['groups'][0]['document']))$patch=array_merge($patch,AsusDpiWorker::resultPatch($job,$job['groups'],$this->store->readOptions($job['id']),$state,$finished,$before,$after,$job['messages']??[]));
-                    else $patch['result']=AsusDpiNormalizer::report(['started_at'=>$job['started_at'],'finished_at'=>$finished,'state'=>$state,'tests'=>$job['params']['tests']],$job['groups'],['before'=>$before,'after'=>$after,'changed'=>$before!==$after]);
+                    try {
+                        $options=$this->store->readOptions($job['id']);AsusDpiLoadPolicy::reportMemory($options);
+                        $data=$this->store->recoveryData($expected);$before=$job['context_before']??AsusDpiWorker::unknownContext();
+                        if(isset($job['context_after']))$after=$job['context_after'];
+                        else{
+                            $context=$this->deps['recovery_context']??[AsusDpiWorker::class,'context'];$dnsFailure=null;$after=$context($dnsFailure);
+                            if($dnsFailure!==null)$data['messages']=$this->store->appendRecoveryMessage($expected,AsusDpiWorker::dnsMessage('recovery',$dnsFailure));
+                        }
+                        if(isset($data['groups'][0]['document']))$reports=AsusDpiWorker::resultPatch($job,$data['groups'],$options,$state,$finished,$before,$after,$data['messages']);
+                        else $reports=['result'=>AsusDpiNormalizer::report(['started_at'=>$job['started_at'],'finished_at'=>$finished,'state'=>$state,'tests'=>$job['params']['tests']],$data['groups'],['before'=>$before,'after'=>$after,'changed'=>$before!==$after])];
+                        $reports=array_intersect_key($reports,array_flip(['native','result','code']));
+                    }catch(Throwable $e){$reports=['code'=>self::code($e->getMessage())];}
+                    try{$this->store->completeRecovery($expected,$reports);}
+                    catch(RuntimeException $e){if(!in_array($e->getMessage(),['missing_job','request_conflict'],true))throw $e;}
                 }
-                $this->store->update($job['id'],$patch);$s=$this->store->status();
+                $s=$this->store->status(false);
             }
         }
         return $s;
@@ -88,6 +102,8 @@ final class AsusDpiJobs
     public function stop(string $jobId): array{return (new AsusDpiRuntime())->stop($jobId);}
     public function result(string $jobId): string{return $this->store->readResult($jobId);}
     public function native(string $jobId): string{return $this->store->readNative($jobId);}
+    /** Internal exact-source projection; no new HTTP route or launch. */
+    public function nativeSnapshot(string $jobId,string $requestId):array{return $this->store->nativeSnapshot($jobId,$requestId);}
     public function deleteResult(string $jobId): void{$this->store->deleteResult($jobId);}
 }
 final class AsusDpiWorker
@@ -99,6 +115,7 @@ final class AsusDpiWorker
     {return AsusDpiOptions::compile($options,$g,$binary)['argv'];}
     public static function resultPatch(array $job,array $groups,array $options,string $state,int $finished,array $before,array $after,array $messages): array
     {
+        AsusDpiLoadPolicy::reportMemory($options);
         $c=AsusDpiOptions::compile($options,0,'/native');
         $metadata=['started_at'=>$job['started_at'],'finished_at'=>$finished,'state'=>$state,'tests'=>$job['params']['tests']];
         $context=['before'=>$before,'after'=>$after,'changed'=>$before!==$after];$outcome=[];
@@ -115,16 +132,19 @@ final class AsusDpiWorker
         try{return array_merge(['native'=>$raw,'result'=>AsusDpiAnalysis::report(json_decode($raw,true,32,JSON_THROW_ON_ERROR))],$outcome);}
         catch(Throwable $e){$doc=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$doc['state']='partial';return ['native'=>json_encode($doc,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n",'state'=>'partial','code'=>strlen($raw)>262144?'output_limit':'invalid_dpi'];}
     }
-    public static function unknownContext(): array{return ['nfqws'=>'unknown','ark'=>'unknown','tun_observed'=>false];}
-    public static function context(): array
+    public static function unknownContext(): array{return ['nfqws'=>'unknown','ark'=>'unknown','tun_observed'=>false,'dns'=>['schema_version'=>1,'state'=>'unknown','sha256'=>null]];}
+    public static function context(?array &$dnsFailure=null): array
     {
         $context=self::unknownContext();$modules=@file_get_contents('/proc/modules');
         if(is_string($modules))$context['ark']=preg_match('/^ark\s/m',$modules)?'loaded':'absent';
         $context['nfqws']='stopped';
         foreach(glob('/proc/[0-9]*/comm')?:[] as $file){$name=trim((string)@file_get_contents($file));if(in_array($name,['nfqws','nfqws2'],true)){$context['nfqws']='running';break;}}
         foreach(glob('/sys/class/net/*/tun_flags')?:[] as $file)if(is_file($file)){$context['tun_observed']=true;break;}
+        $dns=AsusDpiDnsContext::observe();$context['dns']=$dns['context'];$dnsFailure=$dns['failure'];
         return $context;
     }
+    public static function dnsMessage(string $phase,array $failure):array
+    {return ['group'=>null,'text'=>'DNS context unavailable ('.$phase.'): '.$failure['stage'].' '.$failure['source'].':'.$failure['line']];}
     private function work(string $id,array $options): string
     {
         if(isset($this->deps['work']))return ($this->deps['work'])($id);
@@ -139,10 +159,14 @@ final class AsusDpiWorker
     public function run(string $id): void
     {
         $job=$this->store->status()['active'];if(($job['id']??null)!==$id||$job['state']!=='queued')throw new RuntimeException('missing_job');
-        $options=$this->store->readOptions($id);$this->store->update($id,['state'=>'running']);$groups=[];$messages=[];$messageBytes=0;$before=self::unknownContext();$after=$before;$state='failed';$code=null;
+        try{$options=$this->store->readOptions($id);AsusDpiLoadPolicy::reportMemory($options);}
+        catch(Throwable $e){$this->store->update($id,['state'=>'failed','finished_at'=>time(),'code'=>AsusDpiJobs::code($e->getMessage())]);return;}
+        $this->store->update($id,['state'=>'running']);$groups=[];$messages=[];$messageBytes=0;$before=self::unknownContext();$after=$before;$state='failed';$code=null;
+        $context=$this->deps['context']??[self::class,'context'];
         try {
             if($job['kind']==='install'){(new AsusDpiInstaller())->install($id);$this->store->update($id,['state'=>'completed','finished_at'=>time()]);return;}
-            $context=$this->deps['context']??[self::class,'context'];$before=$context();$this->store->update($id,['context_before'=>$before]);
+            $dnsFailure=null;$before=$context($dnsFailure);if($dnsFailure!==null)$messages[]=self::dnsMessage('before',$dnsFailure);
+            $this->store->update($id,['context_before'=>$before,'messages'=>$messages]);
             $work=$this->work($id,$options);$binary=isset($this->deps['binary'])?($this->deps['binary'])():(new AsusDpiInstaller())->binary();
             foreach($job['params']['tests'] as $g) {
                 $this->store->update($id,['current_group'=>$g]);$args=self::arguments($binary,$g,$options);
@@ -155,11 +179,19 @@ final class AsusDpiWorker
             }
             $state='completed';
         }catch(Throwable $e){$code=AsusDpiJobs::code($e->getMessage());$state=in_array($code,['cancelled','timed_out','interrupted'],true)?$code:($groups!==[]?'partial':'failed');}
-        $after=isset($this->deps['context'])?($this->deps['context'])():self::context();
-        $patch=['state'=>$state,'finished_at'=>time(),'code'=>$code,'groups'=>$groups,'context_after'=>$after,'current_group'=>null];
+        $dnsFailure=null;$after=$context($dnsFailure);if($dnsFailure!==null)$messages[]=self::dnsMessage('after',$dnsFailure);
+        // Preserve the actual endpoint before optional report building can die.
+        $this->store->update($id,['context_after'=>$after,'messages'=>$messages,'current_group'=>null]);
+        $patch=['state'=>$state,'finished_at'=>time(),'code'=>$code,'groups'=>$groups,'messages'=>$messages,'context_after'=>$after,'current_group'=>null];
         if($job['kind']==='run'){
             try{$patch=array_merge($patch,self::resultPatch($job,$groups,$options,$state,time(),$before,$after,$messages));}
-            catch(Throwable $e){$patch['state']='partial';$patch['code']=AsusDpiJobs::code($e->getMessage());}
+            catch(Throwable $e){
+                // Optional exports cannot overwrite a cancellation or invent
+                // partial work when no probe completed.
+                if(!in_array($state,['cancelled','timed_out','interrupted'],true)){
+                    $patch['state']=$groups!==[]?'partial':'failed';$patch['code']=AsusDpiJobs::code($e->getMessage());
+                }
+            }
         }
         $this->store->update($id,$patch);
     }

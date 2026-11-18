@@ -59,7 +59,7 @@ class LuaOpkgUpgradeTests(unittest.TestCase):
                 php = php.replace(",0);", ',' + str(os.getuid()) + ');')
                 php = php.replace(",0,'/opt'", ',' + str(os.getuid()) + ',' + repr(str(self.opt)))
                 payload['opt/lib/nfqws2-asus/lua-upgrade.php'] = (php.encode(), 0o644)
-                for name in ['openwrt-resource-upgrade.php', 'support-json-schema.php', 'platform.php']:
+                for name in ['openwrt-resource-upgrade.php', 'support-json-schema.php', 'resource-paths.php', 'platform.php']:
                     payload['opt/share/nfqws-asus-web/' + name] = ((ROOT / 'webui/web/public' / name).read_bytes(), 0o644)
                 command = [str(PHP), '-n', '-d', 'register_argc_argv=1', '-q', '-f', str(self.opt / 'lib/nfqws2-asus/lua-upgrade.php'), '--']
                 gate=('if [ -e '+shlex.quote(str(self.base/'pause-postinst'))+' ]; then exit 43; fi\n')if interrupt else ''

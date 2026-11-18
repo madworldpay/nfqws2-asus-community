@@ -35,10 +35,10 @@ final class AsusShareBundle
         $sort=function(array $v)use(&$sort):array {ksort($v);foreach($v as &$x)if(is_array($x))$x=$sort($x);return $v;};
         return "\0SOURCE\0".json_encode($sort($source),JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);
     }
-    public static function prepare(array $files,string $sessionKey,int $now,?array $source=null,int $version=3): array
+    public static function prepare(array $files,string $sessionKey,int $now,?array $source=null,int $version=3,?string $comment=null): array
     {
-        if($version===4){require_once __DIR__.'/share-bundle-v4.php';return AsusShareBundle4::prepare($files,$sessionKey,$now,$source);}
-        if($version!==3)throw new RuntimeException('invalid_share');
+        if($version===4){require_once __DIR__.'/share-bundle-v4.php';return AsusShareBundle4::prepare($files,$sessionKey,$now,$source,$comment);}
+        if($version!==3||$comment!==null)throw new RuntimeException('invalid_share');
         if(!preg_match('/^[a-f0-9]{64}$/D',$sessionKey)||$now<1)throw new RuntimeException('invalid_proof');
         $manifest=self::manifest($files).self::sourceManifest($files,$source);$nonce=bin2hex(random_bytes(16));
         $proof='v3.'.$now.'.'.$nonce.'.'.hash_hmac('sha256',"NFQWS2-SHARE\0v3\0$now\0$nonce\0".$manifest,hex2bin($sessionKey));
@@ -46,9 +46,10 @@ final class AsusShareBundle
         if(strlen(json_encode($out,JSON_THROW_ON_ERROR))>2097152)throw new RuntimeException('output_limit');
         return $out;
     }
-    public static function verify(string $proof,array $files,string $sessionKey,int $now,?array $source=null): bool
+    public static function verify(string $proof,array $files,string $sessionKey,int $now,?array $source=null,?string $comment=null): bool
     {
-        if(str_starts_with($proof,'v4.')){require_once __DIR__.'/share-bundle-v4.php';return AsusShareBundle4::verify($proof,$files,$sessionKey,$now,$source);}
+        if(str_starts_with($proof,'v4.')){require_once __DIR__.'/share-bundle-v4.php';return AsusShareBundle4::verify($proof,$files,$sessionKey,$now,$source,$comment);}
+        if($comment!==null)return false;
         try {
             if(!preg_match('/^[a-f0-9]{64}$/D',$sessionKey)||!preg_match('/^v3\.([1-9][0-9]{0,9})\.([a-f0-9]{32})\.([a-f0-9]{64})$/D',$proof,$m))return false;
             $issued=(int)$m[1];if((string)$issued!==$m[1]||$issued>$now||$now-$issued>600)return false;

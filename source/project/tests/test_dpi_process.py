@@ -24,7 +24,7 @@ class DpiProcessTests(unittest.TestCase):
             base=Path(directory);run=base/'state'/'runs'/('d'*32);run.mkdir(parents=True,mode=0o700)
             for name,text in [('ack','ready'),('closing','closed'),('ending.reason','timed_out')]:
                 (run/name).write_text(text+'\n');(run/name).chmod(0o600)
-            for name in ['dpi-store.php','dpi-options.php','support-json-schema.php','platform.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
+            for name in ['dpi-store.php','dpi-options.php','dpi-load-policy.php','support-json-schema.php','platform.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
             (base/'dpi-runtime.php').write_text((PUBLIC/'dpi-runtime.php').read_text().replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')))
             code="require $argv[1];try{(new AsusDpiRuntime())->probe(str_repeat('d',32),['/native'],'/',5);}catch(Throwable $e){echo $e->getMessage();}"
             p=subprocess.run([PHP,'-n','-r',code,str(base/'dpi-runtime.php')],capture_output=True,text=True)
@@ -33,7 +33,7 @@ class DpiProcessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             base=Path(directory);run=base/'state'/'runs'/('d'*32);run.mkdir(parents=True,mode=0o700)
             for name in ['ack','cancel']:(run/name).write_text('ready\n');(run/name).chmod(0o600)
-            for name in ['dpi-store.php','dpi-options.php','support-json-schema.php','platform.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
+            for name in ['dpi-store.php','dpi-options.php','dpi-load-policy.php','support-json-schema.php','platform.php']:(base/name).write_bytes((PUBLIC/name).read_bytes())
             (base/'dpi-runtime.php').write_text((PUBLIC/'dpi-runtime.php').read_text().replace('/opt/var/lib/nfqws2-asus/dpi-detector',str(base/'state')))
             code='''require $argv[1];try{(new AsusDpiRuntime())->probe(str_repeat('d',32),['/synthetic-binary','--version'],'/',5);}catch(Throwable $e){echo $e->getMessage();}'''
             p=subprocess.run([PHP,'-n','-r',code,str(base/'dpi-runtime.php')],capture_output=True,text=True)

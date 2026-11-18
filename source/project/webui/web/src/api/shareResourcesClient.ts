@@ -76,6 +76,24 @@ const safeName = (v: unknown): v is string =>
   !v.includes('/') &&
   !v.includes('\\') &&
   !Array.from(v).some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
+export const resourceIdentity = (kind: unknown, name: unknown): boolean =>
+  safeName(name) ||
+  (typeof name === 'string' &&
+    !/[\r\n]/.test(name) &&
+    (kind === 'lua'
+      ? /^imported\/[a-f0-9]{64}\.lua$/.test(name)
+      : kind === 'blobs' && /^imported\/[a-f0-9]{64}\.bin$/.test(name)));
+export const resourcePath = (value: unknown): boolean => {
+  if (typeof value !== 'string') return false;
+  const match = /^\/opt\/etc\/nfqws2\/(lists|lua|blobs)\/(.+)$/.exec(value);
+  return (
+    !!match &&
+    match[0] === value &&
+    resourceIdentity(match[1], match[2]) &&
+    (match[2].startsWith('imported/') ||
+      /^[A-Za-z0-9_.-]{1,128}$/.test(match[2]))
+  );
+};
 const invalid = (): never => {
   throw new ShareError('invalid_response');
 };
@@ -84,7 +102,7 @@ function metadata(v: unknown): v is ResourceMeta {
     record(v) &&
     id(v.id) &&
     ['lists', 'lua', 'blobs'].includes(String(v.kind)) &&
-    safeName(v.name) &&
+    resourceIdentity(v.kind, v.name) &&
     Number.isSafeInteger(v.byte_length) &&
     Number(v.byte_length) >= 0 &&
     (v.sha256 === null || hash(v.sha256)) &&
@@ -257,7 +275,10 @@ export function resourceZip(copies: ResourceCopy[]): Blob {
   let total = 0;
   const names = new Set();
   for (const copy of copies) {
-    if (!safeName(copy.name) || !['lists', 'lua', 'blobs'].includes(copy.kind))
+    if (
+      !resourceIdentity(copy.kind, copy.name) ||
+      !['lists', 'lua', 'blobs'].includes(copy.kind)
+    )
       throw new ShareError('invalid_request');
     const path = copy.kind + '/' + copy.name;
     if (names.has(path)) throw new ShareError('invalid_request');

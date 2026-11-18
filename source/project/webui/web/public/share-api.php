@@ -61,7 +61,7 @@ final class AsusShareApi
                 return (new AsusShareContributions($this->resources(),$this->dns()))->analyze($a,isset($a['strategy'])?$this->config():'');
             case 'sharesend':
                 $envelope=AsusShareBundle::envelope($post['envelope'],$post['submission_id']);
-                if(!AsusShareBundle::verify($post['proof'],$envelope['files'],$sessionKey,$now,$envelope['source']??null))throw new RuntimeException('invalid_proof');
+                if(!AsusShareBundle::verify($post['proof'],$envelope['files'],$sessionKey,$now,$envelope['source']??null,$envelope['comment']??null))throw new RuntimeException('invalid_proof');
                 return $this->mail()->sendShare($post['envelope'],$post['submission_id']);
             case 'sharelocation':return $this->mail()->location();
             case 'sharechannelconnect':return (new AsusSupportChannelSetup())->connect();
@@ -77,8 +77,20 @@ final class AsusShareApi
                 if(!is_object($v))throw new RuntimeException('invalid_request');$v=AsusSupportSchema::toArray($v);
                 $version=$v['version']??3;if(!in_array($version,[3,4],true))throw new RuntimeException('invalid_request');
                 if($version===3){self::keys($v,['report','dpi','strategy','link_installation']);if(strlen($post['selection'])>2097152)throw new RuntimeException('invalid_request');}
-                else self::keys($v,['version','report','dpi','strategy','resources','dns','context','analysis_config_sha256','link_installation'],['version']);$files=[];
+                else self::keys($v,['version','report','dpi','strategy','resources','dns','artifact','context','analysis_config_sha256','link_installation','comment'],['version']);$files=[];
+                if(array_key_exists('comment',$v)&&!is_string($v['comment']))throw new RuntimeException('invalid_request');
                 if(isset($v['link_installation'])&&!is_bool($v['link_installation']))throw new RuntimeException('invalid_request');
+                if(isset($v['artifact'])) {
+                    self::keys($v,['version','artifact','comment'],['version','artifact']);
+                    if($version!==4||!is_array($v['artifact']))throw new RuntimeException('invalid_request');
+                    $input=$v['artifact'];self::keys($input,['filename','media_type','data_base64'],['filename','media_type','data_base64']);
+                    if(!is_string($input['filename'])||!preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/D',$input['filename'])||
+                        !in_array($input['media_type'],['application/json','text/plain','text/yaml','text/x-shellscript','application/zip','application/octet-stream'],true)||
+                        !is_string($input['data_base64'])||strlen($input['data_base64'])>1398104)throw new RuntimeException('invalid_request');
+                    $bytes=base64_decode($input['data_base64'],true);
+                    if(!is_string($bytes)||strlen($bytes)<1||strlen($bytes)>1048576||base64_encode($bytes)!==$input['data_base64'])throw new RuntimeException('output_limit');
+                    $files[]=AsusShareBundle::file('artifact',$input['filename'],$bytes);
+                }
                 if(isset($v['report'])) {
                     $r=$v['report'];if(!is_array($r))throw new RuntimeException('invalid_request');self::keys($r,['raw','filename','proof'],['raw','filename','proof']);
                     foreach($r as $s)if(!is_string($s))throw new RuntimeException('invalid_request');
@@ -95,7 +107,7 @@ final class AsusShareApi
                     if($d['kind']==='legacy'){$legacy=AsusSupportSchema::decode($raw,262144,'invalid_dpi');if(!is_object($legacy)||!is_string($legacy->started_at??null)||!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/D',$legacy->started_at))throw new RuntimeException('invalid_dpi');$stamp=str_replace(['T',':'],['_','-'],substr($legacy->started_at,0,-1));}
                     $files[]=AsusShareBundle::file('dpi','NFQWS2_DPI_'.$stamp.'Z.json',$raw);
                 }
-                if($version===4) {
+                if($version===4&&!isset($v['artifact'])) {
                     $extra=(new AsusShareContributions($this->resources(),$this->dns()))->prepare($v,isset($v['strategy'])?$this->config():'',$this->versions());
                     foreach($extra as $type=>$raw)$files[]=AsusShareBundle::file($type,'NFQWS2_'.strtoupper($type).'_'.gmdate('Y-m-d_H-i-s',$now).'Z.json',$raw);
                 }elseif(isset($v['strategy'])) {
@@ -110,7 +122,7 @@ final class AsusShareApi
                     $files[]=AsusShareBundle::file('strategy','NFQWS2_STRATEGY_'.gmdate('Y-m-d_H-i-s',$now).'Z.json',$raw);
                 }
                 $source=($this->source??=new AsusShareSource())->capture($v['link_installation']??false,$this->versions());
-                return AsusShareBundle::prepare($files,$sessionKey,$now,$source,$version);
+                return AsusShareBundle::prepare($files,$sessionKey,$now,$source,$version,$v['comment']??null);
         }
         throw new RuntimeException('invalid_request');
     }

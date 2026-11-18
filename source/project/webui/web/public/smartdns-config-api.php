@@ -16,6 +16,7 @@ final class AsusSmartDnsConfigApi
         'smartdnspreview'=>['preview_id'],
         'smartdnsapply'=>['request_id','preview_id','profile_hash','baseline_hash'],
         'smartdnsconfirm'=>['request_id'], 'smartdnsrollback'=>['request_id'],
+        'smartdnsrepairhook'=>[],
     ];
     public static function profile(string $raw): array
     {
@@ -36,6 +37,73 @@ final class AsusSmartDnsConfigApi
         foreach (['request_id','preview_id'] as $key) if (isset($post[$key]) && !preg_match('/^[a-f0-9]{32}$/D',$post[$key])) throw new RuntimeException('invalid_request');
         foreach (['profile_hash','baseline_hash'] as $key) if (isset($post[$key]) && !preg_match('/^[a-f0-9]{64}$/D',$post[$key])) throw new RuntimeException('invalid_request');
         if ($cmd==='smartdnsdraft') self::profile($post['profile']);
+    }
+    /** Current generated router/DHCP configuration, separate from an edited profile.
+     * Native paths come only from the verified primary instance; no DNS queries.
+     */
+    private static function dnsContext(AsusReportIO $io): array
+    {
+        $out=['state'=>'unknown','default_servers'=>[],'conditional_servers'=>[],'dhcp_dns'=>[],
+            'client_overrides_observed'=>false,'connectivity_tested'=>false];
+        $unknown=$out;$native=NfqwsPlatform::native();
+        if ($native) {
+            require_once __DIR__.'/dpi-dns-context.php';
+            require_once __DIR__.'/openwrt-smartdns-resolver.php';
+            try {
+                $resolver=new NfqwsOpenWrtDnsmasqResolver();$primary=$resolver->primary();
+                $identity=AsusDpiRuntime::identity($primary['pid']);
+                if ($identity===null) return $unknown;
+                $files=new AsusDpiDnsFiles();
+                $read=['state'=>'available','value'=>$files->read($primary['config'])];
+            } catch (Throwable $e) {return $unknown;}
+        } else $read=$io->read('dnsmasq_config',262144);
+        if ($read['state']!=='available') return $out;
+        $out['state']='available';$sources=[];$noResolve=(bool)preg_match('/^\s*no-resolv\s*(?:#.*)?$/m',$read['value']);
+        $known=$native?['/tmp/resolv.conf.d/resolv.conf.auto'=>'/tmp/resolv.conf.d/resolv.conf.auto','/etc/resolv.conf'=>'/etc/resolv.conf']:
+            ['/tmp/resolv.dnsmasq'=>'dns_forwarders','/tmp/resolv.conf'=>'dns_resolv'];
+        foreach (explode("\n",$read['value']) as $line) {
+            $line=trim($line);if ($line==='' || str_starts_with($line,'#')) continue;
+            if (preg_match('/^server\s*=\s*([^\s]{1,512})$/D',$line,$m)) {
+                $key=str_starts_with($m[1],'/')?'conditional_servers':'default_servers';
+                if (count($out[$key])<32) $out[$key][]=$m[1];else $out['state']='partial';
+            } elseif (preg_match('/^(servers-file|resolv-file)\s*=\s*(.+)$/D',$line,$m)) {
+                if (!isset($known[$m[2]])) {$out['state']='partial';continue;}
+                $sources[$m[1].':'.$known[$m[2]]]=[$m[1],$known[$m[2]]];
+            } elseif (preg_match('/^(conf-file|conf-dir|conf-script|rev-server)\s*(?:=|$)/',$line)) $out['state']='partial';
+            elseif (preg_match('/^dhcp-option(?:-force)?\s*=\s*(.+)$/D',$line,$m)) {
+                $parts=array_map('trim',explode(',',$m[1]));
+                foreach ($parts as $i=>$part) if (in_array($part,['6','option:dns-server'],true)) {
+                    $servers=array_slice($parts,$i+1);$valid=$servers!==[];
+                    foreach ($servers as $ip) if (@inet_pton($ip)===false) $valid=false;
+                    if ($valid && count($out['dhcp_dns'])<32) $out['dhcp_dns'][]=['scope'=>implode(',',array_slice($parts,0,$i)),'servers'=>$servers];
+                    else $out['state']='partial';break;
+                }
+            }
+        }
+        foreach ($sources as [$kind,$source]) {
+            if ($kind==='resolv-file' && $noResolve) continue;
+            if ($native) {
+                try {$read=['state'=>'available','value'=>$files->read($source,true)];}
+                catch (Throwable $e) {$out['state']='partial';continue;}
+            } else $read=$io->read($source,262144);
+            if ($read['state']!=='available') {$out['state']='partial';continue;}
+            foreach (explode("\n",$read['value']) as $line) {
+                $line=trim($line);if ($line==='' || str_starts_with($line,'#')) continue;
+                $pattern=$kind==='servers-file'?'/^server\s*=\s*([^\s]{1,512})$/D':'/^nameserver\s+([^\s#]{1,512})(?:\s+#.*)?$/D';
+                if (!preg_match($pattern,$line,$m)) {if (!preg_match('/^(search|domain|options)\s+/',$line)) $out['state']='partial';continue;}
+                $key=$kind==='servers-file'&&str_starts_with($m[1],'/')?'conditional_servers':'default_servers';
+                if (count($out[$key])<32) $out[$key][]=$m[1];else $out['state']='partial';
+            }
+        }
+        foreach (['default_servers','conditional_servers'] as $key) $out[$key]=array_values(array_unique($out[$key]));
+        if ($out['default_servers']===[]) $out['state']='partial';
+        if ($native) {
+            try {
+                $files->verify();
+                if ($resolver->primary()!==$primary || AsusDpiRuntime::identity($primary['pid'])!==$identity) return $unknown;
+            } catch (Throwable $e) {return $unknown;}
+        }
+        return $out;
     }
     /** Dependencies are trusted local adapters; none can be selected by HTTP. */
     public static function dispatch(array $post,array $deps=[]): array
@@ -60,7 +128,7 @@ final class AsusSmartDnsConfigApi
                 elseif (!in_array($status['state'],['confirmed','validating','applying','awaiting_confirmation','rolling_back'],true)) $resume='resume_required';
             }
             return ['status'=>$status,'draft'=>$store->draft(),'active_profile'=>$store->active()['profile']??null,'confirmed_profile'=>$intent['profile']??null,
-                'routing'=>$routing,'resume_code'=>$resume];
+                'routing'=>$routing,'resume_code'=>$resume,'dns'=>self::dnsContext($deps['dns_io']??new AsusReportIO())];
         }
         if ($cmd==='smartdnspreview') return $store->preview($post['preview_id']);
         if ($cmd==='routercheckup') {
@@ -76,6 +144,10 @@ final class AsusSmartDnsConfigApi
           $writer=$deps['writer']??function($fn){$tx=new AsusImportTransaction();return $tx->writer(function()use($tx,$fn){$tx->recover();return $fn();});};
           return $writer(function()use($jobs,$cmd,$store,$post,$backend){
             $jobs->reconcile();
+            if ($cmd==='smartdnsrepairhook') {
+                if (!$backend instanceof AsusSmartDnsNativeBackend) throw new RuntimeException('hook_permissions');
+                return $backend->repairHookPermissions();
+            }
             if ($cmd==='smartdnsdraft') return ['profile_hash'=>$store->saveDraft(self::profile($post['profile']))];
             if ($cmd==='smartdnsvalidate') return $jobs->start($post['request_id'],$post['profile_hash']);
             if ($cmd==='smartdnsapply') $jobs->awaitValidationRelease($post['preview_id']);

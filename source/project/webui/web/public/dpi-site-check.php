@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/dpi-store.php';
 require_once __DIR__.'/dpi-terminal-lifecycle.php';
+require_once __DIR__.'/public-ipv4.php';
 
 /** Independent control observations. No native report or service is modified. */
 final class AsusDpiSiteCheck
@@ -10,6 +11,14 @@ final class AsusDpiSiteCheck
         'youtube-main'=>'www.youtube.com','youtube-images'=>'i.ytimg.com','youtube-static'=>'www.gstatic.com',
         'discord-main'=>'discord.com','discord-cdn'=>'cdn.discordapp.com','discord-gateway'=>'gateway.discord.gg',
     ];
+    /** One custom public target, parsed by the existing typed target rules. */
+    public static function customTarget(string $target):?array
+    {
+        if(strlen($target)>4110||preg_match('/^custom-(https|route):([^\r\n]+)$/Du',$target,$m)!==1)return null;
+        require_once __DIR__.'/strategy-picker-targets.php';$parsed=NfqwsStrategyPickerTargets::inspectMixed($m[2]);
+        if(!$parsed['valid']||count($parsed['hosts'])!==1)return null;$host=$parsed['hosts'][0];
+        return ['operation'=>$m[1],'host'=>$host,'kind'=>NfqwsPublicIpv4::test($host)?'ipv4':'domain'];
+    }
     /** Overrides belong to trusted local fixtures, never POST or environment. */
     public function __construct(private ?AsusDpiStore $store=null,private ?AsusDpiTerminalLifecycle $terminal=null,private array $deps=[]) {}
     public static function validate(array $post): void
@@ -17,7 +26,7 @@ final class AsusDpiSiteCheck
         $keys=array_keys($post);sort($keys);
         if(!in_array($keys,[['cmd','csrf_token','target'],['cmd','csrf_token','dns_scope','target']],true)||($post['cmd']??null)!=='dpisitecheck'||
             !is_string($post['csrf_token'])||strlen($post['csrf_token'])>256||
-            !is_string($post['target'])||!isset(self::TARGETS[$post['target']])||
+            !is_string($post['target'])||(!isset(self::TARGETS[$post['target']])&&self::customTarget($post['target'])===null)||
             array_key_exists('dns_scope',$post)&&!in_array($post['dns_scope'],['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
     }
     public static function response(string $outcome,string|null $error=null): array
@@ -27,14 +36,19 @@ final class AsusDpiSiteCheck
     }
     public function check(string $target,string $dnsScope='system_resolver'): array
     {
-        if(!isset(self::TARGETS[$target])||!in_array($dnsScope,['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
+        $custom=self::customTarget($target);
+        if((!isset(self::TARGETS[$target])&&$custom===null)||!in_array($dnsScope,['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
         $store=$this->store??new AsusDpiStore();$terminal=$this->terminal??new AsusDpiTerminalLifecycle();
-        return $store->mutation(function()use($target,$store,$terminal,$dnsScope){
-            return $terminal->idle(function()use($target,$store,$dnsScope){
+        return $store->mutation(function()use($target,$store,$terminal,$dnsScope,$custom){
+            return $terminal->idle(function()use($target,$store,$dnsScope,$custom){
                 require_once __DIR__.'/dpi-jobs.php';
                 if((new AsusDpiJobs($store))->active()!==null)throw new RuntimeException('busy');
                 $before=$this->context();$started=time();$clock=self::now();
-                $response=$this->boundedProbe($target,$clock,$dnsScope);
+                $response=$this->boundedProbe($target,$clock,$dnsScope);$addresses=[];$network=null;$dns=['rcode'=>null,'answers'=>[],'reason'=>'unavailable'];
+                if($custom!==null){
+                    if(isset($response['response'])){$addresses=$response['addresses'];$dns=$response['dns'];$response=$response['response'];}
+                    if($custom['operation']==='route')$network=$this->network($addresses[0]??null,$clock+10);
+                }
                 $response['elapsed_ms']=(int)max(0,round((self::now()-$clock)*1000));
                 $finished=time();$after=$this->context();$changed=null;$complete=true;
                 foreach(['nfqws','mode','config_sha256'] as $key){
@@ -42,11 +56,30 @@ final class AsusDpiSiteCheck
                     if(!$known)$complete=false;elseif($before[$key]!==$after[$key])$changed=true;
                 }
                 if($changed!==true&&$complete)$changed=false;
-                return ['type'=>'nfqws2_dpi_site_check','schema_version'=>1,'target'=>$target,'url'=>'https://'.self::TARGETS[$target].'/',
+                $report=['type'=>'nfqws2_dpi_site_check','schema_version'=>$custom===null?1:2,'target'=>$target,'url'=>'https://'.($custom['host']??self::TARGETS[$target]).'/',
                     'started_at'=>$started,'finished_at'=>$finished,'context'=>['before'=>$before,'after'=>$after,'changed'=>$changed],
                     'response'=>$response,'full_service_verified'=>false,'dns_scope'=>$dnsScope];
+                return $custom===null?$report:$report+$custom+['addresses'=>$addresses,'network'=>$network,'dns'=>$dns];
             });
         });
+    }
+    /** Numeric-only, read-only commands; run() owns each exact child handle. */
+    private function network(?string $ip,float $deadline):array
+    {
+        $out=[];$busybox=NfqwsPlatform::native()?'/bin/busybox':'/opt/libexec/nfqws2-asus/busybox';
+        $commands=['ping'=>[$busybox,'ping','-n','-c','3','-W','1','-i','0.2',$ip],
+            'route'=>[$busybox,'ip','-4','route','get',$ip],
+            'trace'=>[$busybox,'traceroute','-n','-m','12','-q','1','-w','1',$ip]];
+        foreach($commands as $kind=>$argv){
+            $left=$deadline-self::now();$limit=$kind==='trace'?6144:1536;
+            if($ip===null||!NfqwsPublicIpv4::test($ip)||$left<=0){$out[$kind]=['state'=>'not_run','output'=>''];continue;}
+            $seconds=min($kind==='ping'?3.0:($kind==='route'?1.0:5.0),$left);
+            $r=isset($this->deps['network_run'])?($this->deps['network_run'])($argv,$seconds,$limit):NfqwsPlatform::run($argv,$seconds,[],$limit);
+            if(!is_array($r)||!is_int($r['status']??null)||!is_array($r['output']??null)){$out[$kind]=['state'=>'unavailable','output'=>''];continue;}
+            $text=substr(preg_replace('/[^\x09\x0a\x0d\x20-\x7e]/','?',implode("\n",$r['output'])),0,$limit);
+            $out[$kind]=['state'=>$r['status']===0?'done':($text!==''?'partial':'unavailable'),'output'=>$text];
+        }
+        return $out;
     }
     private static function now(): float {$t=hrtime();return $t[0]+$t[1]/1e9;}
     private function boundedProbe(string $target,float $started,string $dnsScope): array
@@ -79,7 +112,15 @@ final class AsusDpiSiteCheck
             }
             if($tooLarge)return self::response('unavailable','output_limit');
             $value=json_decode($out,true,8);
-            if(!self::validResponse($value))return self::response('unavailable','invalid_probe_result');
+            $custom=self::customTarget($target);
+            if($custom!==null){
+                if(!is_array($value)||array_keys($value)!==['host','kind','operation','addresses','dns','response']||
+                    $value['host']!==$custom['host']||$value['kind']!==$custom['kind']||$value['operation']!==$custom['operation']||
+                    !is_array($value['addresses'])||!array_is_list($value['addresses'])||count($value['addresses'])>16||
+                    !self::validResponse($value['response'])||!self::validDns($value['dns']))return self::response('unavailable','invalid_probe_result');
+                foreach($value['addresses']as $ip)if(!NfqwsPublicIpv4::test($ip))return self::response('unavailable','invalid_probe_result');
+                if($custom['kind']==='ipv4'&&$value['addresses']!==[$custom['host']])return self::response('unavailable','invalid_probe_result');
+            }elseif(!self::validResponse($value))return self::response('unavailable','invalid_probe_result');
             return $value;
         }catch(Throwable $e){return self::response('unavailable','probe_failed');}
         finally{
@@ -91,6 +132,15 @@ final class AsusDpiSiteCheck
                 proc_close($proc);
             }
         }
+    }
+    private static function validDns(mixed $v):bool
+    {
+        if(!is_array($v)||array_keys($v)!==['rcode','answers','reason']||
+            !($v['rcode']===null||(is_int($v['rcode'])&&$v['rcode']>=0&&$v['rcode']<=15))||
+            !is_array($v['answers'])||!array_is_list($v['answers'])||count($v['answers'])>64||
+            !in_array($v['reason'],['not_requested','ready','no_address','rcode','timed_out','invalid_response','invalid_arguments','system_answer','system_no_address','answer_limit','unavailable'],true))return false;
+        foreach($v['answers']as$ip)if(!is_string($ip)||filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_IPV4)===false)return false;
+        return true;
     }
     private static function validResponse(mixed $v): bool
     {
@@ -170,9 +220,12 @@ final class AsusDpiSiteCheck
 /** One child performs DNS, TLS and bounded HTTP reads. It starts no children. */
 final class AsusDpiSiteCheckProbe
 {
+    public const PINNED_FINGERPRINT='php-openssl-pinned-https-v1';
+    public const MIXED_PINNED_FINGERPRINT='php-openssl-pinned-public-targets-v2';
     private float $deadline;
     private array $response;
     private int $headerBytes=0;
+    private array $dnsObservation=['rcode'=>null,'answers'=>[],'reason'=>'not_requested'];
     public function __construct(private array $deps=[]) {}
     private static function now(): float {$t=hrtime();return $t[0]+$t[1]/1e9;}
     private function remaining(): float
@@ -181,42 +234,165 @@ final class AsusDpiSiteCheckProbe
      * global exceptions within special registries. Compare bytes for 32-bit PHP. */
     private static function publicAddress(mixed $ip): bool
     {
-        if(!is_string($ip)||!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/D',$ip))return false;
-        $packed=@inet_pton($ip);if($packed===false||strlen($packed)!==4||inet_ntop($packed)!==$ip)return false;
-        foreach([['0.0.0.0',8],['10.0.0.0',8],['100.64.0.0',10],['127.0.0.0',8],['169.254.0.0',16],['172.16.0.0',12],
-            ['192.0.0.0',24],['192.0.2.0',24],['192.31.196.0',24],['192.52.193.0',24],['192.88.99.0',24],['192.168.0.0',16],
-            ['192.175.48.0',24],['198.18.0.0',15],['198.51.100.0',24],['203.0.113.0',24],['224.0.0.0',4],['240.0.0.0',4]] as [$network,$bits]){
-            $base=inet_pton($network);$whole=intdiv($bits,8);$rest=$bits%8;
-            if(substr($packed,0,$whole)===substr($base,0,$whole)&&($rest===0||((ord($packed[$whole])^ord($base[$whole]))>>(8-$rest))===0))return false;
-        }
-        return true;
+        return NfqwsPublicIpv4::test($ip);
     }
     public function run(string $target,string $dnsScope='system_resolver'): array
     {
-        if(!isset(AsusDpiSiteCheck::TARGETS[$target])||!in_array($dnsScope,['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
-        $this->deadline=self::now()+10;$this->response=AsusDpiSiteCheck::response('connection_error','connection_failed');$f=null;
-        $host=AsusDpiSiteCheck::TARGETS[$target];$warning='';
+        if(!in_array($dnsScope,['system_resolver','local_resolver'],true))throw new RuntimeException('invalid_request');
+        $custom=AsusDpiSiteCheck::customTarget($target);if($custom!==null)return $this->custom($custom,$dnsScope);
+        if(!isset(AsusDpiSiteCheck::TARGETS[$target]))throw new RuntimeException('invalid_request');
+        return $this->perform(AsusDpiSiteCheck::TARGETS[$target],$dnsScope,null,'auto',10);
+    }
+    private function resolve(string $host,string $dnsScope):array|false
+    {
+        if($dnsScope==='local_resolver'){
+            require_once __DIR__.'/openwrt-dns-probe.php';
+            $timeout=(int)max(1,min(2500,floor($this->remaining()*1000)));
+            $dns=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$this->deps['dns_port']??53,$host,'A','udp',$timeout);
+            if(($dns['truncated']??false)===true){
+                $timeout=(int)max(1,min(2500,floor($this->remaining()*1000)));
+                $dns=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$this->deps['dns_port']??53,$host,'A','tcp',$timeout);
+            }
+            $this->dnsObservation=['rcode'=>($dns['rcode']??-1)>=0?$dns['rcode']:null,'answers'=>$dns['answers']??[],'reason'=>$dns['reason']??'unavailable'];
+            return ($dns['ok']??false)===true?$dns['answers']:[];
+        }
+        $answer=isset($this->deps['resolve'])?($this->deps['resolve'])($host):gethostbynamel($host);
+        $this->dnsObservation=['rcode'=>null,'answers'=>is_array($answer)?array_values($answer):[],'reason'=>$answer?'system_answer':'system_no_address'];
+        if(count($this->dnsObservation['answers'])>64){$this->dnsObservation=['rcode'=>null,'answers'=>[],'reason'=>'answer_limit'];return [];}
+        return $answer;
+    }
+    private function custom(array $target,string $dnsScope):array
+    {
+        $this->deadline=self::now()+10;$addresses=[];$this->dnsObservation=['rcode'=>null,'answers'=>[],'reason'=>'not_requested'];$response=AsusDpiSiteCheck::response('unavailable','not_requested');
+        try{
+            $answer=$target['kind']==='ipv4'?[$target['host']]:$this->resolve($target['host'],$dnsScope);$this->remaining();
+            if(!is_array($answer)||$answer===[])$response=AsusDpiSiteCheck::response('connection_error','dns_failed');
+            else{
+                $addresses=NfqwsStrategyPickerTargets::addresses($answer);
+                if($target['operation']==='https')$response=$this->perform($target['host'],$dnsScope,$addresses,'auto',min(8.0,$this->remaining()),$target['kind']==='ipv4');
+            }
+        }catch(Throwable $e){
+            $code=$e->getMessage();$response=AsusDpiSiteCheck::response($code==='deadline'?'timeout':($code==='custom_non_public_address'?'blocked_address':'unavailable'),
+                $code==='deadline'?'deadline':($code==='custom_non_public_address'?'non_public_address':($code==='custom_dns_answer_too_large'?'dns_answer_too_large':'probe_failed')));
+        }
+        return ['host'=>$target['host'],'kind'=>$target['kind'],'operation'=>$target['operation'],'addresses'=>$addresses,'dns'=>$this->dnsObservation,'response'=>$response];
+    }
+    /** Separate OpenSSL observation, not a native Rustls/QUIC or service test.
+     * The caller supplies one complete, already resolved answer; never re-resolve. */
+    public function pinned(string $host,array $answer,string $tlsMode,float $seconds=8): array
+    {
+        require_once __DIR__.'/strategy-picker-targets.php';
+        $target=NfqwsStrategyPickerTargets::inspect($host);
+        if(!$target['valid']||$target['hosts']!==[$host]||!in_array($tlsMode,['tls12','tls13'],true)||
+            !is_finite($seconds)||$seconds<=0||$seconds>8)throw new RuntimeException('invalid_request');
+        $addresses=NfqwsStrategyPickerTargets::addresses($answer);
+        return $this->perform($host,'system_resolver',$addresses,$tlsMode,$seconds);
+    }
+    /** Explicit typed v2 entry point; the v1 domain contract remains closed to IPs. */
+    public function pinnedTarget(array $target,array $answer,string $tlsMode,float $seconds=8):array
+    {
+        require_once __DIR__.'/strategy-picker-targets.php';
+        $keys=array_keys($target);sort($keys);
+        if($keys!==['host','kind']||!is_string($target['host'])||!in_array($target['kind'],['domain','ipv4'],true)||
+            !in_array($tlsMode,['tls12','tls13'],true)||!is_finite($seconds)||$seconds<=0||$seconds>8)
+            throw new RuntimeException('invalid_request');
+        $host=$target['host'];$literal=$target['kind']==='ipv4';
+        if($literal){
+            if(!NfqwsPublicIpv4::test($host)||$answer!==[$host])throw new RuntimeException('invalid_request');
+        }else{
+            $parsed=NfqwsStrategyPickerTargets::inspect($host);
+            if(!$parsed['valid']||$parsed['hosts']!==[$host])throw new RuntimeException('invalid_request');
+        }
+        $addresses=NfqwsStrategyPickerTargets::addresses($answer);
+        return $this->perform($host,'system_resolver',$addresses,$tlsMode,$seconds,$literal);
+    }
+    /** A bounded DER reader for the captured, already chain-verified certificate.
+     * OpenSSL's display string cannot distinguish an IP SAN from DNS text that
+     * contains ", IP Address:". PHP's generic name check also accepts numeric
+     * DNS SANs and legacy CNs, so literal v2 additionally requires tag [7]. */
+    private static function derValue(string $der,int &$at,?int $expected=null):array
+    {
+        $size=strlen($der);
+        if($at+2>$size)throw new RuntimeException('invalid_certificate');
+        $tag=ord($der[$at++]);$length=ord($der[$at++]);
+        if(($tag&31)===31||$expected!==null&&$tag!==$expected)throw new RuntimeException('invalid_certificate');
+        if($length&128){
+            $bytes=$length&127;
+            if($bytes<1||$bytes>3||$at+$bytes>$size||ord($der[$at])===0)throw new RuntimeException('invalid_certificate');
+            $length=0;for($i=0;$i<$bytes;$i++)$length=$length*256+ord($der[$at++]);
+            if($length<128)throw new RuntimeException('invalid_certificate');
+        }
+        if($length>$size-$at)throw new RuntimeException('invalid_certificate');
+        $value=substr($der,$at,$length);$at+=$length;return [$tag,$value];
+    }
+    private static function hasIpSan(mixed $certificate,string $host):bool
+    {
+        try{
+            if($certificate===null||!openssl_x509_export($certificate,$pem)||strlen($pem)>262144||
+                !preg_match('~\A-----BEGIN CERTIFICATE-----\s+([A-Za-z0-9+/=\r\n]+)-----END CERTIFICATE-----\s*\z~D',$pem,$m))return false;
+            $der=base64_decode(str_replace(["\r","\n"],'',$m[1]),true);
+            if(!is_string($der)||strlen($der)>131072)return false;
+            $at=0;[, $outer]=self::derValue($der,$at,0x30);if($at!==strlen($der))return false;
+            $at=0;[, $tbs]=self::derValue($outer,$at,0x30);
+            $at=0;if(isset($tbs[0])&&ord($tbs[0])===0xa0)self::derValue($tbs,$at,0xa0);
+            foreach([0x02,0x30,0x30,0x30,0x30,0x30]as $tag)self::derValue($tbs,$at,$tag);
+            $extensions=null;
+            while($at<strlen($tbs)){
+                [$tag,$value]=self::derValue($tbs,$at);
+                if($tag===0xa3){if($extensions!==null||$at!==strlen($tbs))return false;$extensions=$value;}
+                elseif(!in_array($tag,[0x81,0x82],true))return false;
+            }
+            if($extensions===null)return false;
+            $at=0;[, $list]=self::derValue($extensions,$at,0x30);if($at!==strlen($extensions))return false;
+            $at=0;$seen=false;$match=false;$packed=pack('C4',...array_map('intval',explode('.',$host)));
+            while($at<strlen($list)){
+                [, $extension]=self::derValue($list,$at,0x30);$i=0;
+                [, $oid]=self::derValue($extension,$i,0x06);
+                if(isset($extension[$i])&&ord($extension[$i])===0x01){
+                    [, $critical]=self::derValue($extension,$i,0x01);
+                    if($critical!=="\x00"&&$critical!=="\xff")return false;
+                }
+                [, $value]=self::derValue($extension,$i,0x04);if($i!==strlen($extension))return false;
+                if($oid!=="\x55\x1d\x11")continue;
+                if($seen)return false;$seen=true;
+                $i=0;[, $names]=self::derValue($value,$i,0x30);if($i!==strlen($value))return false;
+                $i=0;
+                while($i<strlen($names)){
+                    [$tag,$name]=self::derValue($names,$i);
+                    if(!in_array($tag,[0xa0,0x81,0x82,0xa3,0xa4,0xa5,0x86,0x87,0x88],true))return false;
+                    if($tag===0x87){
+                        if(!in_array(strlen($name),[4,16],true))return false;
+                        if($name===$packed)$match=true;
+                    }
+                }
+            }
+            return $seen&&$match;
+        }catch(Throwable $e){return false;}
+    }
+    private function perform(string $host,string $dnsScope,?array $pinnedAddresses,string $tlsMode,float $seconds,bool $literal=false): array
+    {
+        $this->deadline=self::now()+$seconds;$this->headerBytes=0;
+        $this->response=AsusDpiSiteCheck::response('connection_error','connection_failed');$f=null;$warning='';
         set_error_handler(static function($severity,$message)use(&$warning){$warning=substr($warning.' '.$message,0,4096);return true;});
         try{
             if(!extension_loaded('openssl'))return AsusDpiSiteCheck::response('unavailable','https_unavailable');
             $ca=$this->deps['ca']??NfqwsPlatform::translate('/opt/etc/ssl/certs/ca-certificates.crt');
             if(!is_readable($ca))return AsusDpiSiteCheck::response('tls_error','ca_unavailable');
-            if($dnsScope==='local_resolver'){
-                require_once __DIR__.'/openwrt-dns-probe.php';
-                $timeout=(int)max(1,min(2500,floor($this->remaining()*1000)));
-                $dns=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$this->deps['dns_port']??53,$host,'A','udp',$timeout);
-                if(($dns['truncated']??false)===true){
-                    $timeout=(int)max(1,min(2500,floor($this->remaining()*1000)));
-                    $dns=NfqwsOpenWrtDnsProbe::query('127.0.0.1',$this->deps['dns_port']??53,$host,'A','tcp',$timeout);
-                }
-                $addresses=($dns['ok']??false)===true?$dns['answers']:[];
-            }else $addresses=isset($this->deps['resolve'])?($this->deps['resolve'])($host):gethostbynamel($host);
+            if($pinnedAddresses!==null)$addresses=$pinnedAddresses;
+            else $addresses=$this->resolve($host,$dnsScope);
             $this->remaining();
             if(!is_array($addresses)||$addresses===[])return AsusDpiSiteCheck::response('connection_error','dns_failed');
             // Reject the whole answer, rather than skipping poisoned entries.
             foreach($addresses as $address)if(!self::publicAddress($address))return AsusDpiSiteCheck::response('blocked_address','non_public_address');
-            $context=stream_context_create(['ssl'=>['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false,
-                'peer_name'=>$host,'SNI_enabled'=>true,'cafile'=>$ca,'disable_compression'=>true]]);
+            $ssl=['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false,
+                'peer_name'=>$host,'SNI_enabled'=>!$literal,'cafile'=>$ca,'disable_compression'=>true];
+            if($literal)$ssl['capture_peer_cert']=true;
+            if($tlsMode!=='auto'){
+                $method=$tlsMode==='tls12'?'STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT':'STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT';
+                if(!defined($method))return AsusDpiSiteCheck::response('unavailable','tls_version_unavailable');
+                $ssl['crypto_method']=constant($method);
+            }
+            $context=stream_context_create(['ssl'=>$ssl]);
             $endpoint='tls://'.$addresses[0].':443';$errno=0;$error='';
             $f=isset($this->deps['open'])?($this->deps['open'])($endpoint,$context,$this->remaining()):
                 stream_socket_client($endpoint,$errno,$error,$this->remaining(),STREAM_CLIENT_CONNECT,$context);
@@ -224,6 +400,10 @@ final class AsusDpiSiteCheckProbe
                 $tls=preg_match('/certificate|crypto|SSL operation|TLS (?:alert|handshake)|peer name/i',$warning.' '.$error)===1;
                 return AsusDpiSiteCheck::response($tls?'tls_error':'connection_error',$tls?'tls_verification_failed':'connection_failed');
             }
+            if($tlsMode!=='auto'&&(stream_get_meta_data($f)['crypto']['protocol']??null)!==($tlsMode==='tls12'?'TLSv1.2':'TLSv1.3'))
+                return AsusDpiSiteCheck::response('tls_error','tls_version_mismatch');
+            if($literal&&!self::hasIpSan(stream_context_get_options($f)['ssl']['peer_certificate']??null,$host))
+                return AsusDpiSiteCheck::response('tls_error','tls_verification_failed');
             $this->timeout($f);
             $request="GET / HTTP/1.1\r\nHost: ".$host."\r\nUser-Agent: NFQWS2-Control/1\r\nAccept: */*\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n";
             for($at=0;$at<strlen($request);){$n=fwrite($f,substr($request,$at));if(!$n)throw new RuntimeException('write_failed');$at+=$n;$this->timeout($f);}
@@ -313,7 +493,7 @@ final class AsusDpiSiteCheckProbe
 if(realpath($_SERVER['SCRIPT_FILENAME']??($argv[0]??''))===__FILE__){
     if(isset($_SERVER['REQUEST_METHOD'])||isset($_SERVER['REMOTE_ADDR'])||!in_array(PHP_SAPI,['cli','cgi-fcgi'],true))exit(1);
     $args=$argv??[];array_shift($args);if(($args[0]??null)==='--')array_shift($args);
-    if(!in_array(count($args),[2,3],true)||$args[0]!=='--worker'||!isset(AsusDpiSiteCheck::TARGETS[$args[1]])||
+    if(!in_array(count($args),[2,3],true)||$args[0]!=='--worker'||(!isset(AsusDpiSiteCheck::TARGETS[$args[1]])&&AsusDpiSiteCheck::customTarget($args[1])===null)||
         isset($args[2])&&!in_array($args[2],['system_resolver','local_resolver'],true))exit(2);
     echo json_encode((new AsusDpiSiteCheckProbe())->run($args[1],$args[2]??'system_resolver'),JSON_THROW_ON_ERROR);
 }

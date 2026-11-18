@@ -336,13 +336,24 @@ function hash_file($algorithm,$path){
         subprocess.run([str(OPKG),'-f',str(self.config),'-o',str(self.base),'--tmp-dir',str(self.opt/'tmp'),'--nodeps','install',str(artifact)],capture_output=True,check=True,umask=0o022)
         self.pending_fixture();self.status.write_text(self.status.read_text().replace('+b82','+b83'))
         self.assertEqual(self.call('prepare'),{'error':'sockets_recovery_required'})
-    def test_both_modern_official_archives_install_and_probe_without_php_upgrade(self):
+    def test_both_modern_official_module_payloads_install_and_probe_without_php_upgrade(self):
         for abi,machine,sysroot,qemu in [('armv7-3.2','armv7l','armv7-sysroot','qemu-arm'),('aarch64-3.10','aarch64','aarch64-sysroot','qemu-aarch64')]:
             with self.subTest(abi=abi):
                 f=IpHealthSocketsTests();f.setUp()
                 try:
                     f.options.update(abi=abi,machine=machine,php=[str(TOOLS/qemu),'-L',str(TOOLS/sysroot),str(TOOLS/sysroot/'opt/bin/php8-cgi')])
-                    f.status.write_text(f.status.read_text().replace('Version: 8.2.8-1','Version: 8.4.16-4'))
+                    # Current PHP uses actual official module bytes in a derived scriptless test IPK.
+                    # The new official archives include maintainer scripts outside this installer format;
+                    # they are not passed off as old supported archives or deployed product payloads.
+                    current=os.environ.get('NFQWS_SOCKETS_CURRENT_CATALOG')
+                    version='8.4.16-4'
+                    if current:
+                        catalog=json.loads(Path(current).read_text());row=next(e for e in catalog['entries']if e['abi']==abi)
+                        version=row['php_package_version'];(f.resources/'catalog.json').write_text(json.dumps(catalog))
+                        source=Path(os.environ['NFQWS_SOCKETS_CURRENT_IPKS'])/row['filename']
+                        self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(),row['sha256'])
+                        shutil.copyfile(source,f.resources/'ipks'/row['filename']);(f.resources/'ipks'/row['filename']).chmod(0o644)
+                    f.status.write_text(f.status.read_text().replace('Version: 8.2.8-1','Version: '+version))
                     f.config.write_text('dest root /\narch all 100\narch '+abi+' 200\n')
                     before=f.foreign();job=f.prepare();self.assertEqual(f.call('apply',job),{'value':{'state':'ready','code':None}});self.assertEqual(f.foreign(),before)
                 finally:f.doCleanups()

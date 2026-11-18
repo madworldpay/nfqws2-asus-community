@@ -34,6 +34,8 @@ server.port = 90
 server.pid-file = "$WEB_RUN/pid"
 server.errorlog = "$WEB_RUN/error.log"
 server.max-connections = 16
+# lighttpd parses this setting as a 16-bit value; the request pool stays separate.
+server.max-fds = 65535
 server.max-request-size = 32768
 # Bound dynamic buffering; any overflow stays in the private /tmp RAM runtime.
 server.stream-request-body = 2

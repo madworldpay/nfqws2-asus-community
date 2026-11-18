@@ -41,7 +41,6 @@ export const selectImportFiles = (
   kind: ResourceMeta['kind'],
   checked: boolean,
 ): ImportSelection => {
-  if (kind === 'lua') return current;
   const ids = new Set(
     doc.resources.filter((f) => f.kind === kind).map((f) => f.id),
   );
@@ -76,9 +75,9 @@ export const selectAllImport = (
     blocks: picks(STRATEGY_KEYS, doc.values, current.blocks),
     shared: picks(SHARED_IMPORT_KEYS, doc.values, current.shared),
     ports: picks(PORT_IMPORT_KEYS, doc.ports, current.ports),
-    files: doc.resources
-      .filter((f) => f.kind !== 'lua')
-      .map((f) => current.files.find((v) => v.id === f.id) ?? { id: f.id }),
+    files: doc.resources.map(
+      (f) => current.files.find((v) => v.id === f.id) ?? { id: f.id },
+    ),
     dns: selectAllDns(doc.dns_sources, current.dns),
   };
 };

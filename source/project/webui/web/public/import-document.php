@@ -49,6 +49,7 @@ final class AsusImportDocument
             }
         }
         return ['values'=>$values,'ports'=>$ports,'resources'=>$docs['resources']['files']??[],
+            'package_files'=>$docs['resources']['package_files']??[],
             'dependencies'=>$s['dependencies']??[],'audit'=>$docs['resources']['audit']??null,
             'dns_sources'=>$docs['dns']['sources']??[],'context'=>$s!==null?array_intersect_key($s,array_flip(['purpose','operator','comment','region','versions'])):($docs['resources']['context']??$docs['dns']['context']??null),
             'source'=>$source,'ignored'=>$ignored,'input_sha256'=>hash('sha256',json_encode($rawDocuments,JSON_THROW_ON_ERROR))];

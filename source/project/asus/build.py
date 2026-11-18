@@ -27,6 +27,12 @@ _blob_spec.loader.exec_module(blob_bundle)
 _profiles_spec = importlib.util.spec_from_file_location('nfqws_device_profiles_payload', ROOT/'experimental/device-profiles/package_payload.py')
 device_profiles = importlib.util.module_from_spec(_profiles_spec)
 _profiles_spec.loader.exec_module(device_profiles)
+_idna_spec = importlib.util.spec_from_file_location('nfqws_idna_payload', ROOT/'webui/idna_payload.py')
+idna_payload = importlib.util.module_from_spec(_idna_spec)
+_idna_spec.loader.exec_module(idna_payload)
+_public_spec = importlib.util.spec_from_file_location('nfqws_asus_public_payload', ROOT/'webui/public_payload.py')
+public_payload = importlib.util.module_from_spec(_public_spec)
+_public_spec.loader.exec_module(public_payload)
 TARGETS = {
     'armv7-3.2': {'opkg_arch': 'all', 'filename_arch': 'armv7', 'family': 'armv7', 'elf_class': 1, 'elf_machine': 40,
                  'engine_asset': 'nfqws2-keenetic_1.3.3_all_entware.ipk',
@@ -143,6 +149,28 @@ def compressed_tar(files):
 
 def local(path, executable=False):
     return (ROOT/path).read_bytes(), 0o755 if executable else 0o644
+
+
+def mtproto_router_installer():
+    sources = ROOT/'webui/web/src/utils'
+    script = (sources/'mtproto-install.sh').read_bytes()
+    # This entry only installs a fresh Entware service. Web requests never supply shell text.
+    parts = {
+        b'READINESS': (sources/'mtproto-readiness.py').read_bytes().rstrip(b'\n'),
+        b'LOG_REDACTION': (sources/'mtproto-log-redaction.py').read_bytes(),
+        b'DOCKER_IMAGE': b'unsupported',
+        b'DOCKER_LAUNCHER': b'exit 1',
+        b'HEALTH_COMMAND': b'exit 1',
+    }
+    for name, body in parts.items():
+        marker = b'@@MTPROTO_' + name + b'@@'
+        if script.count(marker) != 1:
+            raise ValueError('MTProto installer template changed')
+        script = script.replace(marker, body)
+    header = (b'#!/bin/sh\nset -eu\nNFQWS_MT_METHOD=entware\nNFQWS_MT_ACTION=install\n'
+              b'NFQWS_MT_FRESH_ONLY=yes\nNFQWS_MT_LANG=en\nNFQWS_MT_LINK=""\n'
+              b'IFS= read -r NFQWS_MT_PORT\nIFS= read -r NFQWS_MT_KEY\n')
+    return header + script, 0o755
 
 
 def dpi_terminal_payload(family):
@@ -289,14 +317,10 @@ def web_payload(dist=None):
     dist = Path(dist) if dist is not None else ROOT/'webui/web/dist'
     if not (dist/'index.html').is_file():
         raise RuntimeError('Build frontend before ASUS packaging')
-    # Public PHP is copied verbatim by Vite. Never ship a new lifecycle with a
-    # previous dist that merely happens to contain the required filenames.
-    for source in (ROOT/'webui/web/public').glob('*.php'):
-        installed = dist/source.name
-        if not installed.is_file() or installed.read_bytes() != source.read_bytes():
-            raise RuntimeError('Rebuild the shared production frontend: ASUS backend is stale')
-    return {'opt/share/nfqws-asus-web/'+str(p.relative_to(dist)): (p.read_bytes(), 0o644)
-            for p in sorted(dist.rglob('*')) if p.is_file() and not p.name.endswith('.map')}
+    public = ROOT/'webui/web/public'
+    verified = public_payload.payload(public, dist, idna_payload.payload(public))
+    files = {'opt/share/nfqws-asus-web/'+name: value for name, value in verified.items()}
+    return files
 
 
 def add_lua_factory_resources(payload):
@@ -331,11 +355,13 @@ def build_one(cache, output, offline, arch, build_number=None):
     conffiles = add_lua_factory_resources(core)
     core['opt/lib/nfqws2-asus/lua-upgrade.php'] = local('asus/lua-upgrade.php')
     blob_bundle.add_bundle(core, 'opt/share/nfqws2-asus', 'opt/share/nfqws2-asus/defaults')
+    list_pins = blob_bundle.add_module_resources(
+        core, 'opt/etc/nfqws2/lists', 'opt/share/nfqws2-asus/defaults/blobs')
     baseline = {'schema_version': 1, 'package_version': package_version(build_number), 'web_version': WEB_VERSION,
                 'engine': {'version': '1.0.7', 'provider': 'nfqws2-keenetic',
                            'sha256': hashlib.sha256(engine).hexdigest(),
                            'elf_class': engine[4], 'elf_machine': int.from_bytes(engine[18:20], 'little')},
-                'resources': {}}
+                'resources': list_pins}
     for resource_name, (resource_data, _) in core.items():
         for kind, directory in [('lua', 'lua'), ('blob', 'blobs')]:
             prefix = ('opt/share/nfqws2-asus/defaults/blobs/' if kind == 'blob' else f'opt/etc/nfqws2/{directory}/')
@@ -360,6 +386,8 @@ def build_one(cache, output, offline, arch, build_number=None):
     for name in ['guard.sh', 'probe.sh', 'drop.sh', 'stop.sh', 'worker.php', 'cli.php', 'paths.sh']:
         core['opt/lib/nfqws2-asus/dpi/'+name] = local('asus/dpi/'+name)
     core['opt/bin/nfqws2-dpi'] = local('asus/dpi/cli.sh', True)
+    core['opt/lib/nfqws2-asus/mtproto/install.sh'] = mtproto_router_installer()
+    core['opt/lib/nfqws2-asus/mtproto/worker.php'] = local('asus/mtproto/worker.php')
     core.update(dpi_terminal_payload(arch))
     if family == 'armv7':
         legacy_dpi = (ROOT/'asus/dpi/legacy/dpi-detector-armv5te').read_bytes()
@@ -383,7 +411,7 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/bin/nfqws2-smartdns-control'] = local('asus/smartdns/control-cli.sh', True)
     core['opt/etc/init.d/S80nfqws2-smartdns'] = local('asus/smartdns/init.sh', True)
     core['opt/share/nfqws2-asus/smartdns-catalog.json'] = local('support/smartdns-catalog.json')
-    for name in ['profile-catalog.schema.json', 'import-addon.schema.json', 'import-addon-catalog.schema.json', 'dpi-catalog.json', 'dpi-profile.json', 'dpi-native-defaults.json', 'dpi-analysis-v2.schema.json', 'dpi-report.schema.json', 'dpi-envelope.schema.json', 'dpi-saved.schema.json', 'strategy.schema.json', 'strategy-v2.schema.json', 'resources.schema.json', 'dns-share.schema.json', 'share-v4.schema.json', 'share-envelope.schema.json', 'report.schema.json']:
+    for name in ['profile-catalog.schema.json', 'import-addon.schema.json', 'import-addon-catalog.schema.json', 'dpi-catalog.json', 'dpi-profile.json', 'dpi-native-defaults.json', 'dpi-analysis-v2.schema.json', 'dpi-report.schema.json', 'dpi-envelope.schema.json', 'dpi-saved.schema.json', 'strategy.schema.json', 'strategy-v2.schema.json', 'resources.schema.json', 'resources-v2.schema.json', 'dns-share.schema.json', 'share-v4.schema.json', 'share-envelope.schema.json', 'report.schema.json']:
         core['opt/share/nfqws2-asus/'+name] = local('support/'+name)
     core['opt/share/nfqws2-asus/package-manifest.schema.json'] = local('updates/package-manifest.schema.json')
     core['opt/share/nfqws2-asus/update-release-key.pem'] = local('updates/trusted-release-key.pem')

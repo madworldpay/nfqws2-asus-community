@@ -42,8 +42,8 @@ final class NfqwsOpenWrtReport
         foreach(['config'=>$saved,'runtime'=>$runtime]as $source=>$text)foreach(AsusReportValues::referenceSettings($text)as $key=>$value){
             if(!str_starts_with($key,'NFQWS_')&&!str_starts_with($key,'MODE_'))continue;
             if($value===null){$unresolved++;continue;}
-            preg_match_all('~/(?:opt/)?etc/nfqws2/(lists|lua|blobs)/([A-Za-z0-9_.-]+)~',$value,$matches,PREG_SET_ORDER);
-            foreach($matches as $m){if(str_contains($m[2],'..')){$unresolved++;continue;}$kind=['lists'=>'list','lua'=>'lua','blobs'=>'blob'][$m[1]];$refs[$kind][$m[2]][$source]=true;}
+            require_once __DIR__.'/resource-paths.php';$paths=NfqwsResourcePaths::references($value);$unresolved+=$paths['invalid'];
+            foreach($paths['valid'] as $identity){$kind=['lists'=>'list','lua'=>'lua','blobs'=>'blob'][$identity['kind']];$refs[$kind][$identity['name']][$source]=true;}
             if(preg_match('~@/(?!etc/nfqws2/(?:lists|lua|blobs)/|opt/etc/nfqws2/(?:lists|lua|blobs)/|var/log/nfqws2)~',$value))$unresolved++;
         }
         foreach(['list'=>'LIST','lua'=>'LUA','blob'=>'BLOB']as $kind=>$alias)foreach(array_unique(array_merge(array_keys($refs[$kind]??[]),$io->resources($kind)))as $name){

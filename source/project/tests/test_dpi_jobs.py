@@ -42,6 +42,46 @@ class DpiJobsTests(unittest.TestCase):
     def test_native_error_messages_remain_available_when_no_group_completed(self):
         script='''$job=$j->startRun('11111111-1111-4111-8111-111111111111',[2],[]);$w=new AsusDpiWorker($s,['work'=>fn($id)=>$argv[2],'binary'=>fn()=>'/native','probe'=>fn()=>['exit'=>2,'stdout'=>'','stderr'=>'original error'],'context'=>fn()=>['nfqws'=>'running','ark'=>'absent','tun_observed'=>false]]);$w->run($job['id']);echo json_encode([json_decode($s->readNative($job['id']),true),$s->status()['history'][0]['native_available']]);'''
         r=self.call(script);self.assertIsInstance(r,list);self.assertEqual(r[0]['groups'],[]);self.assertIn('original error',json.dumps(r[0]['messages']));self.assertTrue(r[1])
+
+    def dns_failure_report(self, phase):
+        script=r'''require $argv[1].'/strategy-picker-core.php';$n=0;
+        $job=$j->startRun('11111111-1111-4111-8111-111111111111',[2],[]);
+        $w=new AsusDpiWorker($s,['work'=>fn($id)=>$argv[2],'binary'=>fn()=>'/native',
+          'probe'=>fn()=>['exit'=>0,'stdout'=>json_encode(json_decode(file_get_contents($argv[4].'/tests/fixtures/dpi/group2.json'),true)['raw'])],
+          'context'=>function(?array &$failure=null)use(&$n){$n++;
+            if($n===PHASE){$v=AsusDpiDnsContext::observe(['platform'=>'asus-entware','primary'=>fn()=>throw new RuntimeException('DNS_DIAGNOSTIC_SECRET /private/secret')]);$failure=$v['failure'];$dns=$v['context'];}
+            else{$failure=null;$dns=['schema_version'=>1,'state'=>'known','sha256'=>str_repeat('a',64)];}
+            return ['nfqws'=>'running','ark'=>'absent','tun_observed'=>false,'dns'=>$dns];}]);
+        $w->run($job['id']);$raw=json_decode($s->readNative($job['id']),true);
+        try{NfqwsStrategyPickerScore::measure($raw);$ranking='accepted';}catch(Throwable $e){$ranking=$e->getMessage();}
+        echo json_encode(['native'=>$raw,'journal'=>json_decode(file_get_contents($argv[2].'/state/'.$job['id'].'.messages.json'),true),'ranking'=>$ranking]);'''
+        return self.call(script.replace('PHASE', str(phase)))
+
+    def test_dns_failure_before_probe_is_durable_and_does_not_become_valid_score(self):
+        value = self.dns_failure_report(1)
+        self.assertEqual(value['native']['state'], 'completed')
+        self.assertTrue(value['native']['context']['changed'])
+        self.assertEqual(value['ranking'], 'incomparable_result')
+        self.assertIn('DNS context unavailable (before): primary external:0', json.dumps(value['native']['messages']))
+        self.assertEqual(value['journal'], value['native']['messages'])
+        self.assertNotIn('DNS_DIAGNOSTIC_SECRET', json.dumps(value))
+
+    def test_dns_failure_after_probe_is_durable_and_does_not_become_valid_score(self):
+        value = self.dns_failure_report(2)
+        self.assertEqual(value['native']['state'], 'completed')
+        self.assertTrue(value['native']['context']['changed'])
+        self.assertEqual(value['ranking'], 'incomparable_result')
+        self.assertIn('DNS context unavailable (after): primary external:0', json.dumps(value['native']['messages']))
+        self.assertEqual(value['journal'], value['native']['messages'])
+        self.assertNotIn('DNS_DIAGNOSTIC_SECRET', json.dumps(value))
+
+    def test_deleted_result_blocks_recovery_diagnostic_resurrection(self):
+        script=r'''$job=$j->startRun('11111111-1111-4111-8111-111111111111',[2],[]);
+        $s->update($job['id'],['state'=>'running']);$s->update($job['id'],['state'=>'interrupted','finished_at'=>time()]);
+        $expected=$s->status(false)['history'][0];$s->deleteResult($job['id']);
+        try{$s->appendRecoveryMessage($expected,['group'=>null,'text'=>'DNS context unavailable (recovery): primary external:0']);$error='accepted';}catch(Throwable $e){$error=$e->getMessage();}
+        echo json_encode(['error'=>$error,'messages_present'=>is_file($argv[2].'/state/'.$job['id'].'.messages.json')]);'''
+        self.assertEqual(self.call(script),{'error':'request_conflict','messages_present':False})
     def test_worker_death_recovers_completed_groups_and_original_messages(self):
         script='''$job=$j->startRun('11111111-1111-4111-8111-111111111111',[2],[]);
         $group=AsusDpiNative::group(json_encode(json_decode(file_get_contents($argv[4].'/tests/fixtures/dpi/group2.json'),true)['raw']),2);

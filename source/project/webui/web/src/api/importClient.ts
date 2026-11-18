@@ -6,11 +6,13 @@ import {
 import { ShareError, shareRequest, STRATEGY_KEYS } from '@/api/shareClient';
 import {
   resourceBytes,
+  resourcePath,
   type DnsSelection,
   type DnsSource,
   type ResourceCopy,
 } from '@/api/shareResourcesClient';
 import type { Profile } from '@/api/smartDnsProfile';
+import { sha256 } from '@/api/supportDigest';
 import { newSupportSubmissionId } from '@/api/supportReport';
 
 export const SHARED_IMPORT_KEYS = [
@@ -22,10 +24,19 @@ export const SHARED_IMPORT_KEYS = [
   'MODE_AUTO',
 ] as const;
 export const PORT_IMPORT_KEYS = ['TCP_PORTS', 'UDP_PORTS'] as const;
+export type MeasuredImport = Readonly<{ id: string; result: string }>;
 export type ImportDocument = {
   values: Record<string, string>;
   ports: Record<string, string>;
   resources: (ResourceCopy & { aliases: string[] })[];
+  package_files: {
+    id: string;
+    kind: 'lua' | 'blobs' | 'lists';
+    name: string;
+    byte_length: number;
+    sha256: string;
+    aliases: string[];
+  }[];
   dns_sources: DnsSource[];
   context: Record<string, unknown> | null;
   source: Record<string, unknown> | null;
@@ -134,6 +145,30 @@ export async function readImportFiles(files: File[]): Promise<string[]> {
     }),
   );
 }
+export async function readMeasuredImport(
+  csrf: string,
+  measured: MeasuredImport,
+): Promise<string> {
+  if (!id(measured.id) || !id(measured.result))
+    throw new ShareError('invalid_request');
+  const value = await shareRequest(
+    csrf,
+    'pickerexport',
+    { id: measured.id, result: measured.result },
+    8388608,
+  );
+  if (
+    !obj(value) ||
+    typeof value.raw !== 'string' ||
+    !value.raw ||
+    value.raw.length > 4194304 ||
+    value.filename !== `NFQWS2_MEASURED_${measured.result}.json`
+  )
+    return invalid();
+  const bytes = new TextEncoder().encode(value.raw);
+  if (bytes.length > 4194304 || sha256(bytes) !== value.sha256) return invalid();
+  return value.raw;
+}
 export async function convertKeeneticImport(
   csrf: string,
   text: string,
@@ -206,6 +241,39 @@ export async function inspectImport(
     bytes += resourceBytes(row as ImportDocument['resources'][number]).length;
   }
   if (bytes > 524288) return invalid();
+  const packageFiles = v.package_files ?? [];
+  if (
+    !Array.isArray(packageFiles) ||
+    packageFiles.length + v.resources.length > 128
+  )
+    return invalid();
+  for (const row of packageFiles) {
+    if (
+      !obj(row) ||
+      Object.keys(row).sort().join(',') !==
+        'aliases,byte_length,id,kind,name,sha256' ||
+      !id(row.id) ||
+      seen.has(row.id) ||
+      !['lists', 'lua', 'blobs'].includes(String(row.kind)) ||
+      typeof row.name !== 'string' ||
+      !/^[A-Za-z0-9_.-]{1,128}$/.test(row.name) ||
+      ['.', '..'].includes(row.name) ||
+      !hash(row.sha256) ||
+      !Number.isSafeInteger(row.byte_length) ||
+      Number(row.byte_length) < 0 ||
+      Number(row.byte_length) > 262144 ||
+      !Array.isArray(row.aliases) ||
+      row.aliases.length < 1 ||
+      row.aliases.length > 128 ||
+      row.aliases.some(
+        (x) =>
+          typeof x !== 'string' || !/^(RESOURCE|BLOB)_[1-9][0-9]*$/.test(x),
+      ) ||
+      new Set(row.aliases).size !== row.aliases.length
+    )
+      return invalid();
+    seen.add(row.id);
+  }
   for (const s of v.dns_sources)
     if (
       !obj(s) ||
@@ -220,7 +288,7 @@ export async function inspectImport(
       !Array.isArray(s.warnings)
     )
       return invalid();
-  return { ...v, values, ports } as ImportDocument;
+  return { ...v, values, ports, package_files: packageFiles } as ImportDocument;
 }
 export const selectImportDependencies = (
   selection: ImportSelection,
@@ -234,7 +302,7 @@ export const selectImportDependencies = (
       .filter(
         (id) =>
           !selection.files.some((f) => f.id === id) &&
-          doc.resources.some((f) => f.id === id && f.kind !== 'lua'),
+          doc.resources.some((f) => f.id === id),
       )
       .map((id) => ({ id })),
   ],
@@ -304,9 +372,7 @@ export async function prepareImport(
     if (
       !obj(f) ||
       typeof f.path !== 'string' ||
-      !/^\/opt\/etc\/nfqws2\/(lists|lua|blobs)\/[A-Za-z0-9_.-]{1,128}$/.test(
-        f.path,
-      ) ||
+      !resourcePath(f.path) ||
       typeof f.reuse !== 'boolean' ||
       typeof f.replace !== 'boolean'
     )

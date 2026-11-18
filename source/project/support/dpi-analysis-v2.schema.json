@@ -71,6 +71,9 @@
             },
             "tun_observed": {
               "type": "boolean"
+            },
+            "dns": {
+              "$ref": "#/$defs/dnsContext"
             }
           },
           "required": [
@@ -99,6 +102,9 @@
             },
             "tun_observed": {
               "type": "boolean"
+            },
+            "dns": {
+              "$ref": "#/$defs/dnsContext"
             }
           },
           "required": [
@@ -2229,5 +2235,56 @@
     "coverage",
     "settings"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "dnsContext": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "state": {
+          "enum": [
+            "known",
+            "unknown"
+          ]
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "state",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "state": {
+              "const": "known"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "properties": {
+            "state": {
+              "const": "unknown"
+            },
+            "sha256": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    }
+  }
 }

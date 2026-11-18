@@ -24,6 +24,7 @@ export type StrategyContext = {
 };
 export type ShareSelection = {
   version?: 3 | 4;
+  comment?: string;
   resources?: {
     files: { id: string; source_sha256: string; text?: string }[];
     missing_reason: string;
@@ -45,6 +46,7 @@ export type ShareSelection = {
         context: Omit<StrategyContext, 'region'> & { region?: string };
       };
   link_installation?: boolean;
+  artifact?: DownloadShareInput;
 };
 export type ShareSource = Readonly<{
   model: string;
@@ -58,7 +60,7 @@ export type ShareSource = Readonly<{
   installation_id?: string;
 }>;
 export type ShareWire = Readonly<{
-  type: 'report' | 'dpi' | 'strategy' | 'resources' | 'dns';
+  type: 'report' | 'dpi' | 'strategy' | 'resources' | 'dns' | 'artifact';
   filename: string;
   byte_length: number;
   sha256: string;
@@ -66,6 +68,7 @@ export type ShareWire = Readonly<{
 }>;
 export type PreparedShare = Readonly<{
   version?: 3 | 4;
+  comment?: string;
   wire: readonly ShareWire[];
   files: readonly (SupportReportFile & {
     type: ShareWire['type'];
@@ -241,9 +244,11 @@ export async function prepareShare(
   if (
     !exact(
       value,
-      ['version', 'files', 'source', 'proof'],
+      ['version', 'files', 'source', 'proof', 'comment'],
       ['files', 'proof'],
     ) ||
+    value.comment !== selection.comment ||
+    (version !== 4 && value.comment !== undefined) ||
     (version === 4
       ? value.version !== 4
       : value.version !== undefined && value.version !== 3) ||
@@ -265,15 +270,17 @@ export async function prepareShare(
     const type = f.type as ShareWire['type'];
     const at = (
       version === 4
-        ? ['report', 'dpi', 'strategy', 'resources', 'dns']
+        ? ['report', 'dpi', 'strategy', 'resources', 'dns', 'artifact']
         : ['report', 'dpi', 'strategy']
     ).indexOf(type);
-    const max = [1048576, 262144, 65536, 786432, 131072][at];
+    const max = [1048576, 262144, 65536, 786432, 131072, 1048576][at];
     if (
       at <= last ||
       at < 0 ||
       typeof f.filename !== 'string' ||
-      !NAME.test(f.filename) ||
+      !(type === 'artifact'
+        ? /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(f.filename)
+        : NAME.test(f.filename)) ||
       f.filename.length > 128 ||
       !Number.isInteger(f.byte_length) ||
       Number(f.byte_length) < 1 ||
@@ -289,8 +296,11 @@ export async function prepareShare(
       throw new ShareError('invalid_response');
     const bytes = Uint8Array.from(decoded, (c) => c.charCodeAt(0));
     if (sha256(bytes) !== f.sha256) throw new ShareError('invalid_response');
-    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    const data = JSON.parse(text);
+    const text =
+      type === 'artifact'
+        ? new TextDecoder().decode(bytes)
+        : new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const data = type === 'artifact' ? {} : JSON.parse(text);
     if (
       !object(data) ||
       (type === 'report' &&
@@ -327,11 +337,23 @@ export async function prepareShare(
           !Array.isArray(data.sources)))
     )
       throw new ShareError('invalid_response');
+    if (
+      type === 'artifact' &&
+      (!selection.artifact ||
+        f.filename !== selection.artifact.filename ||
+        f.data_base64 !== selection.artifact.data_base64)
+    )
+      throw new ShareError('invalid_response');
     files.push(
       Object.freeze({
         type,
         filename: f.filename,
-        blob: new Blob([bytes], { type: 'application/json' }),
+        blob: new Blob([bytes], {
+          type:
+            type === 'artifact'
+              ? selection.artifact!.media_type
+              : 'application/json',
+        }),
         text,
         complete:
           type === 'report'
@@ -358,6 +380,7 @@ export async function prepareShare(
     wire: Object.freeze(wire),
     files: Object.freeze(files),
     proof: value.proof,
+    ...(selection.comment ? { comment: selection.comment } : {}),
     ...(origin ? { source: origin } : {}),
   });
 }
@@ -378,6 +401,7 @@ export function sendShare(
       version: snapshot.version ?? 3,
       submission_id: submissionId,
       files: snapshot.wire,
+      ...(snapshot.comment ? { comment: snapshot.comment } : {}),
       ...(snapshot.source ? { source: snapshot.source } : {}),
     });
     if (
@@ -688,4 +712,71 @@ export async function saveShare(
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return 'browser';
+}
+
+/** Download sharing is opt-in. These helpers only open a review, never send. */
+export type DownloadShareInput = Readonly<{
+  filename: string;
+  media_type: string;
+  data_base64: string;
+}>;
+const DOWNLOAD_MEDIA = [
+  'application/json',
+  'text/plain',
+  'text/yaml',
+  'text/x-shellscript',
+  'application/zip',
+  'application/octet-stream',
+];
+export function isDownloadShareInput(
+  value: unknown,
+): value is DownloadShareInput {
+  if (
+    !object(value) ||
+    !exact(value, ['filename', 'media_type', 'data_base64']) ||
+    typeof value.filename !== 'string' ||
+    !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(value.filename) ||
+    typeof value.media_type !== 'string' ||
+    !DOWNLOAD_MEDIA.includes(value.media_type) ||
+    typeof value.data_base64 !== 'string' ||
+    value.data_base64.length > 1398104
+  )
+    return false;
+  try {
+    const raw = atob(value.data_base64);
+    return (
+      raw.length > 0 && raw.length <= 1048576 && btoa(raw) === value.data_base64
+    );
+  } catch {
+    return false;
+  }
+}
+export async function downloadShareInput(
+  blob: Blob,
+  filename: string,
+): Promise<DownloadShareInput> {
+  if (blob.size < 1 || blob.size > 1048576)
+    throw new ShareError('output_limit');
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const media = blob.type.split(';')[0];
+  const value = {
+    filename,
+    media_type: DOWNLOAD_MEDIA.includes(media)
+      ? media
+      : 'application/octet-stream',
+    data_base64: btoa(
+      Array.from(bytes, (c) => String.fromCharCode(c)).join(''),
+    ),
+  };
+  if (!isDownloadShareInput(value)) throw new ShareError('invalid_request');
+  return Object.freeze(value);
+}
+export async function openDownloadShare(
+  blob: Blob,
+  filename: string,
+): Promise<void> {
+  const input = await downloadShareInput(blob, filename);
+  window.dispatchEvent(
+    new CustomEvent('nfqws-share-download', { detail: input }),
+  );
 }

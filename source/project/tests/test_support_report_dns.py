@@ -5,6 +5,35 @@ from test_dpi_normalize import PHP,PUBLIC,ROOT
 from test_support_relay_validation import fixture
 
 class ReportDnsTests(unittest.TestCase):
+    def test_departed_process_does_not_leave_a_cached_partial_dns_scan(self):
+        # A child removes a proc fixture after the reader has cached its
+        # directory. The scanner must freshly distinguish gone from unreadable.
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'100').mkdir();(root/'101').mkdir()
+            (root/'101/comm').write_text('smartdns\n')
+            code=r'''require $argv[1].'/support-report-io.php';
+            $io=new class($argv[2]) extends AsusReportIO{
+              public function __construct(private string $proc){parent::__construct(['proc'=>$proc]);}
+              public function readProcess(int $pid,string $field,int $limit=16384):array{
+                if($pid===100){$path=$this->proc.'/100';is_dir($path);
+                  $p=proc_open(['/bin/rmdir',$path],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
+                  foreach($pipes as $pipe)fclose($pipe);if(proc_close($p)!==0)throw new RuntimeException('fixture');
+                  return ['state'=>'missing','value'=>''];}
+                return parent::readProcess($pid,$field,$limit);
+              }
+            };echo json_encode($io->dnsProcesses());'''
+            p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),d],capture_output=True,text=True,timeout=5)
+            self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'')
+            self.assertEqual(json.loads(p.stdout),{'state':'available','names':['smartdns']})
+
+    def test_present_unreadable_process_still_makes_dns_scan_partial(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'100').mkdir()
+            code="require $argv[1].'/support-report-io.php';echo json_encode((new AsusReportIO(['proc'=>$argv[2]]))->dnsProcesses());"
+            p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),d],capture_output=True,text=True,timeout=5)
+            self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'')
+            self.assertEqual(json.loads(p.stdout),{'state':'partial','names':[]})
+
     def collect(self,nvram,files=None,processes=()):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)

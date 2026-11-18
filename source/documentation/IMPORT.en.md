@@ -33,7 +33,7 @@ edited separately since the import.
 
 If the import save response is lost, use **Check result** or **Retry the same write**. Repeating that write does not create a second import. If recovery is required, preserve the error and import log before making further edits.
 
-## Add-ons · Beta
+## Add-ons
 
 Since Build 92, optional add-ons below the base strategy come from a separate signed catalog. Select a base strategy, then the required add-ons: every checkbox starts off. **Preview** shows added domains, configuration changes and other affected blocks. Only explicitly selected changes are applied after **Save selection**.
 

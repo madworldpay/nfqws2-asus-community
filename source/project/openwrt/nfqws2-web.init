@@ -45,6 +45,7 @@ start_service() {
         -h /usr/share/nfqws2-web -I index.php -E /index.php \
         -i .php=/usr/lib/nfqws2-web/php-cgi.sh -t 35 -T 30 -k 5 -n 3 -N 16
     for address in $NFQWS_WEB_LISTENERS; do procd_append_param command -p "$address"; done
+    procd_set_param limits nofile="131072 131072"
     procd_set_param respawn 3600 5 5
     procd_set_param stdout 1
     procd_set_param stderr 1

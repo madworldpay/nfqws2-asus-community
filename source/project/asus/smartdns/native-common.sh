@@ -68,10 +68,13 @@ sd_install_hook() {
             sd_protected "$sd_root/hook-edit.awk" - || return 1
             sd_ending=0;[ -z "$("$sd_bb" tail -c 1 "$sd_root/hook-original")" ] && sd_ending=1
             "$sd_bb" awk -v expected="$sd_root/owned-block" -v ending="$sd_ending" -f "$sd_root/hook-edit.awk" "$sd_root/hook-original" > /dev/null || return 1
-            "$sd_bb" cmp -s "$sd_hook" "$sd_root/hook-original"
-            return $?
+            "$sd_bb" cmp -s "$sd_hook" "$sd_root/hook-original" && "$sd_bb" cp -p "$sd_hook" "$sd_next" || return 1
+            # Preserve foreign commands in their original order; our exact
+            # block runs last after an addon has appended its DNS handler.
+            "$sd_bb" awk -v expected="$sd_root/owned-block" -v ending="$sd_ending" -f "$sd_root/hook-edit.awk" "$sd_root/hook-original" > "$sd_next" || return 1
+        else
+            "$sd_bb" cp -p "$sd_hook" "$sd_next" || return 1
         fi
-        "$sd_bb" cp -p "$sd_hook" "$sd_next" || return 1
     fi
     sd_ok=0
     if "$sd_bb" cat "$sd_root/owned-block" >> "$sd_next"; then
@@ -173,9 +176,16 @@ sd_render_forwarding() (
 sd_forward_config() {
     sd_protected /tmp/etc/dnsmasq.conf - || return 1
     "$sd_bb" awk '
+        function service(line, value,ip,a,n,i) {
+            value=line;sub(/^server[ \t]*=[ \t]*/,"",value)
+            if (value!~/^\/[A-Za-z0-9_-]+\/[0-9.]+$/) return 0
+            ip=value;sub(/^.*\//,"",ip);n=split(ip,a,".");if (n!=4) return 0
+            for(i=1;i<=4;i++) if(a[i]!~/^[0-9]+$/ || a[i]>255 || (length(a[i])>1 && substr(a[i],1,1)=="0")) return 0
+            return a[1]!=127 && ip!="0.0.0.0"
+        }
         {line=$0;sub(/^[ \t]+/,"",line);sub(/[ \t\r]+$/,"",line)}
         line=="no-resolv" {noresolve++;next}
-        line~/^server[ \t]*=/ {if (line!="server=127.0.0.1#6054") bad=1;server++;next}
+        line~/^server[ \t]*=/ {if (service(line)) next;if (line!="server=127.0.0.1#6054") bad=1;server++;next}
         line~/^(resolv-file|servers-file|conf-file|conf-dir|conf-script)[ \t]*=/ {bad=1}
         END {exit (bad || noresolve!=1 || server!=1)}' /tmp/etc/dnsmasq.conf
 }
@@ -283,6 +293,11 @@ sd_restored_config() (
             } else if (index(endpoint,".")) return 0
             return 1
         }
+        function default_server(line,value) {
+            value=line;gsub(/"/,"",value);sub(/[ \t]+#.*/,"",value)
+            sub(/^[^=]*=[ \t]*/,"",value);value=trim(value)
+            return value!="" && value!="#" && substr(value,1,1)!="/"
+        }
         function source(path,kind, line,status,count,total) {
             if ((path!=servers1 || !good1) && (path!=servers2 || !good2)) return 0
             count=0;total=0
@@ -291,21 +306,28 @@ sd_restored_config() (
                 line=trim(line);if (line=="" || line~/^#/) continue
                 if (kind=="servers-file") {
                     if (line!~/^server[ \t]*=/ || !independent(line)) {close(path);return 0}
+                    if (default_server(line)) default_servers++
                 } else if (line~/^nameserver[ \t]+/) {
                     if (!independent(line)) {close(path);return 0}
+                    resolver_servers++
                 } else if (line!~/^(search|domain|options)[ \t]+/) {close(path);return 0}
             }
             close(path);return status==0
         }
         function directive(line,depth, kind,path) {
             line=trim(line);if (line=="" || line~/^#/) return 1
+            if (line=="no-resolv") {noresolve=1;return 1}
             if (line~/^(conf-dir|conf-script)[ \t]*(=|$)/) return 0
             if (line~/^conf-file[ \t]*(=|$)/) {
                 if (line!~/^conf-file[ \t]*=/) return 0
                 path=literal(line)
                 return path!="" && configuration(path,depth+1)
             }
-            if (line~/^(server|rev-server)[ \t]*=/) return independent(line)
+            if (line~/^(server|rev-server)[ \t]*=/) {
+                if (!independent(line)) return 0
+                if (line~/^server[ \t]*=/ && default_server(line)) default_servers++
+                return 1
+            }
             if (line~/^(servers-file|resolv-file)[ \t]*=/) {
                 kind=line;sub(/[ \t]*=.*/,"",kind);path=line;sub(/^[^=]*=[ \t]*/,"",path)
                 return source(trim(path),kind)
@@ -325,7 +347,11 @@ sd_restored_config() (
         }
         BEGIN {
             n=split(configs,paths,"\n");for (i=1;i<=n;i++) if (paths[i]!="") allowed[paths[i]]=1
-            exit !configuration(main,1)
+            complete=configuration(main,1)
+            # A service-only route or a resolv-file disabled by no-resolv
+            # cannot replace the listener being stopped. A cached DNS answer
+            # is never proof that general queries have a return route.
+            exit !(complete && (default_servers>0 || (!noresolve && resolver_servers>0)))
         }'
 )
 

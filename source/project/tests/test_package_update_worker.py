@@ -24,7 +24,11 @@ class PackageUpdateLifecycleTests(unittest.TestCase):
           'rm -f '+q(str(self.run/'pid'))+' '+q(str(self.run/'enabled'))+' '+q(str(self.run/'runtime.conf'))+' '+q(str(self.run/'started'))+' '+q(str(self.run/'watchdog-state'))+';;\n'
           'start) : > '+q(str(self.run/'enabled'))+'\n'
           'if [ -f "$CONFFILE" ]; then cp "$CONFFILE" '+q(str(self.run/'runtime.conf'))+'; else printf "# Active fixture\\n" > '+q(str(self.run/'runtime.conf'))+'; fi\n'
-          'if [ ! -f '+q(str(self.base/'no-wan'))+' ]; then /bin/sleep 30 </dev/null >/dev/null 2>&1 & echo $! > '+q(str(self.run/'pid'))+'; fi;;\nesac\n')
+          'if [ ! -f '+q(str(self.base/'no-wan'))+' ]; then /bin/sleep 30 </dev/null >/dev/null 2>&1 & child=$!; echo "$child" > '+q(str(self.run/'pid'))+'\n'
+          # The real init waits for its engine before returning. Publishing a
+          # PID before exec is not evidence that the fixture engine is ready.
+          'tries=0; while [ "$(readlink -f /proc/$child/exe 2>/dev/null)" != '+q(str(Path('/bin/sleep').resolve()))+' ] && [ "$tries" -lt 100 ]; do sleep .01; tries=$((tries + 1)); done\n'
+          '[ "$(readlink -f /proc/$child/exe 2>/dev/null)" = '+q(str(Path('/bin/sleep').resolve()))+' ] || exit 1; fi;;\nesac\n')
         self.core.chmod(0o700);self.web.write_text('#!/bin/sh\nexit 0\n');self.web.chmod(0o700)
         (self.run/'runtime.conf').write_text('# Active fixture\n');(self.run/'runtime.conf').chmod(0o600)
         self.options={'run':str(self.run),'engine':str(Path('/bin/sleep').resolve()),'core_init':str(self.core),'web_init':str(self.web),'owner':os.getuid()}
@@ -58,6 +62,10 @@ class PackageUpdateLifecycleTests(unittest.TestCase):
             else:self.identities.append((pid,start))
         return json.loads(r.stdout)
     def test_running_intent_stops_then_starts_exactly_once(self):
+        # Force the prior fixture race: its background child publishes a PID
+        # before exec. Readiness must be established by the init fixture.
+        self.core.write_text(self.core.read_text().replace('/bin/sleep 30 </dev/null',
+            "/bin/sh -c 'sleep .2; exec /bin/sleep 30' </dev/null"))
         self.running();r=self.call([['intent',[]],['stop',[]],['restore',['INTENT']]])
         self.assertIsInstance(r,list);self.assertEqual(r[0]['mode'],'running');self.assertEqual(r[-1],'running')
         self.assertEqual(self.log.read_text().splitlines(),['stop','start'])

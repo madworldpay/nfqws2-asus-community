@@ -18,11 +18,14 @@ BEGIN {
         if (seen || !held) { bad=1;exit 2 }
         # The previous record's LF belongs to the owned block. Holding one
         # record handles both an empty boundary and an original missing LF.
+        separate=(previous!="")
         printf "%s",previous
         held=0;seen=1;inside=1;at=1
         next
     }
     if (index($0,"NFQWS2 SMARTDNS MANAGED")) { bad=1;exit 2 }
+    # The removed block may have supplied the only LF between foreign commands.
+    if (seen && NR==lastBlock+1 && separate && $0!="") printf "\n"
     if (held) printf "%s\n",previous
     previous=$0;held=1
 }

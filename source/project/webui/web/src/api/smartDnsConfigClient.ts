@@ -42,6 +42,14 @@ export type ConfigView = {
   resume_code?: string | null;
   confirmed_profile?: Profile | null;
   routing?: 'managed' | 'external' | 'unknown' | 'inactive';
+  dns?: {
+    state: 'available' | 'partial' | 'unknown';
+    default_servers: string[];
+    conditional_servers: string[];
+    dhcp_dns: { scope: string; servers: string[] }[];
+    client_overrides_observed: false;
+    connectivity_tested: false;
+  };
 };
 const ID = /^[a-f0-9]{32}$/;
 const HASH = /^[a-f0-9]{64}$/;
@@ -161,4 +169,17 @@ export async function confirmSmartDns(csrf: string, id: string) {
 }
 export async function rollbackSmartDns(csrf: string, id: string) {
   return status(await call(csrf, 'smartdnsrollback', { request_id: id }));
+}
+export async function repairSmartDnsHook(csrf: string): Promise<void> {
+  const result = (await call(csrf, 'smartdnsrepairhook')) as {
+    repaired: boolean;
+    backup_id: string | null;
+  };
+  if (
+    typeof result?.repaired !== 'boolean' ||
+    (result.repaired
+      ? !ID.test(result.backup_id ?? '')
+      : result.backup_id !== null)
+  )
+    throw new DpiError('invalid_response');
 }

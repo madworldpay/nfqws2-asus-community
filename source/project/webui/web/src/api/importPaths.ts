@@ -1,6 +1,6 @@
 import type { ImportDocument } from '@/api/importClient';
 
-type Files = ImportDocument['resources'];
+type Files = Pick<ImportDocument['resources'][number], 'kind' | 'name' | 'sha256' | 'aliases'>[];
 const aliasPattern = /\bRESOURCE_[1-9][0-9]*\b/g;
 
 /** Show one argument per line for canonical single-line strategy values,

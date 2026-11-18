@@ -42,6 +42,11 @@ class DpiTerminalHttpTests(mail.SupportMailApiTests):
         self.assertEqual(self.request(self.terminal(token),'visitor')[0],200)
 
     def standalone_job(self, alive):
+        # Match the installed package's PHP dependency closure while retaining
+        # the authentication/service fixture overrides prepared by setUp().
+        for source in (ROOT/'webui/web/public').glob('*.php'):
+            if not (self.base/source.name).exists():
+                (self.base/source.name).write_bytes(source.read_bytes())
         state=self.base/'dpi-state';state.mkdir(mode=0o700)
         source=(self.base/'dpi-store.php').read_text().replace("$root??self::optPath('/var/lib/nfqws2-asus/dpi-detector')",json.dumps(str(state))).replace('private int $owner=0','private int $owner='+str(os.getuid()))
         (self.base/'dpi-store.php').write_text(source)

@@ -1,4 +1,5 @@
 """Inspect emitted own package payload; external pinned archive loading is the boundary."""
+from frontend_fixture import copy_public
 import importlib.util
 import io
 from pathlib import Path
@@ -15,8 +16,7 @@ asus=importlib.util.module_from_spec(spec);spec.loader.exec_module(asus)
 class IpHealthPackagingTests(unittest.TestCase):
     def frontend(self,root):
         dist=root/'dist';dist.mkdir()
-        (dist/'index.html').write_text('fixture')
-        for path in (ROOT/'webui/web/public').glob('*.php'):(dist/path.name).write_bytes(path.read_bytes())
+        copy_public(dist)
         return dist
 
     def test_emitted_asus_arch_packages_include_exact_health_files_without_dependency_change(self):

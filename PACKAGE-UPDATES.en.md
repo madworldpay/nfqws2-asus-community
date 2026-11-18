@@ -2,9 +2,9 @@
 
 ## Current release and device profiles
 
-[Build 99](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build99) is current for all 22 ASUS/Entware and OpenWrt variants. [Real completed-update screenshot](SCREENSHOTS.en.md#build99).
+[Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) is available for ASUS/Entware and OpenWrt. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 
-Before updating from an active Per device mode, save and apply Common in Devices · beta and wait for success. After installation check the version, previous service state, library and SmartDNS. Re-enable per-device mode by explicitly applying it when needed.
+Before updating from an active Per device mode, save and apply Common in Devices and wait for success. After installation check the version, previous service state, library and SmartDNS. Re-enable per-device mode by explicitly applying it when needed.
 
 Build 99 fixes ASUS preparation failures involving learned lists in saved strategies. Backup capture, validation, restoration and cleanup share limits of 4096 files, 64 MiB of data and 2 MiB of metadata; size is checked before stopping the service. If preview Build 98 fails with `invalid_state`, save its log; the current ASUS installer command in README includes the fix. Do not bypass unrelated failures by deleting files or editing the package database; share the error and log through community support.
 

@@ -1,4 +1,4 @@
-# Import Add-ons Beta Implementation Plan
+# Import Add-ons Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement task-by-task.
 
@@ -31,7 +31,7 @@ Interface: `importaddoncatalog` -> `{schema_version:1,revision,build,addons:[ent
 
 ### Task2 Frontend
 Files: new api/importAddonClient.ts and components/ImportAddons.tsx; modify ImportDialog, ImportPreview, import client types and RU/EN translations; browser tests.
-- [ ] RED tests for no default selection, Beta label, failure isolation, source reset, preview labels, hidden old duplicate torrent checkbox.
+- [ ] RED tests for no default selection, section label, failure isolation, source reset, preview labels, hidden old duplicate torrent checkbox.
 - [ ] Use exact Task1 API/types; display scope-limited Riot description and combined preview; preserve specialized torrent option inside same group.
 - [ ] GREEN browser/TypeScript/lint; no commits/deployments.
 

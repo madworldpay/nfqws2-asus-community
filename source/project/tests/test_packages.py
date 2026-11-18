@@ -84,7 +84,7 @@ class PackageTests(unittest.TestCase):
                     expected=overlay.patch_index(expected.decode(),(ROOT/'experimental/device-profiles/dispatcher-hook.php.inc').read_text()).encode()
                 self.assertEqual(data[path][1],expected)
             for name in ['dpi-saved.schema.json','strategy.schema.json','share-envelope.schema.json','report.schema.json',
-                         'strategy-v2.schema.json','resources.schema.json','dns-share.schema.json','share-v4.schema.json']:
+                         'strategy-v2.schema.json','resources.schema.json','resources-v2.schema.json','dns-share.schema.json','share-v4.schema.json']:
                 path='opt/share/nfqws2-asus/'+name
                 self.assertIn(path,list(data))
                 self.assertEqual(data[path][1],(ROOT/'support'/name).read_bytes())
@@ -134,7 +134,9 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(manifest['engine']['sha256'], hashlib.sha256(data['opt/usr/bin/nfqws2'][1]).hexdigest())
             for name, meta in manifest['resources'].items():
                 kind, name = name.split('/', 1)
-                path = ('opt/share/nfqws2-asus/defaults/blobs/' if kind == 'blob' else 'opt/etc/nfqws2/lua/') + name
+                prefix = {'blob': 'opt/share/nfqws2-asus/defaults/blobs/',
+                          'lua': 'opt/etc/nfqws2/lua/', 'lists': 'opt/etc/nfqws2/lists/'}[kind]
+                path = prefix + name
                 actual = data[path][1]
                 self.assertEqual(meta['bytes'], len(actual))
                 self.assertEqual(meta['sha256'], hashlib.sha256(actual).hexdigest())

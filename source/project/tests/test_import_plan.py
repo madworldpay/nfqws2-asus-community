@@ -3,6 +3,7 @@ import base64,copy,hashlib,json,subprocess,unittest
 from test_import_document import PHP,PUBLIC,STRATEGY,CTX
 
 BLOB=b'\0HELLO\xff';LUA=b'function imported() return 1 end\n'
+def imported(kind,raw):return '/opt/etc/nfqws2/'+kind+'/imported/'+hashlib.sha256(raw).hexdigest()+('.lua' if kind=='lua' else '.bin')
 def documents():
  s=copy.deepcopy(STRATEGY);s['blocks'][0]['value']='--filter-tcp=443 --lua-desync=fake:blob=hello';s['shared']={'NFQWS_BASE_ARGS':'--blob=hello:RESOURCE_1 --lua-init=RESOURCE_2'};s['dependencies']=[{'id':a,'kind':k,'included':True}for a,k in [('RESOURCE_1','file'),('RESOURCE_2','file'),('BLOB_3','blob')]]
  rows=[]
@@ -21,13 +22,13 @@ class ImportPlanTests(unittest.TestCase):
   p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],input=json.dumps(data),capture_output=True,text=True,timeout=10);self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');return json.loads(p.stdout)
  def test_exact_file_bindings_and_local_settings_preserved(self):
   p=self.call();self.assertNotIn('error',p);self.assertTrue(p['ready'],p);self.assertIn('ASUS_CLIENTS4="192.0.2.4"',p['config']);self.assertIn('ISP_INTERFACE="eth9"',p['config']);self.assertIn('NFQUEUE_NUM=300',p['config']);self.assertIn('NFQWS_ARGS_UDP="--filter-udp=443"',p['config']);self.assertEqual(len(p['files']),2)
-  self.assertIn('--blob=hello:@/opt/etc/nfqws2/blobs/hello.bin',p['config']);self.assertIn('--lua-init=@/opt/etc/nfqws2/lua/custom.lua',p['config']);self.assertNotIn('RESOURCE_',p['config']);self.assertEqual(base64.b64decode(p['files'][0]['data_base64']),BLOB)
+  self.assertIn('--blob=hello:@'+imported('blobs',BLOB),p['config']);self.assertIn('--lua-init=@'+imported('lua',LUA),p['config']);self.assertNotIn('RESOURCE_',p['config']);self.assertEqual(base64.b64decode(p['files'][0]['data_base64']),BLOB)
  def test_missing_selection_lists_needed_files_and_globals(self):
   p=self.call(selection(shared=[],files=[]));self.assertNotIn('error',p);self.assertFalse(p['ready']);self.assertIn('NFQWS_BASE_ARGS',p['required']['shared']);self.assertEqual(set(p['required']['files']),{'1'*32,'2'*32})
- def test_matching_bytes_reused_and_changed_bytes_replace_same_name(self):
-  row={'id':'a'*32,'kind':'blobs','name':'hello.bin','sha256':hashlib.sha256(BLOB).hexdigest(),'state':'available','byte_length':len(BLOB)}
-  p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertTrue(p['ready']);self.assertTrue(p['files'][0]['reuse']);self.assertEqual(p['files'][0]['path'],'/opt/etc/nfqws2/blobs/hello.bin')
-  row['sha256']='0'*64;p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertTrue(p['ready']);self.assertFalse(p['files'][0]['reuse']);self.assertEqual(p['files'][0]['path'],'/opt/etc/nfqws2/blobs/hello.bin');self.assertTrue(p['files'][0]['replace']);self.assertEqual(p['fingerprints']['files'][p['files'][0]['path']],'0'*64)
+ def test_generated_matching_bytes_reuse_and_changed_target_refuses(self):
+  row={'id':'a'*32,'kind':'blobs','name':imported('blobs',BLOB).split('/blobs/')[1],'sha256':hashlib.sha256(BLOB).hexdigest(),'state':'available','byte_length':len(BLOB)}
+  p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertTrue(p['ready']);self.assertTrue(p['files'][0]['reuse']);self.assertEqual(p['files'][0]['path'],imported('blobs',BLOB))
+  row['sha256']='0'*64;p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertFalse(p['ready']);self.assertFalse(p['files'][0]['reuse']);self.assertEqual(p['files'][0]['path'],imported('blobs',BLOB));self.assertTrue(p['files'][0]['replace']);self.assertEqual(p['fingerprints']['files'][p['files'][0]['path']],'0'*64)
  def test_shared_change_requires_explicit_cross_block_consent(self):
   p=self.call(selection(allow_shared_impact=False));self.assertFalse(p['ready']);self.assertIn('shared_impact',[v['code']for v in p['problems']]);self.assertIn('NFQWS_ARGS_UDP',p['affected_blocks'])
  def test_lua_choice_requires_trust_and_unbound_blob_never_bypasses(self):
@@ -69,15 +70,15 @@ class ImportPlanTests(unittest.TestCase):
   p=self.call(sel,docs=[json.dumps(d)]);self.assertNotIn('error',p);self.assertFalse(p['ready']);self.assertIn('invalid_dns_profile',[v['code']for v in p['problems']]);self.assertIsNone(p['draft'])
  def test_unrelated_legacy_import_name_does_not_change_original_target(self):
   sha=hashlib.sha256(BLOB).hexdigest();row={'id':'a'*32,'kind':'blobs','name':'imp-'+sha+'-hello.bin','sha256':'0'*64,'state':'available','byte_length':1}
-  p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertTrue(p['ready']);self.assertEqual(p['files'][0]['target_name'],'hello.bin')
- def test_replacement_exposes_impact_on_unselected_blocks(self):
+  p=self.call(inventory={'files':[row],'scan_truncated':False,'skipped':0});self.assertTrue(p['ready']);self.assertEqual(p['files'][0]['path'],imported('blobs',BLOB))
+ def test_isolated_blob_does_not_affect_unselected_blocks(self):
   row={'id':'a'*32,'kind':'blobs','name':'hello.bin','sha256':'0'*64,'state':'available','byte_length':1}
   current=CURRENT+'NFQWS_ARGS_CUSTOM="--blob=old:@/opt/etc/nfqws2/blobs/hello.bin"\n'
   p=self.call(selection(blocks=[],shared=[],files=[{'id':'1'*32}],allow_shared_impact=False),inventory={'files':[row]},current=current)
-  self.assertFalse(p['ready']);self.assertIn('NFQWS_ARGS_CUSTOM',p['affected_blocks']);self.assertIn('shared_impact',[x['code']for x in p['problems']])
- def test_selected_same_name_with_different_bytes_is_conflict(self):
+  self.assertTrue(p['ready']);self.assertEqual(p['affected_blocks'],[]);self.assertEqual(p['config'],current)
+ def test_selected_same_name_different_blob_bytes_stay_separate(self):
   v=json.loads(documents()[1]);v['files'][1]={**v['files'][0],'id':'2'*32,'aliases':['RESOURCE_2'],'data_base64':base64.b64encode(b'OTHER').decode(),'sha256':hashlib.sha256(b'OTHER').hexdigest(),'source_sha256':hashlib.sha256(b'OTHER').hexdigest(),'byte_length':5};v['audit']['references']=[];v['audit']['scope']='files_only'
-  p=self.call(selection(blocks=[],shared=[]),docs=[json.dumps(v)]);self.assertFalse(p['ready']);self.assertIn('file_conflict',[x['code']for x in p['problems']])
+  p=self.call(selection(blocks=[],shared=[]),docs=[json.dumps(v)]);self.assertTrue(p['ready']);self.assertEqual(len({f['path'] for f in p['files']}),2)
  def test_quoted_and_separate_file_operands_keep_required_at_prefix(self):
   sel=selection();sel['shared'][0]['value']='--blob "hello:RESOURCE_1" --lua-init "RESOURCE_2"';p=self.call(sel);self.assertTrue(p['ready'],p);self.assertIn('--blob hello:@/opt/',p['config']);self.assertIn('--lua-init @/opt/',p['config'])
 

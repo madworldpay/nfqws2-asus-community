@@ -69,6 +69,15 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
     setLoginOpen(false);
     setOpen(false);
   };
+  const confirmServiceOff = useCallback(async () => {
+    const fresh = await refreshStatus();
+    return (
+      fresh.isSuccess &&
+      fresh.data?.status === 0 &&
+      fresh.data.service === false &&
+      useAppStore.getState().auth === true
+    );
+  }, [refreshStatus]);
   useEffect(
     () => () => {
       request.current++;
@@ -180,7 +189,12 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
       </Tooltip>
     );
     return appearance === 'rabbit' ? (
-      <RabbitBuildBadge key={String(label)} state={rabbitState}>
+      <RabbitBuildBadge
+        key={String(label)}
+        state={rabbitState}
+        serviceOff={auth === true && isReady && service === false}
+        confirmServiceOff={confirmServiceOff}
+      >
         {chip}
       </RabbitBuildBadge>
     ) : (

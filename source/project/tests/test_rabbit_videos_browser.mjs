@@ -11,13 +11,7 @@ const { chromium } = await import(
 const web = fileURLToPath(new URL("../webui/web/", import.meta.url));
 const compact = await readFile(join(web, "public/compact-viewport.css"));
 const fixtures = new Map();
-const videos = [
-  { title: "MAKOSH — Заебало", url: "https://youtu.be/LXj9dgPvnv4" },
-  {
-    title: "Я один гуляю — Opera Experimental Version",
-    url: "https://youtu.be/QYr32Sgwtxk",
-  },
-];
+const song = { title: "Я один гуляю — Opera", url: "https://youtu.be/QYr32Sgwtxk" };
 let browser, server;
 try {
   const bundle = await build({
@@ -31,7 +25,7 @@ try {
     import{queryClient,API}from'./src/api/client';import{Header}from'./src/components/Header';
     import{Layout}from'./src/components/Layout';import{useAppStore}from'./src/store/useAppStore';
     useAppStore.setState({auth:true});
-    window.fixture={refreshStatus:()=>API.invalidateStatus(),refreshOverview:()=>queryClient.refetchQueries({queryKey:['package-update-overview'],type:'active'})};
+    window.fixture={loseAuth:()=>useAppStore.getState().setAuth(false),refreshStatus:()=>API.invalidateStatus(),refreshOverview:()=>queryClient.refetchQueries({queryKey:['package-update-overview'],type:'active'})};
     const routeTree=createRootRoute({component:()=> <Header/>}),router=createRouter({routeTree});
     createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><Layout><RouterProvider router={router}/></Layout></QueryClientProvider>);
   `,
@@ -103,7 +97,16 @@ try {
       installed_version: "1.3.2-asus6+b94",
     };
     res.setHeader("Content-Type", "application/json");
-    if (cmd === "status")
+    if (cmd === "status") {
+      if (f.holdStatus)
+        await new Promise((resolve) => {
+          f.releaseStatus = resolve;
+        });
+      if (f.statusFailure) {
+        res.statusCode = 503;
+        res.end(JSON.stringify({ error: "request_failed" }));
+        return;
+      }
       res.end(
         JSON.stringify({
           status: 0,
@@ -116,7 +119,7 @@ try {
           service: f.service,
         }),
       );
-    else if (cmd === "packageupdatestatus")
+    } else if (cmd === "packageupdatestatus")
       res.end(JSON.stringify({ check, operation: null }));
     else if (cmd === "packageupdatecheck") res.end(JSON.stringify(check));
     else {
@@ -169,7 +172,8 @@ try {
     const texts = JSON.parse(
       await readFile(join(web, "src/translations", language + ".json"), "utf8"),
     );
-    const label = language === "ru" ? "Видео с зайцем" : "Rabbit videos";
+    const label = texts.rabbit_videos.open;
+    await page.clock.install();
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
     await page.waitForResponse(
       (response) =>
@@ -184,7 +188,7 @@ try {
     await trigger.click();
     const menu = page.getByRole("menu", { name: label, exact: true });
     await menu.waitFor();
-    assert.equal(await menu.getByRole("menuitem").count(), 2);
+    assert.equal(await menu.getByRole("menuitem").count(), 1);
     assert.equal(
       await page.getByRole("dialog").count(),
       0,
@@ -202,8 +206,8 @@ try {
     );
     assert.deepEqual(
       f.calls,
-      baseline,
-      "opening the menu issues no update request",
+      [...baseline, "status"],
+      "opening confirms actual OFF with one read-only status request",
     );
     f.service = true;
     await page.evaluate(() => window.fixture.refreshStatus());
@@ -213,27 +217,31 @@ try {
       true,
       "a background service-state update must retain the menu's live anchor",
     );
-    assert.equal(await menu.isVisible(), true);
+    await menu.waitFor({ state: "hidden" });
+    assert.equal(
+      await trigger.count() === 0,
+      true,
+      "ON service must disable the video trigger and close its already-open menu",
+    );
+    f.service = false;
+    await page.evaluate(() => window.fixture.refreshStatus());
+    await page.locator('.rabbit-build-stage[data-state="off"]').waitFor();
+    await trigger.click();
+    await menu.waitFor();
     baseline = [...f.calls];
-    for (const video of videos) {
-      const item = menu.getByRole("menuitem", {
-        name: video.title,
-        exact: true,
-      });
-      assert.equal(await item.getAttribute("href"), video.url);
-      assert.equal(await item.getAttribute("target"), "_blank");
-      assert.deepEqual((await item.getAttribute("rel")).split(/\s+/).sort(), [
-        "noopener",
-        "noreferrer",
-      ]);
-    }
+    const item = menu.getByRole("menuitem", { name: song.title, exact: true });
+    assert.equal(await item.getAttribute("href"), song.url);
+    assert.equal(await item.getAttribute("target"), "_blank");
+    assert.deepEqual((await item.getAttribute("rel")).split(/\s+/).sort(), [
+      "noopener", "noreferrer",
+    ]);
     const firstPopup = context.waitForEvent("page");
     await menu
-      .getByRole("menuitem", { name: videos[0].title, exact: true })
+      .getByRole("menuitem", { name: song.title, exact: true })
       .click();
     const first = await firstPopup;
-    await first.waitForLoadState("domcontentloaded");
-    assert.equal(first.url(), videos[0].url);
+    await first.waitForURL(song.url, { waitUntil: "domcontentloaded" });
+    assert.equal(first.url(), song.url);
     assert.equal(await first.evaluate(() => window.opener), null);
     await first.close();
     await menu.waitFor({ state: "hidden" });
@@ -244,8 +252,8 @@ try {
     const secondPopup = context.waitForEvent("page");
     await page.keyboard.press("Enter");
     const second = await secondPopup;
-    await second.waitForLoadState("domcontentloaded");
-    assert.equal(second.url(), videos[1].url);
+    await second.waitForURL(song.url, { waitUntil: "domcontentloaded" });
+    assert.equal(second.url(), song.url);
     assert.equal(await second.evaluate(() => window.opener), null);
     await second.close();
     await menu.waitFor({ state: "hidden" });
@@ -261,16 +269,105 @@ try {
     );
     assert.deepEqual(
       external,
-      videos.map((video) => ({ url: video.url, referer: undefined })),
-      "only the chosen videos load, without a referrer",
+      [song, song].map(({ url }) => ({ url, referer: undefined })),
+      "only the one song loads via mouse and keyboard, without a referrer",
     );
     assert.deepEqual(
       f.calls,
-      baseline,
-      "rabbit interactions issue no additional update/config/service requests",
+      [...baseline, "status", "status"],
+      "each opening confirms OFF; no update/config/service action is sent",
     );
     assert.equal(await page.getByRole("dialog").count(), 0);
+    // A cached OFF is insufficient: a fresh failing read must never open links.
+    f.statusFailure = true;
     await trigger.click();
+    await page.waitForFunction(
+      () => !document.querySelector(".rabbit-build-video-trigger"),
+    );
+    assert.equal(await menu.count(), 0);
+    f.statusFailure = false;
+    for (const malformed of [null, undefined]) {
+      f.service = malformed;
+      await page.evaluate(() => window.fixture.refreshStatus());
+      await trigger.waitFor({ state: "hidden" });
+      assert.equal(
+        await trigger.count() === 0,
+        true,
+        "missing/null service is not confirmed OFF",
+      );
+      assert.equal(await menu.count(), 0);
+    }
+    f.service = false;
+    await page.evaluate(() => window.fixture.refreshStatus());
+    await trigger.waitFor({ state: "visible" });
+    // A pending confirmation cannot expose a menu before its actual ON response.
+    f.holdStatus = true;
+    await trigger.click();
+    await page.waitForTimeout(100);
+    assert.equal(await menu.count(), 0);
+    assert.equal(typeof f.releaseStatus, "function");
+    f.service = true;
+    f.holdStatus = false;
+    f.releaseStatus();
+    await page.locator('.rabbit-build-stage[data-state="idle"]').waitFor();
+    assert.equal(await trigger.count() === 0, true);
+    assert.equal(await menu.count(), 0);
+    f.service = false;
+    await page.evaluate(() => window.fixture.refreshStatus());
+    await trigger.click();
+    await menu.waitFor();
+    await page.clock.fastForward(30_001);
+    await menu.waitFor({ state: "hidden" });
+    assert.equal(context.pages().length, 1, "expiry never opens a video");
+    const reviewFailures = [];
+    await trigger.click();
+    await menu.waitFor();
+    await page.evaluate(() => window.fixture.loseAuth());
+    await page.waitForTimeout(350);
+    if (await menu.isVisible())
+      reviewFailures.push("auth loss retained open menu");
+    if (!(await page.locator(".rabbit-build-video-trigger").isDisabled()))
+      reviewFailures.push("auth loss left enabled trigger");
+    await page.keyboard.press("Escape");
+    await menu.waitFor({ state: "hidden" });
+    await page.evaluate(() => window.fixture.refreshStatus());
+    delete f.releaseStatus;
+    f.holdStatus = true;
+    await trigger.click();
+    await page.waitForTimeout(100);
+    assert.equal(typeof f.releaseStatus, "function");
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    const delayed = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().endsWith("/index.php"),
+    );
+    f.holdStatus = false;
+    f.releaseStatus();
+    await (await delayed).finished();
+    await page.waitForTimeout(350);
+    if (await menu.isVisible())
+      reviewFailures.push("pending OFF request survived page hiding");
+    await page.keyboard.press("Escape");
+    await menu.waitFor({ state: "hidden" });
+    assert.deepEqual(
+      reviewFailures,
+      [],
+      "session loss and hiding cancel both open and pending menus",
+    );
+    f.service = true;
+    await page.evaluate(() => window.fixture.refreshStatus());
     f.checkState = "failed";
     await page.evaluate(() => window.fixture.refreshOverview());
     await page.locator('.rabbit-build-stage[data-state="unknown"]').waitFor();
@@ -282,12 +379,16 @@ try {
     );
     f.checkState = "current";
     await page.evaluate(() => window.fixture.refreshOverview());
-    await trigger.waitFor();
+    await page.locator('.rabbit-build-stage[data-state="idle"]').waitFor();
+    assert.equal(await trigger.count(), 0);
     assert.equal(
       await menu.count(),
       0,
       "restoring the artwork does not reopen the old menu",
     );
+    f.service = false;
+    await page.evaluate(() => window.fixture.refreshStatus());
+    await page.locator('.rabbit-build-stage[data-state="off"]').waitFor();
     await page.locator("header .MuiChip-root").click();
     await page
       .getByRole("dialog", { name: texts.package_update.title, exact: true })
@@ -312,7 +413,7 @@ try {
         "compact views retain the hidden rabbit",
       );
       await page.setViewportSize({ width: 1306, height: 900 });
-      await trigger.waitFor();
+      await trigger.waitFor({ state: "visible" });
       assert.equal(
         await menu.count(),
         0,
@@ -322,7 +423,7 @@ try {
     assert.deepEqual(errors, []);
     await context.close();
     console.log(
-      `PASS ${language}: rabbit video menu, both links, keyboard/Escape, no eager media or updater action, version button and compact visibility`,
+      `PASS ${language}: only the OFF rabbit offers its song, keyboard/Escape, no eager media or updater action, version button and compact visibility`,
     );
   }
 } finally {

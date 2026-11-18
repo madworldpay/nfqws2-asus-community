@@ -2,41 +2,284 @@
   "schema_version": 1,
   "sources": [
     {
-      "id": "nfqws-menu",
-      "repository": "https://github.com/rndnaame/nfqws-menu",
-      "directory": "strategies/nfqws2",
       "api": "https://api.github.com/repos/rndnaame/nfqws-menu/contents/strategies/nfqws2",
-      "pinned_commit": "8f78e35b8dff78ffbabd85c7de439380b3a83448",
-      "latest_reviewed_commit": "de74aaed77c995de95092837f5993427e9d10bd1",
-      "latest_reviewed_on": "2026-11-06",
       "attribution": "rndnaame/nfqws-menu; ports credited upstream to @Nare51; original Flowseal/zapret-discord-youtube",
-      "original_project": "https://github.com/Flowseal/zapret-discord-youtube",
-      "update_policy": "Manual pinned-source verification, adaptation and import/runtime review before cloud approval; no router snapshot or automatic replacement",
-      "original_release_reviewed": {
-        "tag": "1.10.4",
-        "commit": "176f56dc3f11ce5915c26abcdde903f93d835b64",
-        "scope": "Required fake bytes for the 21 existing Flowseal-derived NFQWS2 ports; Windows general.bat has no approved NFQWS2 catalog port"
-      },
-      "pending_updates": [],
+      "directory": "strategies/nfqws2",
       "held": [
         "MartinBacker"
       ],
       "held_reasons": {
         "MartinBacker": "Packaged Lua circular/per_instance_condition behavior fixture: selecting strategy 5 also executes strategy 6 conditional fakes and skips strategy 5 split; selecting strategy 6 skips its split. Historical legacy aliases are commented out and are not the current blocker. Requires a separately reviewed orchestration correction."
       },
+      "id": "nfqws-menu",
+      "last_update_check": {
+        "changed_configs": [
+          "MartinBacker",
+          "Uvvi2",
+          "alt",
+          "alt10",
+          "alt11",
+          "alt12",
+          "alt13",
+          "alt2",
+          "alt3",
+          "alt4",
+          "alt4_mod",
+          "alt5",
+          "alt6",
+          "alt7",
+          "alt8",
+          "alt9",
+          "exp",
+          "fake_tls_auto",
+          "fake_tls_auto_alt",
+          "fake_tls_auto_alt2",
+          "fake_tls_auto_alt3",
+          "hardcorp74",
+          "krushaaa",
+          "simple_fake",
+          "simple_fake_alt",
+          "simple_fake_alt2"
+        ],
+        "checked_on": "2026-11-16",
+        "common_config_count": 28,
+        "configured_source_count": 1,
+        "held_MartinBacker_preserved": true,
+        "new_configs": [
+          "general"
+        ],
+        "original_Flowseal_latest_tag": "1.10.4",
+        "original_Flowseal_tag_commit": "176f56dc3f11ce5915c26abcdde903f93d835b64",
+        "package_build_freshness_authority": false,
+        "unchanged_configs": 1
+      },
+      "latest_common_directory_observed_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+      "latest_repository_observed_commit": "c9b90262e1e5888a675ebcbce6ac0d75ee37dec7",
       "latest_repository_reviewed_commit": "3a2557bbddf6ddb2416c8e7d0ea17a1ec48c2ff9",
+      "latest_reviewed_commit": "b84df16095e837a4ae35b0a6495b010b79572789",
+      "latest_reviewed_on": "2026-11-15",
+      "original_project": "https://github.com/Flowseal/zapret-discord-youtube",
+      "original_release_reviewed": {
+        "commit": "176f56dc3f11ce5915c26abcdde903f93d835b64",
+        "scope": "Required fake bytes for the 21 existing Flowseal-derived NFQWS2 ports; Windows general.bat has no approved NFQWS2 catalog port",
+        "tag": "1.10.4"
+      },
+      "pending_updates": [
+        {
+          "previous_source_blob_sha1": "77d4bada944d815afcf52148201718b9743a4991",
+          "source_blob_sha1": "10b15f6de27f90ae9326399c65d6d7c2f4d180c8",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "MartinBacker"
+        },
+        {
+          "previous_source_blob_sha1": "a5d98f53dff3d257c12de0ea878aa4c165456c6f",
+          "source_blob_sha1": "413d917236b00ffa803ef01d83bb92cb2d161516",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "Uvvi2"
+        },
+        {
+          "previous_source_blob_sha1": "4701166b1c2f63a737dd87977267e6688b8368b2",
+          "source_blob_sha1": "9c04d67aba31e3305d4c58e9f05b09c99e856778",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt"
+        },
+        {
+          "previous_source_blob_sha1": "beb9bf2c980b5564c51a79d66ba8504c9e23ca52",
+          "source_blob_sha1": "d041cb130ca8fbccc79b6b34344f388f6f297976",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt10"
+        },
+        {
+          "previous_source_blob_sha1": "d50da19e91e32ef6a3538c40d1104990faefb804",
+          "source_blob_sha1": "b6d14c9ab1e1ff4e02ede1d6848282735e1580f2",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt11"
+        },
+        {
+          "previous_source_blob_sha1": "a6232749e801a27816549c12cd7c4a27be0bb993",
+          "source_blob_sha1": "9569e429b9b5f8a4cba1ff2a1ff7a520300fc926",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt12"
+        },
+        {
+          "previous_source_blob_sha1": "261a141bef33ca3891065e50d47c2dac92646045",
+          "source_blob_sha1": "7a37e646747155b6d53723504662b4906301cc9e",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt13"
+        },
+        {
+          "previous_source_blob_sha1": "cbfebb42712a8667fc39c845f4c544bd03651952",
+          "source_blob_sha1": "3039b3ab71b0f05fea30030bf927c43f3bb067be",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt2"
+        },
+        {
+          "previous_source_blob_sha1": "c2c648ebba5b8795fb1db5bb7cd974c3abebd8e4",
+          "source_blob_sha1": "ffd82a3039a69731fb0af0d5f508534160f1b566",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt3"
+        },
+        {
+          "previous_source_blob_sha1": "aa50d68d19cdf834a9dbccda892633567069d96d",
+          "source_blob_sha1": "741353aa20b27ce8bc2154088c1100ea0ef1451c",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt4"
+        },
+        {
+          "previous_source_blob_sha1": "0d60f3c762e3f7e94498045035cd441ddab75cae",
+          "source_blob_sha1": "34b01299bbff334aae0301a3d30188b8cd8a65a0",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt4_mod"
+        },
+        {
+          "previous_source_blob_sha1": "a8c56b148dd9269311b48f5ddff3b23edf252b6f",
+          "source_blob_sha1": "b1cee4c24e2f4a264a5f6bd2a06bfdbcd5c3f08b",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt5"
+        },
+        {
+          "previous_source_blob_sha1": "293b1dc8a0c71bb3045de8e70bebb20e9f149f23",
+          "source_blob_sha1": "c3d126e68e29c8721071d473b5424ec80488bf6f",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt6"
+        },
+        {
+          "previous_source_blob_sha1": "527d7ad29657c16770f635d8368b0941a7d4207e",
+          "source_blob_sha1": "ee31b9ebdd64d81a627be713fa706c04cae2b59a",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt7"
+        },
+        {
+          "previous_source_blob_sha1": "147219521e1c585423a7029884a749edccddfdb4",
+          "source_blob_sha1": "c3b3f393a52559da29548b77e2e065eeb0027c28",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt8"
+        },
+        {
+          "previous_source_blob_sha1": "4136e2598bb269f1f1028b313be3baad1209d639",
+          "source_blob_sha1": "80a12b65789a67536b32a05de8fbc599528d86c4",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "alt9"
+        },
+        {
+          "previous_source_blob_sha1": "9b76b42706ff6a26d9e03187268dd97bd6dd8506",
+          "source_blob_sha1": "c909f3a0c0c960c3173c079cac7c7f1abf1f64dc",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "exp"
+        },
+        {
+          "previous_source_blob_sha1": "cfa7c57c561693b42a2f9cf3c7a77fea24506001",
+          "source_blob_sha1": "faefa40c73e7bd7e543068f8f94cbc3a4d254355",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "fake_tls_auto"
+        },
+        {
+          "previous_source_blob_sha1": "0caa8a6e0a57b91b2a7a5635dc28a348a3640384",
+          "source_blob_sha1": "830d79229b48d5290c7fda9a3fdf0fdc2b47dea0",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "fake_tls_auto_alt"
+        },
+        {
+          "previous_source_blob_sha1": "c7fd31a9f7b27c83915793b26deec5280e4f1022",
+          "source_blob_sha1": "ff26afd27bfc84dc4f67f44e19f51db177be1c6e",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "fake_tls_auto_alt2"
+        },
+        {
+          "previous_source_blob_sha1": "8490683985c6119477284962f71fb857b161e990",
+          "source_blob_sha1": "bcac7b771062f09e9f733fd47fac2a39d2b30a5a",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "fake_tls_auto_alt3"
+        },
+        {
+          "previous_source_blob_sha1": null,
+          "source_blob_sha1": "4f59607009599f8281683d92e783475edcf1e0e9",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "New upstream profile; portable adaptation and resource validation pending; not approved or published.",
+          "strategy": "general"
+        },
+        {
+          "previous_source_blob_sha1": "9d19634a4532c1265f17774235d5043af1a05bd5",
+          "source_blob_sha1": "bad75f394fd298116094b932b2bb10ac11aaee30",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "hardcorp74"
+        },
+        {
+          "previous_source_blob_sha1": "33dbf40f64f86fe848c179f2a7a04c1ad0878920",
+          "source_blob_sha1": "af19312126134534772baf2dc3aefc25920fd7b1",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "krushaaa"
+        },
+        {
+          "previous_source_blob_sha1": "bd6cd1c68919987853b9cf5b0fc340ee541f36d0",
+          "source_blob_sha1": "d116e34a7618ac0ba3d2bd9ee393eb4082ca2b97",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "simple_fake"
+        },
+        {
+          "previous_source_blob_sha1": "db72e59e680f259ea5602a2cfb3db8610874cccf",
+          "source_blob_sha1": "66d55af8e95e283675ba99ff3a1c1e6f0544d0cb",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "simple_fake_alt"
+        },
+        {
+          "previous_source_blob_sha1": "87270541dd5ea9d60e4df501f91a126e4a9697a9",
+          "source_blob_sha1": "2cb41f1e2349188f30eea1cccb6b16f80b1e6986",
+          "source_commit": "ac3f68b408cb5e7ef307be38c640c2896c431220",
+          "status": "Adaptation pending; upstream service/network/user sample is not an approved portable profile. Existing signed catalog entry remains selected.",
+          "strategy": "simple_fake_alt2"
+        }
+      ],
+      "pinned_commit": "8f78e35b8dff78ffbabd85c7de439380b3a83448",
       "published_updates": [
         {
-          "strategy": "hardcorp74",
-          "source_commit": "de74aaed77c995de95092837f5993427e9d10bd1",
-          "source_blob_sha1": "9f29cc8bf15a1161ad97194cfcf4409cf5e1370a",
           "catalog_revision": 5,
           "profile_id": "global-hardcorp74",
           "profile_revision": 2,
           "profile_sha256": "edccfa330cdab5412b91121b15ac235fb5f691532bb29c39fc043f7707ab925d",
-          "status": "Published; verified against current signed catalog and all 24 attached resources on 2026-11-06"
+          "source_blob_sha1": "9f29cc8bf15a1161ad97194cfcf4409cf5e1370a",
+          "source_commit": "de74aaed77c995de95092837f5993427e9d10bd1",
+          "status": "Published; verified against current signed catalog and all 24 attached resources on 2026-11-06",
+          "strategy": "hardcorp74"
+        },
+        {
+          "catalog_revision": 8,
+          "profile_id": "global-hardcorp74",
+          "profile_revision": 3,
+          "profile_sha256": "039869fe5063f010352fcf11426b8138687269ac87483b564bf73937f861350f",
+          "source_blob_sha1": "9d19634a4532c1265f17774235d5043af1a05bd5",
+          "source_commit": "b84df16095e837a4ae35b0a6495b010b79572789",
+          "status": "Owner394 requested update published; current importer and seven CPU argv/Lua-init checks passed; strict TLS/signature/all30 file hashes verified. Traffic of this revision was not measured.",
+          "strategy": "hardcorp74"
         }
-      ]
+      ],
+      "repository": "https://github.com/rndnaame/nfqws-menu",
+      "update_policy": "Manual pinned-source verification, adaptation and import/runtime review before cloud approval; no router snapshot or automatic replacement"
     }
   ]
 }

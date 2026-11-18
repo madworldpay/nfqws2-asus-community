@@ -1,4 +1,5 @@
-"""Read the reviewed, pinned public blob bundle without network access."""
+"""Read and verify the packaged strategy resources without network access."""
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -50,3 +51,35 @@ def add_bundle(payload, shared_root, defaults_root):
         payload[path] = data, 0o644
     for name, value in [('blob-catalog.json', catalog), ('blob-sources.json', sources)]:
         payload[shared_root + '/' + name] = (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode(), 0o644
+
+
+def add_module_resources(payload, lists_root, blobs_root):
+    """Install generator samples and return the package-owned list identities for Import."""
+    asus = Path(__file__).resolve().parent
+    library = asus.parent/'webui/web/public/zapret2-pack'
+    pool = json.loads((library/'resources.json').read_bytes())
+    samples = json.loads((library/'samples.json').read_bytes())
+    for sample in samples.values():
+        item = pool[sample['key']]
+        name = sample['name']
+        if item['kind'] != 'blobs' or name != 'z2-' + item['name'] or not re.fullmatch(r'z2-[\w.-]+\.bin', name, re.ASCII):
+            raise ValueError('Invalid module sample')
+        raw = base64.b64decode(item['data_base64'], validate=True)
+        if len(raw) != item['byte_length'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
+            raise ValueError('Module sample checksum mismatch')
+        payload[blobs_root+'/'+name] = raw, 0o644
+
+    list_pins = {}
+    for item in pool.values():
+        if item['kind'] != 'lists' or 'data_base64' in item:
+            continue
+        digest = item['sha256']
+        name = item['name']
+        if not re.fullmatch('[a-f0-9]{64}', digest) or name != 'z2-pack-' + digest + '.list.gz':
+            raise ValueError('Invalid packaged hostlist name')
+        raw = (asus/'zapret2-pack-lists'/name).read_bytes()
+        if len(raw) != item['byte_length'] or hashlib.sha256(raw).hexdigest() != digest:
+            raise ValueError('Packaged hostlist checksum mismatch')
+        payload[lists_root+'/'+name] = raw, 0o644
+        list_pins['lists/'+name] = {'sha256': digest, 'bytes': len(raw)}
+    return list_pins

@@ -4,6 +4,7 @@ import DevicesOtherOutlinedIcon from '@mui/icons-material/DevicesOtherOutlined';
 import DisplaySettingsIcon from '@mui/icons-material/DisplaySettings';
 import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import { Box, Tab, Tabs } from '@mui/material';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
 
@@ -13,6 +14,7 @@ import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const deviceProfilesHref = '/device-profiles-lab/device-profiles-lab.html';
+const strategyPickerHref = '/index.php?strategy-picker=1';
 
 export const MainTabs = () => {
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export const MainTabs = () => {
         <Tabs
           value={currentTab}
           onChange={(_, value) => {
-            if (value === deviceProfilesHref) return;
+            if (value === deviceProfilesHref || value === strategyPickerHref) return;
             void navigate({ to: value === 'settings' ? '/' : `/${value}` });
           }}
           variant="scrollable"
@@ -111,6 +113,16 @@ export const MainTabs = () => {
             icon={<DevicesOtherOutlinedIcon fontSize="small" />}
             iconPosition="start"
             label={t('tabs.devices_beta')}
+            sx={{ minHeight: 50, fontSize: 14 }}
+          />
+
+          <Tab
+            component="a"
+            href={strategyPickerHref}
+            value={strategyPickerHref}
+            icon={<TuneOutlinedIcon fontSize="small" />}
+            iconPosition="start"
+            label={t('tabs.strategy_picker_beta')}
             sx={{ minHeight: 50, fontSize: 14 }}
           />
 

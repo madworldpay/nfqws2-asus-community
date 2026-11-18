@@ -21,6 +21,8 @@ import {
   type ImportAddonSelection,
 } from '@/api/importAddonClient';
 
+import { CatalogEntryDetails } from '@/components/CatalogEntryDetails';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
 const selectedSources = (
@@ -47,7 +49,7 @@ export const ImportAddons = ({
   onChange: (value: ImportAddonSelection[]) => void;
   children?: ReactNode;
 }) => {
-  const { t, langcode } = useTranslation();
+  const { t } = useTranslation();
   const [catalog, setCatalog] = useState<ImportAddonCatalog>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -179,34 +181,12 @@ export const ImportAddons = ({
               }
               label={addon.title}
             />
-            <Typography variant="body2">{addon.description}</Typography>
-            <Typography
-              component="time"
-              dateTime={addon.updated_at}
-              variant="caption"
-              color="text.secondary"
-            >
-              {t('import.catalog.updated')}:{' '}
-              {new Date(addon.updated_at).toLocaleDateString(
-                langcode === 'en' ? 'en-GB' : 'ru-RU',
-                {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  timeZone: 'UTC',
-                },
-              )}
-            </Typography>
-            {addon.attribution && (
-              <Typography variant="caption" color="text.secondary">
-                {addon.attribution}
-              </Typography>
-            )}
-            {needsUpdate && (
-              <Typography variant="caption">
-                {t('import.catalog.update')}
-              </Typography>
-            )}
+            <CatalogEntryDetails
+              description={addon.description}
+              date={addon.updated_at}
+              attribution={addon.attribution}
+              note={needsUpdate ? t('import.catalog.update') : undefined}
+            />
           </Stack>
         );
       })}

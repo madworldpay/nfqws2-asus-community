@@ -1,5 +1,5 @@
 """Real journal/CAS/crash recovery; no service execution is reachable."""
-import hashlib,json,os,subprocess,tempfile,unittest
+import base64,hashlib,json,os,subprocess,tempfile,unittest
 from pathlib import Path
 from test_import_plan import documents,selection,CURRENT
 from test_import_document import PHP,PUBLIC
@@ -16,6 +16,9 @@ class ImportTransactionTests(unittest.TestCase):
   if crash:self.assertEqual(p.returncode,77,p.stdout+p.stderr);return None
   self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');return json.loads(p.stdout)
  def prep(self,sel=None):return ['prepare',documents(),selection()if sel is None else sel]
+ def list_prep(self):
+  v=json.loads(documents()[1]);row=v['files'][0];raw=b'NEW\n';sha=hashlib.sha256(raw).hexdigest();row.update(kind='lists',name='replace.list',encoding='utf8',data_base64=base64.b64encode(raw).decode(),byte_length=len(raw),sha256=sha,source_sha256=sha,aliases=[]);v['files']=[row];v['audit'].update(scope='files_only',references=[])
+  return ['prepare',[json.dumps(v)],selection(blocks=[],shared=[],files=[{'id':row['id']}],trusted_lua=False)]
  def test_read_only_status_and_prepare_then_apply_undo_exact_bytes(self):
   with tempfile.TemporaryDirectory()as d:
    r=self.fixture(d);out=self.call(r,[['status'],self.prep()]);self.assertFalse((r/'journal').exists());self.assertFalse((r/'dns').exists());self.assertTrue(out[1]['value']['ready'])
@@ -27,7 +30,7 @@ class ImportTransactionTests(unittest.TestCase):
    with self.subTest(mode=mode),tempfile.TemporaryDirectory()as d:
     r=self.fixture(d);p=self.call(r,[self.prep()])[0]['value']
     # Prepare and mutate inside one PHP process so the proposal really is stale.
-    code='''require $argv[1].'/import-transaction.php';$r=$argv[2];$u=(int)$argv[3];$v=json_decode(stream_get_contents(STDIN),true);$s=new AsusSmartDnsStore($r.'/dns',$u);$t=new AsusImportTransaction(new AsusImportStore($r.'/journal',$u),$s,$r.'/resources',$r.'/resources/nfqws2.conf',$u);$p=$t->prepare($v['docs'],$v['sel']);if($v['mode']==='config')file_put_contents($r.'/resources/nfqws2.conf','EDIT');elseif($v['mode']==='target')file_put_contents($r.'/resources/blobs/'.$p['files'][0]['target_name'],'OTHER');else $s->saveDraft($v['profile']);try{$t->apply($p,str_repeat('b',32));echo 'BAD';}catch(Throwable $e){echo $e->getMessage();}'''
+    code='''require $argv[1].'/import-transaction.php';$r=$argv[2];$u=(int)$argv[3];$v=json_decode(stream_get_contents(STDIN),true);$s=new AsusSmartDnsStore($r.'/dns',$u);$t=new AsusImportTransaction(new AsusImportStore($r.'/journal',$u),$s,$r.'/resources',$r.'/resources/nfqws2.conf',$u);$p=$t->prepare($v['docs'],$v['sel']);if($v['mode']==='config')file_put_contents($r.'/resources/nfqws2.conf','EDIT');elseif($v['mode']==='target'){$path=$r.'/resources/blobs/'.$p['files'][0]['target_name'];mkdir(dirname($path),0755);file_put_contents($path,'OTHER');}else $s->saveDraft($v['profile']);try{$t->apply($p,str_repeat('b',32));echo 'BAD';}catch(Throwable $e){echo $e->getMessage();}'''
     q=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(r),str(os.getuid())],input=json.dumps({'docs':documents(),'sel':selection(),'mode':mode,'profile':profile()}),capture_output=True,text=True);self.assertEqual(q.returncode,0,q.stderr);self.assertEqual(q.stdout,'source_changed');self.assertFalse((r/'journal/state.json').exists())
  def test_death_each_boundary_reconciles_owned_changes(self):
   for phase in ['journal','file_0','file_1','draft','committing','config','committed']:
@@ -80,25 +83,25 @@ class ImportTransactionTests(unittest.TestCase):
  def test_same_name_replacement_and_undo_preserve_bytes_and_mode(self):
   from test_import_plan import BLOB
   with tempfile.TemporaryDirectory()as d:
-   r=self.fixture(d);f=r/'resources/blobs/hello.bin';f.write_bytes(b'ORIGINAL');f.chmod(0o640)
-   out=self.call(r,[self.prep(),['apply','a'*32]]);self.assertEqual(out[-1]['value']['state'],'committed',out);self.assertEqual(f.read_bytes(),BLOB);self.assertEqual(f.stat().st_mode&0o777,0o640);self.assertEqual([x.name for x in f.parent.iterdir()],['hello.bin'])
+   r=self.fixture(d);f=r/'resources/lists/replace.list';f.write_bytes(b'ORIGINAL');f.chmod(0o640)
+   out=self.call(r,[self.list_prep(),['apply','a'*32]]);self.assertEqual(out[-1]['value']['state'],'committed',out);self.assertEqual(f.read_bytes(),b'NEW\n');self.assertEqual(f.stat().st_mode&0o777,0o640);self.assertEqual([x.name for x in f.parent.iterdir()],['replace.list'])
    out=self.call(r,[['undo','a'*32]]);self.assertEqual(out[-1]['value']['state'],'undone',out);self.assertEqual(f.read_bytes(),b'ORIGINAL');self.assertEqual(f.stat().st_mode&0o777,0o640)
  def test_replacement_death_and_undo_death_restore_existing_file(self):
   for phase in ['journal','stage_0','linked_0','file_0','committing','config','committed']:
    with self.subTest(phase=phase),tempfile.TemporaryDirectory()as d:
-    r=self.fixture(d);f=r/'resources/blobs/hello.bin';f.write_bytes(b'OLD');f.chmod(0o644)
-    self.call(r,[self.prep(),['apply','a'*32]],crash=phase);out=self.call(r,[['recover']]);expected='committed'if phase in ['config','committed']else'rolled_back';self.assertEqual(out[-1]['value']['state'],expected,out)
+    r=self.fixture(d);f=r/'resources/lists/replace.list';f.write_bytes(b'OLD');f.chmod(0o644)
+    self.call(r,[self.list_prep(),['apply','a'*32]],crash=phase);out=self.call(r,[['recover']]);expected='committed'if phase in ['committing','config','committed']else'rolled_back';self.assertEqual(out[-1]['value']['state'],expected,out)
     if expected=='committed':self.call(r,[['undo','a'*32]],crash='undo_file_0');self.call(r,[['recover']])
     self.assertEqual(f.read_bytes(),b'OLD');self.assertEqual(f.stat().st_mode&0o777,0o644)
  def test_replacement_undo_refuses_later_file_edit(self):
   with tempfile.TemporaryDirectory()as d:
-   r=self.fixture(d);f=r/'resources/blobs/hello.bin';f.write_bytes(b'OLD');self.call(r,[self.prep(),['apply','a'*32]]);f.write_bytes(b'USER EDIT')
+   r=self.fixture(d);f=r/'resources/lists/replace.list';f.write_bytes(b'OLD');self.call(r,[self.list_prep(),['apply','a'*32]]);f.write_bytes(b'USER EDIT')
    out=self.call(r,[['undo','a'*32]]);self.assertEqual(out,[{'error':'source_changed'}]);self.assertEqual(f.read_bytes(),b'USER EDIT')
 
  def test_preexisting_unsafe_resource_is_never_replaced(self):
   for mode in ['symlink','hardlink','fifo']:
    with self.subTest(mode=mode),tempfile.TemporaryDirectory()as d:
-    r=self.fixture(d);outside=r/'outside';outside.write_bytes(b'KEEP');target=r/'resources/blobs/hello.bin'
+    r=self.fixture(d);outside=r/'outside';outside.write_bytes(b'KEEP');target=r/'resources/blobs/imported'/ (hashlib.sha256(__import__('test_import_plan').BLOB).hexdigest()+'.bin');target.parent.mkdir()
     if mode=='symlink':target.symlink_to(outside)
     elif mode=='hardlink':os.link(outside,target)
     else:os.mkfifo(target)
@@ -111,5 +114,5 @@ class ImportTransactionTests(unittest.TestCase):
 
  def test_replacement_undo_preserves_later_permission_edit(self):
   with tempfile.TemporaryDirectory()as d:
-   r=self.fixture(d);f=r/'resources/blobs/hello.bin';f.write_bytes(b'OLD');f.chmod(0o666);self.call(r,[self.prep(),['apply','a'*32]]);f.chmod(0o600);before=f.read_bytes()
+   r=self.fixture(d);f=r/'resources/lists/replace.list';f.write_bytes(b'OLD');f.chmod(0o666);self.call(r,[self.list_prep(),['apply','a'*32]]);f.chmod(0o600);before=f.read_bytes()
    out=self.call(r,[['undo','a'*32]]);self.assertEqual(out,[{'error':'source_changed'}]);self.assertEqual(f.read_bytes(),before);self.assertEqual(f.stat().st_mode&0o777,0o600)

@@ -60,7 +60,7 @@ final class AsusDpiStore
             fclose($f);$f=null;if(!@rename($tmp,$path))throw new RuntimeException('invalid_state');
         } finally {if(is_resource($f))fclose($f);@unlink($tmp);}
     }
-    private function locked(callable $fn): mixed
+    private function locked(callable $fn,bool $persist=true): mixed
     {
         $path=$this->root.'/control.lock';$before=$this->regular($path,0);
         $f=@fopen($path,$before?'r+b':'x+b');
@@ -75,7 +75,7 @@ final class AsusDpiStore
             $raw=$this->read('jobs.json',131072);$db=$raw===null?['jobs'=>[]]:json_decode($raw,true,32,JSON_THROW_ON_ERROR);
             if(!is_array($db)||array_keys($db)!==['jobs']||!is_array($db['jobs'])||count($db['jobs'])>3)throw new RuntimeException('invalid_state');
             foreach($db['jobs'] as $id=>$job)if(!preg_match('/^[a-f0-9]{32}$/D',(string)$id)||!is_array($job)||($job['id']??null)!==$id||!in_array($job['state']??null,array_merge(['queued','running'],self::TERMINAL),true))throw new RuntimeException('invalid_state');
-            $result=$fn($db);$this->write('jobs.json',json_encode($db,JSON_THROW_ON_ERROR));return $result;
+            $result=$fn($db);if($persist)$this->write('jobs.json',json_encode($db,JSON_THROW_ON_ERROR));return $result;
         } catch(JsonException $e) {throw new RuntimeException('invalid_state');}
         finally {flock($f,LOCK_UN);fclose($f);}
     }
@@ -102,7 +102,7 @@ final class AsusDpiStore
         $runs=$this->root.'/runs';$run=$runs.'/'.$id;
         if(is_link($runs)||is_link($run))throw new RuntimeException('invalid_state');
         if(!is_dir($run))return;$s=lstat($run);if($s['uid']!==$this->owner||($s['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
-        $known=['boot','guard.pid','ack','deadline','probe.deadline','probe.pid','spawn.pid','probe.exe','probe.cwd','probe.request','probe.request.new','probe.exit','probe.exit.new','closing','ending.reason','ended.uptime','args','g0.stdout','g0.stderr','outcome','outcome.new','cancel'];
+        $known=['load.plan','boot','guard.pid','ack','deadline','probe.deadline','probe.pid','spawn.pid','probe.exe','probe.cwd','probe.request','probe.request.new','probe.exit','probe.exit.new','closing','ending.reason','ended.uptime','args','g0.stdout','g0.stderr','outcome','outcome.new','cancel'];
         foreach($known as $name){$file=$run.'/'.$name;$s=@lstat($file);if($s&&$s['uid']===$this->owner&&($s['mode']&0170000)===0100000&&$s['nlink']===1)@unlink($file);}
         @rmdir($run);
     }
@@ -181,15 +181,60 @@ final class AsusDpiStore
             $job=array_replace($job,$patch);
         });
     }
-    public function status(): array
+    public function status(bool $withGroups=true): array
     {
-        return $this->locked(function(array &$db){
+        return $this->locked(function(array &$db)use($withGroups){
             $this->prune($db,self::uptime(),time(),self::boot());$active=null;$history=[];
             foreach($db['jobs'] as $job) {
                 $job['native_available']=$this->regular($this->root.'/'.$job['id'].'.native.json',1048576)!==null;
-                if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else {$raw=$this->read($job['id'].'.groups.json',1048576);if($raw!==null)$job['groups']=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$raw=$this->read($job['id'].'.messages.json',196608);if($raw!==null)$job['messages']=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$active=$job;}
+                if(in_array($job['state'],self::TERMINAL,true))$history[]=$job;else {if($withGroups){$raw=$this->read($job['id'].'.groups.json',1048576);if($raw!==null)$job['groups']=json_decode($raw,true,32,JSON_THROW_ON_ERROR);$raw=$this->read($job['id'].'.messages.json',196608);if($raw!==null)$job['messages']=json_decode($raw,true,32,JSON_THROW_ON_ERROR);}$active=$job;}
             }
             return ['active'=>$active,'history'=>array_reverse($history)];
+        });
+    }
+    private function recoveryJob(array $db,array $expected):array
+    {
+        $id=$expected['id']??'';$job=$db['jobs'][$id]??null;
+        if($job===null)throw new RuntimeException('missing_job');
+        if(!in_array($job['state'],self::TERMINAL,true)||$job['state']==='completed'||!empty($job['result_deleted']))throw new RuntimeException('request_conflict');
+        foreach(['id','request_id','kind','params','state','started_at','finished_at','finished_uptime','groups']as $key)
+            if(($job[$key]??null)!==($expected[$key]??null))throw new RuntimeException('request_conflict');
+        return $job;
+    }
+    /** Expensive bodies are read only after liveness has been committed. */
+    public function recoveryData(array $expected):array
+    {
+        return $this->locked(function(array &$db)use($expected){
+            $job=$this->recoveryJob($db,$expected);$out=[];
+            foreach(['groups'=>1048576,'messages'=>196608]as $name=>$limit){$raw=$this->read($job['id'].'.'.$name.'.json',$limit);$out[$name]=$raw===null?[]:json_decode($raw,true,32,JSON_THROW_ON_ERROR);}
+            return $out;
+        });
+    }
+    /** Persist a bounded recovery observation before optional report work, under
+     * the same deletion and job CAS fence as the eventual export. */
+    public function appendRecoveryMessage(array $expected,array $message):array
+    {
+        if(array_keys($message)!==['group','text']||$message['group']!==null||!is_string($message['text'])||strlen($message['text'])>256)throw new RuntimeException('invalid_state');
+        return $this->locked(function(array &$db)use($expected,$message){
+            $job=$this->recoveryJob($db,$expected);$name=$job['id'].'.messages.json';$raw=$this->read($name,196608);
+            $messages=$raw===null?[]:json_decode($raw,true,32,JSON_THROW_ON_ERROR);
+            if(in_array($message,$messages,true))return $messages;
+            $messages[]=$message;$raw=json_encode($messages,JSON_THROW_ON_ERROR);
+            if(strlen($raw)>196608)throw new RuntimeException('output_limit');
+            $this->write($name,$raw);return $messages;
+        });
+    }
+    /** Attach optional exports without changing a failed job's liveness or
+     * touching a newer job that was admitted while this report was built. */
+    public function completeRecovery(array $expected,array $reports):void
+    {
+        $this->locked(function(array &$db)use($expected,$reports){
+            $job=$this->recoveryJob($db,$expected);
+            foreach($reports as $key=>$_)if(!in_array($key,['native','result','code'],true))throw new RuntimeException('invalid_state');
+            if(isset($reports['code'])&&!in_array($reports['code'],['failed','invalid_dpi','invalid_state','output_limit','insufficient_memory','unsupported_runtime'],true))throw new RuntimeException('invalid_state');
+            if(isset($reports['result']))AsusSupportSchema::validate($reports['result'],'dpi');
+            foreach(['native','result']as $key)if(isset($reports[$key]))$this->write($job['id'].'.'.$key.'.json',$reports[$key]);
+            if(isset($reports['code']))$db['jobs'][$job['id']]['code']=$reports['code'];
         });
     }
     public function cleanupArtifacts(callable $cleanup): void
@@ -212,12 +257,60 @@ final class AsusDpiStore
     public function readOptions(string $id): array
     {
         if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('invalid_request');
-        return $this->locked(function(array &$db)use($id){$this->prune($db,self::uptime(),time(),self::boot());if(!isset($db['jobs'][$id]))throw new RuntimeException('missing_job');$raw=$this->read($id.'.options.json',131072);return $raw===null?AsusDpiOptions::defaults():json_decode($raw,true,32,JSON_THROW_ON_ERROR);});
+        return $this->locked(function(array &$db)use($id){$this->prune($db,self::uptime(),time(),self::boot());if(!isset($db['jobs'][$id]))throw new RuntimeException('missing_job');$raw=$this->read($id.'.options.json',131072);$digest=$db['jobs'][$id]['params']['options_digest']??null;
+            if($digest!==null&&(!is_string($digest)||!preg_match('/^[a-f0-9]{64}$/D',$digest)||$raw===null||!hash_equals($digest,hash('sha256',$raw))))throw new RuntimeException('invalid_state');
+            return $raw===null?AsusDpiOptions::defaults():json_decode($raw,true,32,JSON_THROW_ON_ERROR);});
     }
     public function readNative(string $id): string
     {
         if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('invalid_request');
         return $this->locked(function(array &$db)use($id){$this->prune($db,self::uptime(),time(),self::boot());if(!isset($db['jobs'][$id])||!in_array($db['jobs'][$id]['state'],self::TERMINAL,true))throw new RuntimeException('result_unavailable');$raw=$this->read($id.'.native.json',1048576);if($raw===null)throw new RuntimeException('result_unavailable');return $raw;});
+    }
+    /** Internal source snapshot for the original trusted probe callback.
+     * This binds stored bytes to a request, not successful protocol/media
+     * measurements or a picker parent. Consumers retain it before postchecks. */
+    public function nativeSnapshot(string $id,string $request):array
+    {
+        if(!preg_match('/^[a-f0-9]{32}$/D',$id)||!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D',$request))throw new RuntimeException('invalid_request');
+        require_once __DIR__.'/share-read.php';
+        return $this->locked(function(array &$db)use($id,$request){
+            $base=realpath('/opt');
+            $reader=$base!==false&&str_starts_with($this->root,rtrim($base,'/').'/')?
+                NfqwsPlatform::reader($this->owner):new AsusShareRead($this->owner);
+            $fields=array_flip(['dev','ino','mode','nlink','uid','gid','size','mtime','ctime']);
+            $read=function(string $name,int $limit)use($reader,$fields):array{
+                $path=$this->root.'/'.$name;$before=$this->regular($path,$limit);
+                if($before===null)throw new RuntimeException('result_unavailable');
+                $raw=$reader->bytes($path,$limit);$after=$this->regular($path,$limit);
+                if($after===null||array_intersect_key($before,$fields)!==array_intersect_key($after,$fields))throw new RuntimeException('source_changed');
+                return ['raw'=>$raw,'bytes'=>strlen($raw),'sha256'=>hash('sha256',$raw),
+                    'metadata'=>array_intersect_key($before,$fields)];
+            };
+            $index=$read('jobs.json',131072);$actual=json_decode($index['raw'],true,32,JSON_THROW_ON_ERROR);
+            if($actual!==$db)throw new RuntimeException('source_changed');
+            $job=$db['jobs'][$id]??null;
+            if(!is_array($job)||($job['request_id']??null)!==$request||($job['kind']??null)!=='run'||
+                ($job['state']??null)!=='completed'||!empty($job['result_deleted']))throw new RuntimeException('result_unavailable');
+            $options=$read($id.'.options.json',131072);$native=$read($id.'.native.json',1048576);
+            if(!is_string($job['params']['options_digest']??null)||
+                !hash_equals($job['params']['options_digest'],$options['sha256']))throw new RuntimeException('source_changed');
+            // Reopen the same full sources after all IO, without a cache or
+            // accepting a newly published inode with identical bytes.
+            foreach([['jobs.json',131072,$index],[$id.'.options.json',131072,$options],[$id.'.native.json',1048576,$native]]as [$name,$limit,$expected])
+                if($read($name,$limit)!==$expected)throw new RuntimeException('source_changed');
+            // Apply the existing retention bounds as refusals, preserving raw
+            // bytes on unknown boot/time/ownership instead of pruning them.
+            $up=self::uptime();$wall=time();$start=$job['started_uptime']??null;
+            $end=$job['finished_uptime']??$start;$started=$job['started_at']??null;
+            $finished=$job['finished_at']??$started;$last=$job['last_wall']??$started;
+            if(($job['boot_id']??null)!==self::boot()||
+                (!is_int($start)&&!is_float($start))||(!is_int($end)&&!is_float($end))||
+                !is_finite((float)$start)||!is_finite((float)$end)||$start<0||$end<$start||$up<$end||
+                !is_int($started)||!is_int($finished)||!is_int($last)||$finished<$started||
+                $wall<$last||$wall<$finished||$wall-$finished>=86400||$up-$end>=86400)
+                throw new RuntimeException('result_unavailable');
+            return ['mode'=>'dpi-native-source-snapshot-v1','job'=>$job,'index'=>$index,'options'=>$options,'native'=>$native];
+        },false);
     }
     public function readPreferences(): array
     {return $this->locked(function(array &$db){$raw=$this->read('preferences.json',131072);return $raw===null?AsusDpiOptions::defaults():json_decode($raw,true,32,JSON_THROW_ON_ERROR);});}
@@ -230,6 +323,7 @@ final class AsusDpiStore
             if(!in_array($db['jobs'][$jobId]['state'],self::TERMINAL,true))throw new RuntimeException('busy');
             $this->eraseResult($jobId);
             $db['jobs'][$jobId]['groups']=[];
+            $db['jobs'][$jobId]['result_deleted']=true;
             unset($db['jobs'][$jobId]['context_before'],$db['jobs'][$jobId]['context_after']);
         });
     }

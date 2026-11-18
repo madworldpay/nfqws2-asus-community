@@ -1079,7 +1079,7 @@ final class NfqwsPlatform
     }
 }
 
-// webui/web/public/support-json-schema.php sha256=d4d5559f90d2bc9ebfd94e19500c22e87b2b3be8949558d2be5c86d4619f55d3
+// webui/web/public/support-json-schema.php sha256=acadaab7b9111af1ed50b5e56d8ef6cea224289cc15b1f4ea1b8b92d9953b626
 /** Bounded JSON reader and validator for our bundled, closed schemas only. */
 final class AsusSupportSchema
 {
@@ -1152,6 +1152,7 @@ final class AsusSupportSchema
         if(!isset($files[$kind]))throw new RuntimeException('invalid_request');
         [$name,$max,$code]=$files[$kind];$v=self::decode($raw,$max,$code);
         if($kind==='dpi'&&is_object($v)&&($v->schema_version??null)===2)$name='dpi-analysis-v2.schema.json';
+        if($kind==='resources'&&is_object($v)&&($v->schema_version??null)===2)$name='resources-v2.schema.json';
         $root=dirname(__DIR__,3).'/support';
         $file=NfqwsPlatform::sharedFile($name,$root.'/'.$name);
         $schema=json_decode(file_get_contents($file),true,128,JSON_THROW_ON_ERROR);

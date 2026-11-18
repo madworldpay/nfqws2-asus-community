@@ -31,13 +31,67 @@ def fixture(kinds=('strategy','resources','dns')):
     return {'version':4,'submission_id':str(uuid.uuid4()),'files':[file(k,payloads[k]) for k in kinds]}
 
 class ShareV4Tests(unittest.TestCase):
+    def test_download_artifact_proof_and_fixed_mail_preserve_exact_original_bytes(self):
+        from email import policy
+        from email.parser import BytesParser
+        from nfqws_support.smtp import SmtpSender
+        from test_support_relay_smtp import FakeSmtp
+        payload=b'\x00\xffexact downloaded bytes\r\n'
+        document={'type':'nfqws2_download','schema_version':1,'filename':'diagnostic-original.zip',
+                  'media_type':'application/zip','byte_length':len(payload),
+                  'sha256':hashlib.sha256(payload).hexdigest(),'data_base64':base64.b64encode(payload).decode()}
+        v={'version':4,'submission_id':str(uuid.uuid4()),'files':[{'type':'artifact','filename':document['filename'],'byte_length':len(payload),'sha256':document['sha256'],'data_base64':document['data_base64']}]}
+        out=self.php(v,"$p=AsusShareBundle::prepare($v['files'],$key,1000,null,4);echo json_encode(['prepared'=>$p,'valid'=>AsusShareBundle::verify($p['proof'],$p['files'],$key,1001)]);")
+        self.assertNotIn('error',out);self.assertTrue(out['valid'])
+        bundle=validate_share(encode(v),v['submission_id']);fake=FakeSmtp();read_fd,write_fd=os.pipe()
+        try:SmtpSender(config(),factory=lambda **kw:fake)._send(None,None,bundle,write_fd)
+        finally:os.close(read_fd);os.close(write_fd)
+        msg=BytesParser(policy=policy.default).parsebytes(fake.wire)
+        attachments=list(msg.iter_attachments());self.assertEqual(len(attachments),1)
+        self.assertEqual(attachments[0].get_filename(),document['filename'])
+        self.assertEqual(attachments[0].get_payload(decode=True),payload)
+        self.assertEqual(str(msg['To']),'support@example.invalid')
+        bad=copy.deepcopy(v);bad['files'][0]['sha256']='0'*64
+        self.assertIn('error',self.php(bad,"echo json_encode(AsusShareBundle::envelope(json_encode($v),$v['submission_id']));"))
+        with self.assertRaises(InvalidReport):validate_share(encode(bad),bad['submission_id'])
+
     def php(self,value,body):
         code="require $argv[1].'/share-bundle.php';$v=json_decode(stream_get_contents(STDIN),true);$key=str_repeat('a',64);try{"+body+"}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"
         cp=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],input=json.dumps(value),capture_output=True,text=True,timeout=10)
         self.assertEqual(cp.returncode,0,cp.stdout+cp.stderr);self.assertEqual(cp.stderr,'');return json.loads(cp.stdout)
+    def test_download_preparation_api_needs_no_current_strategy_or_installation_id(self):
+        payload=b'exact installer text\n'
+        value={'version':4,'artifact':{'filename':'nfqws-installer.sh','media_type':'text/plain','data_base64':base64.b64encode(payload).decode()}}
+        out=self.php(value,"require $argv[1].'/share-api.php';$api=new AsusShareApi(configPath:'/not-existing-download-control/nfqws2.conf',versions:['core'=>'1.0.0','web'=>'1.0.0']);$post=['cmd'=>'shareprepare','csrf_token'=>'fixture','selection'=>json_encode($v)];$p=$api->handle($post,$key,1000);echo json_encode(['prepared'=>$p,'valid'=>AsusShareBundle::verify($p['proof'],$p['files'],$key,1001,$p['source']??null)]);")
+        self.assertNotIn('error',out);self.assertTrue(out['valid']);self.assertEqual(len(out['prepared']['files']),1)
+        f=out['prepared']['files'][0];self.assertEqual(f['filename'],value['artifact']['filename'])
+        self.assertEqual(base64.b64decode(f['data_base64']),payload)
+        self.assertNotIn('installation_id',out['prepared']['source'])
+
     def test_router_v4_review_proof_binds_extended_bytes_and_version(self):
         v=fixture();r=self.php(v,"$p=AsusShareBundle::prepare($v['files'],$key,1000,null,4);echo json_encode(['prepared'=>$p,'valid'=>AsusShareBundle::verify($p['proof'],$p['files'],$key,1001)]);")
         self.assertNotIn('error',r);self.assertTrue(r['valid']);self.assertEqual(r['prepared']['version'],4);self.assertTrue(r['prepared']['proof'].startswith('v4.'))
+
+    def test_optional_message_is_bound_to_files_and_delivered_as_plain_mail_text(self):
+        from email import policy
+        from email.parser import BytesParser
+        from nfqws_support.smtp import SmtpSender
+        from test_support_relay_smtp import FakeSmtp
+        v=fixture(('dns',))
+        bare=validate_share(encode(v),v['submission_id'])
+        v['comment']='На телевизоре видны постеры.\nВидео загружается долго.'
+        bundle=validate_share(encode(v),v['submission_id'])
+        self.assertNotEqual(bundle.sha256,bare.sha256)
+        checks=self.php(v,"$p=AsusShareBundle::prepare($v['files'],$key,1000,null,4,$v['comment']);echo json_encode([$p['comment'],AsusShareBundle::verify($p['proof'],$p['files'],$key,1001,null,$v['comment']),AsusShareBundle::verify($p['proof'],$p['files'],$key,1001,null,'other'),AsusShareBundle::verify($p['proof'],$p['files'],$key,1001)]);")
+        self.assertEqual(checks,[v['comment'],True,False,False])
+        fake=FakeSmtp();read_fd,write_fd=os.pipe()
+        try:SmtpSender(config(),factory=lambda **kw:fake)._send(None,None,bundle,write_fd)
+        finally:os.close(read_fd);os.close(write_fd)
+        mail=BytesParser(policy=policy.default).parsebytes(fake.wire)
+        self.assertIn(v['comment'],mail.get_body().get_content().replace('\r\n','\n'))
+        self.assertEqual(next(mail.iter_attachments()).get_payload(decode=True),bare.files[0].raw)
+        for invalid in ('x'*2001, 'control\0'):
+            with self.assertRaises(InvalidReport):validate_share(encode(dict(v,comment=invalid)),v['submission_id'])
     def test_router_and_relay_accept_resources_or_dns_without_strategy(self):
         for kinds in [('resources',),('dns',),('resources','dns')]:
             v=fixture(kinds);b=validate_share(encode(v),v['submission_id']);self.assertEqual([f.type for f in b.files],list(kinds))

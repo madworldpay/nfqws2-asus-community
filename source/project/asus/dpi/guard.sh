@@ -10,6 +10,29 @@ run=$root/runs/$job
 [ -d "$run" ] && [ ! -L "$run" ] || exit 1
 uid=$("$bb" id -u)
 [ "$("$bb" ls -ldn "$run" | "$bb" awk '{print $3}')" = "$uid" ] || exit 1
+worker_threads=1
+memory_floor=0
+bad_load_plan() {
+    printf 'invalid_state\n' > "$run/ending.reason"
+    printf 'closed\n' > "$run/closing"
+    "$bb" awk '{print $1}' /proc/uptime > "$run/ended.uptime"
+    printf 'invalid_state\n' > "$run/outcome.new"
+    "$bb" mv "$run/outcome.new" "$run/outcome"
+    exit 1
+}
+# Only a server-written plan in this root-owned private run enables the
+# advanced pool. Legacy runs retain their existing Tokio hint and native policy.
+if [ -e "$run/load.plan" ] || [ -L "$run/load.plan" ]; then
+    [ -f "$run/load.plan" ] && [ ! -L "$run/load.plan" ] || bad_load_plan
+    set -- $("$bb" ls -ldn "$run/load.plan")
+    [ "$1" = -rw------- ] && [ "$2" = 1 ] && [ "$3" = "$uid" ] || bad_load_plan
+    case "$("$bb" wc -c < "$run/load.plan")" in 4|8) :;; *) bad_load_plan;; esac
+    [ "$("$bb" wc -l < "$run/load.plan")" = 1 ] || bad_load_plan
+    IFS= read -r load_plan < "$run/load.plan" || bad_load_plan
+    case "$load_plan" in '4 0'|'4 65536') :;; *) bad_load_plan;; esac
+    worker_threads=4
+    memory_floor=0
+fi
 boot=$("$bb" cat /proc/sys/kernel/random/boot_id) || exit 1
 guard_exe=$("$bb" readlink "/proc/$$/exe") || exit 1
 printf '%s\n' "$boot" > "$run/boot"
@@ -42,6 +65,7 @@ worker_start=$(startof "$worker")
 while same "$worker" "$worker_start"; do
     [ "$ending" = 0 ] || break
     if [ -e "$run/cancel" ]; then reason=cancelled; break; fi
+
     deadline=''; IFS= read -r deadline < "$run/deadline" || :
     if ! "$bb" awk -v limit="$deadline" 'BEGIN {if(limit !~ /^[0-9]+([.][0-9]+)?$/)exit 1} {exit !($1<limit)}' /proc/uptime; then reason=timed_out; break; fi
     if [ -f "$run/probe.deadline" ]; then
@@ -76,7 +100,11 @@ while same "$worker" "$worker_start"; do
         "$bb" rm -f "$run/probe.request"
         (
             cd "$cwd" || exit 1
-            exec "$bb" env -i PATH="$probe_path" LANG=C LC_ALL=C TZ=UTC HOME="$cwd" XDG_CONFIG_HOME="$cwd" XDG_CACHE_HOME="$cwd" XDG_STATE_HOME="$cwd" TMPDIR="$cwd" TOKIO_WORKER_THREADS=1 "$bb" sh "$lib/probe.sh" "$job"
+            # Pinned router builds honor DPI_WORKERS; TOKIO alone is ignored.
+            # Do not change the legacy native default when no advanced plan exists.
+            set --
+            [ "$worker_threads" != 4 ] || set -- DPI_WORKERS="$worker_threads"
+            exec "$bb" env -i PATH="$probe_path" LANG=C LC_ALL=C TZ=UTC HOME="$cwd" XDG_CONFIG_HOME="$cwd" XDG_CACHE_HOME="$cwd" XDG_STATE_HOME="$cwd" TMPDIR="$cwd" TOKIO_WORKER_THREADS="$worker_threads" "$@" "$bb" sh "$lib/probe.sh" "$job"
         ) < /dev/null >> "$run/g0.stdout" 2>> "$run/g0.stderr" &
         probe=$!
         probe_start=$(startof "$probe")

@@ -132,11 +132,10 @@ final class AsusReportPlatform
             foreach($settings as $key=>$value) {
                 if(!str_starts_with($key,'NFQWS_')&&!str_starts_with($key,'MODE_'))continue;
                 if($value===null) {++$unresolved;continue;}
-                preg_match_all('~/opt/etc/nfqws2/(lists|lua|blobs)/([A-Za-z0-9_.-]+)~',$value,$matches,PREG_SET_ORDER);
-                foreach($matches as $match) {
-                    $kind=['lists'=>'list','lua'=>'lua','blobs'=>'blob'][$match[1]];
-                    if(str_contains($match[2],'..')) {++$unresolved;continue;}
-                    $references[$kind][$match[2]][$source]=true;
+                require_once __DIR__.'/resource-paths.php';$paths=NfqwsResourcePaths::references($value);$unresolved+=$paths['invalid'];
+                foreach($paths['valid'] as $identity) {
+                    $kind=['lists'=>'list','lua'=>'lua','blobs'=>'blob'][$identity['kind']];
+                    $references[$kind][$identity['name']][$source]=true;
                 }
                 if(preg_match('~@/(?!opt/etc/nfqws2/(?:lists|lua|blobs)/)~',$value))++$unresolved;
             }

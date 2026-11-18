@@ -7,10 +7,12 @@ import {
   confirmSmartDns,
   getSmartDnsConfigStatus,
   getSmartDnsPreview,
+  repairSmartDnsHook,
   rollbackSmartDns,
   saveSmartDnsDraft,
   validateSmartDnsDraft,
   type ConfigStatus,
+  type ConfigView,
 } from '@/api/smartDnsConfigClient';
 import {
   acceptPreview,
@@ -47,6 +49,8 @@ export const SmartDnsConfigurator = ({
   const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
   const [resumeInfo, setResumeInfo] = useState<string | null>(null);
   const [routing, setRouting] = useState('unknown');
+  const [dns, setDns] = useState<ConfigView['dns']>();
+  const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -77,6 +81,8 @@ export const SmartDnsConfigurator = ({
       setSavedProfile(data.confirmed_profile || null);
       setResumeInfo(data.resume_code || null);
       setRouting(data.routing || 'unknown');
+      setDns(data.dns);
+      setActiveProfile(data.active_profile);
       const profile = data.draft || data.active_profile || emptyProfile();
       if (
         !initialized.current ||
@@ -167,21 +173,21 @@ export const SmartDnsConfigurator = ({
       }
     }
   };
-  const validate = () =>
-    void perform(async () => {
-      const snapshot = current.current;
-      const hash = await saveSmartDnsDraft(csrf, snapshot.profile);
-      if (current.current.revision !== snapshot.revision)
-        throw new DpiError('stale_draft');
-      dirty.current = false;
-      validatedRevision.current = snapshot.revision;
-      validatedHash.current = hash;
-      return validateSmartDnsDraft(
-        csrf,
-        newSupportSubmissionId().replace(/-/g, ''),
-        hash,
-      );
-    });
+  const startValidation = async () => {
+    const snapshot = current.current;
+    const hash = await saveSmartDnsDraft(csrf, snapshot.profile);
+    if (current.current.revision !== snapshot.revision)
+      throw new DpiError('stale_draft');
+    dirty.current = false;
+    validatedRevision.current = snapshot.revision;
+    validatedHash.current = hash;
+    return validateSmartDnsDraft(
+      csrf,
+      newSupportSubmissionId().replace(/-/g, ''),
+      hash,
+    );
+  };
+  const validate = () => void perform(startValidation);
   const reloadDraft = () =>
     void perform(async () => {
       const data = await getSmartDnsConfigStatus(csrf);
@@ -265,11 +271,7 @@ export const SmartDnsConfigurator = ({
           <Stack spacing={2}>
             <Typography>{t('smartdns.sequence')}</Typography>
             <Typography>{t('smartdns.browser_close')}</Typography>
-            <Typography component="code">
-              nfqws2-smartdns-control status
-              <br />
-              nfqws2-smartdns-control rollback
-            </Typography>
+            <Typography>{t('smartdns.restore_guidance')}</Typography>
           </Stack>
         </InlineHelp>
         <Button
@@ -279,6 +281,84 @@ export const SmartDnsConfigurator = ({
         >
           {t('smartdns.reload_draft')}
         </Button>
+      </Stack>
+      <Stack
+        component="section"
+        aria-label={t('smartdns.current_dns')}
+        spacing={1}
+      >
+        <Typography component="h3" variant="subtitle1">
+          {t('smartdns.current_dns')}
+        </Typography>
+        {dns?.default_servers.length ? (
+          <Typography variant="body2">
+            {t('smartdns.router_dns')}{' '}
+            <strong>{dns.default_servers.join(', ')}</strong>
+          </Typography>
+        ) : (
+          <Typography variant="body2">
+            {t('smartdns.current_dns_unknown')}
+          </Typography>
+        )}
+        {dns?.state === 'partial' && (
+          <Typography variant="body2">
+            {t('smartdns.current_dns_partial')}
+          </Typography>
+        )}
+        {routing === 'managed' &&
+          dns?.state === 'available' &&
+          dns.default_servers.length === 1 &&
+          dns.default_servers[0] === '127.0.0.1#6054' &&
+          activeProfile && (
+            <>
+              <Typography variant="body2">
+                {t('smartdns.connected_resolvers')}
+              </Typography>
+              <Stack component="ul" spacing={0.5} sx={{ pl: 3, m: 0 }}>
+                {activeProfile.upstreams.map((server) => (
+                  <Typography component="li" variant="body2" key={server.id}>
+                    {server.label ? `${server.label}: ` : ''}
+                    {server.protocol.toUpperCase()} ·{' '}
+                    {server.protocol === 'doh'
+                      ? server.url
+                      : `${server.address}:${server.port}`}
+                    {server.protocol === 'dot' && server.tls_name
+                      ? ` (${server.tls_name})`
+                      : ''}
+                    {server.default ? ` · ${t('smartdns.form.default')}` : ''}
+                    {server.domains.length > 0
+                      ? ` · ${server.domains.map((d) => d.name).join(', ')}`
+                      : ''}
+                  </Typography>
+                ))}
+              </Stack>
+            </>
+          )}
+        {dns && dns.conditional_servers.length > 0 && (
+          <Typography variant="body2">
+            {t('smartdns.domain_dns')} {dns.conditional_servers.join('; ')}
+          </Typography>
+        )}
+        {dns?.dhcp_dns.length ? (
+          dns.dhcp_dns.map((rule, index) => (
+            <Typography variant="body2" key={`${rule.scope}-${index}`}>
+              DHCP{rule.scope ? ` (${rule.scope})` : ''}:{' '}
+              {rule.servers.join(', ')}
+            </Typography>
+          ))
+        ) : (
+          <Typography variant="body2">
+            {t('smartdns.dhcp_dns_unspecified')}
+          </Typography>
+        )}
+        <Typography variant="body2" color="text.secondary">
+          {t('smartdns.client_dns_scope')}
+        </Typography>
+        {canRestore && (
+          <Typography variant="body2">
+            {t('smartdns.restore_guidance')}
+          </Typography>
+        )}
       </Stack>
       {external && <Alert severity="info">{t('smartdns.external')}</Alert>}
       {resumeInfo && (
@@ -340,6 +420,25 @@ export const SmartDnsConfigurator = ({
       )}
       {(error || status?.code) && (
         <Alert severity="info">{explanation(error || status!.code!)}</Alert>
+      )}
+      {(error || status?.code) === 'hook_permissions' && !connected && (
+        <Stack spacing={1}>
+          <Typography variant="body2">
+            {t('smartdns.repair_hook_hint')}
+          </Typography>
+          <Button
+            variant="outlined"
+            disabled={busy || pending}
+            onClick={() =>
+              void perform(async () => {
+                await repairSmartDnsHook(csrf);
+                return startValidation();
+              })
+            }
+          >
+            {t('smartdns.repair_hook')}
+          </Button>
+        </Stack>
       )}
       {canRestore && (
         <Button

@@ -19,6 +19,10 @@ class BlobStoreTests(unittest.TestCase):
   self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'');return json.loads(p.stdout)
  def upload(self,name='phone.bin',raw=BINARY,**changes):
   return self.call('upload',{'name':name,'data_base64':base64.b64encode(raw).decode(),'sha256':hashlib.sha256(raw).hexdigest()}|changes)
+ def test_imported_blob_inventory_is_read_only_and_upload_cannot_target_it(self):
+  folder=self.root/'blobs/imported';folder.mkdir(mode=0o755);sha=hashlib.sha256(BINARY).hexdigest();target=folder/(sha+'.bin');target.write_bytes(BINARY);before=target.stat()
+  v=self.call();self.assertEqual(len(v['files']),1,v);self.assertEqual(v['files'][0]['name'],'imported/'+sha+'.bin');self.assertEqual(v['files'][0]['sha256'],sha)
+  self.assertEqual(self.upload('imported/'+sha+'.bin'),{'error':'invalid_blob'});self.assertEqual(target.stat().st_ino,before.st_ino);self.assertEqual(target.read_bytes(),BINARY)
  def test_binary_upload_preserves_bytes_and_inventory_is_read_only(self):
   row=self.upload();self.assertNotIn('error',row);self.assertEqual(set(row),FIELDS);self.assertEqual(row['name'],'phone.bin');self.assertEqual(row['path'],'/opt/etc/nfqws2/blobs/phone.bin');self.assertEqual(row['state'],'available');self.assertEqual(row['format'],'other');self.assertIsNone(row['label']);self.assertFalse(row['bundled'])
   path=self.root/'blobs/phone.bin';self.assertEqual(path.read_bytes(),BINARY);self.assertEqual(path.stat().st_nlink,1);self.assertEqual(path.stat().st_uid,os.getuid());self.assertEqual(path.stat().st_mode&0o777,0o644)

@@ -11,6 +11,18 @@ PHP = os.environ.get('PHP_TEST_BINARY', str(ROOT / '.work/packaging-audit-202610
 
 
 class ReportIOTests(unittest.TestCase):
+    def test_generated_import_resources_are_read_without_opening_arbitrary_subpaths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp);folder=p/'etc/nfqws2/lua/imported';folder.mkdir(parents=True)
+            name='a'*64+'.lua';(folder/name).write_text('return 1')
+            (folder/'escape.lua').symlink_to(p/'secret')
+            (p/'secret').write_text('PRIVATE_CANARY')
+            result=self.run_php('''$io=new AsusReportIO(['opt'=>$argv[2]]);echo json_encode([
+                $io->resources('lua'),$io->readResource('lua','imported/'.str_repeat('a',64).'.lua'),
+                $io->readResource('lua','imported/escape.lua'),$io->readResource('lua','other/nested.lua')]);''',p)
+            self.assertEqual(result[0],['imported/'+name]);self.assertEqual(result[1],{'state':'available','value':'return 1'})
+            self.assertEqual([v['state'] for v in result[2:]],['denied','denied'])
+
     def test_firmware_save_uses_supported_no_module_loader_option(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp);binary=p/'iptables-save';binary.write_text('#!/bin/sh\n[ "$1" = --modprobe ] && [ "$2" = /bin/false ] || exit 1\nprintf "*mangle\\nCOMMIT\\n"\n');binary.chmod(0o755)

@@ -178,8 +178,11 @@ final class AsusSmartDnsConfigJobs
         if ($job['state']==='validating') {
             $owner=$this->validationOwner($job);
             $alive=$owner['guard_alive'] || $owner['anchor_alive'] || $owner['worker_alive'];
+            // Uptime resets at reboot; a dead previous-boot owner has no grace period left.
+            $boot=trim((string)@file_get_contents('/proc/sys/kernel/random/boot_id',false,null,0,65));
+            $previousBoot=$boot!=='' && is_string($job['boot']??null) && $job['boot']!==$boot;
             if (!$owner['known']) $status['code']='invalid_state';
-            elseif (!$alive && $this->now()-(float)($job['started_uptime']??$this->now())>=10) {
+            elseif (!$alive && ($previousBoot || $this->now()-(float)($job['started_uptime']??$this->now())>=10)) {
                 $status['state']='failed';$status['code']=$owner['code']??'interrupted';$patch=['state'=>'failed','code'=>$status['code']];
             }
             return ['status'=>$status,'job'=>$job,'patch'=>$patch];

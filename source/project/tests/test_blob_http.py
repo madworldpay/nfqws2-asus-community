@@ -45,4 +45,6 @@ class BlobHttpTests(unittest.TestCase):
 
  def test_pending_import_is_reconciled_before_accepting_the_new_blob(self):
   self.token=self.login();root=self.base/'import-state';root.mkdir(mode=0o700);before=hashlib.sha256(b'CONFIG_CANARY\n').hexdigest();job={'id':'a'*32,'state':'prepared','request_digest':'b'*64,'before':before,'after':'d'*64,'files':[],'dns_changed':False};p=root/'state.json';p.write_text(json.dumps({'schema_version':1,'current':job,'history':[]}));p.chmod(0o600)
+  # A prepared import owns its complete original Config backup, even before publication.
+  backup=root/(job['id']+'.conf');backup.write_bytes(b'CONFIG_CANARY\n');backup.chmod(0o600)
   code,v=self.request(self.upload());self.assertEqual(code,200);self.assertEqual(v['file']['name'],'phone.bin');self.assertEqual(json.loads(p.read_text())['current']['state'],'rolled_back');self.assertEqual((self.base/'resources/nfqws2.conf').read_bytes(),b'CONFIG_CANARY\n')

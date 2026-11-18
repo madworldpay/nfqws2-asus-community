@@ -435,6 +435,20 @@ class PackageUpdatePrepareTests(unittest.TestCase):
     def stock_baseline(self,opt,resources):
         folder=opt/'share/nfqws2-asus';folder.mkdir(parents=True,exist_ok=True)
         (folder/'report-baseline.json').write_text(json.dumps({'schema_version':1,'resources':{name:{'sha256':hashlib.sha256(value.encode()).hexdigest(),'bytes':len(value)} for name,value in resources.items()}}));(folder/'report-baseline.json').chmod(0o644)
+    def test_packaged_hostlist_is_backed_up_and_an_edit_is_detected(self):
+        opt, config, _ = self.fixture()
+        stock = 'packaged domains'
+        name = 'z2-pack-' + hashlib.sha256(stock.encode()).hexdigest() + '.list.gz'
+        path = config/'lists'/name
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(stock)
+        self.stock_baseline(opt, {'lists/'+name: stock})
+        snapshot = self.call('snapshot')
+        self.assertIn('value', snapshot, snapshot)
+        self.assertNotIn('etc/nfqws2/lists/'+name, snapshot['value']['package_resources'])
+        path.write_text('owner edit')
+        self.assertEqual(self.call('verify', allow_defaults=True), {'error':'settings_changed'})
+
     def test_stock_resources_may_change_be_added_or_removed_after_install(self):
         opt,config,web=self.fixture();(config/'lua').mkdir();(config/'blobs').mkdir()
         (config/'lua/stock.lua').write_text('old');(config/'blobs/obsolete.bin').write_text('obsolete');(config/'lua/custom.lua').write_text('CUSTOM')

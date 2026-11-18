@@ -1,4 +1,5 @@
 """Native packaging has its own architecture, dependencies and upgrade contract."""
+from frontend_fixture import copy_public
 import importlib.util
 import gzip
 import hashlib
@@ -17,6 +18,29 @@ ENGINE_DIR=os.environ.get('NFQWS_TEST_ENGINE_DIR')
 
 
 class NativeBuilderTests(unittest.TestCase):
+    @unittest.skipUnless(ENGINE_DIR, 'Requires verified upstream engine payloads')
+    def test_local_import_and_generator_operands_ship_with_verified_defaults(self):
+        catalog = ROOT/'webui/web/public/zapret2-pack'
+        resources = json.loads((catalog/'resources.json').read_bytes())
+        samples = json.loads((catalog/'samples.json').read_bytes())
+        operands = [('lists', row['name'], row) for row in resources.values()
+                    if row['kind'] == 'lists' and 'data_base64' not in row]
+        operands.extend(('blob', sample['name'], resources[sample['key']])
+                        for sample in samples.values())
+        self.assertTrue(samples and len(operands) > len(samples))
+        engine = (Path(ENGINE_DIR)/'nfqws2-armv7').read_bytes()
+        for series in ['24.10', '25.12']:
+            with self.subTest(series=series):
+                files = builder.payload_files(builder.native_metadata(series, 'arm_cortex-a9'), engine)
+                baseline = json.loads(files['usr/share/nfqws2/report-baseline.json'][0])['resources']
+                for kind, name, row in operands:
+                    directory = 'blobs' if kind == 'blob' else 'lists'
+                    data, mode = files[f'usr/share/nfqws2/defaults/{directory}/{name}']
+                    self.assertEqual((len(data), hashlib.sha256(data).hexdigest(), mode),
+                                     (row['byte_length'], row['sha256'], 0o644))
+                    self.assertEqual(baseline[kind+'/'+name],
+                                     {'bytes': row['byte_length'], 'sha256': row['sha256']})
+
     def test_release_filenames_are_unique_across_series_and_architectures(self):
         names=[]
         for series in ['24.10','25.12']:
@@ -53,8 +77,7 @@ class NativeBuilderTests(unittest.TestCase):
             self.assertIn(dep,builder.DEPENDENCIES)
         with tempfile.TemporaryDirectory()as td:
             dist=Path(td)
-            (dist/'index.html').write_text('fixture')
-            for source in (ROOT/'webui/web/public').glob('*.php'):(dist/source.name).write_bytes(source.read_bytes())
+            copy_public(dist)
             files=builder.web_payload(dist)
             profile=json.loads(files['usr/share/nfqws2-web/platform-profile.json'][0])
             self.assertEqual(profile,{'schema_version':1,'platform':'openwrt'})
@@ -66,8 +89,7 @@ class NativeBuilderTests(unittest.TestCase):
 
     def test_native_package_refuses_stale_backend_even_when_all_filenames_exist(self):
         with tempfile.TemporaryDirectory()as td:
-            dist=Path(td);(dist/'index.html').write_text('fixture')
-            for source in (ROOT/'webui/web/public').glob('*.php'):(dist/source.name).write_bytes(source.read_bytes())
+            dist=Path(td);copy_public(dist)
             (dist/'openwrt-package-quiesce.php').write_text('<?php /* older backend */')
             with self.assertRaises(RuntimeError):builder.web_payload(dist)
 

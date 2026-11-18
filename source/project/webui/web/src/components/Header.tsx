@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useConfig } from '@/config/useConfig';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
@@ -23,7 +23,12 @@ import {
 import { Link as RouterLink, useNavigate } from '@tanstack/react-router';
 
 import { API } from '@/api/client';
+import type { MeasuredImport } from '@/api/importClient';
 import { type ServiceActionRequest } from '@/api/schema';
+import {
+  isDownloadShareInput,
+  type DownloadShareInput,
+} from '@/api/shareClient';
 
 import { ArkDialog } from '@/components/ArkDialog';
 import { CommunityActions } from '@/components/CommunityActions';
@@ -33,7 +38,7 @@ import { OutputLogDialog } from '@/components/OutputLogDialog';
 import { PasswordDialog } from '@/components/PasswordDialog';
 import { RequirementsDialog } from '@/components/RequirementsDialog';
 import { RestartScheduleDialog } from '@/components/RestartScheduleDialog';
-import { ShareDialog } from '@/components/ShareDialog';
+import { ArtifactShareDialog, ShareDialog } from '@/components/ShareDialog';
 import { ShareThanks } from '@/components/ShareThanks';
 import { Trans } from '@/components/Trans';
 
@@ -77,10 +82,99 @@ export const Header = () => {
   const [arkOpen, setArkOpen] = useState(false);
   const [requirementsOpen, setRequirementsOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
+  const [downloadShare, setDownloadShare] = useState<DownloadShareInput | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!canControlService || !csrfToken) return;
+    const open = (event: Event) => {
+      const value = (event as CustomEvent<unknown>).detail;
+      if (isDownloadShareInput(value))
+        setDownloadShare(Object.freeze({ ...value }));
+    };
+    window.addEventListener('nfqws-share-download', open);
+    if (new URLSearchParams(window.location.search).has('share-frank')) {
+      try {
+        const raw = sessionStorage.getItem('nfqws-share-download-v1');
+        sessionStorage.removeItem('nfqws-share-download-v1');
+        if (raw && raw.length < 1410000) {
+          const value: unknown = JSON.parse(raw);
+          if (isDownloadShareInput(value))
+            setDownloadShare(Object.freeze({ ...value }));
+        }
+      } catch {
+        /* Optional download content, never consent to send. */
+      }
+    }
+    return () => window.removeEventListener('nfqws-share-download', open);
+  }, [canControlService, csrfToken]);
+
+  const [importOpen, setImportOpen] = useState<true | MeasuredImport | null>(
+    null,
+  );
+  useEffect(() => {
+    if (
+      !canControlService ||
+      !csrfToken ||
+      needSave ||
+      new URLSearchParams(window.location.search).get('picker-import') !== '1'
+    )
+      return;
+    try {
+      const raw = sessionStorage.getItem('nfqws-picker-import-v1');
+      sessionStorage.removeItem('nfqws-picker-import-v1');
+      if (!raw || raw.length > 128) return;
+      const measured = JSON.parse(raw) as Partial<MeasuredImport> | null;
+      if (
+        typeof measured?.id === 'string' &&
+        typeof measured.result === 'string' &&
+        measured.id.length === 32 &&
+        measured.result.length === 32 &&
+        /^[a-f0-9]{32}$/.test(measured.id) &&
+        /^[a-f0-9]{32}$/.test(measured.result)
+      )
+        setImportOpen({ id: measured.id, result: measured.result });
+    } catch {
+      /* The handoff contains only references to locally saved measurements. */
+    }
+  }, [canControlService, csrfToken, needSave]);
   const [shareThanks, setShareThanks] = useState(0);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [dpiTerminalOpen, setDpiTerminalOpen] = useState(false);
+  const [siteCheckTargets, setSiteCheckTargets] = useState<
+    string[] | undefined
+  >();
+  useEffect(() => {
+    if (
+      !canControlService ||
+      !csrfToken ||
+      !new URLSearchParams(window.location.search).has('site-check')
+    )
+      return;
+    try {
+      const raw = sessionStorage.getItem('nfqws-site-check-targets-v1');
+      sessionStorage.removeItem('nfqws-site-check-targets-v1');
+      if (!raw || raw.length > 4096) return;
+      const targets: unknown = JSON.parse(raw);
+      if (
+        !Array.isArray(targets) ||
+        targets.length < 1 ||
+        targets.length > 10 ||
+        targets.some(
+          (value) =>
+            typeof value !== 'string' ||
+            value.length > 253 ||
+            !/^[a-z0-9.-]+$/.test(value),
+        )
+      )
+        return;
+      setSiteCheckTargets(targets);
+      setDpiTerminalOpen(true);
+    } catch {
+      /* The handoff contains optional input, never job or permission state. */
+    }
+  }, [canControlService, csrfToken]);
+
   const [actionPending, setActionPending] = useState(false);
   const actionInFlight = useRef(false);
   const { appearance } = useAppearanceStore();
@@ -449,9 +543,20 @@ export const Header = () => {
         >
           <DpiTerminalDialog
             csrfToken={csrfToken}
-            onClose={() => setDpiTerminalOpen(false)}
+            initialSiteTargets={siteCheckTargets}
+            onClose={() => {
+              setDpiTerminalOpen(false);
+              setSiteCheckTargets(undefined);
+            }}
           />
         </Suspense>
+      )}
+      {downloadShare && csrfToken && (
+        <ArtifactShareDialog
+          input={downloadShare}
+          csrfToken={csrfToken}
+          onClose={() => setDownloadShare(null)}
+        />
       )}
       {scheduleOpen && (
         <RestartScheduleDialog
@@ -483,7 +588,10 @@ export const Header = () => {
         />
       )}
       {auth && importOpen && (
-        <ImportDialog onClose={() => setImportOpen(false)} />
+        <ImportDialog
+          onClose={() => setImportOpen(null)}
+          measured={importOpen === true ? undefined : importOpen}
+        />
       )}
       <ShareThanks
         appearance={appearance}

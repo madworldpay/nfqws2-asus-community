@@ -26,6 +26,7 @@ import {
 } from '@/api/shareResourcesClient';
 
 import { InlineHelp } from '@/components/InlineHelp';
+import { FrankShareButton } from '@/components/ShareDialog';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -187,6 +188,13 @@ export const ShareFilesSection = ({
         >
           {t('share.download_zip')}
         </Button>
+        <FrankShareButton
+          disabled={disabled || loading || !value.selected.length}
+          load={() => ({
+            blob: resourceZip(value.selected.map((id) => value.copies[id])),
+            filename: 'NFQWS2_SELECTED_FILES.zip',
+          })}
+        />
       </Stack>
       {loading && (
         <Typography variant="caption">{t('share.loading')}</Typography>
@@ -309,6 +317,18 @@ export const ShareFilesSection = ({
                           >
                             {t('share.download_copy')}
                           </Button>
+                          <FrankShareButton
+                            disabled={disabled || loading}
+                            load={() => ({
+                              blob: new Blob([resourceBytes(copy)], {
+                                type:
+                                  copy.encoding === 'utf8'
+                                    ? 'text/plain;charset=utf-8'
+                                    : 'application/octet-stream',
+                              }),
+                              filename: copy.name,
+                            })}
+                          />
                         </>
                       )}
                     </Stack>

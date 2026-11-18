@@ -21,6 +21,7 @@ class ShareBundle:
     submission_id:str
     source_json:str|None
     version:int=3
+    comment:str|None=None
 
 def _decode(raw):
     text=raw.decode('utf-8','strict');_bounded_depth(text)
@@ -96,4 +97,7 @@ def share_body(bundle:ShareBundle)->str:
            'categories':(['diagnostics'] if any(f.type in ('report','dpi') for f in bundle.files) else [])+(['strategies'] if any(f.type in ('strategy','resources','dns') for f in bundle.files) else [])}
     source=json.loads(bundle.source_json) if bundle.source_json is not None else None
     if source is not None:value['source']=source
-    return _share_preview(bundle,source)+'\n\n'+json.dumps(value,ensure_ascii=False,indent=2)+'\n'
+    preview=_share_preview(bundle,source)
+    if bundle.comment:
+        preview+='\n\nКомментарий для Фрэнка\n'+bundle.comment
+    return preview+'\n\n'+json.dumps(value,ensure_ascii=False,indent=2)+'\n'

@@ -1,6 +1,13 @@
 NFQWS2 ASUS Community — third-party components
 Third-party notices supplement. Original notices below retain their authorship and terms.
 
+The offline Zapret2 preset library is adapted from zapretdiscordyoutube/magisk-zapret2
+v2.3.10, commit 7a05a2267df82dfa765cc7ff68cefd57fb45086a.
+https://git2.zapret.moe/zapretdiscordyoutube/magisk-zapret2/releases/tag/v2.3.10
+Original author credits and per-entry source links are available in Import.
+The module repository supplies docs/LICENSE.md, reproduced in
+licenses/zapret2-magisk-AGPL-3.0.txt. Upstream zapret2 retains its own notices.
+
 ========================================================================
 busybox-GPL2.txt
 ========================================================================
@@ -84230,3 +84237,53 @@ Copyright notice:
 
   Jean-loup Gailly        Mark Adler
   jloup@gzip.org          madler@alumni.caltech.edu
+
+
+Symfony IDN and Unicode Normalizer polyfills
+============================================
+Used by the bounded common IDNA hostname validator. Upstream source files are unchanged; package bootstrap and a namespaced Unicode-scalar compatibility helper are local adaptations.
+Pinned sources and individual Git/SHA256 checksums: webui/web/public/vendor-idna/provenance.json.
+
+https://github.com/symfony/polyfill-intl-idn/tree/533d68cf99c8f8ee2e8893c59ed59192e92cfd74
+
+Copyright (c) 2018-present Fabien Potencier and Trevor Rowbotham <trevor.rowbotham@pm.me>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+https://github.com/symfony/polyfill-intl-normalizer/tree/ebd57ccc7edb93d632e184efbe7693d2517bab3b
+
+Copyright (c) 2015-present Fabien Potencier
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

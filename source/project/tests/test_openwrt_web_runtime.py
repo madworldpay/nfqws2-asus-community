@@ -1,7 +1,9 @@
 """Authenticated native panel requests in an isolated official rootfs only."""
 import json
+import hashlib
 import os
 from pathlib import Path
+import re
 import subprocess
 import unittest
 
@@ -27,6 +29,10 @@ class NativeWebRequests(unittest.TestCase):
             if p.name=='asus.php':
                 for a,b in [('/opt/etc/nfqws-asus-web/auth.json',cls.base+'/auth.json'),('/etc/passwd',cls.base+'/passwd'),('/etc/shadow',cls.base+'/shadow')]:source=source.replace(a,b)
             cls.sh('cat > '+cls.base+'/'+p.name,input=source)
+        cls.sh('mkdir -p '+cls.base+'/strategy-picker')
+        for name in ['index.html','picker.js','picker.css']:
+            cls.sh('cat > '+cls.base+'/strategy-picker/'+name,
+                   input=(ROOT/'webui/web/public/strategy-picker'/name).read_text())
         for p in (ROOT/'support').glob('*.json'):cls.sh('cat > /usr/share/nfqws2/'+p.name,input=p.read_text())
         from test_openwrt_builder import builder
         cls.sh('mkdir -p /usr/share/nfqws2/defaults; cat > /usr/share/nfqws2/defaults/nfqws2.conf',input=builder.native_defaults().decode())
@@ -79,6 +85,63 @@ require $argv[1].'/index.php';'''
         self.assertIn('Cache-Control: no-store',r.stdout)
         self.assertIn('native-shell-version',r.stdout)
         self.assertNotIn('Location:',r.stdout)
+
+    def picker_get(self,query='strategy-picker=1'):
+        r=subprocess.run(['docker','exec','-e','REQUEST_METHOD=GET','-e','REDIRECT_STATUS=200',
+                          '-e','SCRIPT_FILENAME='+self.base+'/index.php','-e','QUERY_STRING='+query,
+                          '-e','HTTP_IF_MODIFIED_SINCE=Thu, 01 Jan 1970 00:00:00 GMT',
+                          '-e','HTTP_IF_NONE_MATCH="previous-package"',CONTAINER,'php-cgi'],
+                         text=True,capture_output=True,timeout=15)
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(r.stderr,'')
+        return r.stdout.split('\n\n',1)
+
+    def test_picker_entry_bypasses_stale_html_and_binds_current_asset_bytes(self):
+        # Fixed timestamps cannot distinguish the old and new scripts. Their
+        # URLs must follow their bytes, even when a browser sends old validators.
+        head,body=self.picker_get()
+        self.assertIn('Cache-Control: no-store',head)
+        self.assertNotIn('Status: 304',head)
+        self.assertNotIn('ETag:',head)
+        self.assertIn('id="pool-value"',body)
+        self.assertNotIn('native-shell-version',body)
+        for name,attribute in [('picker.js','src'),('picker.css','href')]:
+            raw=(ROOT/'webui/web/public/strategy-picker'/name).read_bytes()
+            self.assertIn(attribute+'="/strategy-picker/'+name+'?v='+hashlib.sha256(raw).hexdigest()+'"',body)
+        path=self.base+'/strategy-picker/picker.js'
+        original=self.sh('cat '+path).stdout
+        try:
+            self.sh('cat > '+path+'; touch -t 197001010000 '+path,input=original+'\n// next package\n')
+            _,changed=self.picker_get()
+            before=re.search(r'src="([^"]*picker\.js[^\"]*)"',body).group(1)
+            after=re.search(r'src="([^"]*picker\.js[^\"]*)"',changed).group(1)
+            self.assertNotEqual(before,after)
+            self.assertIn(hashlib.sha256((original+'\n// next package\n').encode()).hexdigest(),after)
+        finally:self.sh('cat > '+path,input=original)
+
+    def test_picker_entry_rejects_invalid_selector_and_unsafe_fixed_asset(self):
+        for query in ['strategy-picker[]=1','strategy-picker=../../etc/shadow']:
+            with self.subTest(query=query):
+                head,body=self.picker_get(query)
+                self.assertIn('Status: 400',head)
+                self.assertEqual(json.loads(body),{'error':'invalid_request'})
+        path=self.base+'/strategy-picker/picker.js'
+        self.sh('mv '+path+' '+path+'.saved; ln -s /etc/passwd '+path)
+        try:
+            head,body=self.picker_get()
+            self.assertIn('Status: 503',head)
+            self.assertNotIn('root:',body)
+        finally:self.sh('rm '+path+'; mv '+path+'.saved '+path)
+
+    def test_entware_picker_entry_uses_the_same_current_page(self):
+        profile=self.base+'/platform-profile.json'
+        self.sh('mv '+profile+' '+profile+'.saved')
+        try:
+            head,body=self.picker_get()
+            self.assertIn('Cache-Control: no-store',head)
+            self.assertNotIn('Location:',head)
+            self.assertIn('id="pool-value"',body)
+        finally:self.sh('mv '+profile+'.saved '+profile)
 
     def test_native_file_writer_and_symlink_rejection(self):
         self.session='native-write';token=self.login()

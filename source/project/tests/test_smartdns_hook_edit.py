@@ -27,7 +27,8 @@ class SmartDnsNativeHookEditTests(unittest.TestCase):
             for after in [b'',b'\n# new foreign edit\n',b'printf suffix',b'\n\n# suffix\n']:
                 with self.subTest(before=before,after=after):
                     code,value=self.remove(before+self.block+after)
-                    self.assertEqual(code,0);self.assertEqual(value,before+after)
+                    separator=b'\n' if before and after and not before.endswith(b'\n') and not after.startswith(b'\n') else b''
+                    self.assertEqual(code,0);self.assertEqual(value,before+separator+after)
 
     def test_changed_duplicate_or_missing_block_is_never_accepted(self):
         for body in [b'#!/bin/sh\n',self.block.replace(b'postconf',b'CHANGED'),self.block+self.block,

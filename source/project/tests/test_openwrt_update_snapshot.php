@@ -8,7 +8,10 @@ register_shutdown_function(fn()=>removeTree($root));
 function put($p,$v){if(!is_dir(dirname($p)))mkdir(dirname($p),0700,true);file_put_contents($p,$v);chmod($p,0600);}
 put($system.'/etc/nfqws2/nfqws2.conf','current config');put($system.'/etc/nfqws2/lists/auto.list','latest learned host');put($system.'/etc/nfqws2/lua/stock.lua','old stock');put($system.'/etc/nfqws2/lua/custom.lua','operator edit');put($system.'/etc/nfqws2-web/auth.json','anonymous explicitly selected');put($system.'/etc/config/nfqws2-web','custom listener');
 put($system.'/elsewhere','do not follow');symlink('../../elsewhere',$system.'/etc/nfqws2/custom-link');
-$b=['resources'=>['lua/stock.lua'=>['bytes'=>9,'sha256'=>hash('sha256','old stock')],'lua/custom.lua'=>['bytes'=>11,'sha256'=>hash('sha256','old factory')]]];put($system.'/usr/share/nfqws2/report-baseline.json',json_encode($b));
+$b=['resources'=>['lua/stock.lua'=>['bytes'=>9,'sha256'=>hash('sha256','old stock')],'lua/custom.lua'=>['bytes'=>11,'sha256'=>hash('sha256','old factory')]]];
+$listHash=hash('sha256','packaged domains');
+$b['resources']['lists/z2-pack-'.$listHash.'.list.gz']=['bytes'=>16,'sha256'=>$listHash];
+put($system.'/usr/share/nfqws2/report-baseline.json',json_encode($b));
 $profile=['schema_version'=>1,'upstreams'=>[['id'=>'main','label'=>'DNS','protocol'=>'udp','address'=>'8.8.8.8','port'=>53,'tls_name'=>'','url'=>'','bootstrap'=>[],'default'=>true,'domains'=>[]]],'records'=>[]];
 require_once dirname(__DIR__).'/webui/web/public/smartdns-profile.php';
 $intent=['schema_version'=>1,'profile'=>$profile,'profile_hash'=>AsusSmartDnsProfile::hash($profile),'engine_sha'=>str_repeat('a',64),'source_request_id'=>str_repeat('b',32)];put($system.'/etc/nfqws2-web/smartdns/resume-intent.json',json_encode($intent));

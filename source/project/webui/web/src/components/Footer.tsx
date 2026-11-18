@@ -20,6 +20,7 @@ import { API } from '@/api/client';
 
 import { CommunityChatLink } from '@/components/CommunityChatLink';
 import { MtprotoInstallDialog } from '@/components/MtprotoInstallDialog';
+import { SupportProjectMenu } from '@/components/SupportProjectMenu';
 import { TechnicalChannel } from '@/components/TechnicalChannel';
 import { ThemeCycleButton } from '@/components/ThemeCycleButton';
 
@@ -30,7 +31,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 export const Footer = () => {
   const { auth } = useAppStore();
-  const { anonym, csrfToken } = useStatus();
+  const { anonym, csrfToken, authenticated, platform } = useStatus();
   const { t, langcode, setLanguage } = useTranslation();
   const mobile = useMediaQuery('(max-width: 599.95px)', { noSsr: true });
 
@@ -72,6 +73,13 @@ export const Footer = () => {
         <MtprotoInstallDialog
           onClose={() => setMtprotoOpen(false)}
           csrfToken={csrfToken}
+          routerMode={
+            platform === 'asus-entware'
+              ? authenticated
+                ? 'install'
+                : 'login'
+              : undefined
+          }
         />
       )}
       <Box component="footer" sx={{ flexShrink: 0, minWidth: 0 }}>
@@ -138,6 +146,7 @@ export const Footer = () => {
                 <GitHubIcon sx={{ fontSize: '1.2em' }} />
                 {t('community.releases')}
               </Link>
+              <SupportProjectMenu />
             </Stack>
 
             <Stack

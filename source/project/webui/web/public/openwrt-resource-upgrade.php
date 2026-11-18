@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/support-json-schema.php';
+require_once __DIR__.'/resource-paths.php';
 
 /** Update packaged Lua/blobs only while their active bytes still match old stock. */
 final class NfqwsOpenWrtResourceUpgrade
@@ -32,6 +33,7 @@ final class NfqwsOpenWrtResourceUpgrade
         if(!is_array($old)||!is_array($old['resources']??null)||count($old['resources'])>512)throw new RuntimeException('invalid_state');
         $plans=[];$bytes=0;
         foreach($old['resources']as $key=>$record){
+            if(NfqwsResourcePaths::isPackageListPin($key,$record))continue;
             if(!is_string($key)||!preg_match('~^(lua|blob)/([A-Za-z0-9][A-Za-z0-9_.-]{0,127})$~D',$key,$m)||
                 !is_array($record)||!is_int($record['bytes']??null)||$record['bytes']<0||$record['bytes']>16777216||!is_string($record['sha256']??null)||!preg_match('/^[a-f0-9]{64}$/D',$record['sha256']))throw new RuntimeException('invalid_state');
             $relative=($m[1]==='blob'?'blobs':'lua').'/'.$m[2];$src=$defaults.'/'.$relative;$dst=$active.'/'.$relative;

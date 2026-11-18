@@ -274,9 +274,11 @@ const NativeTerminal = ({
 export const DpiTerminalDialog = ({
   csrfToken,
   onClose,
+  initialSiteTargets,
 }: {
   csrfToken: string;
   onClose: VoidFunction;
+  initialSiteTargets?: string[];
 }) => {
   const { t, langcode } = useTranslation();
   const fullScreen = useMediaQuery('(max-width:599.95px)');
@@ -284,7 +286,9 @@ export const DpiTerminalDialog = ({
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [terminalAttempt, setTerminalAttempt] = useState(0);
-  const [view, setView] = useState<'native' | 'services'>('native');
+  const [view, setView] = useState<'native' | 'services'>(
+    initialSiteTargets?.length ? 'services' : 'native',
+  );
   const [siteRunning, setSiteRunning] = useState(false);
   const [confirmInstall, setConfirmInstall] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -597,6 +601,7 @@ export const DpiTerminalDialog = ({
         {view === 'services' && (
           <DpiSiteCheck
             key="site-check"
+            initialTargets={initialSiteTargets}
             csrfToken={csrfToken}
             onRunning={setSiteRunning}
           />

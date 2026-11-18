@@ -143,9 +143,13 @@ export function replaceBlobBinding(
   path: string,
 ): string {
   if (
-    !/^\/(?:opt\/)?etc\/nfqws2\/blobs\/[A-Za-z0-9][A-Za-z0-9_.-]*\.bin$/i.test(
-      path,
+    !(
+      /^\/(?:opt\/)?etc\/nfqws2\/blobs\/[A-Za-z0-9][A-Za-z0-9_.-]*\.bin$/i.test(
+        path,
+      ) ||
+      /^\/(?:opt\/)?etc\/nfqws2\/blobs\/imported\/[a-f0-9]{64}\.bin$/.test(path)
     ) ||
+    /[\x00-\x1f\x7f]/.test(path) ||
     path.slice(path.lastIndexOf('/') + 1).length > 128
   )
     throw new Error('invalid_path');

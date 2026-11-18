@@ -14,6 +14,9 @@ if [ -x /opt/libexec/nfqws2-asus/busybox ]; then
     chmod() { "$mtbb" chmod "$@"; }
     mkdir() { "$mtbb" mkdir "$@"; }
     rm() { "$mtbb" rm "$@"; }
+    mv() { "$mtbb" mv "$@"; }
+    rmdir() { "$mtbb" rmdir "$@"; }
+    grep() { "$mtbb" grep "$@"; }
     sleep() { "$mtbb" sleep "$@"; }
 fi
 msg() { if [ "$NFQWS_MT_LANG" = ru ]; then printf '%s\n' "$2"; else printf '%s\n' "$1"; fi; }
@@ -24,6 +27,20 @@ unit=''
 container=''
 work=''
 committed=no
+updating=no
+previous_root=''
+previous_unit=''
+previous_container=''
+previous_running=no
+native_transition=no
+removed_was_enabled=no
+dc_ips='2:149.154.167.220 4:149.154.167.220'
+pool_size=2
+cf_domain=pclead.co.uk
+refresh_link() {
+    link_server=${NFQWS_MT_LINK%%&port=*}
+    NFQWS_MT_LINK="$link_server&port=$NFQWS_MT_PORT&secret=dd$NFQWS_MT_KEY"
+}
 cleanup() {
     rc=$?
     trap - 0 HUP INT TERM
@@ -31,12 +48,29 @@ cleanup() {
         if [ -n "$container" ]; then docker rm -f "$container" >/dev/null 2>&1 || :; fi
         if [ -n "$unit" ]; then
             if [ "$NFQWS_MT_METHOD" = linux ]; then
-                systemctl disable --now nfqws-mtproto.service >/dev/null 2>&1 || :
+                if [ "$updating" = yes ]; then systemctl stop nfqws-mtproto.service >/dev/null 2>&1 || :
+                else systemctl disable --now nfqws-mtproto.service >/dev/null 2>&1 || :; fi
             elif [ -x "$unit" ]; then "$unit" stop >/dev/null 2>&1 || :; fi
             rm -f "$unit"
             if [ "$NFQWS_MT_METHOD" = linux ]; then systemctl daemon-reload >/dev/null 2>&1 || :; fi
         fi
         if [ -n "$root" ]; then rm -rf "$root"; fi
+        if [ -n "$previous_root" ]; then
+            mv "$previous_root" "$candidate" || rc=1
+        fi
+        if [ -n "$previous_unit" ]; then
+            mv "$previous_unit" "$service" || rc=1
+            if [ "$NFQWS_MT_METHOD" = linux ]; then systemctl daemon-reload || rc=1; fi
+        fi
+        if [ "$removed_was_enabled" = yes ]; then systemctl enable nfqws-mtproto.service || rc=1; fi
+        if [ "$native_transition" = yes ] && [ "$previous_running" = yes ]; then
+            if [ "$NFQWS_MT_METHOD" = linux ]; then systemctl start nfqws-mtproto.service || rc=1
+            else "$service" start || rc=1; fi
+        fi
+        if [ -n "$previous_container" ]; then
+            docker rename "$previous_container" nfqws-mtproto || rc=1
+            if [ "$previous_running" = yes ]; then docker start nfqws-mtproto >/dev/null || rc=1; fi
+        fi
     fi
     if [ -n "$work" ]; then rm -rf "$work"; fi
     exit "$rc"
@@ -54,7 +88,32 @@ if [ "$NFQWS_MT_METHOD" = docker ]; then
     findexe docker >/dev/null || fail 'Docker CLI is missing. Run this on the Docker host.' 'Нет Docker CLI. Выполните команду на устройстве с Docker.'
     docker info >/dev/null 2>&1 || fail 'Docker daemon is unavailable.' 'Служба Docker недоступна.'
     if docker container inspect nfqws-mtproto >/dev/null 2>&1; then
-        fail 'nfqws-mtproto already exists; nothing was changed.' 'Контейнер nfqws-mtproto уже существует; ничего не изменено.'
+        old_image=$(docker inspect --format '{{.Config.Image}}' nfqws-mtproto)
+        old_command=$(docker inspect --format '{{json .Config.Cmd}}' nfqws-mtproto)
+        case "$old_image:$old_command" in
+            lordarrin/tg-ws-proxy@sha256:*proxy/tg_ws_proxy.py*) ;;
+            *) fail 'This container is not our previous MTProto installation; nothing was changed.' 'Этот контейнер не является нашей прежней установкой MTProto; ничего не изменено.';;
+        esac
+        old_env=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' nfqws-mtproto)
+        NFQWS_MT_KEY=''
+        while IFS= read -r item; do
+            case "$item" in
+                PROXY_SECRET=*) NFQWS_MT_KEY=${item#*=};;
+                PROXY_DC_IPS=*) dc_ips=${item#*=};;
+                PROXY_POOL_SIZE=*) pool_size=${item#*=};;
+                CFPROXY_DOMAIN=*) cf_domain=${item#*=};;
+            esac
+        done <<EOF
+$old_env
+EOF
+        NFQWS_MT_PORT=$(docker inspect --format '{{(index (index .HostConfig.PortBindings "1443/tcp") 0).HostPort}}' nfqws-mtproto)
+        case "$NFQWS_MT_KEY" in ''|*[!0-9a-fA-F]*) fail 'Invalid existing proxy secret; nothing was changed.' 'Некорректный прежний ключ прокси; ничего не изменено.';; esac
+        [ "${#NFQWS_MT_KEY}" = 32 ] || fail 'Invalid existing proxy secret.' 'Некорректный прежний ключ прокси.'
+        case "$NFQWS_MT_PORT" in ''|*[!0-9]*) fail 'Cannot read the existing proxy port.' 'Не удалось прочитать прежний порт прокси.';; esac
+        [ "$NFQWS_MT_PORT" -ge 1 ] && [ "$NFQWS_MT_PORT" -le 65535 ] || fail 'Invalid existing proxy port.' 'Некорректный прежний порт прокси.'
+        if [ "$(docker inspect --format '{{.State.Running}}' nfqws-mtproto)" = true ]; then previous_running=yes; fi
+        updating=yes
+        refresh_link
     fi
 else
     [ "$(id -u)" = 0 ] || fail 'Run this command as root (sudo sh).' 'Выполните команду от root (sudo sh).'
@@ -67,11 +126,76 @@ else
         [ -d /run/systemd/system ] && findexe systemctl >/dev/null || fail 'This method requires Linux with systemd. On ASUS choose Entware.' 'Нужен Linux с systemd. Для ASUS выберите Entware.'
         candidate=/usr/local/share/nfqws-mtproto
         service=/etc/systemd/system/nfqws-mtproto.service
-        if systemctl cat nfqws-mtproto.service >/dev/null 2>&1; then
-            fail 'nfqws-mtproto already exists; nothing was changed.' 'Служба nfqws-mtproto уже существует; ничего не изменено.'
-        fi
     fi
-    [ ! -e "$candidate" ] && [ ! -L "$candidate" ] && [ ! -e "$service" ] && [ ! -L "$service" ] || fail 'MTProto files already exist; nothing was changed.' 'Файлы MTProto уже существуют; ничего не изменено.'
+    if [ -e "$candidate" ] || [ -L "$candidate" ] || [ -e "$service" ] || [ -L "$service" ]; then
+        if [ "${NFQWS_MT_FRESH_ONLY:-no}" = yes ]; then exit 18; fi
+        [ -d "$candidate" ] && [ ! -L "$candidate" ] && [ -f "$candidate/config.json" ] && [ -f "$candidate/run.py" ] && [ -f "$service" ] && [ ! -L "$service" ] || fail 'Incomplete previous MTProto installation; nothing was changed.' 'Прежняя установка MTProto неполна; ничего не изменено.'
+        grep -F "$candidate/run.py" "$service" >/dev/null && grep -F 'from proxy.tg_ws_proxy import main' "$candidate/run.py" >/dev/null || fail 'These files are not our previous MTProto installation; nothing was changed.' 'Эти файлы не являются нашей прежней установкой MTProto; ничего не изменено.'
+        if [ "$NFQWS_MT_METHOD" = entware ]; then
+            settings_python=/opt/bin/python3
+            if "$service" status >/dev/null 2>&1; then previous_running=yes; fi
+        else
+            settings_python="$candidate/venv/bin/python"
+            [ -x "$settings_python" ] || settings_python=$(findexe python3)
+            if systemctl is-active --quiet nfqws-mtproto.service; then previous_running=yes; fi
+        fi
+        settings=$("$settings_python" - "$candidate/config.json" <<'PY'
+import json, re, sys
+with open(sys.argv[1]) as f:
+    c = json.load(f)
+assert type(c['port']) is int and 1024 <= c['port'] <= 65535
+assert isinstance(c['secret'], str) and re.fullmatch(r'[0-9a-fA-F]{32}', c['secret'])
+print(str(c['port']) + ':' + c['secret'])
+PY
+)
+        NFQWS_MT_PORT=${settings%%:*}
+        NFQWS_MT_KEY=${settings#*:}
+        updating=yes
+        refresh_link
+    elif [ "$NFQWS_MT_METHOD" = linux ] && systemctl cat nfqws-mtproto.service >/dev/null 2>&1; then
+        fail 'Another MTProto unit exists; nothing was changed.' 'Уже существует другая служба MTProto; ничего не изменено.'
+    fi
+fi
+
+
+# An explicit update/removal never installs over an absent or foreign instance.
+case "${NFQWS_MT_ACTION:-install}" in
+    install) ;;
+    update|remove) [ "$updating" = yes ] || fail 'Our previous proxy installation was not found; nothing was changed.' 'Наша прежняя установка прокси не найдена; ничего не изменено.';;
+    *) fail 'Unknown proxy action.' 'Неизвестное действие с прокси.';;
+esac
+if [ "${NFQWS_MT_ACTION:-install}" = remove ]; then
+    if [ "$NFQWS_MT_METHOD" = docker ]; then
+        old_id=$(docker inspect --format '{{.Id}}' nfqws-mtproto)
+        case "$old_id" in ''|*[!0-9a-f]*) fail 'Cannot identify the previous container.' 'Не удалось определить прежний контейнер.';; esac
+        old_name="nfqws-mtproto-removed-$old_id"
+        docker rename nfqws-mtproto "$old_name"
+        previous_container=$old_name
+        docker stop "$old_name" >/dev/null
+        [ "$(docker inspect --format '{{.State.Running}}' "$old_name")" = false ] || fail 'The proxy is still running.' 'Прокси ещё работает.'
+        saved="$old_name"
+    else
+        saved_root=$(mktemp -d "$candidate.removed.XXXXXX")
+        rmdir "$saved_root"
+        saved_unit=$(mktemp "$service.removed.XXXXXX")
+        native_transition=yes
+        if [ "$NFQWS_MT_METHOD" = linux ]; then systemctl stop nfqws-mtproto.service
+        else "$service" stop; fi
+        if [ "$NFQWS_MT_METHOD" = linux ]; then
+            if systemctl is-enabled --quiet nfqws-mtproto.service; then removed_was_enabled=yes; fi
+            systemctl disable nfqws-mtproto.service
+        fi
+        mv "$candidate" "$saved_root"
+        previous_root=$saved_root
+        mv "$service" "$saved_unit"
+        previous_unit=$saved_unit
+        if [ "$NFQWS_MT_METHOD" = linux ]; then systemctl daemon-reload; fi
+        saved="$saved_root $saved_unit"
+    fi
+    committed=yes
+    msg 'Proxy removed from service. Settings and a stopped backup were retained at:' 'Прокси удалён из запуска. Настройки и остановленная резервная копия сохранены:'
+    printf '%s\n' "$saved"
+    exit 0
 fi
 
 if [ "$NFQWS_MT_METHOD" != docker ]; then
@@ -80,11 +204,11 @@ printf '' | sha256sum >/dev/null 2>&1 || fail 'sha256sum is required.' 'Нужн
 work=$(mktemp -d /tmp/nfqws-mtproto.XXXXXX)
 msg 'Downloading verified proxy source...' 'Скачивание исходников прокси с проверкой...'
 "$curlbin" -fL --connect-timeout 10 --max-time 120 --retry 2 \
-    'https://codeload.github.com/Flowseal/tg-ws-proxy/tar.gz/50d539c718f1689c0437b7cf623e5995018c01e3' -o "$work/source.tgz"
-printf '%s  %s\n' '87a38c235d7a4a66d8a3fa50d64e42cc962c11c210a9e65df1469302a6521613' "$work/source.tgz" | sha256sum -c -
+    'https://codeload.github.com/Flowseal/tg-ws-proxy/tar.gz/6690b788432fd0f59b0f38e228494bcd6bede1ca' -o "$work/source.tgz"
+printf '%s  %s\n' '8e93c7c17074f49ba69f97abae75d196317c215eb278e943d3c5f3b073b4c145' "$work/source.tgz" | sha256sum -c -
 mkdir "$work/source"
 tar -xzf "$work/source.tgz" -C "$work/source"
-source="$work/source/tg-ws-proxy-50d539c718f1689c0437b7cf623e5995018c01e3"
+source="$work/source/tg-ws-proxy-6690b788432fd0f59b0f38e228494bcd6bede1ca"
 fi
 
 if [ "$NFQWS_MT_METHOD" = docker ]; then
@@ -99,6 +223,15 @@ SH
 )
     msg 'Downloading the pinned Docker image...' 'Загрузка закреплённого образа Docker...'
     docker pull "$image"
+    if [ "$updating" = yes ]; then
+        old_id=$(docker inspect --format '{{.Id}}' nfqws-mtproto)
+        case "$old_id" in ''|*[!0-9a-f]*) fail 'Cannot identify the previous container.' 'Не удалось определить прежний контейнер.';; esac
+        old_name="nfqws-mtproto-previous-$old_id"
+        # Rename first, so a failure while stopping still has a rollback target.
+        docker rename nfqws-mtproto "$old_name"
+        previous_container=$old_name
+        docker stop "$previous_container" >/dev/null
+    fi
     container=$(docker create --name nfqws-mtproto --restart unless-stopped \
         --entrypoint /sbin/tini \
         --health-cmd "$health" --health-interval 5m --health-timeout 20s --health-start-period 10s --health-retries 3 \
@@ -106,16 +239,16 @@ SH
         --cap-drop ALL --security-opt no-new-privileges:true \
         -p "$NFQWS_MT_PORT:1443" -e "PROXY_SECRET=$NFQWS_MT_KEY" \
         -e PROXY_HOST=0.0.0.0 -e PROXY_PORT=1443 \
-        -e 'PROXY_DC_IPS=2:149.154.167.220 4:149.154.167.220' \
-        -e PROXY_POOL_SIZE=2 -e CFPROXY_DOMAIN=pclead.co.uk \
+        -e "PROXY_DC_IPS=$dc_ips" \
+        -e "PROXY_POOL_SIZE=$pool_size" -e "CFPROXY_DOMAIN=$cf_domain" \
         "$image" -- /bin/sh -c "$launcher")
     docker start "$container" >/dev/null
     sleep 3
     [ "$(docker inspect --format '{{.State.Running}}' "$container")" = true ] || fail 'Proxy stopped. Check Docker logs.' 'Прокси остановился. Проверьте журнал Docker.'
     docker exec "$container" /opt/venv/bin/python -c "$probe" 127.0.0.1 1443 15 || fail 'Telegram did not respond; the new container was rolled back.' 'Telegram не ответил; новый контейнер удалён.'
 else
-    mkdir "$candidate"
-    root=$candidate
+    if [ "$updating" = yes ]; then root=$(mktemp -d "$candidate.new.XXXXXX")
+    else mkdir "$candidate"; root=$candidate; fi
     chmod 755 "$root"
     mkdir "$root/app"
     cp -R "$source/proxy" "$source/utils" "$source/LICENSE" "$root/app/"
@@ -140,16 +273,18 @@ else
         "$python" -m pip install --disable-pip-version-check --timeout 15 --retries 2 'cryptography==46.0.5' 'httpx[http2]==0.28.1' certifi
         chmod -R a+rX "$root/venv"
     fi
-    "$python" - "$root" "$NFQWS_MT_PORT" "$NFQWS_MT_KEY" <<'PY'
+    NFQWS_MT_CONFIG_KEY="$NFQWS_MT_KEY" "$python" - "$root" "$NFQWS_MT_PORT" "$updating" <<'PY'
 import json, os, pwd, socket, sys
-root, port, secret = sys.argv[1:]
+root, port, updating = sys.argv[1:]
+secret = os.environ['NFQWS_MT_CONFIG_KEY']
 assert sys.version_info >= (3, 8), 'Python 3.8+ required'
 pwd.getpwnam('nobody')
 sys.path[:0] = [root + '/app', root + '/app/vendor']
 from proxy._aes import Cipher, algorithms, modes
 import httpx, certifi, h2
-with socket.socket() as s:
-    s.bind(('0.0.0.0', int(port)))
+if updating != 'yes':
+    with socket.socket() as s:
+        s.bind(('0.0.0.0', int(port)))
 with open(root + '/config.json', 'x') as f:
     json.dump({'port': int(port), 'secret': secret}, f)
 os.chmod(root + '/config.json', 0o600)
@@ -174,6 +309,22 @@ from proxy.tg_ws_proxy import main
 main()
 PY
     chmod 644 "$root/run.py"
+    if [ "$updating" = yes ]; then
+        # Prepare everything while the old service is still available.
+        saved_root=$(mktemp -d "$candidate.previous.XXXXXX")
+        rmdir "$saved_root"
+        saved_unit=$(mktemp "$service.previous.XXXXXX")
+        native_transition=yes
+        if [ "$NFQWS_MT_METHOD" = linux ]; then systemctl stop nfqws-mtproto.service
+        else "$service" stop; fi
+        mv "$candidate" "$saved_root"
+        previous_root=$saved_root
+        mv "$service" "$saved_unit"
+        previous_unit=$saved_unit
+        mv "$root" "$candidate"
+        root=$candidate
+        if [ "$NFQWS_MT_METHOD" = linux ]; then python="$candidate/venv/bin/python"; fi
+    fi
     if [ "$NFQWS_MT_METHOD" = entware ]; then
         # The service only stops the process whose command line matches this runner.
         cat > "$work/service" <<'SH'
@@ -223,8 +374,8 @@ status) if owned && kill -0 "$pid" 2>/dev/null; then echo MTProto_RUNNING; else 
 esac
 SH
         # Exclusive publication prevents a concurrent installer overwriting a service.
-        (set -C; cat "$work/service" > "$service")
         unit=$service
+        (set -C; cat "$work/service" > "$service")
         chmod 755 "$unit"
         "$unit" start
         sleep 3
@@ -236,7 +387,7 @@ Description=Telegram MTProto (Flowseal tg-ws-proxy)
 After=network-online.target
 Wants=network-online.target
 [Service]
-ExecStart=$python $root/run.py
+ExecStart=$candidate/venv/bin/python $candidate/run.py
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true
@@ -246,16 +397,20 @@ ProtectSystem=strict
 [Install]
 WantedBy=multi-user.target
 EOF
-        (set -C; cat "$work/service" > "$service")
         unit=$service
+        (set -C; cat "$work/service" > "$service")
         chmod 644 "$unit"
         systemctl daemon-reload
-        systemctl enable --now nfqws-mtproto.service
+        if [ "$updating" = yes ]; then systemctl start nfqws-mtproto.service
+        else systemctl enable --now nfqws-mtproto.service; fi
         sleep 3
         systemctl is-active --quiet nfqws-mtproto.service
     fi
     NFQWS_MT_PROBE_ROOT="$root" NFQWS_MT_PROBE_SECRET="$NFQWS_MT_KEY" \
-        "$python" -c "$probe" 127.0.0.1 "$NFQWS_MT_PORT" 15 || fail 'Telegram did not respond; installation was rolled back.' 'Telegram не ответил; установка отменена.'
+        "$python" -c "$probe" 127.0.0.1 "$NFQWS_MT_PORT" 15 || {
+            msg 'Telegram did not respond; rolling back the installation.' 'Telegram не ответил; выполняется откат установки.' >&2
+            exit 19
+        }
 fi
 committed=yes
 msg 'Telegram response verified. Add the proxy:' 'Ответ Telegram проверен. Добавьте прокси:'

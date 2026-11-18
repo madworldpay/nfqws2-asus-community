@@ -29,6 +29,11 @@ blob_spec=importlib.util.spec_from_file_location('nfqws_blob_bundle',ROOT/'asus/
 blob_bundle=importlib.util.module_from_spec(blob_spec);blob_spec.loader.exec_module(blob_bundle)
 profiles_spec=importlib.util.spec_from_file_location('nfqws_device_profiles_payload',ROOT/'experimental/device-profiles/package_payload.py')
 device_profiles=importlib.util.module_from_spec(profiles_spec);profiles_spec.loader.exec_module(device_profiles)
+idna_spec=importlib.util.spec_from_file_location('nfqws_native_idna_payload',ROOT/'webui/idna_payload.py')
+idna_payload=importlib.util.module_from_spec(idna_spec);idna_spec.loader.exec_module(idna_payload)
+_public_spec = importlib.util.spec_from_file_location('nfqws_openwrt_public_payload', ROOT/'webui/public_payload.py')
+public_payload = importlib.util.module_from_spec(_public_spec)
+_public_spec.loader.exec_module(public_payload)
 PACKAGE_LICENSE='Multiple (MIT, GPL-2.0, GPL-3.0, LGPL-2.1, BSD-3-Clause and others); see THIRD-PARTY-NOTICES.txt'
 DEPENDENCIES=['libc','firewall4','kmod-nft-queue','kmod-nfnetlink-queue','php8-cgi',
               'php8-mod-session','php8-mod-openssl','php8-mod-curl','ca-bundle','flock','uhttpd','libopenssl3','libgcc']
@@ -157,9 +162,11 @@ def payload_files(target,engine,source=None):
             if rel.endswith('.gz'):data=gzip.decompress(data);rel=rel[:-3]
             files['usr/share/nfqws2/defaults/'+rel]=(data,0o644)
     blob_bundle.add_bundle(files,'usr/share/nfqws2','usr/share/nfqws2/defaults')
+    list_pins = blob_bundle.add_module_resources(
+        files, 'usr/share/nfqws2/defaults/lists', 'usr/share/nfqws2/defaults/blobs')
     baseline={'schema_version':1,'package_version':target['version'],'web_version':(ROOT/'VERSION').read_text().strip(),
         'build_number':target['application_build'], 'engine':{'version':'1.0.7','provider':'nfqws2-keenetic',
-            'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':{}}
+            'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':list_pins}
     for name,(data,_)in files.items():
         for kind,directory in [('lua','lua'),('blob','blobs')]:
             prefix='usr/share/nfqws2/defaults/'+directory+'/'
@@ -170,7 +177,7 @@ def payload_files(target,engine,source=None):
     for name in ['profile-catalog.schema.json','import-addon.schema.json','import-addon-catalog.schema.json',
                  'dpi-catalog.json','dpi-profile.json','dpi-native-defaults.json',
                  'dpi-analysis-v2.schema.json','dpi-report.schema.json','dpi-envelope.schema.json','dpi-saved.schema.json',
-                 'strategy.schema.json','strategy-v2.schema.json','resources.schema.json','dns-share.schema.json',
+                 'strategy.schema.json','strategy-v2.schema.json','resources.schema.json', 'resources-v2.schema.json','dns-share.schema.json',
                  'share-v4.schema.json','share-envelope.schema.json','report.schema.json']:
         files['usr/share/nfqws2/'+name]=((ROOT/'support'/name).read_bytes(),0o644)
     dpi=json.loads((HERE/'dpi-assets.json').read_text())
@@ -312,14 +319,9 @@ def web_payload(dist=None):
     dist=Path(dist)if dist is not None else ROOT/'webui/web/dist'
     for name in ['index.html','index.php','asus.php','platform.php','openwrt-web.php','resource-paths.php']:
         if not (dist/name).is_file():raise RuntimeError('Build the shared production frontend before native packaging')
-    # Vite copies PHP unchanged. A stale backend is unsafe when native hooks
-    # depend on a newer module, even if an old frontend directory still exists.
-    for source in (ROOT/'webui/web/public').glob('*.php'):
-        installed=dist/source.name
-        if not installed.is_file()or installed.read_bytes()!=source.read_bytes():
-            raise RuntimeError('Rebuild the shared production frontend: native backend is stale')
-    files={'usr/share/nfqws2-web/'+str(p.relative_to(dist)):(p.read_bytes(),0o644)
-           for p in sorted(dist.rglob('*'))if p.is_file()and not p.name.endswith('.map')}
+    public = ROOT/'webui/web/public'
+    verified = public_payload.payload(public, dist, idna_payload.payload(public))
+    files = {'usr/share/nfqws2-web/'+name: value for name, value in verified.items()}
     modules=ROOT/'webui/web/node_modules';notices=[]
     for p in sorted(modules.rglob('*')):
         if p.is_file()and p.name.lower().split('.')[0]in ['license','licence','notice','copying']:

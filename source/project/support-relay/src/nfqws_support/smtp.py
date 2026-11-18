@@ -111,7 +111,12 @@ class SmtpSender:
             msg.set_content('A diagnostic report is attached.\n')
         if raw is None:
             for f in info.files:
-                msg.add_attachment(f.raw, maintype='application', subtype='json', filename=f.filename)
+                if f.type=='artifact':
+                    extension=f.filename.rsplit('.',1)[-1].lower()
+                    media={'json':('application','json'),'txt':('text','plain'),'yaml':('text','yaml'),'yml':('text','yaml'),'sh':('text','x-shellscript'),'zip':('application','zip')}.get(extension,('application','octet-stream'))
+                    msg.add_attachment(f.raw,maintype=media[0],subtype=media[1],filename=f.filename)
+                else:
+                    msg.add_attachment(f.raw, maintype='application', subtype='json', filename=f.filename)
         else:
             msg.add_attachment(raw, maintype='application', subtype='json', filename=filename)
         wire = msg.as_bytes()

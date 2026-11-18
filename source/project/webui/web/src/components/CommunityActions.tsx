@@ -31,6 +31,7 @@ export const CommunityActions = ({
       draggable={false}
       width={28}
       height={28}
+      style={{ width: 28, height: 28, flexShrink: 0 }}
       sx={{ display: 'block', objectFit: 'contain', borderRadius: '50%' }}
     />
   );
@@ -56,15 +57,17 @@ export const CommunityActions = ({
       >
         <span tabIndex={0}>
           <Button
-            variant="outlined"
+            variant="contained"
             size="small"
             disabled={importDisabled}
             onClick={onImport}
             aria-label={t('community.import')}
-            sx={buttonStyle}
+            aria-haspopup="dialog"
+            sx={{ ...buttonStyle, px: 1.25, gap: 0.75 }}
           >
-            <FileDownloadOutlinedIcon fontSize="small" />
             {artwork('/community/import-937c2946.png')}
+            <FileDownloadOutlinedIcon fontSize="small" />
+            {t('community.import')}
           </Button>
         </span>
       </Tooltip>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/support-json-schema.php';
+require_once __DIR__.'/resource-paths.php';
 require_once __DIR__.'/share-dns.php';
 /** Semantic checks in addition to the closed JSON schemas. Never runs payloads. */
 final class AsusShareV4Payloads
@@ -10,13 +11,21 @@ final class AsusShareV4Payloads
         if($kind===null)throw new RuntimeException('invalid_share');
         $v=AsusSupportSchema::validate($raw,$kind);
         if($type==='resources') {
+            $assets=array_merge($v['files'],$v['package_files']??[]);
+            if(count($assets)>128||isset($v['package_files'])&&!is_int($v['schema_version']))throw new RuntimeException('invalid_resource');
             $ids=[];$aliases=[];$total=0;
-            foreach($v['files'] as $file) {
+            foreach($assets as $file) {
                 if(in_array($file['name'],['.','..'],true)||isset($ids[$file['id']]))throw new RuntimeException('invalid_resource');$ids[$file['id']]=true;
-                $data=base64_decode($file['data_base64'],true);
-                if(!is_string($data)||base64_encode($data)!==$file['data_base64']||strlen($data)!==$file['byte_length']||!hash_equals(hash('sha256',$data),$file['sha256']))throw new RuntimeException('invalid_resource');
-                if($file['encoding']==='utf8'&&($file['kind']==='blobs'||preg_match('//u',$data)!==1||str_contains($data,"\0")))throw new RuntimeException('invalid_resource');
-                $total+=strlen($data);if($total>524288)throw new RuntimeException('output_limit');
+                if(array_key_exists('data_base64',$file)) {
+                    $data=base64_decode($file['data_base64'],true);
+                    if(!is_string($data)||base64_encode($data)!==$file['data_base64']||strlen($data)!==$file['byte_length']||!hash_equals(hash('sha256',$data),$file['sha256']))throw new RuntimeException('invalid_resource');
+                    if($file['encoding']==='utf8'&&($file['kind']==='blobs'||preg_match('//u',$data)!==1||str_contains($data,"\0")))throw new RuntimeException('invalid_resource');
+                    $total+=strlen($data);if($total>524288)throw new RuntimeException('output_limit');
+                }else{
+                    if(!is_int($file['byte_length']))throw new RuntimeException('invalid_resource');
+                    if($file['kind']==='lists'&&!NfqwsResourcePaths::isPackageListPin('lists/'.$file['name'],
+                        ['sha256'=>$file['sha256'],'bytes'=>$file['byte_length']]))throw new RuntimeException('invalid_resource');
+                }
                 foreach($file['aliases'] as $alias){if(isset($aliases[$alias]))throw new RuntimeException('invalid_resource');$aliases[$alias]=$file['id'];}
             }
             $refs=[];$missing=false;
@@ -45,7 +54,7 @@ final class AsusShareV4Payloads
     public static function bundle(array $documents): void
     {
         $resources=$documents['resources']??null;$strategy=$documents['strategy']??null;$aliases=[];
-        foreach($resources['files']??[] as $file)foreach($file['aliases'] as $alias)$aliases[$alias]=$file['id'];
+        foreach(array_merge($resources['files']??[],$resources['package_files']??[]) as $file)foreach($file['aliases'] as $alias)$aliases[$alias]=$file['id'];
         $deps=[];
         foreach($strategy['dependencies']??[] as $dep) {
             $prefix=['file'=>'RESOURCE','blob'=>'BLOB','network'=>'NETWORK','variable'=>'VARIABLE'][$dep['kind']];

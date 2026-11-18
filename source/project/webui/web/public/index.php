@@ -243,6 +243,32 @@ function upgradeAction(): array
 
 function main(): void
 {
+  if (($_SERVER['REQUEST_METHOD']??'')==='GET' && array_key_exists('strategy-picker',$_GET)) {
+    // Serve the picker through the same uncached PHP entry as the native shell.
+    // Static package timestamps alone cannot invalidate an older uhttpd cache.
+    header('Cache-Control: no-store');
+    if ($_GET['strategy-picker']!=='1') {
+      header('Content-Type: application/json; charset=utf-8');
+      http_response_code(400);echo json_encode(['error'=>'invalid_request']);exit();
+    }
+    $dir=__DIR__.'/strategy-picker';$d=@lstat($dir);
+    if (!$d || is_link($dir) || !is_dir($dir) || $d['uid']!==0 || ($d['mode']&0022)!==0) {
+      throw new RuntimeException('invalid_picker_assets');
+    }
+    $assets=[];
+    foreach (['index.html','picker.js','picker.css'] as $name) {
+      $path=$dir.'/'.$name;$s=@lstat($path);
+      if (!$s || is_link($path) || !is_file($path) || $s['uid']!==0 || $s['nlink']!==1 || ($s['mode']&0022)!==0) {
+        throw new RuntimeException('invalid_picker_assets');
+      }
+      $assets[$name]=$path;
+    }
+    $html=file_get_contents($assets['index.html']);
+    $html=str_replace(['href="picker.css"','src="picker.js"'],
+      ['href="/strategy-picker/picker.css?v='.hash_file('sha256',$assets['picker.css']).'"',
+       'src="/strategy-picker/picker.js?v='.hash_file('sha256',$assets['picker.js']).'"'],$html);
+    header('Content-Type: text/html; charset=utf-8');echo $html;exit();
+  }
   if(NfqwsPlatform::native()&&($_SERVER['REQUEST_METHOD']??'')==='GET'){
     // Native packages normalize timestamps; uhttpd's static HTML validators can
     // otherwise retain the previous bundle across an in-place upgrade.
@@ -292,6 +318,14 @@ function main(): void
     }
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+  if (is_file(__DIR__.'/strategy-picker-api.php')) {
+    require_once __DIR__.'/strategy-picker-api.php';
+    nfqwsStrategyPickerDispatch($_POST,$_SESSION['csrf_token']);
+  } elseif (is_file(NfqwsPlatform::settings()['web_config'].'/strategy-picker/state.json')) {
+    header('Content-Type: application/json; charset=utf-8');http_response_code(503);
+    echo json_encode(['error'=>'recovery_required']);exit();
+  }
 
   if ($_POST['cmd'] === 'dpisitecheck') {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
@@ -436,6 +470,25 @@ function main(): void
     exit();
   }
 
+  if (in_array($_POST['cmd'],['mtprotoinstall','mtprotoinstallstatus','mtprotoinstalllink'],true)) {
+    header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
+    if(!$authEnabled||!$sessionValid){http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
+    require_once __DIR__.'/mtproto-install-api.php';require_once __DIR__.'/support-report.php';
+    try {
+      AsusMtprotoInstall::validate($_POST);
+      if(!hash_equals($_SESSION['csrf_token'],$_POST['csrf_token'])||!asusReportSameOrigin()){
+        http_response_code(403);echo json_encode(['error'=>'csrf_failed']);exit();
+      }
+      session_write_close();
+      echo json_encode((new AsusMtprotoInstall())->dispatch($_POST),JSON_THROW_ON_ERROR);
+    } catch(Throwable $e) {
+      $code=in_array($e->getMessage(),['invalid_request','busy','request_conflict','unsupported_runtime','already_installed','link_unavailable'],true)?$e->getMessage():'install_failed';
+      http_response_code($code==='invalid_request'?400:(in_array($code,['busy','request_conflict','already_installed'],true)?409:503));
+      echo json_encode(['error'=>$code]);
+    }
+    exit();
+  }
+
   if ($_POST['cmd']==='mtprotoaddresses') {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/mtproto-addresses.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
@@ -461,7 +514,7 @@ function main(): void
     exit();
   }
 
-  if (in_array($_POST['cmd'], ['importaddoncatalog','importconvert','importinspect','importprepare','importapply','importstatus','importundo'], true)) {
+  if (in_array($_POST['cmd'], ['importlocalpack','importlocalentry','importaddoncatalog','importconvert','importinspect','importprepare','importapply','importstatus','importundo','importsupplementstate','importsupplementpreview'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/import-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     try {
@@ -474,7 +527,7 @@ function main(): void
     exit();
   }
 
-  if (in_array($_POST['cmd'], ['routercheckup','wanaddresses','smartdnsconfigstatus','smartdnsdraft','smartdnsvalidate','smartdnspreview','smartdnsapply','smartdnsconfirm','smartdnsrollback'], true)) {
+  if (in_array($_POST['cmd'], ['routercheckup','wanaddresses','smartdnsconfigstatus','smartdnsdraft','smartdnsvalidate','smartdnspreview','smartdnsapply','smartdnsconfirm','smartdnsrollback','smartdnsrepairhook'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/smartdns-config-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     try {
@@ -514,7 +567,7 @@ function main(): void
       if($_POST['cmd']==='sharesend'){$statuses=['accepted'=>200,'failed_safe'=>503,'unknown'=>503,'busy'=>409,'limited'=>429,'invalid'=>422];http_response_code(($result['code']??'')==='id_conflict'?409:($statuses[$result['state']]??503));}else http_response_code(200);
       $raw=json_encode($result,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);if(strlen($raw)>($_POST['cmd']==='sharesavedread'?8388608:($_POST['cmd']==='shareprepare'?4194304:2097152)))throw new RuntimeException('output_limit');echo $raw;
     }catch(Throwable $e){
-      $code=in_array($e->getMessage(),['invalid_request','invalid_proof','invalid_strategy','unsafe_strategy','unsupported_config','strategy_unavailable','invalid_share','unsupported_report','result_unavailable','source_changed','invalid_state','output_limit','insufficient_space','invalid_resource','invalid_dns_resource','private_dns_url','incomplete_reason_required','file_too_large','resource_unavailable'],true)?$e->getMessage():'unavailable';
+      $code=in_array($e->getMessage(),['invalid_request','invalid_proof','invalid_strategy','unsafe_strategy','unsupported_config','strategy_unavailable','invalid_share','unsupported_report','result_unavailable','source_changed','invalid_state','output_limit','insufficient_space','invalid_resource','invalid_dns_resource','private_dns_url','incomplete_reason_required','file_too_large','resource_unavailable','strategy_scope_incomplete'],true)?$e->getMessage():'unavailable';
       http_response_code($code==='invalid_proof'?403:(in_array($code,['source_changed'],true)?409:(in_array($code,['invalid_request','invalid_strategy','unsafe_strategy','unsupported_config','invalid_share','invalid_resource','invalid_dns_resource','private_dns_url','incomplete_reason_required','file_too_large'],true)?400:503)));echo json_encode(['error'=>$code]);
     }
     exit();

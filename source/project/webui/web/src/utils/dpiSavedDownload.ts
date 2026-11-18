@@ -1,9 +1,9 @@
 import { readSaved, ShareError, type SavedReport } from '@/api/shareClient';
 
-export async function downloadDpiSavedReport(
+export async function dpiSavedFile(
   csrfToken: string,
   report: SavedReport,
-): Promise<void> {
+): Promise<{ blob: Blob; filename: string }> {
   // readSaved enforces the native TXT name, size limit and HTTP-safe SHA-256.
   const file = await readSaved(csrfToken, report.id);
   const bytes = new TextEncoder().encode(file.raw);
@@ -16,11 +16,18 @@ export async function downloadDpiSavedReport(
 
   // Encode once without newline conversion or a BOM so the original hash holds.
   const blob = new Blob([bytes], { type: 'text/plain;charset=utf-8' });
+  return { blob, filename: file.filename };
+}
+export async function downloadDpiSavedReport(
+  csrfToken: string,
+  report: SavedReport,
+): Promise<void> {
+  const { blob, filename } = await dpiSavedFile(csrfToken, report);
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   try {
     link.href = url;
-    link.download = file.filename;
+    link.download = filename;
     document.body.append(link);
     link.click();
   } finally {

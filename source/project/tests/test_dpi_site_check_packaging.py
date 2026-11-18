@@ -1,4 +1,5 @@
 """Both package families ship the exact shared service-check controller."""
+from frontend_fixture import copy_public
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -14,9 +15,7 @@ class SiteCheckPackagingTests(unittest.TestCase):
         self.assertTrue(source.is_file(), 'service-check backend is missing')
         with tempfile.TemporaryDirectory() as folder:
             dist = Path(folder)
-            (dist / 'index.html').write_text('fixture')
-            for p in public.glob('*.php'):
-                (dist / p.name).write_bytes(p.read_bytes())
+            copy_public(dist)
             for family, prefix in [
                 ('asus', 'opt/share/nfqws-asus-web/'),
                 ('openwrt', 'usr/share/nfqws2-web/'),

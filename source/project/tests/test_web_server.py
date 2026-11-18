@@ -17,7 +17,7 @@ ROOT = platform.ROOT
 class WebServerTests(unittest.TestCase):
     run_sh = platform.PlatformTests.run_sh
     def test_packaged_lighttpd_serves_generated_config_with_shipped_modules(self):
-        audit = ROOT/'.work/packaging-audit-20261012'
+        audit = Path(os.environ.get('NFQWS_WEB_TEST_TOOLS', ROOT/'.work/packaging-audit-20261012'))
         if not (audit/'qemu-arm').exists():
             self.skipTest('QEMU ARM runtime not supplied')
         package_dir = Path(os.environ.get('PACKAGES_DIR', ROOT/'dist'))

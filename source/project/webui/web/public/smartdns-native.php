@@ -31,6 +31,7 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
     }
     private array $paths;
     private int $owner;
+    private ?string $restoreFailure=null;
     private const FIELDS=['schema','request_id','boot_id','phase','deadline','guard_pid','guard_ticks','runtime_pid','runtime_ticks','runtime_exe','hook_created','profile_hash'];
     private const CODE=['native-state.sh','native-common.sh','primary-dns.sh','recovery.sh','lifecycle.sh','forwarding.awk','hook-edit.awk'];
     public function __construct(private AsusSmartDnsStore $store,private AsusSmartDnsInstaller $installer,array $paths=[],private array $deps=[])
@@ -67,6 +68,44 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
         }
         $s=@lstat($path);
         if (!$s || ($s['mode']&0170000)!==0040000 || $s['uid']!==$this->owner || ($s['mode']&0022)!==0 || ($private && ($s['mode']&0777)!==0700)) throw new RuntimeException('invalid_state');
+    }
+    /** Explicit panel repair for the shared hook recreated as 0777 by addons.
+     * Preserve commands, owner and inode; keep the original in the existing store.
+     * Other permission/ownership problems still require their own resolution.
+     */
+    public function repairHookPermissions(): array
+    {
+        $job=$this->store->transaction();
+        if ($job!==null && in_array($job['state'],['validating','applying','awaiting_confirmation','rolling_back','conflict'],true)) throw new RuntimeException('busy');
+        $path=$this->paths['hook'];$this->safePath($path);$this->directory(dirname($path),false,false);
+        $metadata=static function($s): array {
+            if (!is_array($s)) throw new RuntimeException('hook_permissions');
+            return array_intersect_key($s,array_flip(['dev','ino','mode','uid','gid','nlink','size','mtime','ctime']));
+        };
+        clearstatcache(true,$path);$before=$metadata(@lstat($path));
+        if (($before['mode']&0170000)!==0100000 || $before['uid']!==$this->owner || $before['nlink']!==1 || $before['size']>262144 || !in_array($before['mode']&07777,[0755,0777],true)) throw new RuntimeException('hook_permissions');
+        if (($before['mode']&07777)===0755) return ['repaired'=>false,'backup_id'=>null];
+        $f=@fopen($path,'rb');if (!$f) throw new RuntimeException('hook_permissions');
+        try {
+            if (!flock($f,LOCK_EX|LOCK_NB)) throw new RuntimeException('busy');
+            if ($metadata(fstat($f))!==$before) throw new RuntimeException('stale_state');
+            $raw=stream_get_contents($f,262145);
+            if (!is_string($raw) || strlen($raw)!==$before['size']) throw new RuntimeException('storage_unavailable');
+            $backup=$this->store->backup(['schema_version'=>1,'purpose'=>'shared_hook_permissions','hook'=>['path'=>$path,'metadata'=>$before,'sha256'=>hash('sha256',$raw),'base64'=>base64_encode($raw)]]);
+            // chmod through the held kernel FD: a replaced pathname is never edited.
+            $fds=glob('/proc/self/fd/*');$held=null;
+            if (is_array($fds) && count($fds)<=1024) foreach ($fds as $fd) {
+                clearstatcache(true,$fd);$s=@stat($fd);
+                if ($s && $s['dev']===$before['dev'] && $s['ino']===$before['ino']) {$held=$fd;break;}
+            }
+            clearstatcache(true,$path);rewind($f);
+            if ($held===null || $metadata(fstat($f))!==$before || $metadata(@lstat($path))!==$before || stream_get_contents($f,262145)!==$raw) throw new RuntimeException('stale_state');
+            if (!@chmod($held,0755)) throw new RuntimeException('hook_permissions');
+            clearstatcache(true,$path);$after=$metadata(fstat($f));$named=$metadata(@lstat($path));rewind($f);
+            foreach (['dev','ino','uid','gid','nlink','size','mtime'] as $key) if ($after[$key]!==$before[$key]) throw new RuntimeException('stale_state');
+            if (($after['mode']&07777)!==0755 || $named!==$after || stream_get_contents($f,262145)!==$raw) throw new RuntimeException('stale_state');
+            return ['repaired'=>true,'backup_id'=>$backup];
+        } finally {flock($f,LOCK_UN);fclose($f);}
     }
     private static function validState(array $s): bool
     {
@@ -166,7 +205,7 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
         AsusSmartDnsHook::install($hook['value']);$files['hook-original']=$hook['value'];
         $config=$snapshot['baseline']['config']??null;
         if (!is_array($config) || ($config['state']??null)!=='available' || !is_string($config['value']??null)) throw new RuntimeException('invalid_state');
-        if (!AsusSmartDnsHook::profileRouting($config['value'],$profile)) throw new RuntimeException('existing_dns_rules');
+        if (!AsusSmartDnsHook::profileRouting(AsusSmartDnsHook::forwarding($config['value'],$snapshot['baseline']['server_files']??[]),$profile)) throw new RuntimeException('existing_dns_rules');
         $parent=dirname($root);$this->safePath($parent);
         if (!$this->recoveryStorage($parent)) throw new RuntimeException('recovery_unavailable');
         $space=isset($this->deps['space'])?($this->deps['space'])($parent):@disk_free_space($parent);
@@ -363,8 +402,38 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
         $state=$this->checkedJob($job);$runtime=$this->identity($state,'runtime');
         return $runtime!==null && AsusSmartDnsCandidate::ownsPorts($runtime['pid'],6054) && $this->control('confirm',$job)['exit']===0 && $this->checkedJob($job)['phase']==='confirmed';
     }
+    private function recoveryLog(): ?array
+    {
+        $path=$this->paths['native'].'/recovery.log';
+        try {
+            if (!file_exists($path) && !is_link($path)) return ['raw'=>'','identity'=>null];
+            $before=$this->regular($path,65536);$raw=$this->readExact($path,65536);$after=$this->regular($path,65536);
+            foreach (['dev','ino','size','mtime','ctime'] as $key) if ($before[$key]!==$after[$key]) return null;
+            return $raw==='' || str_ends_with($raw,"\n")?['raw'=>$raw,'identity'=>[$after['dev'],$after['ino']]]:null;
+        } catch (Throwable $e) {return null;}
+    }
+    /** Only a fresh append from this restore, never historical shutdown state.
+     * Rotation, truncation or an unreadable log cannot authorize a boot retry. */
+    public function restoreFailure(): ?string { return $this->restoreFailure; }
     public function restore(array $job,array $snapshot): bool
-    { return $this->control('rollback',$job)['exit']===0 && $this->checkedJob($job)['phase']==='rolled_back'; }
+    {
+        $this->restoreFailure=null;$before=$this->recoveryLog();
+        $ok=$this->control('rollback',$job)['exit']===0 && $this->checkedJob($job)['phase']==='rolled_back';
+        if (!$ok && $before!==null) {
+            $after=$this->recoveryLog();$size=strlen($before['raw']);
+            if ($after!==null && ($before['identity']===null || $before['identity']===$after['identity'])
+                && strlen($after['raw'])>$size && hash_equals(hash('sha256',$before['raw']),hash('sha256',substr($after['raw'],0,$size)))) {
+                $fresh=null;
+                foreach (explode("\n",substr($after['raw'],$size)) as $line) {
+                    if ($line==='') continue;
+                    if (!preg_match('/^[0-9]+\.[0-9]{3} ([a-f0-9]{32}) ([a-z_]{1,64})$/D',$line,$m) || $m[1]!==$job['request_id']) {$fresh=null;break;}
+                    $fresh=$m[2];
+                }
+                if ($fresh==='dns_restart_failed') $this->restoreFailure=$fresh;
+            }
+        }
+        return $ok;
+    }
     public function stop(array $job): bool
     { $s=$this->checkedJob($job);return $s['phase']==='rolled_back' && $this->identity($s,'runtime')===null; }
     public function dependencies(): array

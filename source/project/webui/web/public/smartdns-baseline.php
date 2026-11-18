@@ -25,10 +25,13 @@ final class AsusSmartDnsBaseline
                 // Only sources already read from native /tmp by the collector.
                 // A file under /opt (or any unknown include) cannot survive USB loss.
                 if (!isset($serverFiles[$path]) || !is_string($serverFiles[$path])) return false;
+                $service=[];
+                if ($m[1]==='servers-file') {try {$service=AsusSmartDnsHook::nativeServiceRoutes($serverFiles[$path]);}catch (Throwable $e) {return false;}}
                 foreach (explode("\n",$serverFiles[$path]) as $entry) {
                     $entry=trim($entry);if ($entry==='' || str_starts_with($entry,'#')) continue;
                     $pattern=$m[1]==='resolv-file'?'/^nameserver\s+([^\s#]+)(?:\s*(?:#.*)?)$/D':'/^server\s*=\s*([^\s]+)$/D';
                     if (preg_match($pattern,$entry,$part)) {
+                        if ($m[1]==='servers-file' && in_array('server='.$part[1],$service,true)) continue;
                         if ($m[1]==='resolv-file') $resolver[]=$part[1];else $explicit[]=$part[1];
                     } elseif (!preg_match('/^(?:search|domain|options)\s+/',$entry)) return false;
                 }

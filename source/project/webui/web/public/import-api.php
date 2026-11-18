@@ -21,14 +21,15 @@ final class AsusImportProof
 }
 final class AsusImportApi
 {
-    private const FIELDS=['importaddoncatalog'=>[],'importconvert'=>['text'],'importinspect'=>['documents'],'importprepare'=>['documents','selection'],'importapply'=>['documents','selection','proof','request_id'],'importstatus'=>[],'importundo'=>['id','proof']];
+    private const FIELDS=['importlocalpack'=>[],'importlocalentry'=>['entry'],'importaddoncatalog'=>[],'importconvert'=>['text'],'importinspect'=>['documents'],'importprepare'=>['documents','selection'],'importapply'=>['documents','selection','proof','request_id'],'importstatus'=>[],'importundo'=>['id','proof'],'importsupplementstate'=>[],'importsupplementpreview'=>['recipe','domains','config_sha256','resources_sha256']];
     private AsusImportTransaction $tx;
     public function __construct(?AsusImportTransaction $tx=null,private mixed $lease=null,private ?AsusSmartDnsStore $dns=null,private ?AsusProfileCatalogTransport $catalog=null,private ?AsusImportAddonCatalogTransport $addons=null)
     {$this->tx=$tx??new AsusImportTransaction();$this->dns??=new AsusSmartDnsStore();}
     public static function validate(array $post): void
     {
         $cmd=$post['cmd']??null;if(!is_string($cmd)||!isset(self::FIELDS[$cmd]))throw new RuntimeException('invalid_request');$keys=array_keys($post);sort($keys);$want=array_merge(['cmd','csrf_token'],self::FIELDS[$cmd]);sort($want);if($keys!==$want)throw new RuntimeException('invalid_request');
-        foreach($post as $key=>$value)if(!is_string($value)||strlen($value)>($key==='text'?65536:(in_array($key,['documents','selection'],true)?8388608:512)))throw new RuntimeException('invalid_request');
+        foreach($post as $key=>$value)if(!is_string($value)||strlen($value)>($key==='recipe'?8192:($key==='domains'?4096:($key==='text'?65536:(in_array($key,['documents','selection'],true)?8388608:512)))))throw new RuntimeException('invalid_request');
+        foreach(['config_sha256','resources_sha256']as $key)if(isset($post[$key])&&!preg_match('/^[a-f0-9]{64}$/D',$post[$key]))throw new RuntimeException('invalid_request');
         foreach(['id','request_id']as $k)if(isset($post[$k])&&!preg_match('/^[a-f0-9]{32}$/D',$post[$k]))throw new RuntimeException('invalid_request');
     }
     private static function decoded(string $raw,bool $list): array
@@ -62,6 +63,15 @@ final class AsusImportApi
     public function handle(array $post,string $key,int $now): array
     {
         self::validate($post);$cmd=$post['cmd'];
+        if($cmd==='importlocalpack'||$cmd==='importlocalentry'){
+            require_once __DIR__.'/zapret2-pack.php';
+            if($cmd==='importlocalpack')return AsusZapret2Pack::catalog();
+            if(!preg_match('/^[a-f0-9]{24}$/D',$post['entry']))throw new RuntimeException('invalid_request');
+            return ['documents'=>AsusZapret2Pack::documents($post['entry'])];
+        }
+        if($cmd==='importsupplementstate')return $this->tx->supplementState();
+        if($cmd==='importsupplementpreview')return $this->tx->supplementPreview(self::decoded($post['recipe'],false),self::decoded($post['domains'],true),
+            ['config_sha256'=>$post['config_sha256'],'resources_sha256'=>$post['resources_sha256']]);
         if($cmd==='importaddoncatalog'){$source=$this->addons??new AsusImportAddonCatalogTransport();return $source->catalog()+['build'=>$source->build()];}
         if($cmd==='importconvert')return ['document'=>AsusImportKeenetic::convert($post['text'])];
         if($cmd==='importstatus'){$s=$this->tx->status();$s['undo_proof']=$s['can_undo']?AsusImportProof::issue('undo',$this->tx->undoDigest(),hash('sha256',$s['id']),$key,$now):null;return $s;}
@@ -81,6 +91,6 @@ final class AsusImportApi
     public static function error(Throwable $e): string
     {
         $codes=['unsupported_keenetic_strategy','invalid_request','invalid_proof','invalid_import','invalid_import_selection','invalid_import_ports','unsupported_import_version','unsupported_import_config','unsupported_import_argument','duplicate_import_category','no_importable_data','import_limit','import_not_ready','invalid_strategy','unsafe_strategy','unsupported_config','strategy_unavailable','invalid_share','unsupported_report','source_changed','invalid_state','output_limit','insufficient_space','invalid_resource','invalid_dns_resource','private_dns_url','file_too_large','resource_unavailable','busy','request_conflict','stale_preview','stale_state','stale_draft','restore_required','storage_unavailable'];
-        $codes=array_merge($codes,['invalid_torrent_sites_source','invalid_addon_source','addon_scope_incompatible','catalog_invalid','catalog_signature','catalog_unavailable','catalog_runtime','catalog_dns','catalog_tls','catalog_connect','catalog_http','catalog_timeout','catalog_limit','catalog_changed','catalog_version']);return in_array($e->getMessage(),$codes,true)?$e->getMessage():'invalid_import';
+        $codes=array_merge($codes,['supplement_incompatible','supplement_dependencies_incomplete','resource_inventory_incomplete','invalid_torrent_sites_source','invalid_addon_source','addon_scope_incompatible','catalog_invalid','catalog_signature','catalog_unavailable','catalog_runtime','catalog_dns','catalog_tls','catalog_connect','catalog_http','catalog_timeout','catalog_limit','catalog_changed','catalog_version']);return in_array($e->getMessage(),$codes,true)?$e->getMessage():'invalid_import';
     }
 }

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/platform.php';
+require_once __DIR__.'/dpi-load-policy.php';
 /** Compile typed settings into the unchanged native CLI. Never accepts a command or path. */
 final class AsusDpiOptions
 {
@@ -61,13 +62,13 @@ final class AsusDpiOptions
             }
             $stock=$m['config'][$k]??null;
             if(is_array($stock)){
-                if($k==='CONCURRENCY_PRESETS')self::listOf($v,$p,fn($n,$p)=>self::number($n,$p,1,100,true));
+                if($k==='CONCURRENCY_PRESETS')self::listOf($v,$p,fn($n,$p)=>self::number($n,$p,1,AsusDpiLoadPolicy::REQUEST_MAX,true));
                 else self::listOf($v,$p,function($s,$p)use($k){
                     if(str_contains($k,'DOMAINS'))self::domain($s,$p);elseif(str_contains($k,'URL')||$k==='CYMRU_DOH_SERVERS')self::url($s,$p,in_array($k,['IP4_LOOKUP_URLS','IP6_LOOKUP_URLS','IP_LOOKUP_URLS'],true)?['http','https']:['https']);else self::text($s,$p);
                 });continue;
             }
             if(is_int($stock)||$k==='DNS_STUB_THRESHOLD'){
-                $hi=str_contains($k,'PORT')?65535:($k==='DNS_STUB_THRESHOLD'?50:(str_contains($k,'CONCURRENT')||str_contains($k,'CONCURRENCY')?100:($k==='FAT_CHUNK_SIZE'?1048576:100000)));
+                $hi=$k==='MAX_CONCURRENT'?AsusDpiLoadPolicy::REQUEST_MAX:(str_contains($k,'PORT')?65535:($k==='DNS_STUB_THRESHOLD'?50:(str_contains($k,'CONCURRENT')||str_contains($k,'CONCURRENCY')?100:($k==='FAT_CHUNK_SIZE'?1048576:100000))));
                 self::number($v,$p,1,$hi,true);continue;
             }
             self::text($v,$p);
@@ -110,7 +111,7 @@ final class AsusDpiOptions
                 self::text($row['id']??null,$p.'.id',64);if(!(is_string($row['ip']??null)&&@inet_pton($row['ip'])!==false))self::fail($p.'.ip');
                 self::number($row['port']??null,$p.'.port',1,65535,true);
                 if(isset($row['sni'])&&$row['sni']!=='')self::domain($row['sni'],$p.'.sni');foreach(['provider','asn'] as $k)if(isset($row[$k]))self::text($row[$k],$p.'.'.$k,128);
-            });
+            },AsusDpiLoadPolicy::TCP_TARGET_MAX);
         }
         $b=$o['burst'];self::keys($b,['connections','timeout','gap','profiles','tls','alpn','variant','trace'],'burst');
         foreach(['connections'=>[1,100],'timeout'=>[1,60],'gap'=>[0,1000]] as $k=>[$lo,$hi])if(isset($b[$k]))self::number($b[$k],'burst.'.$k,$lo,$hi,true);

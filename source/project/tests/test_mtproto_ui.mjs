@@ -7,7 +7,7 @@ const {chromium}=await import(process.env.NFQWS_PLAYWRIGHT_MODULE||'playwright')
 const web=fileURLToPath(new URL('../webui/web/',import.meta.url));
 let browser,server;
 try{
- const bundle=await build({stdin:{resolveDir:web,loader:'tsx',contents:`import React,{useState}from'react';import{createRoot}from'react-dom/client';import{Layout}from'./src/components/Layout';import{MtprotoInstallDialog}from'./src/components/MtprotoInstallDialog';function App(){const[open,set]=useState(true);return <Layout><button onClick={()=>set(true)}>Open</button>{open&&<MtprotoInstallDialog onClose={()=>set(false)} csrfToken="fixture"/>}</Layout>}createRoot(document.getElementById('root')).render(<App/>);`},bundle:true,platform:'browser',format:'iife',write:false,jsx:'automatic',logLevel:'silent',tsconfig:web+'tsconfig.app.json',loader:{'.sh':'text','.py':'text'}});
+ const bundle=await build({stdin:{resolveDir:web,loader:'tsx',contents:`import React,{useState}from'react';import{createRoot}from'react-dom/client';import{Layout}from'./src/components/Layout';import{MtprotoInstallDialog}from'./src/components/MtprotoInstallDialog';function App(){const[open,set]=useState(true);return <Layout><button onClick={()=>set(true)}>Open</button>{open&&<MtprotoInstallDialog onClose={()=>set(false)} csrfToken="fixture" routerMode={location.search.includes("router") ? "install" : undefined}/>}</Layout>}createRoot(document.getElementById('root')).render(<App/>);`},bundle:true,platform:'browser',format:'iife',write:false,jsx:'automatic',logLevel:'silent',tsconfig:web+'tsconfig.app.json',loader:{'.sh':'text','.py':'text'}});
  server=createServer((req,res)=>{if(req.method==='POST'&&req.url==='/index.php'){res.setHeader('Content-Type','application/json');setTimeout(()=>res.end(JSON.stringify({router:'192.168.12.1',docker:'192.168.12.232'})),80);return;}res.setHeader('Content-Type',req.url==='/fixture.js'?'text/javascript':'text/html');res.end(req.url==='/fixture.js'?bundle.outputFiles[0].contents:'<!doctype html><html><body><div id="root"></div><script src="/fixture.js"></script></body></html>');});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  browser=await chromium.launch({headless:true,...(process.env.NFQWS_CHROMIUM_EXECUTABLE?{executablePath:process.env.NFQWS_CHROMIUM_EXECUTABLE}:{})});
@@ -23,6 +23,7 @@ try{
  await page.getByRole('button',{name:'Копировать: Команда установки',exact:true}).click();
  assert.equal((await page.evaluate(()=>window.copied)).at(-1),command,'HTTP fallback copies entire multi-line command inside modal');
  await page.getByRole('button',{name:'С Docker',exact:true}).click();assert.equal(await page.getByLabel('Адрес устройства с Docker',{exact:true}).inputValue(),'192.168.12.232','AI Board host differs from router');
+ const updateImage=await page.getByLabel('Образ для обновления существующего стека',{exact:true}).inputValue();assert.ok(updateImage.startsWith('lordarrin/tg-ws-proxy@sha256:'));await page.getByRole('button',{name:'Копировать: Образ для обновления существующего стека',exact:true}).click();assert.equal((await page.evaluate(()=>window.copied)).at(-1),updateImage);assert.ok((await page.getByText('Для обновления откройте существующий стек в Portainer',{exact:false}).textContent()).includes('Сохраните прежние PROXY_SECRET'));
  const compose=await page.getByLabel('Конфигурация Portainer',{exact:true}).inputValue();assert.ok(compose.includes('lordarrin/tg-ws-proxy@sha256:'));assert.ok(compose.includes('PROXY_SECRET: "'+secret.slice(2)+'"'));
  await page.getByRole('button',{name:'Копировать: Конфигурация Portainer',exact:true}).click();assert.equal((await page.evaluate(()=>window.copied)).at(-1),compose);
  const yamlEvent=page.waitForEvent('download');await page.getByRole('button',{name:'Скачать compose.yaml',exact:true}).click();const yaml=await yamlEvent;assert.equal(yaml.suggestedFilename(),'compose.yaml');assert.equal(await readFile(await yaml.path(),'utf8'),compose);
@@ -38,7 +39,55 @@ try{
  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile no page overflow');
  if(process.env.NFQWS_UI_SCREENSHOT)await page.screenshot({path:process.env.NFQWS_UI_SCREENSHOT,fullPage:true});
  await page.getByRole('button',{name:'Закрыть',exact:true}).click();const discovery=page.waitForResponse(r=>r.url().endsWith('/index.php'));await page.getByRole('button',{name:'Open',exact:true}).click();await page.getByLabel('Адрес роутера ASUS',{exact:true}).fill('proxy.example.org');assert.notEqual(await page.getByLabel('Секрет',{exact:true}).inputValue(),secret,'Closing discards key');await (await discovery).finished();await page.waitForTimeout(100);assert.equal(await page.getByLabel('Адрес роутера ASUS',{exact:true}).inputValue(),'proxy.example.org','Late discovery preserves manual edits');
- await page.evaluate(()=>localStorage.setItem('lang',JSON.stringify('en')));await page.reload();await page.getByRole('heading',{name:'Install Telegram proxy',exact:true}).waitFor();await page.getByLabel('ASUS router address',{exact:true}).fill('proxy.example.org');await page.getByRole('button',{name:'With Docker',exact:true}).click();await page.getByRole('button',{name:'Copy: Connection link',exact:true}).click();assert.match((await page.evaluate(()=>window.copied)).at(-1),/^https:\/\/t.me\/proxy\?/);
+ await page.evaluate(()=>localStorage.setItem('lang',JSON.stringify('en')));await page.reload();await page.getByRole('heading',{name:'Install or update Telegram proxy',exact:true}).waitFor();await page.getByLabel('ASUS router address',{exact:true}).fill('proxy.example.org');await page.getByRole('button',{name:'With Docker',exact:true}).click();await page.getByRole('button',{name:'Copy: Connection link',exact:true}).click();assert.match((await page.evaluate(()=>window.copied)).at(-1),/^https:\/\/t.me\/proxy\?/);
  assert.ok(mutations.length>0&&mutations.every(v=>v==='mtprotoaddresses'),'Only read-only address discovery requests; no backend mutation');
+ // The backend is simulated here. Only the explicit install click may start the job.
+ const direct=await browser.newPage({locale:'ru-RU'});
+ await direct.addInitScript(()=>localStorage.setItem('lang',JSON.stringify('ru')));
+ let job=null, startCount=0, parameters, polls=0;
+ await direct.route('**/index.php',async route=>{
+   const data=new URLSearchParams(route.request().postData());
+   const cmd=data.get('cmd');let body;
+   if(cmd==='mtprotoaddresses')body={router:'192.0.2.1',docker:null};
+   else if(cmd==='mtprotoinstallstatus'){
+     if(job&&++polls>=2)job={...job,state:'completed'};body={job};
+   }else if(cmd==='mtprotoinstall'){
+     startCount++;assert.equal(data.get('csrf_token'),'fixture');
+     assert.deepEqual([...data.keys()].sort(),['cmd','csrf_token','port','request_id','secret']);
+     parameters={port:Number(data.get('port')),secret:data.get('secret')};
+     job={id:data.get('request_id'),state:'queued',port:parameters.port,code:null};body={job};
+   }else if(cmd==='mtprotoinstalllink'){
+     assert.equal(data.get('request_id'),job.id);body=parameters;
+   }else throw Error(cmd);
+   await route.fulfill({json:body});
+ });
+ await direct.goto('http://127.0.0.1:'+server.address().port+'/?router');
+ const install=direct.getByRole('button',{name:'Установить на этот роутер',exact:true});
+ await direct.waitForFunction(el=>!el.disabled,await install.elementHandle());assert.equal(startCount,0);
+ if (process.env.NFQWS_MTPROTO_SCREEN_DIR) {
+   for (const lang of ['ru','en']) {
+     const shot=await browser.newPage({viewport:{width:1000,height:900},deviceScaleFactor:1.5});
+     await shot.addInitScript(language=>localStorage.setItem('lang',JSON.stringify(language)),lang);
+     await shot.route('**/index.php', route=>route.fulfill({json:new URLSearchParams(route.request().postData()).get('cmd')==='mtprotoaddresses'
+       ? {router:'192.0.2.1',docker:null} : {job:null}}));
+     await shot.goto('http://127.0.0.1:'+server.address().port+'/?router');
+     const main=shot.getByRole('button',{name:lang==='ru'?'Установить на этот роутер':'Install on this router',exact:true});
+     await shot.waitForFunction(e=>!e.disabled,await main.elementHandle());
+     await main.evaluate(e=>e.scrollIntoView({block:'center'}));
+     await shot.waitForFunction(()=>getComputedStyle(document.querySelector('[role=dialog]').parentElement).opacity==='1');
+     const heading=shot.getByText(lang==='ru'?'1. Установите или обновите на выбранном устройстве':'1. Install or update on the selected device',{exact:true});
+     const a=await heading.boundingBox(),b=await shot.locator('details > summary').boundingBox();
+     await shot.screenshot({animations:'disabled',path:process.env.NFQWS_MTPROTO_SCREEN_DIR+'/build100-mtproto-'+lang+'.png',
+       clip:{x:a.x-8,y:a.y-8,width:a.width+16,height:b.y+b.height-a.y+16}});
+     await shot.close();
+   }
+ }
+ await install.click();await direct.getByText('Прокси установлен. Telegram ответил через порт 1443.').waitFor();
+ const open=direct.getByRole('link',{name:'Открыть в Telegram',exact:true});
+ assert.equal(new URL(await open.getAttribute('href')).searchParams.get('secret'),parameters.secret);
+ await direct.reload();await direct.getByRole('button',{name:'Показать ссылку для Telegram'}).click();
+ assert.equal(new URL(await open.getAttribute('href')).searchParams.get('secret'),parameters.secret);
+ assert.equal(startCount,1,'reopening and reading the verified link must not reinstall');
+ await direct.close();
  console.log('PASS real MTProto UI: native/Docker + Portainer YAML, HTTP clipboard fallback, exact downloaded script, key/link consistency, invalid input and low ports, fresh keys on reopen, RU/EN, mobile, no backend mutations');
 }finally{await browser?.close();if(server)await new Promise(r=>server.close(r));}
