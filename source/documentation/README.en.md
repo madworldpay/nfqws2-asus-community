@@ -1,17 +1,22 @@
 # NFQWS2 ASUS Community
 
-![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
+[Русский](README.md)
 
-**[Quick start without the preamble](#quick-start)**
+**Install** · [Download Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [Choose a package](DOWNLOADS.en.md) · [Quick start](QUICKSTART.en.md) · [ASUS / Entware](INSTALL.en.md) · [OpenWrt](OPENWRT.en.md) · [Changelog](CHANGELOG.md)
+
+**Panel** · [Import](IMPORT.en.md) · [Strategies](PRESETS.en.md) · [Device profiles](docs/DEVICE-PROFILES.en.md) · [Generator (beta)](docs/LOCAL-STRATEGY-PICKER.en.md) · [SmartDNS](SMARTDNS.en.md) · [MTProto](#telegram-proxy-guide) · [DPI Detector](DPI-DETECTOR.en.md)
+
+**Guides** · [Compatibility](COMPATIBILITY.en.md) · [Updates](PACKAGE-UPDATES.en.md) · [Troubleshooting](DIAGNOSTICS.en.md) · [Screenshots](SCREENSHOTS.en.md#build100) · [All guides](#project-guides)
+
+**Contact** · [Telegram community chat](https://t.me/nfqws2AsusCommunityChat) · [Message Frank](https://t.me/Profy13) · [Report an issue](https://github.com/madworldpay/nfqws2-asus-community/issues)
+
+**Donate** · [YooMoney](https://yoomoney.ru/to/4100119670967911) · [Boosty](https://boosty.to/madworldpay/donate) · [TRON (USDT)](#wallet-tron) · [Ethereum](#wallet-ethereum) · [Solana](#wallet-solana) · [Bitcoin](#wallet-bitcoin)
+
+![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
 
 [![Release](https://img.shields.io/github/v/release/madworldpay/nfqws2-asus-community?label=release&color=79b548)](https://github.com/madworldpay/nfqws2-asus-community/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/madworldpay/nfqws2-asus-community?style=flat&logo=github)](https://github.com/madworldpay/nfqws2-asus-community/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
-<br>
-[![Telegram · community](https://img.shields.io/badge/Telegram-community-229ED9?logo=telegram&logoColor=white)](https://t.me/nfqws2AsusCommunityChat)
-[![YooMoney](https://img.shields.io/badge/support-YooMoney-8B3FFD)](https://yoomoney.ru/to/4100119670967911)
-[![Boosty](https://img.shields.io/badge/support-Boosty-F15F2C)](https://boosty.to/madworldpay/donate)
-[![Crypto](https://img.shields.io/badge/support-USDT_·_USDC_·_BTC-3478B9)](#support-the-project)
 
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
@@ -27,10 +32,6 @@ or a native OpenWrt package. Installing the application itself does not require 
 
 **Free · RU / EN · ASUS/Entware · OpenWrt**
 
-💬 **[Telegram community chat](https://t.me/nfqws2AsusCommunityChat)** — setup help and strategy discussions.
-
-**Build 100:** [download the release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [change history](CHANGELOG.md).
-
 **Strategy import.** Open “Zapret2 library”, select “Full presets”, and choose one of the 98 ready-made strategies. Each preset includes its rules. Select “Preview” and then “Save selection”. Starting or restarting the service is a separate step. Add a personal note beside any strategy in the Zapret2 library or cloud catalog and search by its text. Notes stay in this browser across panel updates. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 
 **Strategy generator (beta).** Choose 2–10 runs and compare results in 1–6 columns or let them fit the window. The panel restores the original settings afterwards. Applying and exporting are separate actions. [Panel workflow](docs/LOCAL-STRATEGY-PICKER.en.md).
@@ -40,8 +41,6 @@ or a native OpenWrt package. Installing the application itself does not require 
 **The built-in DPI Detector helps check the result.** Repeat the same tests before and after changing a strategy, save TXT to your PC or phone and check the actual services. [How to use it](DPI-DETECTOR.en.md) · [large real comparison screenshots](docs/DETECTOR-COMPARISON.en.md).
 
 **SmartDNS alongside XrayUI.** [Check shared DNS hooks and permissions](SMARTDNS.en.md#using-smartdns-with-xrayui) if SmartDNS refuses to connect.
-
-[Installation](#quick-start) · [Import](#import-a-profile-and-all-required-files) · [Device profiles](docs/DEVICE-PROFILES.en.md) · [Gallery](SCREENSHOTS.en.md)
 
 ## What you get
 
@@ -147,7 +146,7 @@ Since Build 88, compatible **general strategies from the signed cloud catalog** 
 
 Settings, strategies and service controls share one panel. Header buttons use a consistent height and wrap to fit the window. The phone header is more compact; language, theme and links have moved to the collapsible lower panel. It starts collapsed, with expansion remembered separately for narrow and wide windows. Settings and the lower panel remain accessible in portrait and landscape. Short screens and mobile desktop mode allow page scrolling; the expanded lower panel has its own scrolling. Browser zoom is allowed.
 
-The [annotated gallery](SCREENSHOTS.en.md) now starts with real **Build 99** captures: RU/EN main panels, mobile layout, the lower panel, device profiles and strategy library, the Detector menu with tests 1–3, DNS selection in Service checks and the completed update. Device cards are explicitly labelled as an unsaved example. Build 96/85 screens and historical Detector runs retain their original versions and dates; Russian-only captures are identified.
+The [Build 100 gallery](SCREENSHOTS.en.md#build100) shows preset notes, the generator comparison table and MTProto installation. The [Build 99 gallery](SCREENSHOTS.en.md#build99-device-profiles) includes the desktop and mobile panel, device profiles and the Detector menu. Device cards are explicitly labelled as an unsaved example. Build 96/85 screens and historical Detector runs retain their original versions and dates; Russian-only captures are identified.
 
 [![NFQWS2 main panel](images/screenshots/build99-panel-overview-en.jpg)](images/screenshots/build99-panel-overview-en.jpg)
 
@@ -248,6 +247,8 @@ When an ordinary UDP DNS answer contains working alternatives, the unavailable a
 
 Excluded devices are unaffected. Restrictions stop taking effect when the worker stops. **TCP DNS, DoH and DoT are not filtered; simultaneous multiple WAN connections are unsupported.** This feature is not yet available on native OpenWrt. A suitable NFQWS2 strategy is still needed.
 
+<a id="telegram-proxy-guide"></a>
+
 ### Telegram proxy
 
 On an ASUS router with Entware, sign in to the panel with an administrator password, open **MTProto for Telegram** and choose **Install on this router**. The panel offers a connection link once Telegram replies through the new proxy. A separate Linux server can use the downloadable script. For Docker, choose the terminal command or the Portainer stack. Access from outside your home requires an externally reachable address and port.
@@ -306,21 +307,20 @@ me to keep releasing updates. Thank you for using the project!
 
 [![YooMoney](https://img.shields.io/badge/YooMoney-4100119670967911-8B3FFD)](https://yoomoney.ru/to/4100119670967911)
 [![Boosty · support](https://img.shields.io/badge/Boosty-support-F15F2C)](https://boosty.to/madworldpay/donate)
-· [Ask the administrator about other options](https://t.me/madworldpay)
+· [Message Frank about other ways to donate](https://t.me/Profy13)
 
-<details>
-<summary>Crypto · USDT / USDC / ETH / SOL / BTC</summary>
+<a id="crypto-wallets"></a>
+
+### Crypto wallets
 
 | Network | Asset | Address |
 | --- | --- | --- |
-| TRON · TRC20 | USDT | `TUZf9Ap4Z47FZdmpavtPdqMTsxfSD2cELA` |
-| Ethereum | ETH · USDT / USDC (ERC20) | `0xb2acf70b01394617e52e5d1e0b25256429fcb4da` |
-| Solana | SOL · USDC | `92AfAH7YfobQC4RTDv1pSQY6og9DVDKhqcAWZ4RM6XsF` |
-| Bitcoin | BTC | `1C1VXdi5JaEiHYJaTPWXcHwxwxok1dBJwn` |
+| <a id="wallet-tron"></a>TRON · TRC20 | USDT | `TUZf9Ap4Z47FZdmpavtPdqMTsxfSD2cELA` |
+| <a id="wallet-ethereum"></a>Ethereum | ETH · USDT / USDC (ERC20) | `0xb2acf70b01394617e52e5d1e0b25256429fcb4da` |
+| <a id="wallet-solana"></a>Solana | SOL · USDC | `92AfAH7YfobQC4RTDv1pSQY6og9DVDKhqcAWZ4RM6XsF` |
+| <a id="wallet-bitcoin"></a>Bitcoin | BTC | `1C1VXdi5JaEiHYJaTPWXcHwxwxok1dBJwn` |
 
 Use the network shown next to each address.
-
-</details>
 
 Feedback, working strategies and helping other community members are valuable too.
 
@@ -350,6 +350,8 @@ access for diagnostics or configuration after prior arrangements with the
 Administrator. Paste the link they provide and connect. A panel password is
 required. You can disconnect at any time; access ends at expiry or reboot.
 The channel lets the Administrator run commands as root. Its expiry is set by the invitation and reconnection does not extend it. Disconnecting ends access; completed configuration changes remain. This does not submit a request for permanent or 24/7 support.
+
+<a id="project-guides"></a>
 
 ## Documentation
 

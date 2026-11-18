@@ -1,17 +1,22 @@
 # NFQWS2 ASUS Community
 
-![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
+[English](README.en.md)
 
-**[Быстрый старт без предисловий](#быстрый-старт)**
+**Установка** · [Скачать Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [Какой пакет выбрать](DOWNLOADS.md) · [Быстрый старт](QUICKSTART.md) · [ASUS / Entware](INSTALL.md) · [OpenWrt](OPENWRT.md) · [Что нового](CHANGELOG.md)
+
+**Панель** · [Импорт](IMPORT.md) · [Стратегии](PRESETS.md) · [Профили устройств](docs/DEVICE-PROFILES.md) · [Генератор (бета)](docs/LOCAL-STRATEGY-PICKER.md) · [SmartDNS](SMARTDNS.md) · [MTProto](#telegram-proxy-guide) · [DPI Detector](DPI-DETECTOR.md)
+
+**Справка** · [Совместимость](COMPATIBILITY.md) · [Обновления](PACKAGE-UPDATES.md) · [Диагностика](DIAGNOSTICS.md) · [Скриншоты](SCREENSHOTS.md#build100) · [Вся документация](#project-guides)
+
+**Связь** · [Чат сообщества в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Написать Фрэнку](https://t.me/Profy13) · [Сообщить об ошибке](https://github.com/madworldpay/nfqws2-asus-community/issues)
+
+**Поддержать проект** · [ЮMoney](https://yoomoney.ru/to/4100119670967911) · [Boosty](https://boosty.to/madworldpay/donate) · [TRON (USDT)](#wallet-tron) · [Ethereum](#wallet-ethereum) · [Solana](#wallet-solana) · [Bitcoin](#wallet-bitcoin)
+
+![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
 
 [![Release](https://img.shields.io/github/v/release/madworldpay/nfqws2-asus-community?label=release&color=79b548)](https://github.com/madworldpay/nfqws2-asus-community/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/madworldpay/nfqws2-asus-community?style=flat&logo=github)](https://github.com/madworldpay/nfqws2-asus-community/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
-<br>
-[![Telegram · чат](https://img.shields.io/badge/Telegram-чат-229ED9?logo=telegram&logoColor=white)](https://t.me/nfqws2AsusCommunityChat)
-[![ЮMoney](https://img.shields.io/badge/поддержать-ЮMoney-8B3FFD)](https://yoomoney.ru/to/4100119670967911)
-[![Boosty](https://img.shields.io/badge/поддержать-Boosty-F15F2C)](https://boosty.to/madworldpay/donate)
-[![Криптовалюта](https://img.shields.io/badge/поддержать-USDT_·_USDC_·_BTC-3478B9)](#поддержать-проект)
 
 **Настройте доступ к YouTube, Instagram и Discord без VPN — прямо на роутере.**
 
@@ -27,10 +32,6 @@ NFQWS2 обрабатывает трафик на роутере; отдельн
 
 **Бесплатно · RU / EN · ASUS/Entware · OpenWrt**
 
-💬 **[Чат сообщества в Telegram](https://t.me/nfqws2AsusCommunityChat)** — помощь с настройкой и обсуждение стратегий.
-
-**Build 100:** [скачать выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [история изменений](CHANGELOG.md).
-
 **Импорт стратегий.** В «Библиотеке Zapret2» откройте «Полные пресеты» и выберите одну из 98 готовых стратегий. Все её правила уже в комплекте. Нажмите «Предпросмотр», затем «Сохранить выбранное». Запуск или перезапуск службы подтверждается отдельно. В библиотеке Zapret2 и облачном каталоге можно оставить личную заметку напротив каждой стратегии. Поиск находит пресеты и по тексту заметки. Заметки сохраняются в этом браузере после обновления панели. [Снимки Build 100](SCREENSHOTS.md#build100).
 
 **Генератор стратегий (бета).** Выберите от 2 до 10 прогонов. Результаты можно сравнить в 1–6 колонках или доверить выбор ширине окна. После завершения панель восстанавливает исходные настройки. Применение и экспорт выбираются отдельно. [Как пользоваться](docs/LOCAL-STRATEGY-PICKER.md).
@@ -40,8 +41,6 @@ NFQWS2 обрабатывает трафик на роутере; отдельн
 **Встроенный DPI Detector помогает проверить результат.** Запустите одинаковые тесты до и после смены стратегии, сохраните TXT на свой ПК или телефон и проверьте нужные сервисы. [Как пользоваться](DPI-DETECTOR.md) · [крупные реальные скрины сравнения](docs/DETECTOR-COMPARISON.md).
 
 **SmartDNS вместе с XrayUI.** [Проверка общих DNS-скриптов и прав доступа](SMARTDNS.md#совместная-работа-с-xrayui) помогает разобраться, если подключение SmartDNS отклонено.
-
-[Установка](#быстрый-старт) · [Импорт](#импорт-профиль-и-все-необходимые-файлы) · [Профили устройств](docs/DEVICE-PROFILES.md) · [Галерея](SCREENSHOTS.md)
 
 ## Что вы получаете
 
@@ -147,7 +146,7 @@ NFQWS2 обрабатывает трафик на роутере; отдельн
 
 Настройки, стратегии и управление службой — в одной панели. Кнопки шапки выровнены по высоте и переносятся на строки по ширине окна. На телефоне шапка компактнее; язык, тема и ссылки перенесены в сворачиваемую нижнюю панель. Она изначально свёрнута, а выбор раскрытия запоминается отдельно для узкого и широкого окна. В портретной и горизонтальной ориентации доступны прокрутка настроек и нижняя панель. На низком экране и в режиме «Версия для ПК» можно прокрутить всю страницу; раскрытая нижняя панель имеет свою прокрутку. Масштабирование браузера разрешено.
 
-В [галерее с пояснениями](SCREENSHOTS.md) — новые реальные снимки **Build 99**: главное окно RU/EN, мобильная разметка, нижняя панель, профили устройств и библиотека стратегий, меню Detector с тестами 1–3, выбор DNS в проверке сервисов и завершённое обновление. Пример карточек устройств явно отмечен как несохранённый черновик. Снимки Build 96/85 и реальные исторические прогоны Detector сохранены с исходными версиями и датами.
+В [галерее Build 100](SCREENSHOTS.md#build100) показаны заметки к стратегиям, таблица генератора и установка MTProto. В [галерее Build 99](SCREENSHOTS.md#build99-device-profiles) можно посмотреть панель на компьютере и телефоне, профили устройств и меню Detector. Пример карточек устройств явно отмечен как несохранённый черновик. Снимки Build 96/85 и реальные исторические прогоны Detector сохранены с исходными версиями и датами.
 
 [![Главное окно NFQWS2](images/screenshots/build99-panel-overview-ru.jpg)](images/screenshots/build99-panel-overview-ru.jpg)
 
@@ -248,6 +247,8 @@ VPN настраивается отдельно средствами проши�
 
 Устройства из исключений не затрагиваются. При остановке обработчика ограничения перестают действовать. **DNS по TCP, DoH и DoT не фильтруются; одновременная работа нескольких WAN не поддерживается.** В нативном OpenWrt эта функция пока недоступна. Подходящая стратегия NFQWS2 по-прежнему нужна.
 
+<a id="telegram-proxy-guide"></a>
+
 ### Прокси Telegram
 
 На ASUS с Entware откройте **MTProto для Telegram**, войдите с паролем администратора и нажмите **Установить на этот роутер**. Панель предложит ссылку для подключения после ответа Telegram через новый прокси. Для отдельного Linux-сервера сохраните скрипт, а для Docker выберите команду или стек Portainer. Для подключения вне дома нужен доступный извне адрес и порт.
@@ -311,21 +312,20 @@ VPN настраивается отдельно средствами проши�
 
 [![ЮMoney](https://img.shields.io/badge/ЮMoney-4100119670967911-8B3FFD)](https://yoomoney.ru/to/4100119670967911)
 [![Boosty · поддержать](https://img.shields.io/badge/Boosty-поддержать-F15F2C)](https://boosty.to/madworldpay/donate)
-· [Другой способ — написать администратору](https://t.me/madworldpay)
+· [Написать Фрэнку о других способах поддержки](https://t.me/Profy13)
 
-<details>
-<summary>Криптовалюта · USDT / USDC / ETH / SOL / BTC</summary>
+<a id="crypto-wallets"></a>
+
+### Криптокошельки
 
 | Сеть | Валюта | Адрес |
 | --- | --- | --- |
-| TRON · TRC20 | USDT | `TUZf9Ap4Z47FZdmpavtPdqMTsxfSD2cELA` |
-| Ethereum | ETH · USDT / USDC (ERC20) | `0xb2acf70b01394617e52e5d1e0b25256429fcb4da` |
-| Solana | SOL · USDC | `92AfAH7YfobQC4RTDv1pSQY6og9DVDKhqcAWZ4RM6XsF` |
-| Bitcoin | BTC | `1C1VXdi5JaEiHYJaTPWXcHwxwxok1dBJwn` |
+| <a id="wallet-tron"></a>TRON · TRC20 | USDT | `TUZf9Ap4Z47FZdmpavtPdqMTsxfSD2cELA` |
+| <a id="wallet-ethereum"></a>Ethereum | ETH · USDT / USDC (ERC20) | `0xb2acf70b01394617e52e5d1e0b25256429fcb4da` |
+| <a id="wallet-solana"></a>Solana | SOL · USDC | `92AfAH7YfobQC4RTDv1pSQY6og9DVDKhqcAWZ4RM6XsF` |
+| <a id="wallet-bitcoin"></a>Bitcoin | BTC | `1C1VXdi5JaEiHYJaTPWXcHwxwxok1dBJwn` |
 
 Выбирайте сеть, указанную рядом с адресом.
-
-</details>
 
 Отзывы, рабочие стратегии и помощь другим участникам тоже очень ценны.
 
@@ -349,6 +349,8 @@ VPN настраивается отдельно средствами проши�
 Наша ASUS-адаптация распространяется по [MIT](LICENSE). Сторонние компоненты сохраняют
 свои лицензии и авторство.
 [Авторство и лицензии компонентов](UPSTREAM.md) · [Полные уведомления](THIRD-PARTY-NOTICES.txt).
+
+<a id="project-guides"></a>
 
 ## Документация
 
