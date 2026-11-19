@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-[Скачать Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
+[Скачать Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
 
 <details>
 <summary>Все ссылки проекта</summary>

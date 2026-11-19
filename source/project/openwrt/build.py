@@ -163,10 +163,10 @@ def payload_files(target,engine,source=None):
             files['usr/share/nfqws2/defaults/'+rel]=(data,0o644)
     blob_bundle.add_bundle(files,'usr/share/nfqws2','usr/share/nfqws2/defaults')
     list_pins = blob_bundle.add_module_resources(
-        files, 'usr/share/nfqws2/defaults/lists', 'usr/share/nfqws2/defaults/blobs')
+        files, 'usr/share/nfqws2/factory/lists', 'usr/share/nfqws2/defaults/blobs')
     baseline={'schema_version':1,'package_version':target['version'],'web_version':(ROOT/'VERSION').read_text().strip(),
         'build_number':target['application_build'], 'engine':{'version':'1.0.7','provider':'nfqws2-keenetic',
-            'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':list_pins}
+            'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':{},'package_lists':list_pins}
     for name,(data,_)in files.items():
         for kind,directory in [('lua','lua'),('blob','blobs')]:
             prefix='usr/share/nfqws2/defaults/'+directory+'/'

@@ -2,7 +2,9 @@
 
 ## Current release and device profiles
 
-[Build 100](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build100) is available for ASUS/Entware and OpenWrt. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+[Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) is available for ASUS/Entware and OpenWrt. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+
+To upgrade from Build 99 or 100, open the update section, check for updates, then use “Prepare package” and “Install update” for Build 101. If Build 100 previously rolled back with `invalid_state`, check for updates again. Your own site lists are preserved.
 
 Before updating from an active Per device mode, save and apply Common in Devices and wait for success. After installation check the version, previous service state, library and SmartDNS. Re-enable per-device mode by explicitly applying it when needed.
 

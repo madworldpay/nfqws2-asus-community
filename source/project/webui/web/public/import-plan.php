@@ -71,7 +71,7 @@ final class AsusImportPlan
         try{return AsusSmartDnsProfile::normalize(['schema_version'=>1,'upstreams'=>$servers,'records'=>$records]);}
         catch(AsusSmartDnsProfileError $e){$problems[]=['code'=>'invalid_dns_profile','field'=>$e->field];return null;}
     }
-    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null,array $addons=[],?callable $readList=null): array
+    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null,array $addons=[],?callable $readList=null,?callable $readFactoryList=null): array
     {
         $profile??=NfqwsPlatform::current();NfqwsPlatform::settings($profile);
         self::keys($selection,array_merge(['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua'],array_key_exists('torrent_sites',$selection)?['torrent_sites']:[],array_key_exists('addons',$selection)?['addons']:[]));
@@ -97,10 +97,22 @@ final class AsusImportPlan
                 ($row['bundled_name']??null)===$file['name']&&$row['sha256']===$file['sha256']&&$row['byte_length']===$file['byte_length']){
                 $candidate=$row;if($row['name']===$file['name'])break;
             }
-            if($candidate===null){$problems[]=['code'=>'package_resource_unavailable','name'=>$file['name']];continue;}
-            $path='/opt/etc/nfqws2/'.$candidate['kind'].'/'.$candidate['name'];
+            if($candidate===null){
+                if($file['kind']!=='lists'||$readFactoryList===null||$readFactoryList($file)===null){
+                    $problems[]=['code'=>'package_resource_unavailable','name'=>$file['name']];continue;
+                }
+                $path='/opt/etc/nfqws2/lists/'.$file['name'];
+                if(!array_key_exists($path,$fingerprints)){
+                    $files[]=$file+['path'=>$path,'target_name'=>$file['name'],'reuse'=>false,'replace'=>false,'factory_list'=>true];
+                    $virtual[]=$file+['state'=>'available','factory_list'=>true];
+                }
+                $fingerprints[$path]=null;
+            }else{
+                $path='/opt/etc/nfqws2/'.$candidate['kind'].'/'.$candidate['name'];
+                $fingerprints[$path]=$candidate['sha256'];
+            }
             foreach($file['aliases'] as $alias)$aliases[$alias]=$path;
-            $fingerprints[$path]=$candidate['sha256'];
+            $selectedTargets[$path]=$file['sha256'];
         }
         foreach($available as $id=>$file) {
             $raw=base64_decode($file['data_base64'],true);$pick=$filePicks[$id]??null;

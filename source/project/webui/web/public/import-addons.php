@@ -23,7 +23,7 @@ final class AsusImportAddons
         $path=NfqwsResourcePaths::canonical($path)??$path;
         if(!preg_match('~^/opt/etc/nfqws2/lists/([A-Za-z0-9_.-]{1,128})$~D',$path,$m))return null;
         foreach($virtual as $file)if($file['kind']==='lists'&&$file['name']===$m[1]&&($file['state']??null)==='available'){
-            foreach($files as $picked)if($picked['kind']==='lists'&&($picked['target_name']??$picked['name'])===$m[1])return base64_decode($picked['data_base64'],true);
+            foreach($files as $picked)if($picked['kind']==='lists'&&($picked['target_name']??$picked['name'])===$m[1]&&isset($picked['data_base64']))return base64_decode($picked['data_base64'],true);
             if($readList!==null){$raw=$readList($file);if(!is_string($raw)||strlen($raw)>262144||!hash_equals($file['sha256'],hash('sha256',$raw)))throw new RuntimeException('source_changed');return $raw;}
         }return null;
     }

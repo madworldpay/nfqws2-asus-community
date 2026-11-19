@@ -30,7 +30,7 @@ export function suggestMtprotoServer(
 
 // Multi-architecture image used by the reference installation (amd64 / arm64).
 export const MTPROTO_DOCKER_IMAGE =
-  'lordarrin/tg-ws-proxy@sha256:f9c033be52166e51e8ab5326b50a5dafd32939ff99d147e9d96a5a06c19d361d';
+  'lordarrin/tg-ws-proxy@sha256:429b6481be0b23f3d595b3830c3b5cdec1dd303368f5a5d08211848115a42b1d';
 
 // The pinned image's entrypoint resets argv; override it for the verified WS/80 route.
 // pclead.co.uk is already in that image's relay pool. Owners can change the ENV

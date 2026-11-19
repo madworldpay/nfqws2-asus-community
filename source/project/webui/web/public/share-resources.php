@@ -11,9 +11,10 @@ final class AsusShareResources
     private const KINDS=['lists','lua','blobs'];
     private string $root;
     private AsusShareRead $reader;
-    public function __construct(?string $root=null,private int $owner=0,private ?array $bundledLua=null,?AsusShareRead $reader=null)
+    public function __construct(?string $root=null,private int $owner=0,private ?array $bundledLua=null,?AsusShareRead $reader=null,private ?string $factoryLists=null)
     {
         $this->root=$root??AsusDpiStore::optPath('/etc/nfqws2');$this->reader=$reader??($root===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true));
+        if($root===null)$this->factoryLists=AsusDpiStore::optPath('/share/nfqws2-asus/factory/lists');
         if($this->bundledLua===null)$this->bundledLua=$root===null?self::packageLua('/opt',$owner):[];
         // The trusted build manifest uses singular blob/, the runtime directory
         // is blobs/. This mapping never accepts names from an imported document.
@@ -33,7 +34,13 @@ final class AsusShareResources
             $stat=$reader->stat($path);
             if(!$stat || $stat['uid']!==$owner || ($stat['mode']&0022)!==0)return [];
             $v=json_decode($reader->bytes($path,131072),true,32,JSON_THROW_ON_ERROR);
-            return is_array($v['resources']??null)?$v['resources']:[];
+            if(!is_array($v['resources']??null)||!is_array($v['package_lists']??[]))return [];
+            $resources=$v['resources'];
+            foreach($v['package_lists']??[] as $name=>$pin){
+                if(!NfqwsResourcePaths::isPackageListPin($name,$pin)||isset($resources[$name]))return [];
+                $resources[$name]=$pin;
+            }
+            return $resources;
         } catch(Throwable $e) {return [];}
     }
     private function directory(string $path): bool { return $this->reader->directory($path); }
@@ -41,6 +48,22 @@ final class AsusShareResources
     {return $name!==''&&$name!=='.'&&$name!=='..'&&strlen($name)<=128&&preg_match('//u',$name)===1&&!preg_match('~[/\\\\\x00-\x1f\x7f]~',$name);}
     private function stat(string $path): ?array { return $this->reader->stat($path); }
     private function bytes(string $path): string { return $this->reader->bytes($path,self::FILE_LIMIT); }
+    /** Only an explicit import may create an active copy of a factory list. */
+    public function factoryList(array $file): ?string
+    {
+        if($this->factoryLists===null||$file['kind']!=='lists')return null;
+        $key='lists/'.$file['name'];
+        $pin=$this->bundledLua[$key]??null;
+        if(!NfqwsResourcePaths::isPackageListPin($key,$pin)||$pin['bytes']!==$file['byte_length']||$pin['sha256']!==$file['sha256'])return null;
+        $active=$this->root.'/'.$key;
+        clearstatcache(true,$active);
+        if(!$this->directory(dirname($active))||@lstat($active)!==false)return null;
+        $path=$this->factoryLists.'/'.$file['name'];
+        $stat=$this->stat($path);
+        if(!$stat||$stat['uid']!==$this->owner||($stat['mode']&0022)!==0||$stat['size']!==$pin['bytes'])return null;
+        $bytes=$this->bytes($path);
+        return hash_equals($pin['sha256'],hash('sha256',$bytes))?$bytes:null;
+    }
     private function entries(): array
     {
         if(!$this->directory($this->root))throw new RuntimeException('resource_unavailable');

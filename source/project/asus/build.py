@@ -356,12 +356,12 @@ def build_one(cache, output, offline, arch, build_number=None):
     core['opt/lib/nfqws2-asus/lua-upgrade.php'] = local('asus/lua-upgrade.php')
     blob_bundle.add_bundle(core, 'opt/share/nfqws2-asus', 'opt/share/nfqws2-asus/defaults')
     list_pins = blob_bundle.add_module_resources(
-        core, 'opt/etc/nfqws2/lists', 'opt/share/nfqws2-asus/defaults/blobs')
+        core, 'opt/share/nfqws2-asus/factory/lists', 'opt/share/nfqws2-asus/defaults/blobs')
     baseline = {'schema_version': 1, 'package_version': package_version(build_number), 'web_version': WEB_VERSION,
                 'engine': {'version': '1.0.7', 'provider': 'nfqws2-keenetic',
                            'sha256': hashlib.sha256(engine).hexdigest(),
                            'elf_class': engine[4], 'elf_machine': int.from_bytes(engine[18:20], 'little')},
-                'resources': list_pins}
+                'resources': {}, 'package_lists': list_pins}
     for resource_name, (resource_data, _) in core.items():
         for kind, directory in [('lua', 'lua'), ('blob', 'blobs')]:
             prefix = ('opt/share/nfqws2-asus/defaults/blobs/' if kind == 'blob' else f'opt/etc/nfqws2/{directory}/')

@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 4,
-    "sha256": "eea8254c7500ba3de996aa8ad6af399183f04e17d4a8102fde539dbc93a90012"
+    "sha256": "39b8dc3fc8b44765c8e6f1adee04c5b465e555ab791cc42d0d9e810d5b64297c"
   },
   {
     "path": "LICENSE",
@@ -126,8 +126,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 33130,
-    "sha256": "7211fc5efff88355906d7b733dc4f900ad8ddd8c46398fd956ec5f26b1f084ea"
+    "bytes": 33166,
+    "sha256": "33c637d2adf468a5487dafc9ef010d39b1a0747a4c599fa84efc92ef49311f7a"
   },
   {
     "path": "asus/compatibility.sh",
@@ -306,8 +306,8 @@
   },
   {
     "path": "asus/ipk/lua-upgrade.sh",
-    "bytes": 7253,
-    "sha256": "ddd2e9e5276860300f864a3b057f29a4275236af554b24f1786e0c6f49fc2372"
+    "bytes": 10311,
+    "sha256": "bdbe4a8abbb54367c5c5128fab7d068be9871d128025583ad7641e1f56d30c14"
   },
   {
     "path": "asus/ipk/migration.sh",
@@ -331,8 +331,8 @@
   },
   {
     "path": "asus/ipk/unified-postinst",
-    "bytes": 1816,
-    "sha256": "8e465dac572f3eda1b8d68ca26c1fb6b33587d22cbbca376fb2357074c7de980"
+    "bytes": 1855,
+    "sha256": "9c991260008ff5bc400119561fc1f34d110698e456c05254a434a3a5eac7c988"
   },
   {
     "path": "asus/ipk/unified-prerm",
@@ -1191,8 +1191,8 @@
   },
   {
     "path": "openwrt/build.py",
-    "bytes": 30734,
-    "sha256": "b5ab0734b28e9f1d94482b9aba6a02b5122d56de33cbeac809150192eb20b060"
+    "bytes": 30752,
+    "sha256": "31890b6154e0f5f02870035fab51bd1e4163b5fbcb33083354bbebc2f0072c94"
   },
   {
     "path": "openwrt/config-cli.php",
@@ -1950,6 +1950,11 @@
     "sha256": "9b0d93df36d045ece8669948a9cfc8e7ff95b60f0eb647b451b79cdeb7488d6e"
   },
   {
+    "path": "tests/test_b100_owned_list_upgrade.py",
+    "bytes": 5169,
+    "sha256": "06003a84e6e7273fd778b6ce06b7b7356dda874c2f36c845438829a0f6510690"
+  },
+  {
     "path": "tests/test_blob_api.py",
     "bytes": 5514,
     "sha256": "d37e4c2d357092f1f0bf095ea1938e5a9fb1042633950c1d42423a16772a38af"
@@ -2278,6 +2283,11 @@
     "path": "tests/test_engine_release.py",
     "bytes": 4076,
     "sha256": "4a0e8d56bb9ef671c465b943c69de9ae2f28781ff2a3fd6d728357bf49be3e4a"
+  },
+  {
+    "path": "tests/test_factory_hostlist_import.py",
+    "bytes": 6771,
+    "sha256": "a7c9f82b1999ed6c8c833959509c0d280aa9639f9318113c5baff90c7a36c20b"
   },
   {
     "path": "tests/test_frontend_freshness.py",
@@ -3388,6 +3398,11 @@
     "path": "tests/test_profile_catalog_publish.py",
     "bytes": 8653,
     "sha256": "b3e0ad2ac0696942cc731d7bea0162e9c3297e3395f63e0390852852c8eca854"
+  },
+  {
+    "path": "tests/test_published_asus_update_hostlists.py",
+    "bytes": 4784,
+    "sha256": "02fe16eb389881e85e72d0b7dbb473114268f30eb0ced2fe46eca8eb147920f6"
   },
   {
     "path": "tests/test_queue_samples.mjs",
@@ -4566,8 +4581,8 @@
   },
   {
     "path": "webui/web/public/import-addons.php",
-    "bytes": 14605,
-    "sha256": "d4601dc8f782f5765322d9cb23f35e0fcfb6e0d2899ce0c32fecafbdddfe0ea3"
+    "bytes": 14636,
+    "sha256": "3750beebe8d31b50230d50d5aa7eac14dfd588e653f2697d40584a854a9eeaf8"
   },
   {
     "path": "webui/web/public/import-api.php",
@@ -4591,8 +4606,8 @@
   },
   {
     "path": "webui/web/public/import-plan.php",
-    "bytes": 21345,
-    "sha256": "f397920426d377fd64331eae1a86fbe99425b73cba85b6664f706450ff128350"
+    "bytes": 22010,
+    "sha256": "89af45902bcd6c321706c8b8dcc57f9aa540e8a1e26bbb418ecc9b9a6544805d"
   },
   {
     "path": "webui/web/public/import-store.php",
@@ -4606,8 +4621,8 @@
   },
   {
     "path": "webui/web/public/import-transaction.php",
-    "bytes": 36374,
-    "sha256": "e43278ebc37ab12a93823ca7f475395ca0bf60601adb35c394739af198bdf5d1"
+    "bytes": 36824,
+    "sha256": "6d7305f154499439d2bf64dee8bc725471597eeed0647e850bcd0391a84f6c4c"
   },
   {
     "path": "webui/web/public/index.php",
@@ -4891,8 +4906,8 @@
   },
   {
     "path": "webui/web/public/share-resources.php",
-    "bytes": 8651,
-    "sha256": "d4b86accf22d76f8f36764d57196d31f6456019a14ed3c43a9793ec66c767337"
+    "bytes": 10032,
+    "sha256": "35e220fcdedb20998435f02b035ca8774ebb2341428bb3f992d85419ca640299"
   },
   {
     "path": "webui/web/public/share-source.php",
@@ -6182,7 +6197,7 @@
   {
     "path": "webui/web/src/utils/mtprotoInstall.ts",
     "bytes": 6757,
-    "sha256": "d16d1bb9bf8e9011efa2a18d81ce6168231e78faa7d25862b23b8818a3978b01"
+    "sha256": "69c5be84cc56796a4cabe528e35aa3bf235dfe29cddb4e6dd6a4a88b0abebaa4"
   },
   {
     "path": "webui/web/src/utils/newlineMarkers.ts",

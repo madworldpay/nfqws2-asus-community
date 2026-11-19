@@ -15,7 +15,7 @@ final class AsusImportTransaction
     public function __construct(?AsusImportStore $store=null,?AsusSmartDnsStore $dns=null,?string $resourceRoot=null,?string $configPath=null,private int $owner=0,private array $deps=[])
     {
         $this->store=$store??new AsusImportStore();$this->dns=$dns??new AsusSmartDnsStore();$this->root=$resourceRoot??AsusDpiStore::optPath('/etc/nfqws2');$this->config=$configPath??$this->root.'/nfqws2.conf';
-        $this->reader=$resourceRoot===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true);$this->resources=new AsusShareResources($resourceRoot,$owner);
+        $this->reader=$resourceRoot===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true);$this->resources=$deps['resources']??new AsusShareResources($resourceRoot,$owner);
     }
     public function writer(callable $fn): mixed {return $this->store->locked($fn);}
     /** Read a supplement proposal under the same mutex as panel saves/imports.
@@ -170,7 +170,8 @@ final class AsusImportTransaction
     public function prepare(array $documents,array $selection,?array $catalogScope=null,array $addons=[]): array
     {
         $doc=AsusImportDocument::read($documents);$raw=$this->raw($this->config);if($raw===null)throw new RuntimeException('strategy_unavailable');
-        return AsusImportPlan::prepare($doc,$selection,$raw,$this->resources->inventory(),$this->dns->draft(),null,$catalogScope,$addons,fn($file)=>base64_decode($this->resources->read($file['id'],$file['sha256'])['data_base64'],true));
+        $readList=fn($file)=>($file['factory_list']??false)?$this->resources->factoryList($file):base64_decode($this->resources->read($file['id'],$file['sha256'])['data_base64'],true);
+        return AsusImportPlan::prepare($doc,$selection,$raw,$this->resources->inventory(),$this->dns->draft(),null,$catalogScope,$addons,$readList,$this->resources->factoryList(...));
     }
     public function inspect(array $documents): array {return AsusImportDocument::read($documents);}
     private function publicJob(?array $j): array
@@ -397,7 +398,13 @@ final class AsusImportTransaction
     {
         if(!preg_match('/^[a-f0-9]{32}$/D',$id))throw new RuntimeException('invalid_request');$requestDigest??=$p['digest'];
         return $this->writer(function()use($p,$id,$requestDigest){$this->reconcile();$this->store->prune();$receipt=$this->receipt($id,$requestDigest);if($receipt!==null)return $receipt;[$s,$j,$newFiles]=$this->prepareJournal($p,$id,$requestDigest);
-            try{$this->originals($j);$this->directories($j);$i=0;foreach($newFiles as $f){$this->putFile($j,$i,base64_decode($f['data_base64'],true),$j['files'][$i]['before'],$j['files'][$i]['metadata']['mode']??($f['kind']==='lists'?0666:0644));$this->checkpoint('file_'.$i);$i++;}
+            try{$this->originals($j);$this->directories($j);$i=0;
+                foreach($newFiles as $f){
+                    $raw=($f['factory_list']??false)?$this->resources->factoryList($f):base64_decode($f['data_base64'],true);
+                    if(!is_string($raw))throw new RuntimeException('source_changed');
+                    $newMode=$f['kind']==='lists'&&empty($f['factory_list'])?0666:0644;
+                    $this->putFile($j,$i,$raw,$j['files'][$i]['before'],$j['files'][$i]['metadata']['mode']??$newMode);$this->checkpoint('file_'.$i);$i++;
+                }
                 $this->published($j);if($j['dns_changed'])$this->dns->replaceDraft($p['draft'],$j['draft_before']);$this->checkpoint('draft');
                 $s['current']=$j;$s['current']['state']='committing';$this->store->save($s);$this->checkpoint('committing');
                 $this->originals($j);$this->published($j);if($j['config_changed'])$this->atomicConfig($p['config'],$j['before'],$j,fn()=>$this->published($j));$this->checkpoint('config');
