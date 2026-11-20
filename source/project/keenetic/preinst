@@ -1,0 +1,47 @@
+#!/bin/sh
+# The panel and picker both validate these ancestors before loading code or
+# writing state. Check them before opkg unpacks anything into the stock tree.
+set -eu
+root=${IPKG_INSTROOT:-}
+bb=/opt/bin/busybox
+if [ -n "$root" ]; then bb=busybox; fi
+check_owner() {
+    path=$1
+    if [ ! -e "$path" ] || [ -L "$path" ]; then
+        echo "Missing or linked Entware path: $path" >&2
+        return 1
+    fi
+    # Entware's compact BusyBox supports terse stat, including builds without -c.
+    meta=$("$bb" stat -t "$path") || return 1
+    case "$meta" in "$path "*) meta=${meta#"$path "} ;; *) return 1 ;; esac
+    # After the literal path come size, blocks, hexadecimal st_mode and uid.
+    set -- $meta
+    [ "$#" -ge 4 ] || return 1
+    mode=$3
+    uid=$4
+    case "$mode" in ''|*[!0-9a-fA-F]*) return 1 ;; esac
+    if [ "$uid" != 0 ] || [ $(( 0x$mode & 0022 )) != 0 ]; then
+        echo "Panel cannot use $path (uid=$uid st_mode=0x$mode); existing files were preserved." >&2
+        return 1
+    fi
+}
+for dir in /opt /opt/etc /opt/etc/nfqws2 /opt/etc/init.d /opt/share /opt/share/www /opt/share/www/nfqws /opt/lib; do
+    check_owner "$root$dir" || exit 1
+done
+check_owner "$root/opt/etc/nfqws2/nfqws2.conf" || exit 1
+check_owner "$root/opt/etc/init.d/S51nfqws2" || exit 1
+
+# These parents are optional in Entware and may already belong to other packages.
+# opkg does not create omitted parent directories while extracting a child.
+for dir in /opt/libexec /opt/share/licenses; do
+    path="$root$dir"
+    if [ -e "$path" ] || [ -L "$path" ]; then
+        [ -d "$path" ] && check_owner "$path" || exit 1
+    fi
+done
+for dir in /opt/libexec /opt/share/licenses; do
+    path="$root$dir"
+    if [ ! -d "$path" ]; then
+        (umask 022 && mkdir "$path") || exit 1
+    fi
+done

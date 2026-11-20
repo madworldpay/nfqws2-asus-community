@@ -1,3 +1,4 @@
+import { panelApi } from './panelPaths.js';
 import { DpiError } from '@/api/dpiClient';
 
 export type IpHealthEntry = {
@@ -87,7 +88,7 @@ async function request(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch('/index.php', {
+    const response = await fetch(panelApi, {
       method: 'POST',
       credentials: 'same-origin',
       redirect: 'error',

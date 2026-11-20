@@ -278,7 +278,7 @@ export interface components {
      *     }
      */
     StatusResponse: {
-      platform?: 'asus-entware' | 'openwrt';
+      platform?: 'asus-entware' | 'keenetic-entware' | 'openwrt';
       /** @enum {integer} */
       status: 0;
       /** @description Service status (running or not) */

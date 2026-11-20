@@ -138,7 +138,7 @@ final class NfqwsStrategyPickerRuntime
                 }
             }if(!$added)break;
         }
-        $bb=NfqwsPlatform::native()?['/bin/kill']:['/opt/libexec/nfqws2-asus/busybox','kill'];
+        $bb=NfqwsPlatform::native()?['/bin/kill']:[NfqwsPlatform::busybox(),'kill'];
         foreach(['-TERM','-KILL']as $signal){
             foreach(array_reverse($owned,true)as $proof)if(self::sameProcess($proof))NfqwsPlatform::run([...$bb,$signal,(string)$proof['pid']],2);
             usleep(300000);
@@ -454,7 +454,7 @@ final class NfqwsStrategyPickerRuntime
     }
     private function launch(string $mode,string $id):void
     {
-        $bb=NfqwsPlatform::native()?'/bin/busybox':'/opt/libexec/nfqws2-asus/busybox';
+        $bb=NfqwsPlatform::busybox();
         $php=NfqwsPlatform::translate('/opt/bin/php-cgi');
         $unused=$this->store->path('unused-'.$mode.'-'.$id.'.pid');
         if(file_exists($unused))throw new RuntimeException('invalid_state');

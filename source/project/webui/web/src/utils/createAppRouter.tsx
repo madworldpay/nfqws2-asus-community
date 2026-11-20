@@ -1,5 +1,6 @@
 import { routeTree } from '@/routeTree.generated';
-import { createRouter } from '@tanstack/react-router';
+import { panelBase } from '@/api/panelPaths.js';
+import { createHashHistory, createRouter } from '@tanstack/react-router';
 
 export function createAppRouter() {
   return createRouter({
@@ -9,6 +10,7 @@ export function createAppRouter() {
       },
     },
     routeTree,
+    history: panelBase === '/' ? undefined : createHashHistory(),
     defaultPreload: 'render',
   });
 }

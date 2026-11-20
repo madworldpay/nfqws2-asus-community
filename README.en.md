@@ -2,7 +2,7 @@
 
 [Русский](README.md)
 
-[Download Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
+[Build 101 for ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 for Keenetic and Netcraze](DOWNLOADS.en.md#keenetic) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
 
 <details>
 <summary>All project links</summary>
@@ -34,10 +34,11 @@ the router; your Android TV box, phone or PC does not need a separate client.
 
 Test video playback, seeking and voice calls separately.
 
-**This is an application for an installed firmware:** an ASUS package for Asuswrt-Merlin/Entware
-or a native OpenWrt package. Installing the application itself does not require flashing your router.
+The application runs on your existing firmware. ASUS routers running Asuswrt-Merlin use Entware. OpenWrt uses native packages.
 
-**Free · RU / EN · ASUS/Entware · OpenWrt**
+**Keenetic and Netcraze.** On KeeneticOS, the panel uses the stock `nfqws2-keenetic` service. Open `/nfqws-community/` on port 90. The home page and generator tab show the brand reported by the router. Packages are available for ARM64, MIPS and MIPSEL. Installation was tested on a Netcraze Ultra NC-1812. All three packages also passed tests in isolated Entware environments. [Choose a package and install it](DOWNLOADS.en.md#keenetic).
+
+**Free · RU / EN · ASUS/Entware · OpenWrt · KeeneticOS/Entware**
 
 **Strategy import.** Open “Zapret2 library”, select “Full presets”, and choose one of the 98 ready-made strategies. Each preset includes its rules. Select “Preview” and then “Save selection”. Starting or restarting the service is a separate step. Add a personal note beside any strategy in the Zapret2 library or cloud catalog and search by its text. Notes stay in this browser across panel updates. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 

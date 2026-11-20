@@ -25,7 +25,7 @@ export const CommunityActions = ({
   const artwork = (src: string) => (
     <Box
       component="img"
-      src={src}
+      src={src.replace(/^\//, '')}
       alt=""
       aria-hidden="true"
       draggable={false}

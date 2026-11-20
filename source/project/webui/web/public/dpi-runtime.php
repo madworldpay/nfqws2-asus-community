@@ -5,7 +5,7 @@ final class AsusDpiRuntime
     private const ROOT='/opt/var/lib/nfqws2-asus/dpi-detector';
     public const BUSYBOX='/opt/libexec/nfqws2-asus/busybox';
     private static function root():string{return NfqwsPlatform::translate(self::ROOT);}
-    public static function busybox():string{return NfqwsPlatform::native()?'/bin/busybox':self::BUSYBOX;}
+    public static function busybox():string{return NfqwsPlatform::busybox();}
     public function capabilities(): array
     {
         $status=@file_get_contents('/proc/self/status');

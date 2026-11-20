@@ -13,8 +13,11 @@ import { mainTabsValues, type MainTabsValues } from '@/types/types';
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { panelApi } from '@/api/panelPaths.js';
+
 const deviceProfilesHref = '/device-profiles-lab/device-profiles-lab.html';
-const strategyPickerHref = '/index.php?strategy-picker=1';
+
+const strategyPickerHref = panelApi + '?strategy-picker=1';
 
 export const MainTabs = () => {
   const navigate = useNavigate();
@@ -98,23 +101,27 @@ export const MainTabs = () => {
             }}
           />
 
-          <Tab
-            value="smartdns"
-            icon={<DnsOutlinedIcon fontSize="small" />}
-            iconPosition="start"
-            label="SmartDNS"
-            sx={{ minHeight: 50, fontSize: 14 }}
-          />
+          {platform !== 'keenetic-entware' && (
+            <Tab
+              value="smartdns"
+              icon={<DnsOutlinedIcon fontSize="small" />}
+              iconPosition="start"
+              label="SmartDNS"
+              sx={{ minHeight: 50, fontSize: 14 }}
+            />
+          )}
 
-          <Tab
-            component="a"
-            href={deviceProfilesHref}
-            value={deviceProfilesHref}
-            icon={<DevicesOtherOutlinedIcon fontSize="small" />}
-            iconPosition="start"
-            label={t('tabs.devices_beta')}
-            sx={{ minHeight: 50, fontSize: 14 }}
-          />
+          {platform !== 'keenetic-entware' && (
+            <Tab
+              component="a"
+              href={deviceProfilesHref}
+              value={deviceProfilesHref}
+              icon={<DevicesOtherOutlinedIcon fontSize="small" />}
+              iconPosition="start"
+              label={t('tabs.devices_beta')}
+              sx={{ minHeight: 50, fontSize: 14 }}
+            />
+          )}
 
           <Tab
             component="a"

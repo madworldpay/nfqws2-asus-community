@@ -54,6 +54,12 @@ const DpiTerminalDialog = lazy(() =>
   })),
 );
 
+const platformDisplay = {
+  'asus-entware': { title: 'ASUS', service: 'nfqws2-asus' },
+  'keenetic-entware': { title: 'Keenetic / Netcraze', service: 'S51nfqws2' },
+  openwrt: { title: 'OpenWrt', service: 'nfqws2-native' },
+} as const;
+
 export const Header = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -189,7 +195,7 @@ export const Header = () => {
       const lines = data?.output?.join('\n') || '';
       const failed = error || !data || data.status !== 0;
       setOutput(
-        `> ${platform === 'openwrt' ? 'nfqws2-native' : 'nfqws2-asus'} ${command}\n${lines}${failed ? `\n${t(command === 'restart' ? 'restart_schedule.restart_failed' : 'restart_schedule.action_failed')}` : ''}`,
+        `> ${platformDisplay[platform].service} ${command}\n${lines}${failed ? `\n${t(command === 'restart' ? 'restart_schedule.restart_failed' : 'restart_schedule.action_failed')}` : ''}`,
       );
       if (!failed && command === 'upgrade') setNeedReload(true);
     } catch {
@@ -289,7 +295,9 @@ export const Header = () => {
                 },
               }}
             >
-              {platform === 'openwrt' ? 'OpenWrt' : 'ASUS'}
+              {((!isReady || platform === 'keenetic-entware') &&
+                document.documentElement.dataset.routerBrand) ||
+                platformDisplay[platform].title}
             </Typography>
             <Typography
               component="h2"
@@ -361,7 +369,7 @@ export const Header = () => {
             >
               <Trans i18nKey="requirements.title" />
             </Button>
-            {auth && (
+            {auth && platform !== 'keenetic-entware' && (
               <Button
                 variant="outlined"
                 size="small"
@@ -392,7 +400,7 @@ export const Header = () => {
                 }}
               />
             )}
-            {auth && (
+            {auth && platform !== 'keenetic-entware' && (
               <Tooltip title={t('auth.change_password')} enterTouchDelay={0}>
                 <IconButton
                   size="small"

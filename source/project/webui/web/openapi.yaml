@@ -405,7 +405,7 @@ components:
       properties:
         platform:
           type: string
-          enum: [asus-entware, openwrt]
+          enum: [asus-entware, keenetic-entware, openwrt]
         status:
           type: integer
           enum: [0]

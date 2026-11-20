@@ -43,6 +43,7 @@ export const RequirementsDialog = ({
   const { t } = useTranslation();
   const { csrfToken, platform, isReady } = useStatus();
   const native = platform === 'openwrt';
+  const keenetic = platform === 'keenetic-entware';
   const dirty = useAppStore((s) => s.needSave);
   const pendingRestart = useAppStore((s) => s.needReload);
   const [checkup, setCheckup] = useState<Checkup>();
@@ -228,9 +229,9 @@ export const RequirementsDialog = ({
             target="_blank"
             rel="noreferrer"
           >
-            NFQWS2 ASUS Community
+            NFQWS2 Community
           </Link>
-          <Link
+          {!keenetic && <Link
             href={
               native
                 ? 'https://github.com/madworldpay/nfqws2-asus-community/blob/main/OPENWRT.md'
@@ -240,7 +241,7 @@ export const RequirementsDialog = ({
             rel="noreferrer"
           >
             {native ? 'OpenWrt' : 'Asuswrt-Merlin'}
-          </Link>
+          </Link>}
           <Link
             href="https://github.com/nfqws/nfqws2-keenetic#подготовка-keeneticnetcraze"
             target="_blank"
@@ -248,7 +249,7 @@ export const RequirementsDialog = ({
           >
             NFQWS2
           </Link>
-          {!native && (
+          {platform === 'asus-entware' && (
             <Link
               href="https://www.asus.com/support/faq/1045253/"
               target="_blank"
@@ -257,7 +258,7 @@ export const RequirementsDialog = ({
               ASUS DNS
             </Link>
           )}
-          {!native && (
+          {platform === 'asus-entware' && (
             <Link
               href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/DNS-Director"
               target="_blank"

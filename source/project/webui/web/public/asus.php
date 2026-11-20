@@ -37,8 +37,19 @@ function asusAuthenticate(string $username, string $password, string $passwdFile
     return strlen($candidate) >= 13 && hash_equals($hash, $candidate);
 }
 
-function asusWebReadAuth(string $path = ASUS_WEB_AUTH_FILE, string $passwdFile = '/etc/passwd', string $shadowFile = '/etc/shadow', ?string $profile = null): ?array
+function asusWebReadAuth(string $path = ASUS_WEB_AUTH_FILE, ?string $passwdFile = null, ?string $shadowFile = null, ?string $profile = null): ?array
 {
+    $profile ??= NfqwsPlatform::current();
+    $accountRoot = $profile === 'keenetic-entware' ? '/opt' : '';
+    $passwdFile ??= $accountRoot.'/etc/passwd';
+    $shadowFile ??= $accountRoot.'/etc/shadow';
+    if ($profile === 'keenetic-entware') {
+        // Authenticate with the router's existing Entware administrator account.
+        $accounts = asusWebSystemAccounts($passwdFile, $shadowFile);
+        if (!$accounts) return null;
+        return ['mode'=>'system', 'username'=>array_key_first($accounts), 'password_hash'=>'',
+                'accounts'=>$accounts, 'revision'=>hash('sha256', json_encode($accounts, JSON_THROW_ON_ERROR))];
+    }
     $source = @file_get_contents($path);
     if ($source === false) return null;
     $auth = json_decode($source, true);

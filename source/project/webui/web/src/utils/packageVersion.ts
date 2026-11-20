@@ -1,11 +1,11 @@
 export type Version = [number, number, number];
 
 export const formatPackageVersion = (version: string | undefined | null) =>
-  version?.replace(/\+b([1-9][0-9]*)$/, ' — Build $1');
+  version?.replace(/\+b([1-9][0-9]*)(?:-[0-9]+)?$/, ' — Build $1');
 
 export const parsePackageVersion = (version: string | undefined | null) => {
   const match = version?.match(
-    /^v?([0-9]+)\.([0-9]+)\.([0-9]+)(?:-asus[0-9]+)?(?:\+b([0-9]+))?$/,
+    /^v?([0-9]+)\.([0-9]+)\.([0-9]+)(?:-asus[0-9]+)?(?:\+b([0-9]+)(?:-[0-9]+)?)?$/,
   );
   return {
     version: (match

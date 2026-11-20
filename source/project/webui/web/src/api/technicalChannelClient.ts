@@ -1,3 +1,4 @@
+import { panelApi } from './panelPaths.js';
 import { ShareError } from '@/api/shareClient';
 
 export type TechnicalState = {
@@ -26,7 +27,7 @@ export async function technicalRequest(
   const timer = globalThis.setTimeout(() => controller.abort(), 15000);
   let v: unknown;
   try {
-    const response = await fetch('/index.php', {
+    const response = await fetch(panelApi, {
       method: 'POST',
       credentials: 'same-origin',
       redirect: 'error',

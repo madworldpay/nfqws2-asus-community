@@ -1,0 +1,4 @@
+767b7003db0057d1d46513dcdd6c8c87dc666732a2f7b8c6d756b15cd7900565  nfqws-keenetic-web_3.0.24_all_entware.ipk
+1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91  nfqws2-keenetic_1.3.3_aarch64-3.10.ipk
+f0d3bf7389f796e9b07481629d52fe687bda2dcd01b4a1f5518532d5c9ea7245  nfqws2-keenetic_1.3.3_mips-3.4.ipk
+3da1a9a57cfcc16d243fe128024ecfb2c8f11802d932643ea46509e8ec0465b5  nfqws2-keenetic_1.3.3_mipsel-3.4.ipk

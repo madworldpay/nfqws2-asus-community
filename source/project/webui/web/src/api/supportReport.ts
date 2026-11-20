@@ -1,3 +1,4 @@
+import { panelApi } from './panelPaths.js';
 export type SupportReportFile = {
   blob: Blob;
   filename: string;
@@ -32,7 +33,7 @@ export async function downloadSupportReport(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
   try {
-    const response = await fetch('/index.php', {
+    const response = await fetch(panelApi, {
       method: 'POST',
       credentials: 'same-origin',
       body: new URLSearchParams({
@@ -239,7 +240,7 @@ export async function getSupportMailAvailability(
   csrfToken: string,
   onUnauthorized: () => void = () => {},
 ): Promise<SupportMailAvailability> {
-  const response = await fetch('/index.php', {
+  const response = await fetch(panelApi, {
     method: 'POST',
     credentials: 'same-origin',
     body: new URLSearchParams({
@@ -315,7 +316,7 @@ export function sendSupportReport(
       code: 'delivery_unknown',
     };
     try {
-      const response = await fetch('/index.php', {
+      const response = await fetch(panelApi, {
         method: 'POST',
         credentials: 'same-origin',
         signal: AbortSignal.timeout(20000),

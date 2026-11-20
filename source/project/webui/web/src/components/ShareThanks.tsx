@@ -94,7 +94,7 @@ function AcceptedThanks({ appearance, event, onClose }: ShareThanksProps) {
               <Box
                 key={interaction.replays}
                 component="img"
-                src={`/community/rabbit-respect-once.gif?sent=${event}${interaction.replays ? `&replay=${interaction.replays}` : ''}`}
+                src={`community/rabbit-respect-once.gif?sent=${event}${interaction.replays ? `&replay=${interaction.replays}` : ''}`}
                 alt=""
                 aria-hidden="true"
                 width={192}

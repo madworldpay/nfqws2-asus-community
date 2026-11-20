@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-[Скачать Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
+[Build 101 для ASUS и OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 для Keenetic и Netcraze](DOWNLOADS.md#keenetic) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
 
 <details>
 <summary>Все ссылки проекта</summary>
@@ -34,10 +34,11 @@ NFQWS2 обрабатывает трафик на роутере; отдельн
 
 Работу видео, перемотки и голосовых звонков проверяйте отдельно.
 
-**Это приложение для установленной прошивки:** пакет для ASUS с Asuswrt-Merlin/Entware
-или нативный пакет для OpenWrt. Прошивать роутер ради установки самого пакета не требуется.
+Приложение устанавливается в текущую прошивку. Для ASUS с Asuswrt-Merlin используется Entware, для OpenWrt есть нативные пакеты.
 
-**Бесплатно · RU / EN · ASUS/Entware · OpenWrt**
+**Keenetic и Netcraze.** На KeeneticOS панель работает со штатной службой `nfqws2-keenetic`. Она открывается на порту 90 по пути `/nfqws-community/`. Название на главной и во вкладке генератора определяется по модели. Готовы пакеты для ARM64, MIPS и MIPSEL. Установка проверена на Netcraze Ultra NC-1812, все три пакета прошли также проверку в изолированной Entware. [Выбрать пакет и установить](DOWNLOADS.md#keenetic).
+
+**Бесплатно · RU / EN · ASUS/Entware · OpenWrt · KeeneticOS/Entware**
 
 **Импорт стратегий.** В «Библиотеке Zapret2» откройте «Полные пресеты» и выберите одну из 98 готовых стратегий. Все её правила уже в комплекте. Нажмите «Предпросмотр», затем «Сохранить выбранное». Запуск или перезапуск службы подтверждается отдельно. В библиотеке Zapret2 и облачном каталоге можно оставить личную заметку напротив каждой стратегии. Поиск находит пресеты и по тексту заметки. Заметки сохраняются в этом браузере после обновления панели. [Снимки Build 100](SCREENSHOTS.md#build100).
 

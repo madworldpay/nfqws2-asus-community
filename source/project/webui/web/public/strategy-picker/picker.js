@@ -3,6 +3,9 @@ import {mountSupplement} from './supplement.js';
 import {customMeasurements,customComparison,customScope,targetErrors,validTargetPreview} from './custom.js';
 import {poolChoice,poolDescription,recordedPool,planSelection,validPoolPlan,roundChoice} from './concurrency.js';
 
+// Both the standalone page and the PHP entry load this module from strategy-picker/.
+const panelBase = /^https?:/.test(import.meta.url) ? new URL('../', import.meta.url).pathname : '/';
+
 export function addonNotice(job,language='ru'){
   if(job?.state!=='applied'||!job.torrent_sites)return '';
   return language==='ru'?'Добавлено дополнение «Торрент-трекеры». Показатели относятся к исходному комплекту без дополнения; после добавления повторите проверку.':'The tracker extension was added. The scores describe the base strategy before this extension; repeat the checks after adding it.';
@@ -150,7 +153,7 @@ if(typeof document!=='undefined'){
     const controller=new AbortController();
     const timeout=controller?setTimeout(()=>controller.abort(),15000):null;
     try{
-    const r=await fetch('/index.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p,...(controller?{signal:controller.signal}:{})});
+    const r=await fetch(panelBase+'index.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p,...(controller?{signal:controller.signal}:{})});
     if(r.status===401||r.status===403){authenticated=false;pending=null;$('confirmation').hidden=true;if(data)data={...data,error:'auth'};poller.stop();render();throw new Error('auth');}
     const v=await r.json();if(!r.ok||v.error){const error=new Error(v.error||'failed');error.confirmed=true;throw error;}return v;
     }finally{if(timeout!==null)clearTimeout(timeout);}
@@ -552,7 +555,7 @@ if(typeof document!=='undefined'){
     if($('measured-import').hidden||$('measured-import').disabled)return;
     try{
       sessionStorage.setItem('nfqws-picker-import-v1',JSON.stringify({id:data.job.id,result:measuredView.id}));
-      window.location.assign('/?picker-import=1');
+      window.location.assign(panelBase+'?picker-import=1');
     }catch{
       measuredStatus='measurement_unavailable';render();
     }
@@ -563,13 +566,13 @@ if(typeof document!=='undefined'){
       if(!pageActive||$('custom-sites').value!==input)return;
       if(!validTargetPreview(preview)){customErrors=preview.errors||[{line:0,code:'invalid_hostname'}];return;}
       sessionStorage.setItem('nfqws-site-check-targets-v1',JSON.stringify(preview.hosts));
-      window.location.assign('/?site-check=1');
+      window.location.assign(panelBase+'?site-check=1');
     }catch(e){actionError=e.message;}finally{busy=false;render();}
   });
   function shareDownload(raw,filename){
     const bytes=new TextEncoder().encode(raw);if(bytes.length<1||bytes.length>1048576)throw new Error('output_limit');
     sessionStorage.setItem('nfqws-share-download-v1',JSON.stringify({filename,media_type:'application/json',data_base64:btoa(Array.from(bytes,c=>String.fromCharCode(c)).join(''))}));
-    window.location.assign('/?share-frank=1');
+    window.location.assign(panelBase+'?share-frank=1');
   }
   $('share-report').addEventListener('click',()=>{if(!data||data.active||!jobView(data.job,language).reportAvailable)return;
     try{shareDownload(JSON.stringify(data,null,2),'nfqws2-strategy-selection.json');}catch(e){actionError=e.message;render();}});

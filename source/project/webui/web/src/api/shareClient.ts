@@ -1,3 +1,4 @@
+import { panelApi } from './panelPaths.js';
 import type { DpiStatus } from '@/api/dpiClient';
 import { sha256 } from '@/api/supportDigest';
 import {
@@ -171,7 +172,7 @@ export async function shareRequest(
   max = 2097152,
   timeout = 15000,
 ): Promise<unknown> {
-  const response = await fetch('/index.php', {
+  const response = await fetch(panelApi, {
     method: 'POST',
     credentials: 'same-origin',
     redirect: 'error',
@@ -415,7 +416,7 @@ export function sendShare(
       code: 'delivery_unknown',
     };
     try {
-      const response = await fetch('/index.php', {
+      const response = await fetch(panelApi, {
         method: 'POST',
         credentials: 'same-origin',
         redirect: 'error',

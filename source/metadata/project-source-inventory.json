@@ -126,8 +126,8 @@
   },
   {
     "path": "asus/build.py",
-    "bytes": 33166,
-    "sha256": "33c637d2adf468a5487dafc9ef010d39b1a0747a4c599fa84efc92ef49311f7a"
+    "bytes": 33219,
+    "sha256": "82f4b0b34acb52f293fd4c1336be84c1558b619302a0e9c9dbb28806e1061259"
   },
   {
     "path": "asus/compatibility.sh",
@@ -1138,6 +1138,51 @@
     "path": "ip-health/worker.php",
     "bytes": 3937,
     "sha256": "a51096123dca16837f3249bb984e3b9b7c915bba85c279f421f9356d83d6d826"
+  },
+  {
+    "path": "keenetic/brand.php",
+    "bytes": 1313,
+    "sha256": "8d55dee13271c116748c5be5ec6c9b01d52bf98808c12d5cfd0f6508f6109f45"
+  },
+  {
+    "path": "keenetic/build.py",
+    "bytes": 10251,
+    "sha256": "285d8c67d8f57c0900e9273876f897ec2bdce75a9d9bceb7d1f99be8f202c12f"
+  },
+  {
+    "path": "keenetic/check.php",
+    "bytes": 597,
+    "sha256": "a93ca8df4caae63300572b8c68045c32a430e87c6eabbbb3a256e9fe883bfd98"
+  },
+  {
+    "path": "keenetic/diagnostics.sh",
+    "bytes": 1260,
+    "sha256": "7e3d80db3c698cc34dc99e03245f94613b011c38d9d817d32319e1d700d1775a"
+  },
+  {
+    "path": "keenetic/dpi-paths.sh",
+    "bytes": 450,
+    "sha256": "7cc868d22b2b395ed1f371481e9dd8d2a720402321a7dfc0b02bcae470ff6f6d"
+  },
+  {
+    "path": "keenetic/postinst",
+    "bytes": 209,
+    "sha256": "91ac5db497a13293f977d558f9db3bf65562d1b9b18da537e41a851bd5c9353f"
+  },
+  {
+    "path": "keenetic/preinst",
+    "bytes": 1782,
+    "sha256": "f7f6a78772d9ba3b67b85007246cc9e9158e6039c6502492090ed6a9c66dac8e"
+  },
+  {
+    "path": "keenetic/stock.php",
+    "bytes": 1731,
+    "sha256": "27fbc06faa8f098643523492c273d77b87cf8d7a7184b972df1388aaf233b67f"
+  },
+  {
+    "path": "keenetic/web-entry.php",
+    "bytes": 231,
+    "sha256": "09edeed7b509ba122c142b916f6f69eafd0361c0e993308a6faf9f9a936bfe6c"
   },
   {
     "path": "licenses/busybox-GPL2.txt",
@@ -2528,6 +2573,11 @@
     "path": "tests/test_keenetic_import_ui.mjs",
     "bytes": 7102,
     "sha256": "42a79e69def6491616ef4389cc51317a693a02367012bcc2bc62cf7707e79c09"
+  },
+  {
+    "path": "tests/test_keenetic_stock.php",
+    "bytes": 2749,
+    "sha256": "780fbb08f13a20ada341e4ef288765e5ab0a6ec1842ada81bd86cbf9d231e5b4"
   },
   {
     "path": "tests/test_legacy_compatibility.py",
@@ -4396,13 +4446,13 @@
   },
   {
     "path": "webui/web/index.html",
-    "bytes": 935,
-    "sha256": "e0715a486e262b20845f029e97cfbd660532bff07d3c5902a48799a6c12ff9c3"
+    "bytes": 964,
+    "sha256": "ef30e408b020b001e7b93ce25d36965029ee3da3194e9f1f1a51de49bae8574a"
   },
   {
     "path": "webui/web/openapi.yaml",
-    "bytes": 43904,
-    "sha256": "3bef3114bd09cb9cf05fe55beac96041ce240c2749ceb2c3024cc61750a7d048"
+    "bytes": 43922,
+    "sha256": "df01849eb0796ef87832125f8286657c3ecbc3856e267c0c66fe9bc1bd510993"
   },
   {
     "path": "webui/web/package.json",
@@ -4426,8 +4476,8 @@
   },
   {
     "path": "webui/web/public/asus.php",
-    "bytes": 4554,
-    "sha256": "8cf1515950867e7117e355b0a1d88961752093c00a03ad7df7a8e8f3fdcb596a"
+    "bytes": 5188,
+    "sha256": "d66eed64f2e74696a016c2ae7556816b66db1fd0aad13b4a56bfa8c5c1ce31fc"
   },
   {
     "path": "webui/web/public/blob-api.php",
@@ -4496,8 +4546,8 @@
   },
   {
     "path": "webui/web/public/dpi-install.php",
-    "bytes": 16092,
-    "sha256": "514ac789b54349c0857b828cd1c3cfdd8c144d01573a2825bfe1c8777c99db27"
+    "bytes": 16962,
+    "sha256": "92c3361122644ed6d44cddde3bca26a3b8fc10f549224ef1c86f59ad9d706ad0"
   },
   {
     "path": "webui/web/public/dpi-jobs.php",
@@ -4531,8 +4581,8 @@
   },
   {
     "path": "webui/web/public/dpi-runtime.php",
-    "bytes": 10027,
-    "sha256": "3ebc4c17937d36b938162051a91891674a48d194c954dad5d9b7b29569df9800"
+    "bytes": 9999,
+    "sha256": "7c7e7a63f34b8551c32ad4e13fb946008e33596fc093af20ebd3d253a6f53c5e"
   },
   {
     "path": "webui/web/public/dpi-saved-projector.php",
@@ -4546,8 +4596,8 @@
   },
   {
     "path": "webui/web/public/dpi-site-check.php",
-    "bytes": 34182,
-    "sha256": "fc43288320d3e894788e22708029d2ac1aba64a78b93f4900a9200175c2cb5c3"
+    "bytes": 34133,
+    "sha256": "b6c86fa095d129cb306749c50860e9b3f8d24c33f4367987f88289e4f6382f66"
   },
   {
     "path": "webui/web/public/dpi-store.php",
@@ -4563,6 +4613,11 @@
     "path": "webui/web/public/dpi-terminal.php",
     "bytes": 14326,
     "sha256": "b860499906cb227c51db162ddc4604a6b41e504c2e5cd71786cdbd738eaa5725"
+  },
+  {
+    "path": "webui/web/public/entware-package.php",
+    "bytes": 1535,
+    "sha256": "ff4f60d74deec32425b2b5f1ee12c704fcc8a1a0824b5b7ad744cc67ed56132c"
   },
   {
     "path": "webui/web/public/idna.php",
@@ -4626,8 +4681,8 @@
   },
   {
     "path": "webui/web/public/index.php",
-    "bytes": 42796,
-    "sha256": "6a1f8c52c61c7dff68d15239be0090b18861edd52d36d26fbc1b4a772a74ea17"
+    "bytes": 43466,
+    "sha256": "cba4d34ce6c34a93442fb5192d7cf038ffadf9c80a054aab7fc78536987da06a"
   },
   {
     "path": "webui/web/public/ip-health-api.php",
@@ -4821,8 +4876,8 @@
   },
   {
     "path": "webui/web/public/platform.php",
-    "bytes": 7841,
-    "sha256": "53877309af1524ed44aa076b1cdc00744d0cc8ca2e66b605dcae8e5c08c12d6c"
+    "bytes": 9500,
+    "sha256": "65fa2988578fc94a9f36988a50555a81ebd7072727be3348b823fb6adec016a1"
   },
   {
     "path": "webui/web/public/profile-catalog-api.php",
@@ -5056,8 +5111,8 @@
   },
   {
     "path": "webui/web/public/strategy-picker-runtime.php",
-    "bytes": 107586,
-    "sha256": "7dd6b684c0657bed4a0e41208fa9df4ec8a2cb13f02251b361414871c42bcebf"
+    "bytes": 107527,
+    "sha256": "535500db28b646ae2a9cef99b41b1ba37cb75cc3c293ae343f930203c59d9f25"
   },
   {
     "path": "webui/web/public/strategy-picker-targets.php",
@@ -5076,8 +5131,8 @@
   },
   {
     "path": "webui/web/public/strategy-picker/index.html",
-    "bytes": 13748,
-    "sha256": "2369219656d5eb99288029d0c572afb80e875de25fbc6e280a07e9605aeccbca"
+    "bytes": 13750,
+    "sha256": "596844f4c61c3c302e59bbef35621c20bd80f446a492087943cf64952d744601"
   },
   {
     "path": "webui/web/public/strategy-picker/metrics.js",
@@ -5091,8 +5146,8 @@
   },
   {
     "path": "webui/web/public/strategy-picker/picker.js",
-    "bytes": 78894,
-    "sha256": "8b331797bc7162213f36349ad4da5afb94ca3aa72e2dde23dd3339a289b107b0"
+    "bytes": 79118,
+    "sha256": "f16556000fba79991b65688e677cf3acf575bce5b581ef595de93cfe21a324a2"
   },
   {
     "path": "webui/web/public/strategy-picker/supplement.js",
@@ -5201,8 +5256,8 @@
   },
   {
     "path": "webui/web/public/update-api.php",
-    "bytes": 3608,
-    "sha256": "ac3b7e3594da6e2333d4e1f363d351805e7f45f794bcdec63318fc773644cc1b"
+    "bytes": 3725,
+    "sha256": "faa65f258397504b584b71d2ede1ab98df6dd1735e5307b3994d9e15c2d094e8"
   },
   {
     "path": "webui/web/public/update-check.php",
@@ -5461,8 +5516,8 @@
   },
   {
     "path": "webui/web/src/api/baseUrl.ts",
-    "bytes": 47,
-    "sha256": "cd0b5b83d60533eaa18ad1b6c6dd93698d5305c946ce0485a7356618a12615c0"
+    "bytes": 124,
+    "sha256": "a0945d96a38981499ef49850fb30838e080d9dcf0e7821984530d4e20e7f97bb"
   },
   {
     "path": "webui/web/src/api/blobClient.ts",
@@ -5496,8 +5551,8 @@
   },
   {
     "path": "webui/web/src/api/dpiClient.ts",
-    "bytes": 20267,
-    "sha256": "dc62676c6a7bacdeaceeddf0acc22d86bcaa1c373ed28fb3a94361329e8ee86e"
+    "bytes": 20307,
+    "sha256": "0a800b74c6233e8adffd117d75b34788bea4ed7731361ce1ce37b971199ed48d"
   },
   {
     "path": "webui/web/src/api/dpiOptions.ts",
@@ -5536,8 +5591,8 @@
   },
   {
     "path": "webui/web/src/api/ipHealthClient.ts",
-    "bytes": 5649,
-    "sha256": "70f41a6e6005720d30c7202b053e77b794c27c2dbb9698b31171f8823f1cc584"
+    "bytes": 5689,
+    "sha256": "456ffa404a7f9e75b55a0d0c12e9d7c62b11a058f1c93eb523c2b7c9cad45a8e"
   },
   {
     "path": "webui/web/src/api/mtprotoAddresses.ts",
@@ -5551,8 +5606,13 @@
   },
   {
     "path": "webui/web/src/api/packageUpdates.ts",
-    "bytes": 11779,
-    "sha256": "565cc85de20c59cc37ea9c2f3f02e3cbdc6fc648ca8ce9820ca4aa9029702748"
+    "bytes": 11819,
+    "sha256": "55919996e99b120cb38b3a7ed35589e3b427c7a46eb2609c88f8369189ae6c72"
+  },
+  {
+    "path": "webui/web/src/api/panelPaths.js",
+    "bytes": 191,
+    "sha256": "b1c5f69f5d5d53e0b260ca77d4cd0ff7d546d4483ba50f277a1ff6d4d10eb4fa"
   },
   {
     "path": "webui/web/src/api/profileCatalogClient.ts",
@@ -5561,8 +5621,8 @@
   },
   {
     "path": "webui/web/src/api/restartSchedule.ts",
-    "bytes": 3845,
-    "sha256": "a862f4bfd2709128f9bbf53089fce4eefe0cde57bf0fd3119ee947679e75ef53"
+    "bytes": 3885,
+    "sha256": "0775ca369f253ccd8a58d3e2c241fce95fef5bf52d83c50fabb8294f0043a6f9"
   },
   {
     "path": "webui/web/src/api/routerWan.ts",
@@ -5571,8 +5631,8 @@
   },
   {
     "path": "webui/web/src/api/schema.ts",
-    "bytes": 47497,
-    "sha256": "776d4f1d2dab6eb56b453870bbca81dd084fec2845f3f55c3639dd2e0b0eb078"
+    "bytes": 47518,
+    "sha256": "8e9ef900494012023fddd52f4a4ad017866864f6028ea1febb35233eda9c68d4"
   },
   {
     "path": "webui/web/src/api/services/IndexPhpService.ts",
@@ -5586,8 +5646,8 @@
   },
   {
     "path": "webui/web/src/api/shareClient.ts",
-    "bytes": 24222,
-    "sha256": "52f18a14716abbf16ad5ff8989643502d6716b743a82dff2cdf02a59917acfd0"
+    "bytes": 24258,
+    "sha256": "9ff89c7d46c123c3847845e6c49b5a5be8f8b2fae451c7d9a82e04fa236d245f"
   },
   {
     "path": "webui/web/src/api/shareResourcesClient.ts",
@@ -5626,8 +5686,8 @@
   },
   {
     "path": "webui/web/src/api/supportBundle.ts",
-    "bytes": 7520,
-    "sha256": "87aad4aad9429ec99840698d7135426ef256fc0ce7e3294a5cd78620ab6e978c"
+    "bytes": 7556,
+    "sha256": "62b371589321d3e4e8b343fc546f389a723051e33966dd6ff1ebc5c069609b70"
   },
   {
     "path": "webui/web/src/api/supportDigest.ts",
@@ -5636,13 +5696,13 @@
   },
   {
     "path": "webui/web/src/api/supportReport.ts",
-    "bytes": 13531,
-    "sha256": "c491d608689a3d7fac24b588e0bd50c16fbc401ae459783f3f3f555507b35a52"
+    "bytes": 13563,
+    "sha256": "df01194d290a22bfda8e4a55c9143789bd2bea4c5ad236758cca9b11174b49e7"
   },
   {
     "path": "webui/web/src/api/technicalChannelClient.ts",
-    "bytes": 5885,
-    "sha256": "8edad48229cc9e9fa4de9213a3ef74b69e31b47a34b81c6f2b754c50c4111284"
+    "bytes": 5925,
+    "sha256": "ec14c5aca48e17abddd7dc34408e786616304da42c6b27d13f5eeb6cb2177cf4"
   },
   {
     "path": "webui/web/src/app.d.ts",
@@ -5681,8 +5741,8 @@
   },
   {
     "path": "webui/web/src/components/CommunityActions.tsx",
-    "bytes": 2140,
-    "sha256": "4924033fbedfff77f71ff4d1f1e000fae4c498f2863b9398f117f13f0db40f28"
+    "bytes": 2159,
+    "sha256": "c4fe7b91f7d299391d1f0a20a5fa9cf0a701e7808c91fc93995aa9066048a84d"
   },
   {
     "path": "webui/web/src/components/CommunityChatLink.tsx",
@@ -5701,8 +5761,8 @@
   },
   {
     "path": "webui/web/src/components/CurrentVersion.tsx",
-    "bytes": 6978,
-    "sha256": "852d6bf4a8f4acb8b0b06ce89c8191ac2796f44a47781798d16d3f25524f61c5"
+    "bytes": 7159,
+    "sha256": "9a7908ce4dd98d124967db928aef69459f60755ff51ee0398b28ce49f7a7790a"
   },
   {
     "path": "webui/web/src/components/DpiSavedReports.tsx",
@@ -5741,8 +5801,8 @@
   },
   {
     "path": "webui/web/src/components/Footer.tsx",
-    "bytes": 10783,
-    "sha256": "83c48ea41a82df77c55e45ac7bef38b8c914459d2c54d63f9ce85eadc1eeb453"
+    "bytes": 10820,
+    "sha256": "6813f0f0f2b04be5752585f1ee7133a8d4f070085219b235eba491e5d9c47f77"
   },
   {
     "path": "webui/web/src/components/FormEditor.tsx",
@@ -5751,8 +5811,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 20110,
-    "sha256": "c654e2761ef800c76cb344d1bfa384245e2e0d3bc27984cd7d42fc63f56d5bd9"
+    "bytes": 20513,
+    "sha256": "7babd12084ce101be46ba082b106cbabf9bf4eb031cdf0f299f3eab66c564c86"
   },
   {
     "path": "webui/web/src/components/ImportAddons.tsx",
@@ -5811,8 +5871,8 @@
   },
   {
     "path": "webui/web/src/components/MainTabs.tsx",
-    "bytes": 4874,
-    "sha256": "7b04ac0c5cc995a512019ef38044877679cc1fb4aabdb19f307f001eb9a6bdcd"
+    "bytes": 5079,
+    "sha256": "417df691a3220547cfd992daf29054819ce425d074e1ff0bcc14f2d56747e9c0"
   },
   {
     "path": "webui/web/src/components/MtprotoInstallDialog.tsx",
@@ -5856,8 +5916,8 @@
   },
   {
     "path": "webui/web/src/components/RequirementsDialog.tsx",
-    "bytes": 8957,
-    "sha256": "9e2f537c1db421eccbab167b5a3214c3369c1da274a67da1a404bbef8a3cdd36"
+    "bytes": 9059,
+    "sha256": "b2bab1f242f62d7cdae65ffd3f175780856382348878eb4ea1c49036f11fdf6b"
   },
   {
     "path": "webui/web/src/components/RestartScheduleDialog.tsx",
@@ -5921,8 +5981,8 @@
   },
   {
     "path": "webui/web/src/components/ShareThanks.tsx",
-    "bytes": 4342,
-    "sha256": "ef7b386e912a914d74b56ccdeb7f94a317ee901854d84626b22bfb4af2623541"
+    "bytes": 4341,
+    "sha256": "b37b969f88b28072c13164d79ebaba866d84a17a000d8b790a150d793b0f1c89"
   },
   {
     "path": "webui/web/src/components/SmartDnsConfigurator.tsx",
@@ -6011,8 +6071,8 @@
   },
   {
     "path": "webui/web/src/hooks/useStatus.tsx",
-    "bytes": 2931,
-    "sha256": "fb734954f5c1f050d1dbfed9365126370eecb87bd822a02b47db5f798883e893"
+    "bytes": 3078,
+    "sha256": "7743a0c77f197e9bc67b708bd7a5037d9f0e6f115b4eecf8994ac86725f693bc"
   },
   {
     "path": "webui/web/src/hooks/useStorage.ts",
@@ -6151,8 +6211,8 @@
   },
   {
     "path": "webui/web/src/utils/createAppRouter.tsx",
-    "bytes": 335,
-    "sha256": "8ecf7d09628c85cdae9d0c1174b8d263cc2c37936263097d8a79d901cdf5e80b"
+    "bytes": 469,
+    "sha256": "b13b933012fe812ef0a7171005c06d5d03dbd8f4f5e9e2696345e9530e922b7b"
   },
   {
     "path": "webui/web/src/utils/createRouterProviderContext.tsx",
@@ -6211,8 +6271,8 @@
   },
   {
     "path": "webui/web/src/utils/packageVersion.ts",
-    "bytes": 848,
-    "sha256": "8518ca43a1d29e337d1975b26973df67057eebf64594c33a372f33bd63ef5031"
+    "bytes": 872,
+    "sha256": "14801258bdb2eed2717e6b897443ca9d63e6a9523b80e0af17816e8381e2b39f"
   },
   {
     "path": "webui/web/src/utils/queueSamples.ts",

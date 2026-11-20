@@ -1,5 +1,7 @@
 # Исходники
 
+Для панели Keenetic и Netcraze см. [инструкцию по сборке](BUILD-KEENETIC.md). Исходники опубликованных пакетов ASUS и OpenWrt Build 101 доступны в [теге build101](https://github.com/madworldpay/nfqws2-asus-community/tree/build101/source).
+
 - [project/](project/) — общий WebUI, адаптации ASUS/Entware и OpenWrt, службы, модуль ASUS, тесты и серверная часть.
 - [sources/](sources/) — исходники движка, SmartDNS, BusyBox, lighttpd и библиотек.
 - [recipes/](recipes/) — конфигурации, патчи и рецепты сборки модуля, движка и DPI.

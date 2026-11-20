@@ -213,14 +213,7 @@ function nfqwsArkLoaded(): ?bool
 
 function nfqwsServiceStatus(): array
 {
-  $command=NfqwsPlatform::serviceCommand('status');$path=$command[0];
-  if (!file_exists($path)) {
-    return array('service' => false, 'status' => 1);
-  }
-
-  $result=NfqwsPlatform::run($command);
-  $running = $result['status']===0&&str_contains($result['output'][0] ?? '', 'is running');
-  return array('service' => $running, 'status' => 0);
+  return NfqwsPlatform::serviceStatus();
 }
 
 function nfqwsServiceAction(string $action): array
@@ -231,6 +224,10 @@ function nfqwsServiceAction(string $action): array
 function nfqwsInstalledVersion(): string
 {
   if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-web.php';return NfqwsOpenWrtWeb::version();}
+  if (NfqwsPlatform::current() === 'keenetic-entware') {
+    require_once __DIR__ . '/entware-package.php';
+    return (NfqwsEntwarePackage::installed('nfqws2-keenetic-community') ?? NfqwsEntwarePackage::installed('nfqws2-keenetic'))['version'] ?? '';
+  }
   $output = [];
   exec("opkg status nfqws2-asus | awk -F': ' '/^Version:/ {print $2}'", $output);
   return $output[0] ?? '';
@@ -264,9 +261,11 @@ function main(): void
       $assets[$name]=$path;
     }
     $html=file_get_contents($assets['index.html']);
-    $html=str_replace(['href="picker.css"','src="picker.js"'],
-      ['href="/strategy-picker/picker.css?v='.hash_file('sha256',$assets['picker.css']).'"',
-       'src="/strategy-picker/picker.js?v='.hash_file('sha256',$assets['picker.js']).'"'],$html);
+    $base=NfqwsPlatform::webBase();
+    $html=str_replace(['href="picker.css"','src="picker.js"','href="../"'],
+      ['href="'.$base.'strategy-picker/picker.css?v='.hash_file('sha256',$assets['picker.css']).'"',
+       'src="'.$base.'strategy-picker/picker.js?v='.hash_file('sha256',$assets['picker.js']).'"',
+       'href="'.$base.'"'],$html);
     header('Content-Type: text/html; charset=utf-8');echo $html;exit();
   }
   if(NfqwsPlatform::native()&&($_SERVER['REQUEST_METHOD']??'')==='GET'){
@@ -318,6 +317,16 @@ function main(): void
     }
   }
   if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+  // These components administer ASUS or OpenWrt firmware or their package
+  // channels. The companion uses the existing KeeneticOS service and web server.
+  if (NfqwsPlatform::current() === 'keenetic-entware' &&
+      preg_match('/^(?:ark|smartdns|restartschedule|technical|iphealth|mtprotoinstall|routercheckup|wanaddresses|deviceprofiles)/D', $_POST['cmd'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(400);
+    echo json_encode(['error'=>'unsupported_runtime']);
+    exit();
+  }
 
   if (is_file(__DIR__.'/strategy-picker-api.php')) {
     require_once __DIR__.'/strategy-picker-api.php';
@@ -765,6 +774,7 @@ function main(): void
       break;
 
     case 'password':
+      if (NfqwsPlatform::current() === 'keenetic-entware') { http_response_code(403); exit(); }
       if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         http_response_code(403);
         exit();

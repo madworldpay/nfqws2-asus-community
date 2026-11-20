@@ -29,6 +29,7 @@ import { formatPackageVersion } from '@/utils/packageVersion';
 
 export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
   const {
+    platform,
     packageVersion,
     buildNumber,
     webVersion,
@@ -56,7 +57,7 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
   const waitingForLogin = useRef(false);
   const updates = usePackageUpdates(
     csrfToken,
-    anonym || authenticated,
+    platform !== 'keenetic-entware' && (anonym || authenticated),
     open,
     refreshingSession || !!intent,
   );
@@ -170,6 +171,8 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
             ? 'idle'
             : 'unknown';
   const badge = (label: ReactNode, available: boolean) => {
+    if (platform === 'keenetic-entware')
+      return <Chip key={String(label)} label={label} size="small" variant="outlined" />;
     const chip = (
       <Tooltip
         key={String(label)}

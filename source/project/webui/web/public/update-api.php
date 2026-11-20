@@ -37,7 +37,9 @@ final class AsusUpdateApi
     }
     public static function dispatch(array $post): array
     {
-        self::validate($post);$store=new AsusUpdateStore();$dispatch=new AsusUpdateDispatch($store);
+        self::validate($post);
+        if (NfqwsPlatform::current() === 'keenetic-entware') throw new RuntimeException('unsupported_abi');
+        $store=new AsusUpdateStore();$dispatch=new AsusUpdateDispatch($store);
         if($post['cmd']==='packageupdatecheck')return self::checkResult((new AsusUpdateCheck($store))->request($post['force']==='1'));
         if($post['cmd']==='packageupdateprepare')return self::operation($dispatch->prepare($post['revision'],$post['request_id']));
         if($post['cmd']==='packageupdateapply')return self::operation($dispatch->apply($post['operation_id'],$post['revision'],$post['request_id']));

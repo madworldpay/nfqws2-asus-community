@@ -67,6 +67,18 @@ final class AsusDpiInstaller
     {
         if($this->artifact!==null)return $this->artifact;
         if(NfqwsPlatform::native())return NfqwsOpenWrtDpi::artifact();
+        if (NfqwsPlatform::current() === 'keenetic-entware') {
+            require_once __DIR__.'/entware-package.php';
+            $panel = NfqwsEntwarePackage::installed('nfqws2-keenetic-community');
+            $arch = $panel['architecture'] ?? '';
+            $record = NfqwsPlatform::sharedFile('keenetic-dpi-artifact.json', __DIR__.'/missing-keenetic-artifact');
+            $raw = @file_get_contents($record, false, null, 0, 16385);
+            if (!is_string($raw) || strlen($raw) > 16384) throw new RuntimeException('unsupported_abi');
+            $spec = json_decode($raw, true);
+            $engine = ['aarch64-3.10'=>'arm64','mips-3.4'=>'mips','mipsel-3.4'=>'mipsel'][$arch] ?? '';
+            if ($engine === '' || !is_array($spec)) throw new RuntimeException('unsupported_abi');
+            return NfqwsOpenWrtDpi::select($spec, $arch, $engine);
+        }
         $p=@proc_open([AsusDpiRuntime::BUSYBOX,'sh','-c','. /opt/lib/nfqws2-asus/abi.sh; asus_entware_primary_abi'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/usr/bin:/bin:/opt/bin','LANG'=>'C']);
         if(!is_resource($p))throw new RuntimeException('unsupported_abi');$abi=stream_get_contents($pipes[1],64);fclose($pipes[1]);$exit=proc_close($p);
         if($exit!==0)throw new RuntimeException('unsupported_abi');return AsusDpiCatalog::artifact(trim($abi));

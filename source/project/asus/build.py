@@ -125,7 +125,7 @@ def asset(name, cache, offline):
             return {m.name.removeprefix('./'): inner.extractfile(m).read() for m in inner if m.isfile()}
 
 
-def compressed_tar(files):
+def compressed_tar(files, *, omit_directories=()):
     """files: path -> (bytes, mode). Normalize ownership, timestamps and order."""
     stream = io.BytesIO()
     with gzip.GzipFile(fileobj=stream, mode='wb', filename='', mtime=0) as gz:
@@ -136,7 +136,7 @@ def compressed_tar(files):
                 if path.is_absolute() or '..' in path.parts:
                     raise ValueError(f'Unsafe package path: {name}')
                 directories.update(str(p) for p in path.parents if str(p) != '.')
-            for name in sorted(directories):
+            for name in sorted(directories.difference(omit_directories)):
                 info = tarfile.TarInfo(name)
                 info.type, info.mode = tarfile.DIRTYPE, 0o755
                 tar.addfile(info)

@@ -2,9 +2,13 @@
 /** Trusted package profile. HTTP fields and process environment cannot select it. */
 final class NfqwsPlatform
 {
+    private const ENTWARE = [
+        'root'=>'/opt', 'config'=>'/opt/etc/nfqws2', 'web_config'=>'/opt/etc/nfqws-asus-web',
+        'library'=>'/opt/lib/nfqws2-asus', 'share'=>'/opt/share/nfqws2-asus', 'service'=>'/opt/etc/init.d/S51nfqws2',
+    ];
     private const PROFILES=[
-        'asus-entware'=>['root'=>'/opt','config'=>'/opt/etc/nfqws2','web_config'=>'/opt/etc/nfqws-asus-web',
-            'library'=>'/opt/lib/nfqws2-asus','share'=>'/opt/share/nfqws2-asus','service'=>'/opt/etc/init.d/S51nfqws2'],
+        'asus-entware'=>self::ENTWARE,
+        'keenetic-entware'=>self::ENTWARE,
         'openwrt'=>['root'=>'','config'=>'/etc/nfqws2','web_config'=>'/etc/nfqws2-web',
             'library'=>'/usr/lib/nfqws2','share'=>'/usr/share/nfqws2','service'=>'/etc/init.d/nfqws2-native'],
     ];
@@ -64,12 +68,43 @@ final class NfqwsPlatform
         $littleEndian??=pack('L',1)==="\x01\x00\x00\x00";
         return strtoupper(bin2hex($littleEndian?strrev($bytes):$bytes));
     }
+    public static function webBase(): string
+    {
+        return self::current() === 'keenetic-entware' ? '/nfqws-community/' : '/';
+    }
+    public static function busybox(?string $profile = null): string
+    {
+        return match ($profile ?? self::current()) {
+            'keenetic-entware' => '/opt/bin/busybox',
+            'openwrt' => '/bin/busybox',
+            'asus-entware' => '/opt/libexec/nfqws2-asus/busybox',
+            default => throw new RuntimeException('invalid_platform_profile'),
+        };
+    }
     public static function serviceCommand(string $action,?string $profile=null):array
     {
         if(!in_array($action,['start','stop','restart','status','check','diagnostics'],true))throw new RuntimeException('invalid_service_action');
+        $profile ??= self::current();
         $settings=self::settings($profile);
+        if ($profile === 'keenetic-entware' && $action === 'diagnostics') return [$settings['library'].'/keenetic-diagnostics.sh'];
         if($settings['root']===''&&in_array($action,['status','check','diagnostics'],true))return ['/usr/lib/nfqws2/control.sh',$action];
         return [$settings['service'],$action];
+    }
+    public static function serviceStatus(?string $profile=null):array
+    {
+        $profile ??= self::current();
+        $command = self::serviceCommand('status', $profile);
+        if (!file_exists($command[0])) return ['service'=>false, 'status'=>1];
+        $result = self::run($command);
+        if ($profile === 'keenetic-entware') {
+            if ($result['status'] === 0 && $result['output'] === ['Service NFQWS2 is running'])
+                return ['service'=>true, 'status'=>0];
+            if ($result['status'] === 0 && $result['output'] === ['Service NFQWS2 is stopped'])
+                return ['service'=>false, 'status'=>0];
+            return ['service'=>false, 'status'=>1];
+        }
+        $running = $result['status'] === 0 && str_contains($result['output'][0] ?? '', 'is running');
+        return ['service'=>$running, 'status'=>0];
     }
     public static function reader(int $owner=0,bool $mutable=false):AsusShareRead
     {

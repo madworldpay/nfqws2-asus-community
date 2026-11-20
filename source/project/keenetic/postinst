@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+# The stock listener already serves this subdirectory on port 90.
+root=${IPKG_INSTROOT:-}
+state="$root/opt/etc/nfqws-asus-web"
+if [ ! -e "$state" ]; then
+    (umask 077 && mkdir "$state")
+fi

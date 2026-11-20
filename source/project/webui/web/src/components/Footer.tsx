@@ -94,7 +94,7 @@ export const Footer = () => {
             },
           }}
         >
-          <TechnicalChannel />
+          {platform !== 'keenetic-entware' && <TechnicalChannel />}
           <Box
             sx={{
               display: 'flex',

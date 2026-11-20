@@ -1,3 +1,4 @@
+import { panelApi } from './panelPaths.js';
 import { sha256 } from '@/api/supportDigest';
 import {
   inspectSupportReport,
@@ -59,7 +60,7 @@ export async function prepareSupportBundle(
   if (!report.proof || !/^[a-f0-9]{32}$/.test(jobId))
     throw new SupportReportError('invalid');
   const preview = await inspectSupportReport(report);
-  const response = await fetch('/index.php', {
+  const response = await fetch(panelApi, {
     method: 'POST',
     credentials: 'same-origin',
     signal: AbortSignal.timeout(20000),
@@ -173,7 +174,7 @@ export function sendSupportBundle(
       code: 'delivery_unknown',
     };
     try {
-      const response = await fetch('/index.php', {
+      const response = await fetch(panelApi, {
         method: 'POST',
         credentials: 'same-origin',
         signal: AbortSignal.timeout(20000),

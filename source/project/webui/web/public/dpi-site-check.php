@@ -66,7 +66,7 @@ final class AsusDpiSiteCheck
     /** Numeric-only, read-only commands; run() owns each exact child handle. */
     private function network(?string $ip,float $deadline):array
     {
-        $out=[];$busybox=NfqwsPlatform::native()?'/bin/busybox':'/opt/libexec/nfqws2-asus/busybox';
+        $out=[];$busybox=NfqwsPlatform::busybox();
         $commands=['ping'=>[$busybox,'ping','-n','-c','3','-W','1','-i','0.2',$ip],
             'route'=>[$busybox,'ip','-4','route','get',$ip],
             'trace'=>[$busybox,'traceroute','-n','-m','12','-q','1','-w','1',$ip]];

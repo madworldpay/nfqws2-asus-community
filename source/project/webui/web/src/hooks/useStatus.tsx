@@ -3,6 +3,7 @@ import { useConfig } from '@/config/useConfig';
 import { useQuery } from '@tanstack/react-query';
 
 import { API } from '@/api/client';
+import type { StatusResponse } from '@/api/schema';
 
 import { isAuthUnconfigured } from '@/utils/authError';
 import { parsePackageVersion, type Version } from '@/utils/packageVersion';
@@ -28,7 +29,7 @@ export const useVersionCheck = (url: string, enabled = true) => {
 };
 
 type UseStatusResult = {
-  platform: 'asus-entware' | 'openwrt';
+  platform: NonNullable<StatusResponse['platform']>;
   authUnavailable?: boolean;
   status: boolean;
   nfqws2: boolean;
@@ -68,7 +69,10 @@ export const useStatus = (): UseStatusResult => {
       const currentWeb = parsePackageVersion(process.env.APP_VERSION).version;
 
       return {
-        platform: status.platform === 'openwrt' ? 'openwrt' : 'asus-entware',
+        platform:
+          status.platform === 'openwrt' || status.platform === 'keenetic-entware'
+            ? status.platform
+            : 'asus-entware',
         status: true,
         nfqws2: status.nfqws2,
         service: status.service,

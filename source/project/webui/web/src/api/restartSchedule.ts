@@ -1,3 +1,4 @@
+import { panelApi } from './panelPaths.js';
 export type RestartScheduleSettings = {
   enabled: boolean;
   interval_hours: number;
@@ -41,7 +42,7 @@ export async function restartScheduleRequest(
   else signal.addEventListener('abort', abort, { once: true });
   const timer = setTimeout(abort, 15000);
   try {
-    const response = await fetch('/index.php', {
+    const response = await fetch(panelApi, {
       method: 'POST',
       credentials: 'same-origin',
       redirect: 'error',
