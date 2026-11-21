@@ -1,8 +1,14 @@
 # Preset catalog
 
+## Built-in Zapret2 library
+
+For a ready-made strategy, open **Import strategies → Zapret2 library → Full presets**. The 98 presets ship with the panel. Choose one, review its files and preview the changes. [Step-by-step guide](IMPORT.en.md#zapret2) · [Screenshots](SCREENSHOTS.en.md#zapret2).
+
+## Cloud catalog
+
 > **The strategy catalog has moved to a new source.** Use the current package to import and submit profiles. Strategies already applied continue to work; you can also open your own JSON through **From computer (JSON)**.
 
-The catalog is used in the ASUS/Entware and OpenWrt panels. Supported resource paths are adapted during import; selection and preview remain available.
+The cloud catalog is available on ASUS with Entware, OpenWrt, Keenetic and Netcraze. Supported resource paths are adapted during import; selection and preview remain available.
 
 In the panel, click **import → From cloud**. The catalog has two sections:
 

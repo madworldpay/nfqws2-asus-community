@@ -1,12 +1,13 @@
 # Downloads
 
-[**Open the latest release**](https://github.com/madworldpay/nfqws2-asus-community/releases/latest).
-First, identify your firmware and installation environment:
+**Build 101 releases** · [ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
+
+[Install with one command](QUICKSTART.en.md#install-command). Use the table if you prefer to choose the file manually.
 
 | Installation environment | Which package to choose |
 | --- | --- |
 | ASUSWRT / Merlin with Entware already installed | `nfqws2-asus_…_armv7.ipk` or `nfqws2-asus_…_aarch64-3.10.ipk`, according to the Entware architecture |
-| KeeneticOS with Entware on Keenetic or Netcraze | [Choose the panel IPK](#keenetic) for your installed Entware architecture |
+| Keenetic or Netcraze with Entware | [Choose the panel IPK](#keenetic) for your installed Entware architecture |
 | OpenWrt 24.10 | `nfqws2-native_VERSION_ARCHITECTURE.ipk`, matching the exact `DISTRIB_ARCH` |
 | OpenWrt 25.12 | `nfqws2-native_VERSION_ARCHITECTURE.apk`, matching the exact `DISTRIB_ARCH`; the signature is checked by the native OpenWrt installer |
 
@@ -20,7 +21,7 @@ different firmware can run on the same model.
 
 The Build 101 panel installs alongside the stock web interface. It requires Entware, `nfqws2-keenetic` version `1.3.3` and `nfqws-keenetic-web` version `3.0.24` or later. Installation preserves the stock service configuration. [Stock NFQWS2](https://github.com/nfqws/nfqws2-keenetic) · [Stock web interface](https://github.com/nfqws/nfqws-keenetic-web).
 
-Run `opkg print-architecture` in the Entware terminal. Find your architecture in the table and download its package.
+Run `opkg print-architecture` in the Entware terminal. Find your architecture in the table and download its package. A vendor entry such as `aarch64-3.10_kn` can appear alongside the base architecture. Use the package for the matching base entry, in this case `aarch64-3.10`.
 
 | Entware architecture | Build 101 package |
 | --- | --- |
@@ -49,8 +50,5 @@ automatically selects the current package.
 The source archive ending in `_source.tar.gz` is available alongside the IPK files in each
 release. For your installed version, choose the sources from the same release.
 [Sources in the repository](source/).
-
-To install without choosing a file manually, use the [quick start](QUICKSTART.en.md):
-the ASUSWRT-Merlin command comes first, followed by the OpenWrt command.
 
 [Project documentation](README.en.md#documentation).

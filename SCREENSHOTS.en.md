@@ -1,10 +1,40 @@
 # Panel screenshots
 
-The first three screenshots show new features in Build 100. The galleries below show installed panels from Build 99 and earlier releases.
+Build 101 shows how to find a complete Zapret2 preset and see what it imports. The Build 100 gallery below covers personal notes, result columns and the MTProto button.
 
 Expand a screenshot and click it for full size. Static images have no animation; collapsed sections keep the gallery compact on phones.
 
 [Русский](SCREENSHOTS.md) · [Documentation](README.en.md)
+
+<a id="zapret2"></a>
+
+## Build 101 · Import strategies
+
+These screenshots come from a local copy of the released Build 101 Keenetic and Netcraze panel with stock package data. [Import guide](IMPORT.en.md#zapret2).
+
+### Open the import window
+
+The **Import strategies** button is in the header of the Keenetic and Netcraze panel.
+
+[![Build 101 panel header with the Import strategies button](images/screenshots/build101-keenetic-import-en.png)](images/screenshots/build101-keenetic-import-en.png)
+
+### Find a full preset
+
+**Full presets** contains 98 entries. Search and personal notes appear beside the list.
+
+[![Zapret2 full preset library with 98 results and personal note fields](images/screenshots/build101-zapret2-library-en.png)](images/screenshots/build101-zapret2-library-en.png)
+
+### See what a preset brings
+
+This preset selects five files together. They include a Lua script, a binary template and three lists.
+
+[![Five selected files belonging to one Zapret2 preset](images/screenshots/build101-zapret2-resources-en.png)](images/screenshots/build101-zapret2-resources-en.png)
+
+### Identify a missing dependency
+
+The preview names the Lua files this preset expects when matching copies are missing from the installed configuration.
+
+[![Preview identifying required Lua files before saving](images/screenshots/build101-zapret2-preview-en.png)](images/screenshots/build101-zapret2-preview-en.png)
 
 <a id="build100"></a>
 

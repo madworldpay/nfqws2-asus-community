@@ -1,6 +1,21 @@
 # Importing and sharing profiles
 
-Import and export work on ASUS/Entware and OpenWrt. Known paths for lists, Lua, and blobs are adapted to the platform; WAN and local device selection are preserved from your router.
+On ASUS with Entware, OpenWrt, Keenetic and Netcraze, the panel imports strategies and their files. It keeps the WAN interface and device selection from the receiving router.
+
+<a id="zapret2"></a>
+
+## Choose one of 98 Zapret2 strategies
+
+Open **Import strategies → Zapret2 library** and leave **Full presets** selected. This section contains 98 complete strategies from Zapret2 Magisk 2.3.10. Select one preset for the configuration you want to import. It already includes the author’s choice of rules.
+
+1. Find a preset by name, author or technique. The note beside each strategy is yours. Search includes notes saved in this browser for this panel address.
+2. Select the preset to see its strategy blocks, attached files and stock dependencies. The selection includes the preset’s lists, Lua scripts and binary templates (blobs) when it uses them.
+3. Select **Preview** to review the changes. If a required file is missing or differs from the expected version, the preview names it. For a preset with Lua, review the source before confirming that you trust it.
+4. When the preview is ready, select **Save selection**. Starting or restarting NFQWS2 is a separate action.
+
+On a fresh Keenetic or Netcraze installation, the stock NFQWS2 1.3.3 package stores some Lua files as `.lua.gz`. If the preview lists `zapret-lib.lua`, `zapret-antidpi.lua` or `zapret-auto.lua` as missing, the preset needs matching uncompressed copies. Preview the import again once those dependencies are available.
+
+[See the library, attached files and preview in Build 101](SCREENSHOTS.en.md#zapret2).
 
 **JSON** is a file containing selected settings from our panel. The router owner saves it
 to transfer settings to another device or share them with another user.

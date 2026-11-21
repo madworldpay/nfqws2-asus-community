@@ -322,43 +322,14 @@ main() {
     [ -n "$model" ] || model=$(nvram get odmpid 2>/dev/null)
     [ -n "$model" ] || fail 'Не удалось определить модель ASUS.'
 
-    # Resolve the primary Entware ABI, never a supported lower-priority ABI.
-    arches=$("$OPKG" print-architecture) || fail 'Не удалось прочитать архитектуру Entware.'
-    abi=$(printf '%s\n' "$arches" | awk '
-        $1=="arch" && $2!="all" {
-            if(NF!=3 || $3!~/^[0-9]+$/ || $3>2147483647){bad=1;next}
-            if($2 in seen)next;seen[$2]=1
-            if(!have || $3+0>priority){have=1;priority=$3+0;abi=$2;tied=0}
-            else if($3+0==priority)tied=1
-        }
-        END{if(bad||!have||priority<=0||tied)exit 1;print abi}
-    ') || fail 'Не удалось однозначно определить основную архитектуру Entware.'
+    entware_select_abi
     case "$abi:$(uname -m)" in
         armv7-2.6:armv7*|armv7-3.2:armv7*|armv7-2.6:aarch64|armv7-3.2:aarch64) family=armv7 ;;
         aarch64-3.10:aarch64) family=aarch64-3.10 ;;
         *) fail "Архитектура Entware $abi не поддерживается этим установщиком." ;;
     esac
-    CURL=$(tool curl) || CURL=''
-    WGET=''
-    if [ -z "$CURL" ]; then
-        WGET=$(tool wget) || fail 'Для скачивания нужен curl или GNU wget: установите один из них через opkg.'
-        "$WGET" --version 2>/dev/null | grep -q 'GNU Wget' || fail 'Для HTTPS нужен curl или GNU wget из Entware.'
-    fi
-    mkdir -p /opt/tmp || fail 'Entware недоступна для записи.'
-    work_attempt=0
-    while [ "$work_attempt" -lt 32 ]; do
-        work_candidate=/opt/tmp/nfqws2-asus-install.$$.$work_attempt
-        if mkdir "$work_candidate" 2>/dev/null; then WORK=$work_candidate; break; fi
-        work_attempt=$((work_attempt + 1))
-    done
-    [ -n "$WORK" ] || fail 'Не удалось создать временный каталог в Entware.'
-    # Entware commonly exposes its mounted tree through the firmware /opt alias.
-    # The PHP verifier accepts only canonical ancestors below that boundary.
-    WORK=$(cd "$WORK" && pwd -P) || fail 'Не удалось определить каталог установки Entware.'
-    trap cleanup 0
-    trap 'exit 130' INT
-    trap 'exit 143' TERM HUP
-    nfqws_asus_bootstrap_lease || fail 'Другой установщик NFQWS2 ASUS уже работает или его блокировка недоступна.'
+    entware_download_tools || fail 'Для HTTPS нужен curl или GNU wget из Entware.'
+    entware_workspace
     say "ASUS $model · Entware $abi"
     read_package_status
     case "$package_status" in
@@ -470,6 +441,251 @@ EOF
     panel_link
     [ -n "$was_installed" ] || say 'Выберите WAN, устройства и профиль в панели, затем запустите NFQWS2.'
     return 0
+}
+
+entware_select_abi() {
+    # Resolve the primary Entware ABI, never a supported lower-priority ABI.
+    arches=$("$OPKG" print-architecture) || fail 'Не удалось прочитать архитектуру Entware.'
+    abi=$(printf '%s\n' "$arches" | awk -v platform="${1-}" '
+        $1=="arch" && $2!="all" {
+            if(NF!=3 || $3!~/^[0-9]+$/ || $3>2147483647){bad=1;next}
+            if ($2 in registered) next
+            registered[$2] = $3 + 0
+            family = $2
+            # KeeneticOS can give its vendor feed higher priority than Entware.
+            if (platform == "keenetic" && family ~ /^(aarch64-3[.]10|mips-3[.]4|mipsel-3[.]4)_kn$/)
+                sub(/_kn$/, "", family)
+            if (!have || $3+0 > priority) {
+                have = 1; priority = $3+0; abi = family; tied = 0
+            } else if ($3+0 == priority && family != abi) tied = 1
+        }
+        END {
+            # The published IPK carries the base architecture in its control file.
+            if (bad || !have || tied || !(abi in registered) || registered[abi] <= 0) exit 1
+            print abi
+        }
+    ') || fail 'Не удалось однозначно определить основную архитектуру Entware.'
+}
+
+entware_download_tools() {
+    CURL=$(tool curl) || CURL=''
+    WGET=''
+    [ -z "$CURL" ] || return 0
+    WGET=$(tool wget) && "$WGET" --version 2>/dev/null | grep -q 'GNU Wget'
+}
+
+entware_workspace() {
+    mkdir -p /opt/tmp || fail 'Entware недоступна для записи.'
+    work_attempt=0
+    while [ "$work_attempt" -lt 32 ]; do
+        work_candidate=/opt/tmp/nfqws2-asus-install.$$.$work_attempt
+        if mkdir "$work_candidate" 2>/dev/null; then WORK=$work_candidate; break; fi
+        work_attempt=$((work_attempt + 1))
+    done
+    [ -n "$WORK" ] || fail 'Не удалось создать временный каталог в Entware.'
+    # Entware commonly exposes its mounted tree through the firmware /opt alias.
+    # The PHP verifier accepts only canonical ancestors below that boundary.
+    WORK=$(cd "$WORK" && pwd -P) || fail 'Не удалось определить каталог установки Entware.'
+    trap cleanup 0
+    trap 'exit 130' INT
+    trap 'exit 143' TERM HUP
+    nfqws_asus_bootstrap_lease || fail 'Другой установщик NFQWS2 уже работает или его блокировка недоступна.'
+}
+
+# Only the immutable Build 101 r2 release and its matching upstream packages.
+# Community package hashes come from the signed SHA256SUMS-keenetic.txt.
+keenetic_package_version() {
+    record=$("$OPKG" status "$1") || return 1
+    [ -n "$record" ] || return 0
+    printf '%s\n' "$record" | awk -v name="$1" '
+        $1=="Package:" {packages++; pkg=$2}
+        $1=="Version:" {version=$2}
+        $1=="Status:" {state=$4; valid=($2=="install" || $2=="hold") && ($3=="ok" || $3=="user")}
+        END {
+            if(packages!=1 || pkg!=name) exit 1
+            if(state=="config-files" || state=="not-installed") exit 0
+            if(!valid || state!="installed" || !version) exit 1
+            print version
+        }'
+}
+
+# opkg uses >> for strictly newer. A solver error must not look like an older package.
+keenetic_compare() {
+    "$OPKG" compare-versions "$@" && return 0
+    [ "$?" -eq 1 ] || fail 'Не удалось сравнить версии пакетов Entware.'
+    return 1
+}
+
+keenetic_asset() {
+    filename=$1 expected=$2 base=$3
+    if [ -f "/opt/packages/$filename" ] && [ ! -L "/opt/packages/$filename" ]; then
+        cp "/opt/packages/$filename" "$WORK/$filename" || fail 'Не удалось прочитать пакет с накопителя.'
+        digest=$(recovery_hash "$WORK/$filename") && [ "${digest%% *}" = "$expected" ] && return 0
+    fi
+    if ! entware_download_tools; then
+        [ "$CHECK_ONLY" = 0 ] || fail 'Для проверки загрузок нужен curl или GNU wget из Entware.'
+        prepare_opkg
+        "$OPKG" --tmp-dir "$WORK/opkg" install curl ca-bundle && entware_download_tools ||
+            fail 'Не удалось подготовить curl и сертификаты Entware.'
+    fi
+    download "$base/$filename" "$WORK/$filename" 33554432
+    digest=$(recovery_hash "$WORK/$filename") && [ "${digest%% *}" = "$expected" ] ||
+        fail "Контрольная сумма не совпала: $filename"
+}
+
+keenetic_panel_link() {
+    # SSH_CONNECTION lists the server address in field three. Local consoles
+    # can use the same LAN address as the router settings.
+    address=$(printf '%s\n' "${SSH_CONNECTION-}" | awk 'NF==4 {
+        if ($3 ~ /^[0-9a-fA-F:]+$/ && index($3,":")) {print "[" $3 "]"; exit}
+        n=split($3,octets,"[.]"); if(n!=4)exit
+        for(i=1;i<=4;i++) if(octets[i]!~/^[0-9]+$/ || octets[i]+0>255)exit
+        print $3
+    }')
+    if [ -n "$address" ]; then
+        say "Панель: http://$address:90/nfqws-community/"
+    else
+        say 'Откройте в домашней сети http://<адрес-роутера>:90/nfqws-community/'
+    fi
+}
+
+# The two pinned vendor archives contain only regular files and directories,
+# all stamped with the build user's UID 1001. opkg applies even directory
+# ownership to an existing /opt. Stage the same files before invoking opkg.
+keenetic_stage_stock() (
+    set -u
+    original=$1
+    name=${original##*/}
+    stage=$WORK/stage-$name
+    mkdir -p "$WORK/stock" "$stage/data" || exit 1
+    "$STOCK_TAR" -xzf "$original" --no-same-owner -C "$stage" || exit 1
+    "$STOCK_TAR" -xzf "$stage/data.tar.gz" --no-same-owner --same-permissions -C "$stage/data" || exit 1
+    "$STOCK_TAR" -tzf "$stage/data.tar.gz" > "$stage/members" || exit 1
+    while IFS= read -r member; do
+        path=${member#./}
+        path=${path%/}
+        case "$path" in
+            ''|.|opt) continue ;;
+            opt/*) target=/opt/${path#opt/} ;;
+            *) exit 1 ;;
+        esac
+        if [ -d "$stage/data/$path" ] && { [ -e "$target" ] || [ -L "$target" ]; }; then
+            [ -d "$target" ] && [ ! -L "$target" ] || exit 1
+            continue
+        fi
+        printf '%s\n' "$member" || exit 1
+    done < "$stage/members" > "$stage/include" || exit 1
+    "$STOCK_TAR" --format=ustar --no-recursion --numeric-owner --owner=0 --group=0 \
+        -czf "$stage/data.tar.gz" -C "$stage/data" -T "$stage/include" || exit 1
+    "$STOCK_TAR" --format=ustar -czf "$WORK/stock/$name" -C "$stage" debian-binary control.tar.gz data.tar.gz
+)
+
+keenetic_stock_asset() {
+    keenetic_asset "$@"
+    [ "$CHECK_ONLY" = 0 ] || return 0
+    if [ -z "${STOCK_TAR-}" ]; then
+        STOCK_TAR=/opt/libexec/tar-gnu
+        if [ ! -x "$STOCK_TAR" ]; then STOCK_TAR=$(tool tar) || STOCK_TAR=''; fi
+        if [ -z "$STOCK_TAR" ] || ! "$STOCK_TAR" --version 2>/dev/null | grep -q 'GNU tar'; then
+            prepare_opkg
+            "$OPKG" --tmp-dir "$WORK/opkg" install tar || fail 'Не удалось установить GNU tar из Entware.'
+            STOCK_TAR=/opt/libexec/tar-gnu
+            "$STOCK_TAR" --version 2>/dev/null | grep -q 'GNU tar' ||
+                fail 'Для подготовки штатного пакета нужен GNU tar.'
+        fi
+    fi
+    keenetic_stage_stock "$WORK/$1" || fail "Не удалось подготовить штатный пакет $1 в Entware."
+}
+
+nfqws_keenetic_main() {
+    WORK='' KEEP_WORK=0 OPKG_UPDATED=0 CHECK_ONLY=0 STOCK_TAR=''
+    [ "$#" -le 1 ] || fail 'Используйте sh install.sh или sh install.sh --check.'
+    case "${1-}" in
+        '') ;;
+        --check) CHECK_ONLY=1 ;;
+        --help|-h) say 'Keenetic и Netcraze: sh install.sh. Проверка пакетов без установки: sh install.sh --check'; return 0 ;;
+        *) fail 'Неизвестный параметр. Используйте sh install.sh или sh install.sh --check.' ;;
+    esac
+    [ "$(id -u)" = 0 ] || fail 'Откройте SSH-терминал Entware от имени root.'
+    board=$(/bin/ndmc -c 'show version') || fail 'KeeneticOS не вернула сведения о модели.'
+    model=$(printf '%s\n' "$board" | awk '
+        $1=="hw_id:" {count++; model=$2}
+        END {if(count!=1 || model!~/^(KN|NC)-[0-9][0-9][0-9][0-9]$/) exit 1; print model}') ||
+        fail 'Не удалось подтвердить модель Keenetic или Netcraze.'
+    OPKG=/opt/bin/opkg
+    [ -x "$OPKG" ] || fail 'Сначала подключите накопитель с Entware и выберите его в разделе OPKG.'
+    entware_select_abi keenetic
+    case "$abi:$(uname -m)" in
+        aarch64-3.10:aarch64)
+            core_sha=1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91
+            panel_sha=51ef4841819f0958a812a817dc9bd7c7ae39ee20bccf90e750895d906e542e34 ;;
+        mips-3.4:mips|mips-3.4:mips64)
+            core_sha=f0d3bf7389f796e9b07481629d52fe687bda2dcd01b4a1f5518532d5c9ea7245
+            panel_sha=4c54d7968aae52976f1ad973557bd6713474ae25e301882764f69737cc8afc56 ;;
+        mipsel-3.4:mips|mipsel-3.4:mipsel|mipsel-3.4:mips64|mipsel-3.4:mips64el)
+            core_sha=3da1a9a57cfcc16d243fe128024ecfb2c8f11802d932643ea46509e8ec0465b5
+            panel_sha=7ac365f03c38897c26d1e434ca09f094892e201e9b47ddbb00729c4b031645a2 ;;
+        *) fail "Для $model с архитектурой Entware $abi совместимого пакета пока нет." ;;
+    esac
+    case "$model" in KN-*) brand=Keenetic;; NC-*) brand=Netcraze;; esac
+    say "$brand $model · Entware $abi"
+    version='1.3.3+b101-2'
+    name=nfqws2-keenetic-community
+    core=nfqws2-keenetic
+    web=nfqws-keenetic-web
+    entware_workspace
+    for conflict in nfqws2-asus nfqws-asus-web nfqws-keenetic tpws-keenetic; do
+        other=$(keenetic_package_version "$conflict") || fail "Проверьте состояние пакета $conflict в Entware."
+        [ -z "$other" ] || fail "Установлен несовместимый пакет $conflict. Настройки сохранены."
+    done
+    installed=$(keenetic_package_version "$name") || fail "Проверьте состояние пакета $name в Entware."
+    core_version=$(keenetic_package_version "$core") || fail "Проверьте состояние пакета $core в Entware."
+    web_version=$(keenetic_package_version "$web") || fail "Проверьте состояние пакета $web в Entware."
+    if [ -n "$installed" ] && keenetic_compare "$installed" '>>' "$version"; then
+        fail "Установлен более новый пакет панели $installed."
+    fi
+    if [ -n "$core_version" ] && keenetic_compare "$core_version" '>>' '1.3.3'; then
+        fail "Для штатного NFQWS2 $core_version требуется более новая версия панели."
+    fi
+    web_ready=0
+    if [ -n "$web_version" ] && keenetic_compare "$web_version" '>=' '3.0.24'; then web_ready=1; fi
+    if [ "$CHECK_ONLY" = 0 ] && [ "$installed" = "$version" ] && [ "$core_version" = '1.3.3' ] && [ "$web_ready" = 1 ]; then
+        [ -f /opt/share/www/nfqws/nfqws-community/index.php ] || fail 'Пакет установлен, но отсутствует файл панели. Проверьте накопитель Entware.'
+        say "$name $version уже установлен."
+        keenetic_panel_link
+        return 0
+    fi
+    if ! select_hash; then
+        [ "$CHECK_ONLY" = 0 ] || fail 'Для проверки пакетов нужен sha256sum из Entware.'
+        prepare_opkg
+        "$OPKG" --tmp-dir "$WORK/opkg" install coreutils-sha256sum && select_hash ||
+            fail 'Не удалось подготовить проверку SHA-256.'
+    fi
+    set --
+    if [ "$core_version" != '1.3.3' ]; then
+        file="${core}_1.3.3_${abi}.ipk"
+        keenetic_stock_asset "$file" "$core_sha" 'https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.3'
+        set -- "$@" "$WORK/stock/$file"
+    fi
+    if [ "$web_ready" = 0 ]; then
+        file="${web}_3.0.24_all_entware.ipk"
+        keenetic_stock_asset "$file" 767b7003db0057d1d46513dcdd6c8c87dc666732a2f7b8c6d756b15cd7900565 'https://github.com/nfqws/nfqws-keenetic-web/releases/download/v3.0.24'
+        set -- "$@" "$WORK/stock/$file"
+    fi
+    file="${name}_${version}_${abi}.ipk"
+    keenetic_asset "$file" "$panel_sha" 'https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2'
+    set -- "$@" "$WORK/$file"
+    if [ "$CHECK_ONLY" = 1 ]; then say "Пакеты Build 101 для $brand проверены."; return 0; fi
+    prepare_opkg
+    "$OPKG" --tmp-dir "$WORK/opkg" --noaction install "$@" || fail 'Entware не смогла подготовить установку. Проверьте доступ к её репозиторию.'
+    nfqws_asus_background "$OPKG" --tmp-dir "$WORK/opkg" install "$@" || fail 'Установка не завершена. Сохраните журнал opkg.'
+    web_version=$(keenetic_package_version "$web") || fail 'Не удалось проверить штатную веб-панель.'
+    [ "$(keenetic_package_version "$name")" = "$version" ] &&
+        [ "$(keenetic_package_version "$core")" = '1.3.3' ] && [ -n "$web_version" ] &&
+        keenetic_compare "$web_version" '>=' '3.0.24' &&
+        [ -f /opt/share/www/nfqws/nfqws-community/index.php ] || fail 'Не удалось подтвердить установленную панель.'
+    say 'Готово. Пакет панели Build 101 установлен.'
+    keenetic_panel_link
 }
 
 # BEGIN GENERATED ASUS RECOVERY INSTALLER
@@ -959,13 +1175,17 @@ cat <<'NFQWS_NATIVE_BUNDLE'
 <?php
 // Generated from shared native installer verification code.
 interface AsusUpdateSource { public function manifest():array; public function download(array $package,string $destination):void; }
-// webui/web/public/platform.php sha256=53877309af1524ed44aa076b1cdc00744d0cc8ca2e66b605dcae8e5c08c12d6c
+// webui/web/public/platform.php sha256=65fa2988578fc94a9f36988a50555a81ebd7072727be3348b823fb6adec016a1
 /** Trusted package profile. HTTP fields and process environment cannot select it. */
 final class NfqwsPlatform
 {
+    private const ENTWARE = [
+        'root'=>'/opt', 'config'=>'/opt/etc/nfqws2', 'web_config'=>'/opt/etc/nfqws-asus-web',
+        'library'=>'/opt/lib/nfqws2-asus', 'share'=>'/opt/share/nfqws2-asus', 'service'=>'/opt/etc/init.d/S51nfqws2',
+    ];
     private const PROFILES=[
-        'asus-entware'=>['root'=>'/opt','config'=>'/opt/etc/nfqws2','web_config'=>'/opt/etc/nfqws-asus-web',
-            'library'=>'/opt/lib/nfqws2-asus','share'=>'/opt/share/nfqws2-asus','service'=>'/opt/etc/init.d/S51nfqws2'],
+        'asus-entware'=>self::ENTWARE,
+        'keenetic-entware'=>self::ENTWARE,
         'openwrt'=>['root'=>'','config'=>'/etc/nfqws2','web_config'=>'/etc/nfqws2-web',
             'library'=>'/usr/lib/nfqws2','share'=>'/usr/share/nfqws2','service'=>'/etc/init.d/nfqws2-native'],
     ];
@@ -1025,12 +1245,43 @@ final class NfqwsPlatform
         $littleEndian??=pack('L',1)==="\x01\x00\x00\x00";
         return strtoupper(bin2hex($littleEndian?strrev($bytes):$bytes));
     }
+    public static function webBase(): string
+    {
+        return self::current() === 'keenetic-entware' ? '/nfqws-community/' : '/';
+    }
+    public static function busybox(?string $profile = null): string
+    {
+        return match ($profile ?? self::current()) {
+            'keenetic-entware' => '/opt/bin/busybox',
+            'openwrt' => '/bin/busybox',
+            'asus-entware' => '/opt/libexec/nfqws2-asus/busybox',
+            default => throw new RuntimeException('invalid_platform_profile'),
+        };
+    }
     public static function serviceCommand(string $action,?string $profile=null):array
     {
         if(!in_array($action,['start','stop','restart','status','check','diagnostics'],true))throw new RuntimeException('invalid_service_action');
+        $profile ??= self::current();
         $settings=self::settings($profile);
+        if ($profile === 'keenetic-entware' && $action === 'diagnostics') return [$settings['library'].'/keenetic-diagnostics.sh'];
         if($settings['root']===''&&in_array($action,['status','check','diagnostics'],true))return ['/usr/lib/nfqws2/control.sh',$action];
         return [$settings['service'],$action];
+    }
+    public static function serviceStatus(?string $profile=null):array
+    {
+        $profile ??= self::current();
+        $command = self::serviceCommand('status', $profile);
+        if (!file_exists($command[0])) return ['service'=>false, 'status'=>1];
+        $result = self::run($command);
+        if ($profile === 'keenetic-entware') {
+            if ($result['status'] === 0 && $result['output'] === ['Service NFQWS2 is running'])
+                return ['service'=>true, 'status'=>0];
+            if ($result['status'] === 0 && $result['output'] === ['Service NFQWS2 is stopped'])
+                return ['service'=>false, 'status'=>0];
+            return ['service'=>false, 'status'=>1];
+        }
+        $running = $result['status'] === 0 && str_contains($result['output'][0] ?? '', 'is running');
+        return ['service'=>$running, 'status'=>0];
     }
     public static function reader(int $owner=0,bool $mutable=false):AsusShareRead
     {
@@ -3116,4 +3367,6 @@ nfqws_native_main() {
 # END GENERATED NATIVE OPENWRT INSTALLER
 
 # Keep the entry point last so an incomplete piped download cannot run a partial installer.
-if [ -f /etc/openwrt_release ]; then nfqws_native_main "$@"; else main "$@"; fi
+if [ -x /bin/ndmc ]; then nfqws_keenetic_main "$@"
+elif [ -f /etc/openwrt_release ]; then nfqws_native_main "$@"
+else main "$@"; fi

@@ -1,5 +1,7 @@
 # Installation and removal
 
+<a id="asus-entware"></a>
+
 ## ASUSWRT-Merlin / Entware
 
 ### Before installation
@@ -23,32 +25,9 @@ On a fresh ASUSWRT-Merlin installation, prepare Entware first:
 
 ### Install with one command
 
-Connect to the router over SSH with Entware ready and run:
+Open the [common installation command](QUICKSTART.en.md#install-command) and paste it into the router’s SSH shell. The installer selects the ASUS package and verifies its SHA-256 digest. Allow at least 128 MB of free space in Entware and 32 MB of available RAM.
 
-```sh
-(
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
-  trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
-  sh "$nfqws_dir/install.sh"
-)
-```
-
-The same command works on ASUS/Entware and OpenWrt; the installer selects the package.
-
-The installer downloads the current IPK over HTTPS and verifies SHA256.
-The command above uses `curl` supplied with Merlin; the installer also supports GNU `wget`. Installation requires at least 128 MB of free Entware storage
-and 32 MB of available RAM. Temporary files are placed in `/opt/tmp` and removed
-when finished. The installer does not delete files belonging to other applications.
-
-Start processing in the panel after initial setup. Updates preserve settings
-and the chosen on/off service state. If the current version is already installed,
-running the command again only prints the panel address.
-
-To check without installing, run the already downloaded script with `sh install.sh --check`. This mode installs neither the package nor missing prerequisites.
+Start NFQWS2 from the panel after setup. Updates preserve your settings and service state. To check a downloaded installer, run `sh install.sh --check`.
 
 ### Install an IPK
 
@@ -105,9 +84,17 @@ If a required configuration file is missing, the package restores the current te
 and only the missing default lists needed by that template. Existing files are retained.
 If stopping fails, save diagnostics and investigate the cause; do not use force.
 
+<a id="keenetic"></a>
+
+## Keenetic and Netcraze
+
+Enable the OPKG component in the router settings and select a drive for Entware. Once Entware is installed, connect to its SSH shell as `root`. For manual installation, run `opkg print-architecture` to identify the package you need. [Quick start](QUICKSTART.en.md#install-command) · [Packages for manual installation](DOWNLOADS.en.md#keenetic).
+
+Open `http://<router-address>:90/nfqws-community/` on your home network. To remove the community panel, run `opkg remove nfqws2-keenetic-community` in Entware. The `nfqws2-keenetic` package manages the stock NFQWS2 service.
+
 ## OpenWrt
 
-**OpenWrt uses the same command above.** Connect to the router over SSH as `root`; Entware is not required.
+Connect to the router over SSH as `root` and run the [common installation command](QUICKSTART.en.md#install-command). The installer selects a native OpenWrt package.
 
 After installation, open the panel address, select devices and a strategy,
 save settings and start NFQWS2. To stop: `/etc/init.d/nfqws2-native stop`.

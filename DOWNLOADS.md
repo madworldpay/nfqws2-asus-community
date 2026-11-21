@@ -1,12 +1,13 @@
 # Загрузки
 
-[**Открыть последний выпуск**](https://github.com/madworldpay/nfqws2-asus-community/releases/latest).
-Сначала определите прошивку и среду установки:
+**Выпуски Build 101** · [ASUS и OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
+
+[Установить одной командой](QUICKSTART.md#install-command). Для ручного выбора файла используйте таблицу ниже.
 
 | Где устанавливаете | Какой пакет выбрать |
 | --- | --- |
 | ASUSWRT / Merlin с готовой Entware | `nfqws2-asus_…_armv7.ipk` или `nfqws2-asus_…_aarch64-3.10.ipk` по архитектуре Entware |
-| KeeneticOS с Entware на Keenetic или Netcraze | [Выбрать IPK панели](#keenetic) по архитектуре установленной Entware |
+| Keenetic или Netcraze с Entware | [Выбрать IPK панели](#keenetic) по архитектуре установленной Entware |
 | OpenWrt 24.10 | `nfqws2-native_ВЕРСИЯ_АРХИТЕКТУРА.ipk` по точному `DISTRIB_ARCH` |
 | OpenWrt 25.12 | `nfqws2-native_ВЕРСИЯ_АРХИТЕКТУРА.apk` по точному `DISTRIB_ARCH`; подпись проверяется нативным установщиком OpenWrt |
 
@@ -20,7 +21,7 @@
 
 Панель Build 101 устанавливается рядом со штатной веб-панелью. Для неё нужны Entware, `nfqws2-keenetic` версии `1.3.3` и `nfqws-keenetic-web` версии `3.0.24` или новее. Установка сохраняет конфигурацию штатной службы. [Штатный NFQWS2](https://github.com/nfqws/nfqws2-keenetic) · [Штатная веб-панель](https://github.com/nfqws/nfqws-keenetic-web).
 
-В терминале Entware выполните `opkg print-architecture`. Найдите свою архитектуру в таблице и скачайте один файл.
+В терминале Entware выполните `opkg print-architecture`. Найдите свою архитектуру в таблице и скачайте один файл.Рядом с основной архитектурой может стоять вариант с суффиксом `_kn`. Например, если в списке есть `aarch64-3.10` и `aarch64-3.10_kn`, выбирайте пакет `aarch64-3.10`.
 
 | Архитектура Entware | Пакет Build 101 |
 | --- | --- |
@@ -49,8 +50,5 @@
 Архив исходников с окончанием `_source.tar.gz` находится рядом с IPK в каждом
 выпуске. Для установленной версии выбирайте исходники из того же выпуска.
 [Исходники в репозитории](source/).
-
-Для установки без ручного выбора файла используйте [быстрый старт](QUICKSTART.md):
-сначала приведена команда для ASUSWRT-Merlin, ниже — для OpenWrt.
 
 [Документация проекта](README.md#документация).

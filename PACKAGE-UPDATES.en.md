@@ -1,6 +1,12 @@
 # Updates
 
-## Current release and device profiles
+## Keenetic and Netcraze
+
+For these routers, Build 101 ships as a separate Entware package called `nfqws2-keenetic-community`. Run `opkg print-architecture` to identify your Entware architecture. [Choose a package and verify its checksum](DOWNLOADS.en.md#keenetic).
+
+<a id="current-release-and-device-profiles"></a>
+
+## ASUS and OpenWrt
 
 [Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) is available for ASUS/Entware and OpenWrt. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 

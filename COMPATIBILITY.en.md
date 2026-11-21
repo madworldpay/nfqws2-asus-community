@@ -1,6 +1,8 @@
 # Compatibility
 
-## Tested devices
+<a id="tested-devices"></a>
+
+## Tested ASUS devices
 
 | Model | Firmware | Entware | Notes |
 |---|---|---|---|
@@ -20,7 +22,7 @@ separate update, SmartDNS, ARK, IPv6, or technical-channel checks.
 
 ## Other devices and firmware
 
-The two IPK files target `armv7-2.6` / `armv7-3.2` and `aarch64-3.10`.
+The two ASUS IPKs for Asuswrt-Merlin target `armv7-2.6` / `armv7-3.2` and `aarch64-3.10`.
 The table above lists the checks performed, rather than every potentially compatible
 model. For another combination, the Entware package architecture, NFQUEUE support, and actual
 delivery of packets to the queue matter.
@@ -36,6 +38,20 @@ The checkup shows the current resource status and component availability.
 
 A regular installation does not change ARK. If the kernel rejects the required rules,
 the service reports an error; a running process alone does not prove that bypass works.
+
+<a id="keenetic"></a>
+
+## Keenetic and Netcraze
+
+Keenetic and Netcraze routers with Entware use the same community panel. Choose the IPK matching the architecture listed by `opkg print-architecture`.
+
+| Entware architecture | Package family |
+| --- | --- |
+| `aarch64-3.10` | ARM64 |
+| `mips-3.4` | MIPS (big-endian) |
+| `mipsel-3.4` | MIPSEL (little-endian) |
+
+[Download the matching IPK](DOWNLOADS.en.md#keenetic).
 
 ## OpenWrt
 
