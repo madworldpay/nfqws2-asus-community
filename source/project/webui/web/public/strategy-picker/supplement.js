@@ -83,13 +83,13 @@ export class SupplementPreview{
   }
 }
 const labels={
-  ru:{open:'Дополнить текущую стратегию',title:'Предпросмотр дополнения',domains:'От одного до пяти доменов, каждый с новой строки',submit:'Предпросмотр дополнения',loading:'Подготовка предпросмотра…',
-    help:'Правила собранного варианта будут предложены только для указанных доменов. Введите домены без адреса страницы и без IP. Telegram исключён.',
-    additions:'Добавляемые правила',files:'Файлы полного комплекта',note:'Это предпросмотр: настройки ещё не сохранены. Объединённую стратегию нужно проверить повторно на тех же целях и контрольных сайтах. Применение и экспорт дополнения пока недоступны.',
-    invalid_domains:'Введите от одного до пяти разных доменов без URL и IP. Домены Telegram исключены.',source_changed:'Настройки или файлы изменились. Подготовьте новый предпросмотр.',auth:'Сессия закончилась. Войдите в основную панель и обновите страницу.',invalid_preview:'Предпросмотр недоступен для этого варианта или текущих файлов. Настройки не сохранены.'},
-  en:{open:'Supplement the current strategy',title:'Supplement preview',domains:'One to five domains, one per line',submit:'Preview supplement',loading:'Preparing preview…',
-    help:'Propose rules from the generated candidate only for these domains. Enter domains without a page URL or IP address. Telegram is excluded.',
-    additions:'Rules to add',files:'Complete kit files',note:'This is a preview; settings have not been saved. Repeat checks of the combined strategy with the same goals and control sites. Supplement Apply and export are not available yet.',
+  ru:{open:'Дополнить текущую стратегию',title:'Дополнение к стратегии',domains:'От одного до пяти доменов, каждый с новой строки',submit:'Посмотреть изменения',loading:'Готовим список изменений…',
+    help:'Укажите сайты, на которые хотите добавить правила из найденной стратегии. Введите только имена сайтов, например example.com. Telegram исключён.',
+    additions:'Добавляемые правила',files:'Файлы стратегии',note:'Здесь можно посмотреть предлагаемые изменения. Сохранение и скачивание готового дополнения пока недоступны.',
+    invalid_domains:'Введите от одного до пяти разных доменов без URL и IP. Домены Telegram исключены.',source_changed:'Настройки или файлы изменились. Подготовьте новый предпросмотр.',auth:'Сессия закончилась. Войдите в основную панель и обновите страницу.',invalid_preview:'Не удалось показать, как изменится стратегия. Текущие настройки сохранены.'},
+  en:{open:'Supplement the current strategy',title:'Strategy additions',domains:'One to five domains, one per line',submit:'See changes',loading:'Preparing list of changes…',
+    help:'Choose which sites should get rules from the new strategy. Enter site names such as example.com. Telegram is excluded.',
+    additions:'Rules to add',files:'Strategy files',note:'Here you can see the suggested changes. Saving and downloading these changes are not yet available.',
     invalid_domains:'Enter one to five distinct domains without URLs or IP addresses. Telegram domains are excluded.',source_changed:'Settings or files changed. Prepare a new preview.',auth:'Your session expired. Sign in on the main panel and reload this page.',invalid_preview:'A preview is unavailable for this candidate or the current files. Settings have not been saved.'}
 };
 export function mountSupplement({document,request,context,language}){

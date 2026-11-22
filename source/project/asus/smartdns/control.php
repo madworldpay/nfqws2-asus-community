@@ -47,6 +47,6 @@ try {
     $ok=$mode==='boot-resume'?in_array($result['state'],['idle','confirmed'],true):in_array($result['state'],['idle','rolled_back','confirmed','preview_ready','failed'],true);
     if (!$ok) exit(1);
 } catch (Throwable $e) {
-    $allowed=['busy','invalid_state','dns_restore_failed','storage_unavailable','guard_unavailable','timed_out','stale_baseline','baseline_unavailable'];
+    $allowed=['busy','invalid_state','dns_restore_failed','dns_permissions_changed','storage_unavailable','guard_unavailable','timed_out','stale_baseline','baseline_unavailable'];
     echo json_encode(['error'=>in_array($e->getMessage(),$allowed,true)?$e->getMessage():'unavailable'])."\n";exit(1);
 } finally {foreach ([$resumeLock,$lease] as $f) if (is_resource($f)) {flock($f,LOCK_UN);fclose($f);}}

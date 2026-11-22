@@ -10,8 +10,28 @@ final class AsusImportStore
     private int $depth=0;
     public function __construct(?string $root=null,private int $owner=0)
     {
-        $this->root=$root??AsusDpiStore::optPath('/var/lib/nfqws2-asus/import');
         $this->reader=$root===null?NfqwsPlatform::reader($owner):new AsusShareRead($owner);
+        $this->root=$root??(NfqwsPlatform::current()==='keenetic-entware'
+            ?self::keeneticRoot(dirname(AsusDpiStore::optPath('/etc')))
+            :AsusDpiStore::optPath('/var/lib/nfqws2-asus/import'));
+    }
+    /** Keep the original journal and its writer mutex on upgrades. On vendor
+     * layouts where /opt/var belongs to 1001, begin new history under the
+     * panel's root-owned settings directory. Every reader uses this choice. */
+    public static function keeneticRoot(string $opt): string
+    {
+        $legacy=$opt.'/var/lib/nfqws2-asus/import';
+        $private=$opt.'/etc/nfqws-asus-web/import';
+        clearstatcache();
+        $old=@lstat($legacy);
+        if(@lstat($private)!==false){
+            if($old!==false)throw new RuntimeException('restore_required');
+            return $private;
+        }
+        if($old!==false)return $legacy;
+        $var=@lstat($opt.'/var');
+        if($var!==false&&$var['uid']===1001&&$var['gid']===1001&&($var['mode']&0177777)===0040755)return $private;
+        return $legacy;
     }
     private static function fullSignature(array $s):array
     {return array_intersect_key($s,array_flip(['dev','ino','mode','uid','gid','nlink','size','mtime','ctime']));}

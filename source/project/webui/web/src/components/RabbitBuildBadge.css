@@ -114,9 +114,11 @@
     transform: scaleY(0.996);
   }
 }
-@media (max-width: 599.95px) {
-  .rabbit-build-stage {
-    display: contents;
+@media (max-width: 599.95px), (max-height: 600px) {
+  #root .rabbit-build-stage {
+    width: auto;
+    height: 36px;
+    flex: 0 0 auto;
   }
   .rabbit-build-native {
     position: static;
@@ -126,10 +128,15 @@
     width: auto;
   }
   .rabbit-build-native .MuiChip-label {
-    padding: 0 10px;
+    padding: 0 35px 0 10px;
   }
-  .rabbit-build-sprite {
-    display: none;
+  #root .rabbit-build-sprite {
+    width: 27px;
+    height: 34px;
+    right: 4px;
+    top: 1px;
+    background-position: center;
+    background-size: contain;
     animation: none;
   }
 }

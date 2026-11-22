@@ -34,6 +34,8 @@ export const ShareDnsSection = ({
   disabled,
   onChange,
   onError,
+  onSources,
+  onRefresh,
 }: {
   csrfToken: string;
   providedSources?: DnsSource[];
@@ -41,6 +43,8 @@ export const ShareDnsSection = ({
   disabled: boolean;
   onChange: (value: DnsSelection[]) => void;
   onError: (e: unknown) => void;
+  onSources?: (sources: DnsSources) => void;
+  onRefresh?: () => void;
 }) => {
   const { t } = useTranslation();
   const [sources, setSources] = useState<DnsSources>();
@@ -53,19 +57,27 @@ export const ShareDnsSection = ({
         alive.current = false;
       };
     let active = true;
+    setLoading(true);
     void getShareDnsSources(csrfToken).then(
       (v) => {
-        if (active) setSources(v);
+        if (active) {
+          setLoading(false);
+          setSources(v);
+          onSources?.(v);
+        }
       },
       (e) => {
-        if (active) onError(e);
+        if (active) {
+          setLoading(false);
+          onError(e);
+        }
       },
     );
     return () => {
       active = false;
       alive.current = false;
     };
-  }, [csrfToken, onError, providedSources]);
+  }, [csrfToken, onError, onSources, providedSources]);
   const update = (
     source: DnsSource,
     fn: (old: DnsSelection) => DnsSelection,
@@ -105,10 +117,15 @@ export const ShareDnsSection = ({
   const refresh = async () => {
     if (disabled || loading) return;
     setLoading(true);
-    onChange([]);
+    setSources(undefined);
+    if (onRefresh) onRefresh();
+    else onChange([]);
     try {
       const v = await getShareDnsSources(csrfToken);
-      if (alive.current) setSources(v);
+      if (alive.current) {
+        setSources(v);
+        onSources?.(v);
+      }
     } catch (e) {
       if (alive.current) onError(e);
     } finally {

@@ -62,6 +62,12 @@ final class AsusSmartDnsInstaller
     {
         if($this->artifact!==null)return $this->artifact;
         if(NfqwsPlatform::native()){require_once __DIR__.'/openwrt-smartdns-install.php';return NfqwsOpenWrtSmartDnsInstall::artifact();}
+        if(NfqwsPlatform::current()==='keenetic-entware'){
+            require_once __DIR__.'/entware-package.php';
+            $panel=NfqwsEntwarePackage::installed('nfqws2-keenetic-community');
+            if(($panel['architecture']??null)!=='aarch64-3.10'||php_uname('m')!=='aarch64')throw new RuntimeException('unsupported_abi');
+            return self::catalog()['artifacts']['aarch64'];
+        }
         $p=@proc_open([AsusDpiRuntime::BUSYBOX,'sh','-c','. /opt/lib/nfqws2-asus/abi.sh; asus_entware_primary_abi'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','a']],$pipes,'/',['PATH'=>'/opt/bin:/usr/bin:/bin','LANG'=>'C']);
         if(!is_resource($p))throw new RuntimeException('unsupported_abi');$abi=trim(stream_get_contents($pipes[1],64));fclose($pipes[1]);$exit=proc_close($p);
         if($exit!==0||!in_array($abi,['armv7-2.6','armv7-3.2','aarch64-3.10'],true))throw new RuntimeException('unsupported_abi');

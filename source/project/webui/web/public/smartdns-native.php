@@ -274,6 +274,80 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
             return $this->identity($state,'runtime');
         }]))->collect();
     }
+    /** The approved source must be the same root-owned main config and include graph. */
+    public function repairIncludes(array $snapshot): void
+    {
+        $path=$this->paths['config'];$before=$this->regular($path,262144);
+        $config=$this->readExact($path,262144);
+        $expected=$snapshot['fingerprints']??[];
+        $expectedConfig=$expected['dnsmasq_config']??[];
+        $identity=['mode'=>$before['mode']&07777,'uid'=>$before['uid'],'links'=>$before['nlink'],
+            'device'=>$before['dev'],'inode'=>$before['ino']];
+        if (($expectedConfig['state']??null)!=='available' || ($expectedConfig['file']??null)!==$identity ||
+            ($expectedConfig['sha256']??null)!==hash('sha256',$config))
+            throw new RuntimeException('stale_baseline');
+        $observed=AsusSmartDnsConfig::collect($config,$this->owner,true);
+        if (($expected['dns_includes']??null)!==$observed['fingerprints'])
+            throw new RuntimeException('stale_baseline');
+        $identity=$this->primaryIdentity();
+        $verify=function()use($config,$before,$identity):void{
+            $this->assertSamePrimaryConfig($config,$before);
+            if ($this->primaryIdentity()!==$identity) throw new RuntimeException('stale_baseline');
+        };
+        $backup=function(array $files)use($verify):void{
+            $verify();
+            $this->store->backupPermissions($files);
+            $verify();
+        };
+        AsusSmartDnsConfig::repair($config,$backup,$this->owner,$observed);
+        $verify();
+    }
+    /** Only the bound confirmed/rolled-back job may repair its DNS sources during an upgrade. */
+    public function repairUpgradeIncludes(array $job,array $fingerprints,bool $restored): void
+    {
+        $state=$this->checkedJob($job);
+        if ($state['phase']!==($restored?'rolled_back':'confirmed') ||
+            $state['boot_id']!==trim((string)file_get_contents('/proc/sys/kernel/random/boot_id')))
+            throw new RuntimeException('stale_baseline');
+        $path=$this->paths['config'];$before=$this->regular($path,262144);
+        $config=$this->readExact($path,262144);
+        $identity=$this->primaryIdentity();
+        $verify=function()use($job,$state,$config,$before,$identity):void{
+            $this->assertSamePrimaryConfig($config,$before);
+            if ($this->checkedJob($job)!==$state || $this->primaryIdentity()!==$identity)
+                throw new RuntimeException('stale_baseline');
+        };
+        $backup=function(array $files)use($verify):void{
+            $verify();
+            $this->store->backupPermissions($files);
+            $verify();
+        };
+        AsusSmartDnsConfig::repair($config,$backup,$this->owner);
+        if (!$restored) {
+            // The managed generator can flatten the includes in the running
+            // configuration. Use the previous protected graph for those files.
+            AsusSmartDnsConfig::repairKnown($fingerprints,$backup,$this->owner);
+        }
+        $verify();
+    }
+    private function primaryIdentity(): string
+    {
+        $path=$this->paths['library'].'/primary-dns.sh';
+        $this->regular($path,65536);
+        $result=$this->run(['/bin/sh',$path,'identity'],3);
+        if ($result['exit']!==0 || !preg_match('/^[1-9][0-9]{0,9} [1-9][0-9]{0,19}\n$/D',$result['out']))
+            throw new RuntimeException('primary_dns_unverified');
+        return $result['out'];
+    }
+    private function assertSamePrimaryConfig(string $config,array $before): void
+    {
+        $path=$this->paths['config'];$after=$this->regular($path,262144);
+        foreach (['dev','ino','mode','uid','gid','nlink','size','mtime','ctime'] as $key) {
+            if ($before[$key]!==$after[$key]) throw new RuntimeException('stale_baseline');
+        }
+        if ($this->readExact($path,262144)!==$config)
+            throw new RuntimeException('stale_baseline');
+    }
     public function healthy(): bool
     {
         $s=$this->state();
@@ -383,7 +457,9 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
     }
     public function forward(array $job): array
     {
-        if (!hash_equals($job['baseline_hash'],$this->baseline()['hash'])) throw new RuntimeException('stale_baseline');
+        $baseline=$this->baseline();
+        if (!hash_equals($job['baseline_hash'],$baseline['hash']) || ($baseline['includes_need_repair']??false)===true)
+            throw new RuntimeException('stale_baseline');
         $r=$this->control('forward',$job);
         if ($r['exit']!==0) {
             $code=trim($r['out']);
@@ -439,6 +515,7 @@ final class AsusSmartDnsNativeBackend implements NfqwsSmartDnsBackend
     public function dependencies(): array
     {
         $out=[];foreach (['baseline','prepare','guard','forward','dns','confirm','restore','stop'] as $name) $out[$name]=[$this,$name];
+        $out['repair_includes']=[$this,'repairIncludes'];
         // A confirmed guardian remains alive; it drops only its two leases on
         // its next native tick. A rolled-back guardian exits itself.
         $out['release']=static function(array $job): void {};

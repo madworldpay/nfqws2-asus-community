@@ -2,79 +2,79 @@
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Подбор стратегии · NFQWS2 ASUS</title><link rel="stylesheet" href="picker.css"></head>
 <body><main>
 <header><a href="../">← NFQWS2 ASUS</a><button id="language" type="button">EN</button></header>
-<h1 id="title">Подобрать стратегию</h1>
-<p id="intro">Проверки выполняются на этом роутере. После сравнения вернутся исходные настройки; лучший вариант можно применить отдельно.</p>
-<section><h2 id="device-title">Возможности устройства</h2><p id="device">Загрузка…</p><p id="limits"></p><p id="remaining" aria-live="polite"></p>
+<h1 id="title">Подбор стратегии</h1>
+<p id="intro">Роутер проверит варианты и вернёт исходные настройки. Вы сами решите, применять ли найденную стратегию.</p>
+<section><h2 id="device-title">Состояние роутера</h2><p id="device">Загрузка…</p><p id="limits"></p><p id="remaining" aria-live="polite"></p>
 <div id="live-metrics" class="live-metrics"><p id="metric-cpu"></p><p id="metric-memory"></p><p id="metric-temperature"></p><p id="metric-freshness"></p></div></section>
-<section><h2 id="start-title">Локальный подбор</h2>
-<p id="warning">Во время смены профилей соединения могут кратковременно прерываться. DNS и сетевые настройки сохраняются. Закрытие страницы не останавливает работу; для отмены нажмите «Остановить и восстановить». Проверки в этой версии выполняются по IPv4.</p>
-<label><span id="search-label">Способ поиска</span> <select id="search" disabled><option id="search-synthesis" value="synthesis">Разработать стратегию</option><option id="search-profiles" value="profiles">Сравнить готовые профили</option></select></label>
-<p id="search-help">Генератор стратегий проходит бета-тестирование. Он проверяет методы для HTTP, TLS и QUIC и уточняет поиск по результатам. Полезные приёмы прошлых запусков проверяются заново. Лучшие варианты проходят повторные замеры; улучшение не гарантируется. Каталог готовых стратегий не требуется. Проверки выполняются по IPv4.</p>
-<p id="repeat-hint">Выберите число прогонов заранее — серия выполнится автоматически. Новый прогон учитывает предыдущие проверки. При остановке или ошибке серия прекращается. Стратегия сама не применяется.</p>
+<section><h2 id="start-title">Настройки подбора</h2>
+<p id="warning">Во время проверки интернет может ненадолго прерваться. Если закрыть вкладку или уйти со страницы, роутер остановит подбор и начнёт возвращать исходные настройки. При потере связи это может занять несколько минут. Чтобы проверить результат, снова откройте подбор.</p>
+<label><span id="search-label">Что проверить</span> <select id="search" disabled><option id="search-synthesis" value="synthesis">Создать новую стратегию</option><option id="search-profiles" value="profiles">Сравнить готовые стратегии</option></select></label>
+<p id="search-help">Создание новой стратегии пока в бета-версии. Роутер пробует разные настройки и повторно проверяет лучшие варианты. Улучшение не гарантируется. Проверки идут по IPv4.</p>
+<p id="repeat-hint">Каждый прогон использует результаты предыдущего. Лучший вариант можно применить после завершения подбора.</p>
 <fieldset id="rounds-fieldset" disabled><legend id="rounds-title">Количество прогонов</legend>
 <label for="rounds-value" id="rounds-label">Прогонов подряд: от 2 до 10</label>
 <input id="rounds-value" type="text" value="2" inputmode="numeric" pattern="[2-9]|10" maxlength="2" autocomplete="off" aria-describedby="rounds-help rounds-error">
-<p id="rounds-help">Укажите число заранее: следующий прогон начнётся автоматически после восстановления настроек и новой проверки условий. При ошибке или остановке серия прекращается. Стратегия сама не применяется.</p><p id="rounds-error" role="alert"></p></fieldset>
+<p id="rounds-help">Следующий прогон начнётся после восстановления настроек и проверки соединения. При остановке или ошибке вся серия завершается.</p><p id="rounds-error" role="alert"></p></fieldset>
 <p id="series-status" aria-live="polite"></p>
-<fieldset id="pool-fieldset" disabled><legend id="pool-title">Одновременные запросы</legend>
-<div id="pool-controls"><label for="pool-value" id="pool-value-label">Число запросов</label>
+<fieldset id="pool-fieldset" disabled><legend id="pool-title">Одновременные проверки</legend>
+<div id="pool-controls"><label for="pool-value" id="pool-value-label">Число проверок</label>
 <input id="pool-value" type="text" value="100" inputmode="numeric" pattern="[1-9][0-9]{0,6}" maxlength="7" autocomplete="off" aria-describedby="pool-help pool-error"></div>
 
 <p id="pool-selected" aria-live="polite"></p><p id="pool-error" role="alert"></p>
-<p id="pool-help">Это число одновременных проверок соединения. Обычно достаточно 10–100. Большие значения не гарантируют ускорения подбора.</p></fieldset>
-<fieldset id="goals" disabled><legend id="goal-title">Цель подбора</legend>
+<p id="pool-help">Обычно достаточно 10–100. Большие значения не гарантируют ускорения подбора.</p></fieldset>
+<fieldset id="goals" disabled><legend id="goal-title">Какие сервисы важны</legend>
 <label><input type="radio" name="scope" id="goal-all" checked><span id="goal-all-label">Все сервисы</span></label>
 <label><input type="radio" name="scope" id="goal-selected"><span id="goal-selected-label">Выбранные сервисы</span></label>
 <div class="service-choices"><label><input type="checkbox" id="goal-youtube" checked>YouTube</label><label><input type="checkbox" id="goal-discord" checked>Discord</label><label><input type="checkbox" id="goal-instagram" checked>Instagram</label><label><input type="checkbox" id="goal-torrents" checked><span id="goal-torrents-label">Торрент-трекеры</span></label></div>
 </fieldset>
-<p id="torrent-goal-help">Цель «Торрент-трекеры» проверяет сайты NNMClub (nnmclub.to), RuTracker (rutracker.org), Rutor (rutor.info) и tapochek.net.</p>
-<p id="goal-help">В режиме «Все сервисы» в первую очередь проверяются YouTube, Instagram, Discord и торрент-трекеры. Остальные сайты остаются дополнительным контролем. Для выбранных сервисов поиск и оценка сосредоточены на их доменах; общие проверки сохраняются для контроля ухудшений.</p>
+<p id="torrent-goal-help">Торрент-трекеры в проверке — NNMClub, RuTracker, Rutor и tapochek.net.</p>
+<p id="goal-help">Выбранные сервисы влияют на итог. Роутер проверит и другие сайты, чтобы заметить ухудшения.</p>
 <fieldset id="custom-fieldset" disabled><legend id="custom-title">Свои сайты</legend>
-<label><input type="checkbox" id="custom-enabled"><span id="custom-enabled-label">Добавить свои сайты к генерации</span></label>
+<label><input type="checkbox" id="custom-enabled"><span id="custom-enabled-label">Добавить свои сайты к подбору</span></label>
 <div id="custom-settings" hidden>
-<label for="custom-sites" id="custom-sites-label">До десяти доменов и публичных IPv4 суммарно, каждый с новой строки</label>
-<p id="custom-examples">Например: example.com, https://example.org или 8.8.8.8. Каждый адрес — с новой строки.</p>
+<label for="custom-sites" id="custom-sites-label">До десяти сайтов или публичных IPv4-адресов</label>
+<p id="custom-examples">Один адрес на строку. Подойдут example.com, https://example.org и 8.8.8.8.</p>
 <textarea id="custom-sites" rows="5" maxlength="4096" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com&#10;https://example.org/&#10;8.8.8.8" aria-describedby="custom-help custom-errors"></textarea>
-<button id="custom-check" type="button">Проверить доступность</button>
-<label><input type="radio" name="custom-mode" id="custom-joint" checked><span id="custom-joint-label">Вместе с выбранными сервисами</span></label>
-<label><input type="radio" name="custom-mode" id="custom-only"><span id="custom-only-label">Только свои сайты; встроенные проверки — контроль</span></label>
-<p id="custom-help">Проверяются корневые HTTPS-страницы по IPv4 с TLS 1.2 и 1.3. Для IP нужен сертификат, действительный для этого IP; домен не подставляется. Ошибка TLS сама по себе не доказывает блокировку. Правило IP может затрагивать другие HTTPS-сайты на том же адресе. Ответ сервера, включая 403, не означает доступность сайта. Telegram не участвует.</p>
+<button id="custom-check" type="button">Проверить, открываются ли сайты</button>
+<label><input type="radio" name="custom-mode" id="custom-joint" checked><span id="custom-joint-label">Подбирать для своих сайтов и выбранных сервисов</span></label>
+<label><input type="radio" name="custom-mode" id="custom-only"><span id="custom-only-label">Подбирать только для своих сайтов</span></label>
+<p id="custom-help">Роутер проверит главную страницу каждого сайта по HTTPS (TLS 1.2 и 1.3). Для IP-адреса нужен сертификат, выданный на этот адрес. Правило для IP может затронуть другие сайты на нём. Сбой защищённого соединения (TLS) может иметь разные причины. Telegram исключён.</p>
 <p id="custom-budget"></p><p id="custom-errors" role="alert"></p>
 </div></fieldset>
-<label id="extended-control" hidden><input type="checkbox" id="extended" disabled><span id="extended-label">Расширенный поиск, если готовые профили не улучшат результат</span></label>
-<p id="extended-help" hidden>Проверяются раздельные и совместные варианты числа повторов TCP/QUIC. Правила отдельных сервисов и игр сохраняются; число попыток ограничено.</p>
-<div class="actions"><button id="start" type="button" disabled>Начать подбор</button><button id="cancel" type="button" hidden>Остановить и восстановить</button><button id="refresh" type="button">Обновить</button></div>
+<label id="extended-control" hidden><input type="checkbox" id="extended" disabled><span id="extended-label">Проверить ещё варианты, если готовые стратегии не помогут</span></label>
+<p id="extended-help" hidden>Роутер попробует дополнительные настройки соединения. Правила для отдельных сервисов и игр сохранятся.</p>
+<div class="actions"><button id="start" type="button" disabled>Начать подбор</button><button id="cancel" type="button" hidden>Остановить и восстановить</button><button id="refresh" type="button">Обновить состояние</button></div>
 <p id="error" role="alert"></p>
 <div id="confirmation" role="dialog" aria-modal="false" aria-labelledby="confirmation-text" hidden><p id="confirmation-text"></p><div class="actions"><button id="confirm-submit" type="button">Продолжить</button><button id="confirm-dismiss" type="button">Отмена</button></div></div>
 </section>
-<section id="progress-section" hidden><h2 id="phase"></h2><progress id="progress" max="100" value="0"></progress><p id="current"></p><p id="matrix"></p><p id="restore"></p><button id="download" type="button">Скачать отчёт JSON</button><button id="share-report" type="button" hidden>Поделиться с Фрэнком</button></section>
-<section id="results-section" hidden><h2 id="results-title">Сравнение</h2><p id="measured-goal"></p><p id="explanation">Сначала проверяются разные способы обхода, затем лучшие варианты проходят повторные замеры. Итоговая стратегия сравнивается с вашей исходной стратегией и вариантом без обхода.</p><p id="generation"></p><p id="custom-summary" hidden></p>
+<section id="progress-section" hidden><h2 id="phase"></h2><progress id="progress" max="100" value="0"></progress><p id="current"></p><p id="matrix"></p><p id="restore"></p><button id="download" type="button">Скачать отчёт</button><button id="share-report" type="button" hidden>Поделиться с Фрэнком</button></section>
+<section id="results-section" hidden><h2 id="results-title">Сравнение</h2><p id="measured-goal"></p><p id="explanation">Роутер сравнил варианты с вашей исходной стратегией и соединением без обхода.</p><p id="generation"></p><p id="custom-summary" hidden></p>
 <div class="result-layout">
   <label for="result-columns" id="result-columns-label">Колонки результатов</label>
   <select id="result-columns"><option id="result-columns-auto" value="auto">Авто</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
   <span id="result-column-count" role="status"></span>
 </div>
 <div id="results"></div><p id="winner"></p>
-<p id="tradeoffs" hidden></p><p id="torrent-applied-note"></p><div id="torrent-control" hidden><label><input id="torrent-sites" type="checkbox" disabled><span id="torrent-label">Добавить торрент-трекеры</span></label><p id="torrent-help">Четыре сайта добавятся к области HTTPS собранного метода: nnmclub.to, rutracker.org, rutor.info, tapochek.net. Дополнение необязательно и выключено по умолчанию. Показатели выше получены для исходного комплекта до добавления дополнения; после добавления повторите проверку.</p></div>
-<div class="actions"><button id="export" type="button" hidden>Скачать собранную стратегию с файлами</button><button id="share-export" type="button" hidden>Поделиться с Фрэнком</button><button id="apply" type="button" hidden>Применить лучший вариант</button></div><details><summary id="skipped-title">Пропущенные варианты и причины</summary><ul id="skipped"></ul></details></section>
+<p id="tradeoffs" hidden></p><p id="torrent-applied-note"></p><div id="torrent-control" hidden><label><input id="torrent-sites" type="checkbox" disabled><span id="torrent-label">Добавить торрент-трекеры</span></label><p id="torrent-help">Добавляет HTTPS-правила для NNMClub, RuTracker, Rutor и tapochek.net. Если включите их, проверьте стратегию ещё раз.</p></div>
+<div class="actions"><button id="export" type="button" hidden>Скачать стратегию с файлами</button><button id="share-export" type="button" hidden>Поделиться с Фрэнком</button><button id="apply" type="button" hidden>Применить этот вариант</button></div><details><summary id="skipped-title">Пропущенные варианты и причины</summary><ul id="skipped"></ul></details></section>
 <section id="measured-section" hidden>
 <h2 id="measured-title">Замеры по прогонам</h2>
-<label for="measured-select" id="measured-label">Вариант из серии</label>
+<label for="measured-select" id="measured-label">Какой вариант посмотреть</label>
 <select id="measured-select"></select>
 <p id="measured-status" role="status"></p>
 <div id="measured-detail"></div>
 <div class="actions">
-<button id="measured-report" type="button" hidden>Скачать замеры JSON</button>
-<button id="measured-export" type="button" hidden>Скачать стратегию JSON</button>
-<button id="measured-import" type="button" hidden>Открыть в импорте</button>
+<button id="measured-report" type="button" hidden>Скачать замеры</button>
+<button id="measured-export" type="button" hidden>Скачать стратегию</button>
+<button id="measured-import" type="button" hidden>Открыть для импорта</button>
 </div>
 </section>
 <section id="supplement-section" hidden><button id="supplement-open" type="button" aria-expanded="false" aria-controls="supplement-form">Дополнить текущую стратегию</button>
-<div id="supplement-form" hidden><h2 id="supplement-title">Предпросмотр дополнения</h2><p id="supplement-help"></p>
+<div id="supplement-form" hidden><h2 id="supplement-title">Дополнение к стратегии</h2><p id="supplement-help"></p>
 <label id="supplement-domains-label" for="supplement-domains">От одного до пяти доменов, каждый с новой строки</label>
 <textarea id="supplement-domains" rows="5" maxlength="4096" spellcheck="false" autocapitalize="none" autocomplete="off" aria-describedby="supplement-help supplement-error"></textarea>
-<button id="supplement-submit" type="button">Предпросмотр дополнения</button><p id="supplement-error" role="alert"></p>
-<div id="supplement-output" aria-live="polite" hidden><p id="supplement-scope"></p><h3 id="supplement-additions-title">Добавляемые правила</h3><pre id="supplement-rules"></pre><h3 id="supplement-files-title">Файлы полного комплекта</h3><ul id="supplement-files"></ul></div>
+<button id="supplement-submit" type="button">Посмотреть изменения</button><p id="supplement-error" role="alert"></p>
+<div id="supplement-output" aria-live="polite" hidden><p id="supplement-scope"></p><h3 id="supplement-additions-title">Добавляемые правила</h3><pre id="supplement-rules"></pre><h3 id="supplement-files-title">Файлы стратегии</h3><ul id="supplement-files"></ul></div>
 <p id="supplement-note"></p></div></section>
-<footer id="note">Проверки доменов не подтверждают воспроизведение YouTube, голосовой чат Discord или загрузку ленты Instagram. После применения проверьте нужные функции в приложениях на своих устройствах.</footer>
+<footer id="note">После применения проверьте видео, голосовые звонки и другие нужные функции в самих приложениях. Роутер измеряет только доступность сайтов.</footer>
 </main><script type="module" src="picker.js"></script></body></html>

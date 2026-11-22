@@ -12,6 +12,7 @@ final class AsusSmartDnsConfigApi
     private const INPUTS=[
         'routercheckup'=>[], 'wanaddresses'=>[], 'smartdnsconfigstatus'=>[],
         'smartdnsdraft'=>['profile'],
+        'smartdnskeeneticstart'=>['profile_hash'], 'smartdnskeeneticstop'=>[],
         'smartdnsvalidate'=>['request_id','profile_hash'],
         'smartdnspreview'=>['preview_id'],
         'smartdnsapply'=>['request_id','preview_id','profile_hash','baseline_hash'],
@@ -109,11 +110,17 @@ final class AsusSmartDnsConfigApi
     public static function dispatch(array $post,array $deps=[]): array
     {
         self::validate($post);$cmd=$post['cmd'];
+        $keenetic=NfqwsPlatform::current()==='keenetic-entware';
+        if (!$keenetic && str_starts_with($cmd,'smartdnskeenetic')) throw new RuntimeException('unsupported_runtime');
         if(NfqwsPlatform::native()&&in_array($cmd,['wanaddresses','routercheckup'],true)){
             require_once __DIR__.'/openwrt-web.php';return $cmd==='wanaddresses'?NfqwsOpenWrtWeb::wan():NfqwsOpenWrtWeb::checkup();
         }
         if ($cmd==='wanaddresses') return (new AsusRouterWan($deps['wan_io']??new AsusReportIO()))->collect();
         $store=$deps['store']??new AsusSmartDnsStore();
+        if ($keenetic) {
+            require_once __DIR__.'/keenetic-smartdns.php';
+            return NfqwsKeeneticSmartDns::dispatch($post,$store);
+        }
         $backend=$deps['backend']??AsusSmartDnsNativeBackend::create($store,new AsusSmartDnsInstaller());
         $jobs=new AsusSmartDnsConfigJobs($store,$backend,$deps['jobs_deps']??[]);
         if ($cmd==='smartdnsconfigstatus') {

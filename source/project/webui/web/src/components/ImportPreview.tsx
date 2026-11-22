@@ -35,6 +35,9 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
       <Alert severity={plan.ready ? 'success' : 'info'}>
         {t(plan.ready ? 'import.ready' : 'import.needs_choice')}
       </Alert>
+      {plan.kept_auto_list && (
+        <Typography variant="body2">{t('import.kept_auto_list')}</Typography>
+      )}
       {plan.problems.map((p, i) => (
         <Alert severity="info" key={i}>
           {Object.prototype.hasOwnProperty.call(en.import.problems, p.code)

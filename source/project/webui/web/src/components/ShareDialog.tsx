@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TranslationSchema } from '@/context/TranslationProvider';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
@@ -19,7 +19,11 @@ import {
   Typography,
 } from '@mui/material';
 
-import { readBulkResources, selectAllDns } from '@/api/bulkSelection';
+import {
+  readBulkResources,
+  selectAllDns,
+  selectStrategyDns,
+} from '@/api/bulkSelection';
 import { API } from '@/api/client';
 import {
   autoLocation,
@@ -44,6 +48,7 @@ import {
   getShareInventory,
   readShareResource,
   type DnsSelection,
+  type DnsSources,
 } from '@/api/shareResourcesClient';
 import {
   canChooseReportLocation,
@@ -197,7 +202,14 @@ export const ShareDialog = ({
     selected: [],
     copies: {},
   });
-  const [dns, setDns] = useState<DnsSelection[]>([]);
+  const [dnsSources, setDnsSources] = useState<DnsSources>();
+  // An explicit empty selection also overrides the strategy's default.
+  const [dnsChoice, setDns] = useState<DnsSelection[]>();
+  const strategyDns = useMemo(
+    () => selectStrategyDns(dnsSources?.sources ?? []),
+    [dnsSources],
+  );
+  const dns = dnsChoice ?? (strategySelected ? strategyDns : []);
   const [link, setLink] = useState(false);
   const [snapshot, setSnapshot] = useState<PreparedShare>();
   const [result, setResult] = useState<SupportMailResult>();
@@ -381,7 +393,7 @@ export const ShareDialog = ({
     setStrategySelected(false);
     setDpi(undefined);
     setFiles((old) => ({ ...old, selected: [] }));
-    setDns([]);
+    setDns(undefined);
   };
   const collect = () =>
     perform('collect', async () => {
@@ -408,6 +420,9 @@ export const ShareDialog = ({
     (!hasContributions ||
       !!(form.context.purpose.trim() && form.context.operator.trim())) &&
     files.selected.every((id) => !!files.copies[id]) &&
+    (!strategySelected ||
+      dnsSources !== undefined ||
+      dnsChoice !== undefined) &&
     (!reportSelected || !!report?.proof) &&
     validStrategy;
   const previewGuidance = [
@@ -645,6 +660,26 @@ export const ShareDialog = ({
               onError={fail}
             />
           )}
+          {strategySelected &&
+            (!dnsSources || strategyDns.length > 0 || dns.length > 0) && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={dnsChoice === undefined || dns.length > 0}
+                    disabled={disabled}
+                    onChange={(_, checked) => {
+                      invalidate();
+                      setDns(checked ? undefined : []);
+                    }}
+                  />
+                }
+                label={
+                  dnsChoice === undefined && strategyDns.length
+                    ? `${t('share.strategy_dns')} · ${t(`share.dns_origins.${strategyDns[0].source_id}`)}`
+                    : t('share.strategy_dns')
+                }
+              />
+            )}
           <Divider />
           {token && (
             <ShareFilesSection
@@ -663,6 +698,12 @@ export const ShareDialog = ({
               disabled={disabled}
               onChange={updateDns}
               onError={fail}
+              onSources={setDnsSources}
+              onRefresh={() => {
+                invalidate();
+                setDns((current) => (current === undefined ? undefined : []));
+                setDnsSources(undefined);
+              }}
             />
           )}
           {hasContributions && token && (

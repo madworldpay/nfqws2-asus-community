@@ -140,6 +140,7 @@ export function PackageUpdateDialog({
     'busy',
     'dns_restore_required',
     'dns_restore_failed',
+    'dns_permissions_changed',
     'dns_resume_stop_failed',
     'request_failed',
     'core_start_failed',

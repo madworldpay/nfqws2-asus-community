@@ -9,8 +9,8 @@ export function roundChoice(value){
 export function poolDescription(choice,language='ru'){
   if(!choice||poolChoice(choice.requested)===null||!Number.isSafeInteger(choice.effective)||choice.effective<1||choice.effective>1000000||
     choice.requested!=='auto'&&Number(choice.requested)!==choice.effective)return null;
-  return language==='ru'?`${choice.requested==='auto'?'Автоматически':'Вручную'}: пул до ${choice.effective} параллельных запросов для одной стратегии.`:
-    `${choice.requested==='auto'?'Automatic':'Manual'}: a pool of up to ${choice.effective} parallel requests within one strategy.`;
+  return language==='ru'?`${choice.requested==='auto'?'Автоматически':'Вручную'} — до ${choice.effective} проверок одновременно для одной стратегии.`:
+    `${choice.requested==='auto'?'Automatic':'Manual'} — up to ${choice.effective} simultaneous checks for one strategy.`;
 }
 export function recordedPool(job){
   if(job?.concurrency_valid===false)return null;

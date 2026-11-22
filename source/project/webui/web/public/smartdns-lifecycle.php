@@ -26,12 +26,41 @@ final class AsusSmartDnsLifecycle
         $blocked=isset($this->deps['blocked'])?($this->deps['blocked'])():$jobs->blocksUpdate();
         if ($blocked) throw new RuntimeException('busy');
         if ($this->store->active()!==null) {
-            $this->remember();$job=$this->store->transaction();
+            $job=$this->store->transaction();
+            if ($mode==='upgrade') $this->repairForUpgrade($job,false);
+            $this->remember();
             $status=isset($this->deps['rollback'])?($this->deps['rollback'])($job['request_id']):(new AsusSmartDnsConnection($this->store,$this->backend->dependencies()))->rollback($job['request_id']);
             if ($status['state']!=='rolled_back') throw new RuntimeException('dns_restore_failed');
         }
+        if ($mode==='upgrade') $this->verifyUpgradeDns();
         if ($mode==='remove') $this->store->saveIntent(null);
         return $status;
+    }
+    /** Recheck the current dnsmasq inputs immediately before the package transaction. */
+    public function verifyUpgradeDns(): void
+    {
+        if (!$this->backend instanceof AsusSmartDnsNativeBackend || NfqwsPlatform::current()!=='asus-entware') return;
+        $intent=$this->store->intent();$job=$this->store->transaction();
+        if ($intent===null || ($job['state']??null)!=='rolled_back' ||
+            ($job['request_id']??null)!==$intent['source_request_id'] ||
+            ($job['profile_hash']??null)!==$intent['profile_hash'] ||
+            ($job['boot']??null)!==trim((string)file_get_contents('/proc/sys/kernel/random/boot_id'))) return;
+        $this->repairForUpgrade($job,true);
+    }
+    private function repairForUpgrade(?array $job,bool $restored): void
+    {
+        if (!$this->backend instanceof AsusSmartDnsNativeBackend || NfqwsPlatform::current()!=='asus-entware' ||
+            !is_string($job['backup_id']??null)) return;
+        $snapshot=$this->store->snapshot($job['backup_id']);
+        $fingerprints=$snapshot['baseline']['fingerprints']['dns_includes']??null;
+        if (!is_array($fingerprints)) return; // An old backup without this proof cannot authorize file changes.
+        try { $this->backend->repairUpgradeIncludes($job,$fingerprints,$restored); }
+        catch (RuntimeException $e) {
+            if (in_array($e->getMessage(),['existing_dns_rules','stale_baseline'],true))
+                throw new RuntimeException('dns_permissions_changed',0,$e);
+            throw $e;
+        }
+        if ($this->store->transaction()!==$job) throw new RuntimeException('stale_baseline');
     }
     /** A validator briefly owns the journal while publishing its result. Only
      * retry this passive read; never replay a DNS switch or confirmation. */

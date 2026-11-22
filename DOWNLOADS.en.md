@@ -2,6 +2,8 @@
 
 **Build 101 releases** · [ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
 
+[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
+
 [Install with one command](QUICKSTART.en.md#install-command). Use the table if you prefer to choose the file manually.
 
 | Installation environment | Which package to choose |

@@ -55,10 +55,11 @@ final class AsusSmartDnsBaseline
             if (!in_array($f['read']['state'],['available','missing'],true)) $conflicts[]='dns_sources_unavailable';
         }
         if ($files['dnsmasq_config']['read']['state']!=='available') throw new RuntimeException('baseline_unavailable');
-        $config=$files['dnsmasq_config']['read'];
+        $config=$files['dnsmasq_config']['read'];$includesNeedRepair=false;
         try {
-            $expanded=AsusSmartDnsConfig::collect($config['value'],$owner);
+            $expanded=AsusSmartDnsConfig::collect($config['value'],$owner,NfqwsPlatform::current()==='asus-entware');
             $config['value']=$expanded['text'];$facts['dns_includes']=$expanded['fingerprints'];
+            $includesNeedRepair=($expanded['repairable']??[])!==[];
         } catch (Throwable $e) {$conflicts[]='existing_dns_rules';}
         $hook=$files['hook_dnsmasq'];
         if ($hook['read']['state']==='available' && ($hook['meta']['file']['uid']!==$owner || $hook['meta']['file']['links']!==1 || ($hook['meta']['file']['mode']&0022)!==0 || ($hook['meta']['file']['mode']&0100)===0)) $conflicts[]='hook_permissions';
@@ -113,6 +114,7 @@ final class AsusSmartDnsBaseline
         $snapshot=['hook'=>['state'=>$hook['read']['state'],'value'=>$hook['read']['value'],'mode'=>$hook['meta']['file']['mode']??null],
             'config'=>$config,'server_files'=>$serverFiles,'fingerprints'=>$facts];
         if (strlen(json_encode($snapshot,JSON_THROW_ON_ERROR))>500000) throw new RuntimeException('output_limit');
-        return ['hash'=>hash('sha256',json_encode($facts,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES)), 'snapshot'=>$snapshot,'conflicts'=>$conflicts];
+        return ['hash'=>hash('sha256',json_encode($facts,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES)),
+            'snapshot'=>$snapshot,'conflicts'=>$conflicts,'includes_need_repair'=>$includesNeedRepair];
     }
 }

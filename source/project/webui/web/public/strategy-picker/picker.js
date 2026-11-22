@@ -13,8 +13,9 @@ export function addonNotice(job,language='ru'){
 export function jobView(job,language='ru'){
   const w=words[language],state=job?.state,finished=['completed','applied'].includes(state);
   const stopped=['failed','cancelled','interrupted','recovery_required'].includes(state);
-  const phase=stopped?(w[state]||w.failed):(w[job?.phase]||job?.phase||'');
-  const noWinner=stopped?(w[state]||w.failed):state==='applied'?w.applied:state==='completed'?
+  const phase=stopped?(state==='recovery_required'&&job?.can_restart===true?w.restart_available:w[state]):
+    (Object.hasOwn(w,job?.phase)?w[job.phase]:job?w.checking:'');
+  const noWinner=stopped?phase:state==='applied'?w.applied:state==='completed'?
     (job.generation?.verified?(language==='ru'?'Исходная стратегия сохранена. Собранный комплект доступен для скачивания.':'Original retained. The generated kit is available to download.'):w.none):'';
   return {phase,noWinner,showWinner:finished&&job.restored===true,reportAvailable:finished||stopped};
 }
@@ -25,7 +26,7 @@ export function profileLabel(profile,language='ru'){
     (plain?'Assembled strategy · no bypass methods · repeat verification':'Assembled strategy · final repeat verification');
 }
 export function retryHint(language='ru'){
-  return language==='ru'?'Один прогон проверяет только часть вариантов. Можно заранее указать число прогонов — второй, третий и следующие начнутся автоматически после восстановления настроек. Генератор использует результаты предыдущих прогонов и исследует новые сочетания. Исходная стратегия, соединение без обхода и лучшие варианты проходят контрольные повторные замеры. Результат может стать лучше, но это не гарантируется. Каждый прогон завершается отдельно; применение найденной стратегии — ваш отдельный выбор.':'One run checks only part of the available variants. Choose the run count beforehand: a second, third or later run starts automatically after restoring settings. The generator uses previous results and explores new combinations. The original strategy, pass-through and leading candidates get control remeasurements. Results may improve, but improvement is not guaranteed. Each run finishes separately; applying a strategy remains your choice.';
+  return language==='ru'?'Результаты первых проверок учитываются, когда начинаются второй, третий и следующие прогоны. Улучшение не гарантируется.':'The second, third and later runs build on earlier measurements. Improvement is not guaranteed.';
 }
 export function goalLabel(goal='all',language='ru'){
   const names={youtube:'YouTube',discord:'Discord',instagram:'Instagram',torrents:language==='ru'?'Торрент-трекеры':'Torrent trackers'};
@@ -33,30 +34,30 @@ export function goalLabel(goal='all',language='ru'){
 }
 export function selectionDescription(goal,search,language='ru',custom=null){
   if(custom){const scope=customScope(custom.hosts,custom.only,goal,language);return scope===null?null:
-    (language==='ru'?'Разработка стратегии. ':'Strategy generation. ')+scope;}
+    (language==='ru'?'Создание стратегии. ':'Creating a strategy. ')+scope;}
   const scope=goalLabel(goal,language);
-  const method=language==='ru'?(search==='synthesis'?'Разработать стратегию':'Сравнить готовые профили'):(search==='synthesis'?'Develop a strategy':'Compare existing profiles');
+  const method=language==='ru'?(search==='synthesis'?'Создать новую стратегию':'Сравнить готовые стратегии'):(search==='synthesis'?'Create a new strategy':'Compare existing strategies');
   return method+'. '+(language==='ru'?'Цель: ':'Goal: ')+scope+'.';
 }
 export function searchDescription(search,language='ru'){
-  if(search!=='synthesis')return language==='ru'?'Сравниваются текущая, стандартная и подходящие стратегии из каталога вместе с их файлами. Новая стратегия с нуля в этом режиме не создаётся.':'Compare the current, stock and compatible signed-catalog profiles with their dependencies. This mode does not generate a strategy from scratch.';
-  return language==='ru'?'Генератор стратегий проходит бета-тестирование. Он проверяет методы для HTTP, TLS и QUIC и уточняет поиск по результатам. Результаты прошлых запусков направляют поиск. В одной серии одинаковые поисковые сочетания исключаются; контрольные замеры исходной стратегии, соединения без обхода и лучших вариантов повторяются. Лучшие варианты проходят повторные замеры; улучшение не гарантируется. Каталог готовых стратегий не требуется. Проверки выполняются по IPv4.':'The strategy generator is in beta. It tests methods for HTTP, TLS and QUIC and refines the search using the results. Previous results guide the search. Identical exploratory combinations are excluded within a series; the original strategy, pass-through and leading candidates get repeated control measurements. Leading candidates are measured repeatedly; improvement is not guaranteed. No strategy catalog is required. Checks use IPv4.';
+  if(search!=='synthesis')return language==='ru'?'Роутер сравнит вашу текущую стратегию, стандартную и подходящие варианты из каталога.':'The router compares your current strategy with the default and compatible strategies from the catalog.';
+  return language==='ru'?'Создание новой стратегии пока в бета-версии. Роутер пробует разные настройки и повторно проверяет лучшие варианты. Улучшение не гарантируется. Проверки идут по IPv4.':'Creating new strategies is in beta. The router tries different settings and checks the most promising options again. Results may vary. Tests use IPv4.';
 }
 export function reportDescription(search,language='ru'){
-  if(search!=='synthesis')return language==='ru'?'Для каждого профиля: предварительная проверка и обучение и два измерения. Показаны диапазоны успешных проверок. DNS проверяется отдельно и не влияет на рейтинг.':'Each profile gets the same AUTO warmup and two recorded runs. Successful-check ranges are shown. DNS is tested separately and does not affect ranking.';
-  return language==='ru'?'Предварительные замеры помогают выбрать варианты для повторной проверки. Итог сравнивается с вашей исходной стратегией и соединением без обхода. Применение выполняется отдельно.':'Exploratory measurements select candidates for repeat checks. The result is compared with your original strategy and pass-through. Applying it is a separate step.';
+  if(search!=='synthesis')return language==='ru'?'Каждую стратегию проверили дважды. В таблице показано, сколько проверок прошло успешно. Проверка DNS не влияет на сравнение.':'Each strategy was measured twice. The table shows how many checks passed. DNS is checked separately and has no effect on the comparison.';
+  return language==='ru'?'Роутер повторно проверяет лучшие варианты и сравнивает итог с вашей исходной стратегией и соединением без обхода.':'The router checks promising strategies again and compares the result with your original strategy and a connection without bypass.';
 }
 export function generationSummary(generation,language='ru'){
   const fromZero=generation?.from_zero?.eligible===true;
   const versusCurrent=generation?.verified===true&&generation?.versus_current?.eligible===true;
   if(language==='ru')return fromZero?
-    'Новая стратегия собрана без каталога. Рост по выбранной цели относительно пустой основы подтверждён повторными измерениями. '+
-      (versusCurrent?'Подтверждено улучшение по выбранной цели относительно исходной стратегии.':'Ваша исходная стратегия сохранена: преимущества над ней не подтверждены.'):
-    'Для собранного варианта рост относительно пустой основы пока не подтверждён. Это результат проверенной части матрицы, не всех возможных сочетаний.';
+    'Повторные проверки показали улучшение по выбранной цели по сравнению с соединением без обхода. '+
+      (versusCurrent?'Она улучшила результат для выбранных сервисов по сравнению с вашей исходной стратегией.':'Ваша исходная стратегия сохранена. Улучшение по сравнению с ней не подтвердилось.'):
+    'Проверки пока не показали, что новая стратегия работает лучше соединения без обхода.';
   return fromZero?
-    'A new strategy was generated without the catalog. Repeated measurements confirmed improvement for the selected goal over pass-through. '+
-      (versusCurrent?'It also improved the selected goal compared with the original strategy.':'The original was retained: improvement over it was not confirmed.'):
-    'The assembled candidate did not confirm improvement over pass-through. Only the recorded part of the matrix was tested.';
+    'Repeated checks showed an improvement for the selected goal over the connection without bypass. '+
+      (versusCurrent?'It also improved results for the selected services over your original strategy.':'The router kept your original strategy. The new strategy did not show an improvement over it.'):
+    'The checks have not shown an improvement over the connection without bypass.';
 }
 export function ranges(runs,service=null){
   if(!Array.isArray(runs)||(runs.length!==1&&runs.length!==2))return [];
@@ -103,14 +104,14 @@ export function applyDescription(job,language='ru',torrentSites=false){
   if(job?.state!=='completed'||job.restored!==true||job.can_apply!==true||!p||!tradeoffComparison(job,p).known)return null;
   const goal=Array.isArray(job.custom_hosts)?customScope(job.custom_hosts,job.custom_only,job.goal||'all',language):goalLabel(job.goal||'all',language),notice=tradeoffNotice(job,p,language);
   if(goal===null)return null;
-  const base=language==='ru'?`Применить этот общий профиль целиком? Цель проверки: ${goal}. Состав правил изменится; исходные файлы будут сохранены. Проверки выполнялись по IPv4.`:`Apply this complete common profile? Measured goal: ${goal}. Its rules will replace the current strategy; original resource files are preserved. Measurements cover IPv4.`;
+  const base=language==='ru'?`Заменить текущую стратегию этим вариантом? Роутер сохранит исходные файлы. Цель проверок по IPv4 — ${goal}.`:`Replace your current strategy with this one? The router will keep the original files. The goal of the IPv4 checks was ${goal}.`;
   const addon=torrentSites?(language==='ru'?' Дополнение для торрент-трекеров будет добавлено без отдельного измерения.':' The tracker extension is not separately measured.'):'';
   return base+(notice?' '+notice:'')+addon;
 }
 function recoveryBlocked(j){return j?.state==='recovery_required'&&j.can_restart!==true;}
-const words={ru:{start:'Начать подбор',cancel:'Остановить и восстановить',refresh:'Обновить',apply:'Применить этот вариант',download:'Скачать отчёт JSON',baseline:'Исходная стратегия',eligible:'Подтверждённое улучшение по выбранной цели',no_improvement:'Улучшение не подтверждено',tls_regression:'Ухудшение TLS',youtube_regression:'Ухудшение проверок YouTube',incomparable_result:'Несопоставимые результаты',complete:'Подбор завершён',catalog:'Подготовка профилей',dns:'Проверка DNS',switching:'Переключение стратегии',warming:'Предварительная проверка и обучение',measuring_1:'Первое измерение',measuring_2:'Повторное измерение',restoring:'Восстановление исходного состояния',applying:'Применение выбранной стратегии',applied:'Стратегия применена',backup:'Резервная копия',restored:'Исходная конфигурация восстановлена.',notrestored:'Восстановление ещё не подтверждено.',none:'Подтверждённого улучшения не найдено — сохранена исходная стратегия.',best:'Рекомендуемый вариант: ',not_installed:'Сначала установите DPI Detector кнопкой в основной панели.',busy:'Устройство занято другой операцией. Дождитесь завершения.',insufficient_memory:'Недостаточно свободной памяти для безопасной проверки.',insufficient_space:'Недостаточно места для резервной копии и ресурсов.',source_changed:'Настройки изменены вне подбора. Чужие изменения не перезаписаны; требуется проверка.',recovery_required:'Восстановление не подтверждено. Скачайте отчёт; новый подбор заблокирован.',split_mode_active:'Для подбора сначала включите общий режим стратегий.',all_mode_not_supported:'Выберите режим «Авто» или «Список». Режим «Всё» в подборе не используется.',cancelled:'Остановлен пользователем.',timed_out:'Проверка не завершилась за отведённое время.',interrupted:'Проверка была прервана.',goal_no_improvement:'Улучшение выбранных сервисов не подтверждено',goal_regression:'Ухудшение выбранного сервиса',failed:'Подбор не завершён. Сохраните отчёт для диагностики.',invalid_synthesis_recipe:'Не удалось собрать вариант стратегии. Подбор остановлен. Сохраните отчёт.',unsupported_abi:'Для этой архитектуры нет совместимого DPI Detector; подбор недоступен.',unsupported_runtime:'Не удалось запустить проверку с выбранными параметрами. Уменьшите число запросов; если ошибка повторится, сохраните отчёт.',storage_unavailable:'Хранилище подбора недоступно. Сохраните имеющийся отчёт и проверьте накопитель.',detector_failed:'DPI Detector не завершил измерение. Сохраните отчёт.',service_start_failed:'Не удалось запустить службу. Сохраните отчёт.',service_stop_failed:'Не удалось остановить службу. Сохраните отчёт.',service_check_failed:'Не удалось подтвердить работу службы. Сохраните отчёт.',lua_trust:'Для Lua требуется явное доверие; профиль пропущен.',unresolved_profile_resource:'Недоступны необходимые списки, блобы или Lua.',choose_goal:'Выберите хотя бы один сервис.',stale_state:'Отчёт устарел. Выполните подбор повторно.',auth:'Войдите в основную панель и откройте подбор снова.'},en:{start:'Start selection',cancel:'Stop and restore',refresh:'Refresh',apply:'Apply this strategy',download:'Download JSON report',baseline:'Original strategy',eligible:'Confirmed improvement for the selected goal',no_improvement:'No confirmed improvement',tls_regression:'TLS regression',youtube_regression:'YouTube checks regressed',incomparable_result:'Incomparable results',complete:'Selection complete',catalog:'Preparing profiles',dns:'Checking DNS',switching:'Switching strategy',warming:'Equal AUTO warmup',measuring_1:'First measurement',measuring_2:'Repeat measurement',restoring:'Restoring original state',applying:'Applying strategy',applied:'Strategy applied',backup:'Backup',restored:'Original configuration restored.',notrestored:'Restoration has not been confirmed yet.',none:'No confirmed improvement; the original strategy was retained.',best:'Recommended strategy: ',not_installed:'Install DPI Detector from the main panel first.',busy:'Another operation is using the device.',insufficient_memory:'Not enough available memory.',insufficient_space:'Not enough storage for backup and resources.',source_changed:'Settings changed outside this operation; foreign changes were preserved.',recovery_required:'Restoration is not confirmed. Download the report; new selection is blocked.',split_mode_active:'Switch to common strategy mode first.',all_mode_not_supported:'Use AUTO or LIST mode; ALL is excluded.',cancelled:'Stopped by the user.',timed_out:'Time limit reached.',interrupted:'Interrupted.',goal_no_improvement:'No confirmed improvement for selected services',goal_regression:'A selected service regressed',failed:'Selection did not finish. Save the diagnostic report.',invalid_synthesis_recipe:'Could not build a strategy variant. Selection stopped. Save the report.',unsupported_abi:'No compatible DPI Detector is available for this architecture.',unsupported_runtime:'The checks could not start with these settings. Reduce the request count; if this recurs, share the report with Frank.',storage_unavailable:'Selection storage is unavailable. Save the report and check storage.',detector_failed:'DPI Detector did not finish the measurement. Save the report.',service_start_failed:'The service could not start. Save the report.',service_stop_failed:'The service could not stop. Save the report.',service_check_failed:'Service operation could not be confirmed. Save the report.',lua_trust:'Lua requires explicit trust; profile skipped.',unresolved_profile_resource:'Required lists, blobs or Lua are unavailable.',choose_goal:'Select at least one service.',stale_state:'This report is outdated. Run selection again.',auth:'Sign in to the main panel, then reopen this page.'}};
-Object.assign(words.ru,{synthesis_setup:'Подготовка подбора',discovering:'Проверка методов и параметров',assembling:'Сборка правил по результатам',zero_baseline:'Стратегия временно отключена, чтобы сравнить обычное соединение с работой обхода. После проверки подбор продолжится.',exploratory:'Предварительный результат · нужна повторная проверка',synthesis_lua_unavailable:'Стандартные Lua не совпадают с проверенной версией пакета. Генерация не начата.',synthesis_unverified:'Для этой стратегии нет подтверждённой повторной проверки.',retested:'Вариант проверен повторно',protocol_regression:'Часть ранее успешных проверок перестала проходить',export:'Скачать стратегию с нужными файлами'});
-Object.assign(words.en,{synthesis_setup:'Preparing strategy generation',discovering:'Testing methods and parameters',assembling:'Assembling measured rules',zero_baseline:'Pass-through control',exploratory:'One exploratory sample · not a recommendation',synthesis_lua_unavailable:'Standard Lua does not match the verified package. Generation has not started.',synthesis_unverified:'This strategy has no confirmed repeat validation.',retested:'Retested candidate',protocol_regression:'Some previously successful checks stopped passing',export:'Download strategy with required files'});
+const words={ru:{start:'Начать подбор',cancel:'Остановить и восстановить',refresh:'Обновить состояние',apply:'Применить этот вариант',download:'Скачать отчёт',baseline:'Исходная стратегия',eligible:'Подтверждённое улучшение по выбранной цели',no_improvement:'Улучшение не подтверждено',tls_regression:'Некоторые защищённые соединения стали работать хуже',youtube_regression:'Меньше проверок YouTube прошли успешно',incomparable_result:'Сравнить результаты не удалось',complete:'Подбор завершён',catalog:'Подготовка профилей',dns:'Проверка DNS',switching:'Переключение стратегии',warming:'Проверка соединения перед замером',measuring_1:'Первое измерение',measuring_2:'Повторное измерение',restoring:'Восстановление исходного состояния',applying:'Применение выбранной стратегии',applied:'Стратегия применена',backup:'Резервная копия',restored:'Исходные настройки восстановлены.',notrestored:'Роутер ещё не подтвердил возврат настроек.',none:'Улучшение не подтвердилось. Роутер вернул исходную стратегию.',best:'Рекомендуемый вариант: ',not_installed:'Сначала установите DPI Detector кнопкой в основной панели.',busy:'Устройство занято другой операцией. Дождитесь завершения.',insufficient_memory:'Недостаточно свободной памяти для безопасной проверки.',insufficient_space:'Недостаточно места для резервной копии и ресурсов.',source_changed:'Настройки изменены вне подбора. Чужие изменения не перезаписаны; требуется проверка.',recovery_required:'Роутер не подтвердил возврат настроек. Скачайте отчёт и отправьте его Фрэнку. Новый подбор пока недоступен.',split_mode_active:'Для подбора сначала включите общий режим стратегий.',all_mode_not_supported:'Выберите режим «Авто» или «Список». Режим «Всё» в подборе не используется.',cancelled:'Подбор остановлен.',timed_out:'Проверка не завершилась за отведённое время.',interrupted:'Проверка была прервана.',goal_no_improvement:'Улучшение выбранных сервисов не подтверждено',goal_regression:'Ухудшение выбранного сервиса',failed:'Подбор не завершён. Сохраните отчёт для диагностики.',invalid_synthesis_recipe:'Не удалось собрать вариант стратегии. Подбор остановлен. Сохраните отчёт.',unsupported_abi:'Для этой модели роутера подбор недоступен.',unsupported_runtime:'Не удалось запустить проверку с выбранными параметрами. Уменьшите число запросов; если ошибка повторится, сохраните отчёт.',storage_unavailable:'Хранилище подбора недоступно. Сохраните имеющийся отчёт и проверьте накопитель.',detector_failed:'DPI Detector не завершил измерение. Сохраните отчёт.',service_start_failed:'Не удалось запустить службу. Сохраните отчёт.',service_stop_failed:'Не удалось остановить службу. Сохраните отчёт.',service_check_failed:'Не удалось подтвердить работу службы. Сохраните отчёт.',lua_trust:'Роутер пропустил стратегию, потому что её скрипты требуют разрешения.',unresolved_profile_resource:'Не удалось найти файлы, нужные для этой стратегии.',choose_goal:'Выберите хотя бы один сервис.',stale_state:'Этот отчёт больше не подходит к текущим настройкам. Запустите подбор снова.',auth:'Войдите в основную панель и откройте подбор снова.'},en:{start:'Start selection',cancel:'Stop and restore',refresh:'Refresh status',apply:'Apply this strategy',download:'Download report',baseline:'Original strategy',eligible:'Confirmed improvement for the selected goal',no_improvement:'No confirmed improvement',tls_regression:'Some secure connections got worse',youtube_regression:'Fewer YouTube checks passed',incomparable_result:'Results could not be compared',complete:'Selection complete',catalog:'Preparing profiles',dns:'Checking DNS',switching:'Switching strategy',warming:'Checking the connection before measuring',measuring_1:'First measurement',measuring_2:'Repeat measurement',restoring:'Restoring original state',applying:'Applying strategy',applied:'Strategy applied',backup:'Backup',restored:'Original settings restored.',notrestored:'The router has yet to confirm that it restored your settings.',none:'The router kept your original strategy because the checks showed no clear improvement.',best:'Recommended strategy: ',not_installed:'Install DPI Detector from the main panel first.',busy:'Another operation is using the device.',insufficient_memory:'Not enough available memory.',insufficient_space:'Not enough storage for backup and resources.',source_changed:'Settings changed outside this operation; foreign changes were preserved.',recovery_required:'The router could not confirm that it restored the settings. Download the report and share it with Frank. Starting a new search is unavailable for now.',split_mode_active:'Switch to common strategy mode first.',all_mode_not_supported:'Use AUTO or LIST mode; ALL is excluded.',cancelled:'Search stopped.',timed_out:'Time limit reached.',interrupted:'Interrupted.',goal_no_improvement:'No confirmed improvement for selected services',goal_regression:'A selected service regressed',failed:'Selection did not finish. Save the diagnostic report.',invalid_synthesis_recipe:'Could not build a strategy variant. Selection stopped. Save the report.',unsupported_abi:'Strategy search is unavailable for this router model.',unsupported_runtime:'The checks could not start with these settings. Reduce the request count; if this recurs, share the report with Frank.',storage_unavailable:'Selection storage is unavailable. Save the report and check storage.',detector_failed:'DPI Detector did not finish the measurement. Save the report.',service_start_failed:'The service could not start. Save the report.',service_stop_failed:'The service could not stop. Save the report.',service_check_failed:'Service operation could not be confirmed. Save the report.',lua_trust:'The router skipped this strategy because its scripts require permission.',unresolved_profile_resource:'Files needed by this strategy are missing.',choose_goal:'Select at least one service.',stale_state:'This report no longer matches your current settings. Start a new search.',auth:'Sign in to the main panel, then reopen this page.'}};
+Object.assign(words.ru,{synthesis_setup:'Подготовка подбора',discovering:'Проверка методов и параметров',assembling:'Сборка правил по результатам',zero_baseline:'Стратегия временно отключена, чтобы сравнить обычное соединение с работой обхода. После проверки подбор продолжится.',exploratory:'Предварительный результат · нужна повторная проверка',synthesis_lua_unavailable:'Стандартные Lua не совпадают с проверенной версией пакета. Генерация не начата.',synthesis_unverified:'Для этой стратегии нет подтверждённой повторной проверки.',retested:'Вариант проверен повторно',protocol_regression:'Часть ранее успешных проверок перестала проходить',export:'Скачать стратегию с файлами'});
+Object.assign(words.en,{synthesis_setup:'Preparing strategy generation',discovering:'Testing methods and parameters',assembling:'Assembling measured rules',zero_baseline:'Pass-through control',exploratory:'One exploratory sample · not a recommendation',synthesis_lua_unavailable:'Standard Lua does not match the verified package. Generation has not started.',synthesis_unverified:'This strategy has no confirmed repeat validation.',retested:'Retested candidate',protocol_regression:'Some previously successful checks stopped passing',export:'Download strategy with files'});
 Object.assign(words.ru,{invalid_custom_targets:'Проверьте список своих сайтов.',request_conflict:'Этот запрос уже связан с другим набором целей. Обновите отчёт и начните новый подбор.',selection_changed:'Выбор изменился. Проверьте его и начните снова.',custom_regression:'Ухудшение проверки своего сайта',native_regression:'Ухудшение встроенных контрольных проверок',custom_budget_unavailable:'Не удалось подготовить все проверки. Измените список сайтов и повторите подбор.',synthesis_rule_limit:'Не удалось собрать все цели в допустимое число правил. Неполный вариант не предлагается.'});
 Object.assign(words.en,{invalid_custom_targets:'Check the custom site list.',request_conflict:'This request already identifies different goals. Refresh the report and start a new search.',selection_changed:'Your selection changed. Review it and start again.',custom_regression:'A custom site check regressed',native_regression:'Built-in control checks regressed',custom_budget_unavailable:'A safe time budget is unavailable for these checks.',synthesis_rule_limit:'The complete target set exceeds the rule limit. No partial strategy is offered.'});
 Object.assign(words.ru,{request_unconfirmed:'Ответ не получен. Работа на роутере может продолжаться. Обновите статус или повторите тот же запрос.',retry_request:'Повторить тот же запрос'});
@@ -118,6 +119,34 @@ Object.assign(words.en,{request_unconfirmed:'No response was received. Work on t
 Object.assign(words.ru,{invalid_pool:'Введите целое число от 1 до 1000000 без пробелов и ведущих нулей.',concurrency_budget_unavailable:'Не удалось подготовить проверки с этим числом запросов. Уменьшите его и повторите.',plan_changed:'Условия проверки изменились. Выберите параметры и подтвердите новый план.'});
 Object.assign(words.en,{invalid_pool:'Enter an integer from 1 to 1000000 without spaces or leading zeros.',concurrency_budget_unavailable:'This request pool cannot cover every target within the safe time limit.',plan_changed:'The test conditions changed. Review the selection and confirm a new plan.'});
 words.ru.invalid_rounds='Введите целое число прогонов от 2 до 10.';words.en.invalid_rounds='Enter a whole number of runs from 2 to 10.';
+Object.assign(words.ru,{
+  checking:'Идёт проверка',
+  restart_available:'Подбор остановлен. Можно начать новый.',
+  preparing:'Готовим подбор',
+  profiles:'Подготовка стратегий',
+  series_between:'Подготовка следующего прогона',
+  details_unavailable:'Подробности смотрите в отчёте.',
+  output_limit:'Файл слишком большой для отправки. Скачайте его отдельно.',
+  request_conflict:'Выбор для этого запуска изменился. Обновите состояние и начните новый подбор.',
+  invalid_request:'Не удалось выполнить действие. Обновите состояние и попробуйте снова.',
+  admission_closed:'Роутер сейчас не готов к подбору. Проверьте состояние и попробуйте снова.',
+  admission_busy:'Подбор уже запускается. Обновите состояние.',
+  guard_lost:'Роутер потерял контроль над проверкой. Дождитесь сообщения о восстановлении.',
+});
+Object.assign(words.en,{
+  checking:'Check in progress',
+  restart_available:'The search stopped. You can start a new one.',
+  preparing:'Preparing the search',
+  profiles:'Preparing strategies',
+  series_between:'Preparing the next run',
+  details_unavailable:'See the report for details.',
+  output_limit:'The file is too large to share here. Download it separately.',
+  request_conflict:'The selection for this run changed. Refresh status and start a new search.',
+  invalid_request:'The action could not be completed. Refresh status and try again.',
+  admission_closed:'The router is not ready for a search. Refresh status and try again.',
+  admission_busy:'The search is starting. Refresh status.',
+  guard_lost:'The router lost control of the check. Wait for the restoration status.',
+});
 Object.assign(words.ru,{
   measurement_saved:'Замеры сохранены. Сравнение с исходной ещё не подтверждено.',
   measurement_loading:'Загрузка замеров…',
@@ -128,7 +157,7 @@ Object.assign(words.en,{
   measurement_loading:'Loading measurements…',
   measurement_unavailable:'This measurement could not be opened. Refresh the report and select it again.',
 });
-words.ru.auth='Сессия закончилась. Войдите в основную панель и обновите страницу.';words.en.auth='Your session expired. Sign in on the main panel and reload this page.';
+words.ru.auth='Войдите в основную панель заново и обновите страницу.';words.en.auth='Your session expired. Sign in on the main panel and reload this page.';
 export function remainingTime(job,active,since=0,language='ru'){
   if(!active||!Number.isFinite(job?.elapsed_seconds)||job.elapsed_seconds<0||!Number.isFinite(since)||since<0)return '';
   const progress=job.progress;
@@ -141,9 +170,29 @@ export function remainingTime(job,active,since=0,language='ru'){
     `About ${minutes} min until the search finishes. The estimate updates as checks complete.`;
 }
 if(typeof document!=='undefined'){
-  let csrf='',data=null,busy=false,language='ru',actionError='',pending=null,goalLoaded=false,customLoaded=false,customErrors=[],pageActive=true;const $=id=>document.getElementById(id);const t=key=>words[language][key]||key;
+  let csrf='',data=null,busy=false,language='ru',actionError='',pending=null,goalLoaded=false,customLoaded=false,customErrors=[],pageActive=true;const $=id=>document.getElementById(id);const t=key=>Object.hasOwn(words[language],key)?words[language][key]:words[language].details_unavailable;
   let poolLoaded=false,roundsLoaded=false,draftPlan=null,timingJob=null,timingReceived=0;$('pool-value').value='100';$('rounds-value').value='2';
   let measuredJob=null,measuredOptions='',measuredView=null,measuredRequest=0,measuredStatus='';
+  let ownedWindow=null,windowTimer=null;
+  const randomId=()=>crypto.getRandomValues(new Uint32Array(4)).reduce((id,value)=>id+value.toString(16).padStart(8,'0'),'');
+  function forgetWindow(){
+    if(windowTimer!==null)clearInterval(windowTimer);
+    windowTimer=null;
+    ownedWindow=null;
+  }
+  function reportWindow(presence){
+    if(!ownedWindow||!authenticated||!csrf)return;
+    const url=panelBase+'index.php';
+    const body=new URLSearchParams({cmd:'pickerwindow',csrf_token:csrf,...ownedWindow,presence});
+    if(presence==='closed'){
+      try{if(window.navigator?.sendBeacon?.(url,body))return;}catch{/* Try the keepalive transport. */}
+    }
+    const signal=presence==='open'?AbortSignal.timeout?.(15000):undefined;
+    void fetch(url,{method:'POST',credentials:'same-origin',body,keepalive:presence==='closed',signal}).catch(()=>{});
+  }
+  function observeWindow(result){
+    if(ownedWindow&&result?.job?.request_id===ownedWindow.request_id&&!result.active)forgetWindow();
+  }
   const requestedPool=()=>{const v=$('pool-value').value;return v==='auto'?null:poolChoice(v);};
   function text(id,value){$(id).textContent=value;}
   const metrics=new MetricsHistory();let metricsEpoch=0;
@@ -154,7 +203,7 @@ if(typeof document!=='undefined'){
     const timeout=controller?setTimeout(()=>controller.abort(),15000):null;
     try{
     const r=await fetch(panelBase+'index.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p,...(controller?{signal:controller.signal}:{})});
-    if(r.status===401||r.status===403){authenticated=false;pending=null;$('confirmation').hidden=true;if(data)data={...data,error:'auth'};poller.stop();render();throw new Error('auth');}
+    if(r.status===401||r.status===403){authenticated=false;forgetWindow();pending=null;$('confirmation').hidden=true;if(data)data={...data,error:'auth'};poller.stop();render();throw new Error('auth');}
     const v=await r.json();if(!r.ok||v.error){const error=new Error(v.error||'failed');error.confirmed=true;throw error;}return v;
     }finally{if(timeout!==null)clearTimeout(timeout);}
   }
@@ -180,6 +229,7 @@ if(typeof document!=='undefined'){
   let outstanding=null;try{const saved=JSON.parse(sessionStorage.getItem(mutationKey));if(validMutation(saved))outstanding=saved;}catch{}
   function rememberMutation(value){outstanding=value;try{if(value)sessionStorage.setItem(mutationKey,JSON.stringify(value));else sessionStorage.removeItem(mutationKey);}catch{}}
   function reconcile(result){
+    observeWindow(result);
     if(!outstanding)return;
     const {cmd,extra}=outstanding,j=result?.job;
     if((extra.request_id&&j?.request_id===extra.request_id)||j?.id===extra.id&&
@@ -276,8 +326,8 @@ if(typeof document!=='undefined'){
     if(Array.isArray(job.custom_hosts)){
       const v=customMeasurements(profile.custom_runs),label=document.createElement('p');
       label.className='custom-metrics';
-      label.textContent=v?(language==='ru'?`Свои сайты · ${v.repeats===2?'успешно в обоих замерах':'предварительный замер'}: ${v.stable}/${v.total}. Ответ транспорта: ${v.responded}/${v.total}.`:
-        `Custom sites · ${v.repeats===2?'successful in both runs':'exploratory sample'}: ${v.stable}/${v.total}. Transport responses: ${v.responded}/${v.total}.`):t('incomparable_result');
+      label.textContent=v?(language==='ru'?`Свои сайты · ${v.repeats===2?'успешно в обоих замерах':'предварительный замер'}: ${v.stable}/${v.total}. Сервер ответил: ${v.responded}/${v.total}.`:
+        `Custom sites · ${v.repeats===2?'successful in both runs':'exploratory sample'}: ${v.stable}/${v.total}. Server answered: ${v.responded}/${v.total}.`):t('incomparable_result');
       row.append(label);
       for(const site of v?.rows||[]){
         const line=document.createElement('p'),ratio=c=>`${c.low===c.high?c.low:c.low+'–'+c.high}/1`;
@@ -324,10 +374,10 @@ if(typeof document!=='undefined'){
     $('measured-section').hidden=!items.length;
     picker.disabled=!authenticated||busy;
     text('measured-title',ru?'Замеры по прогонам':'Measurements by run');
-    text('measured-label',ru?'Вариант из серии':'Result from the series');
-    text('measured-report',ru?'Скачать замеры JSON':'Download measurements as JSON');
-    text('measured-export',ru?'Скачать стратегию JSON':'Download strategy as JSON');
-    text('measured-import',ru?'Открыть в импорте':'Open in Import');
+    text('measured-label',ru?'Какой вариант посмотреть':'Which result to view');
+    text('measured-report',ru?'Скачать замеры':'Download measurements');
+    text('measured-export',ru?'Скачать стратегию':'Download strategy');
+    text('measured-import',ru?'Открыть для импорта':'Open for import');
     text('measured-status',measuredStatus?t(measuredStatus):
       selected&&!entry.document_available?(ru?'Для этого варианта доступны только замеры.':'Only measurements are available for this result.'):'');
     detail.replaceChildren();
@@ -362,7 +412,7 @@ if(typeof document!=='undefined'){
     text('pool-error',requested===null?t('invalid_pool'):'');$('pool-controls').hidden=false;
     $('pool-fieldset').disabled=busy||active||recoveryBlocked(j)||Boolean(data.error)||Boolean(pending)||Boolean(outstanding);
     text('device',b?(language==='ru'?`Ядер процессора: ${b.cores}. Свободная память${data.active?' при запуске':''}: ${Math.round(b.available_kib/1024)} МиБ`:`CPU cores: ${b.cores}. Available memory${data.active?' at start':''}: ${Math.round(b.available_kib/1024)} MiB`):t(data.error||'failed'));
-    text('limits',b?(language==='ru'?`Пул запросов: до ${b.concurrency}. Будут сравнены сохранённые стратегии и до 3 дополнительных вариантов.`:`Request pool: up to ${b.concurrency}. Saved strategies and up to 3 additional variants will be compared.`):'');
+    text('limits',b?(language==='ru'?`До ${b.concurrency} одновременных проверок. Роутер сравнит сохранённые стратегии и до трёх дополнительных вариантов.`:`Up to ${b.concurrency} simultaneous checks. The router compares saved strategies and up to three additional options.`):'');
     const validProfiles=validProfileCollection(j?.profiles);
     const profiles=validProfiles?j.profiles:[];
     if(locked)$('search').value=j.search==='synthesis'?'synthesis':'profiles';
@@ -376,12 +426,12 @@ if(typeof document!=='undefined'){
     text('custom-errors',targetErrors(customErrors,language));
     const customBudget=locked?j?.budget:planned?.budget||data.custom_capability?.budget;
     text('custom-budget',custom?(data.custom_capability?.available===true||locked?
-      (language==='ru'?`Свои сайты будут проверены вместе со встроенными. После завершения или остановки вернутся исходные настройки.`:`Custom sites are checked alongside built-in sites. Original settings are restored after completion or cancellation.`):t(data.custom_capability?.code||'unsupported_runtime')):'');
+      (language==='ru'?`Роутер проверит и другие сайты, чтобы заметить ухудшения.`:`The router also checks other sites to spot any decline.`):t(data.custom_capability?.code||'unsupported_runtime')):'');
     text('search-help',searchDescription($('search').value,language));
     $('extended-control').hidden=synthesis;$('extended-help').hidden=synthesis;
-    if(synthesis&&b){const g=locked?(j.matrix||data.generator):data.generator,shown=custom&&customBudget?customBudget:b;text('limits',language==='ru'?`Пул запросов: до ${shown.concurrency}. Будут проверены до ${g?.max_trials||8} вариантов, затем собранная стратегия проверяется повторно.`:`Request pool: up to ${shown.concurrency}. Up to ${g?.max_trials||8} variants will be tested, followed by repeated checks of the assembled strategy.`);}
+    if(synthesis&&b){const g=locked?(j.matrix||data.generator):data.generator,shown=custom&&customBudget?customBudget:b;text('limits',language==='ru'?`До ${shown.concurrency} одновременных проверок. Роутер попробует до ${g?.max_trials||8} вариантов и повторно проверит собранную стратегию.`:`Up to ${shown.concurrency} simultaneous checks. The router tries up to ${g?.max_trials||8} options and checks the resulting strategy again.`);}
     if(!locked&&requested!=='auto'&&!planned){
-      const message=requested===null?t('invalid_pool'):(language==='ru'?`Выбрано вручную: пул до ${requested} параллельных запросов.`:`Selected manually: a pool of up to ${requested} parallel requests.`);
+      const message=requested===null?t('invalid_pool'):(language==='ru'?`Выбрано до ${requested} одновременных проверок.`:`Up to ${requested} simultaneous checks selected.`);
       text('limits',message);if(custom)text('custom-budget',message);
     }
     if(j?.id!==torrentJob){$('torrent-sites').checked=false;torrentJob=j?.id;}
@@ -396,18 +446,20 @@ if(typeof document!=='undefined'){
     $('cancel').hidden=!active;$('cancel').disabled=busy||Boolean(data.error)||Boolean(outstanding&&outstanding.extra.id!==j?.id);$('extended').disabled=locked||busy||Boolean(pending)||Boolean(outstanding);
     $('progress-section').hidden=!j;$('results-section').hidden=!j||(validProfiles&&!profiles.length);
     for(const id of ['start','cancel','refresh','apply','download','export'])text(id,t(id));if(outstanding?.extra.request_id)text('start',t('retry_request'));
-    text('error',actionError?t(actionError):(j?.code?t(j.code):(data.error?t(data.error):(!data.detector.installed?t(data.detector.code||'not_installed'):''))));
+    const jobCode=j?.state==='recovery_required'&&j.can_restart===true?null:j?.code;
+    text('error',actionError?t(actionError):(jobCode?t(jobCode):(data.error?t(data.error):(!data.detector.installed?t(data.detector.code||'not_installed'):''))));
     $('download').hidden=data.active===true||!view?.reportAvailable;
     $('share-report').hidden=$('download').hidden;$('share-report').disabled=busy;
     $('share-export').hidden=$('export').hidden;$('share-export').disabled=$('export').disabled;
     text('repeat-hint',retryHint(language));
     const series=j?.series;text('series-status',series?(language==='ru'?
-      `${active?'Серия выполняется':'Серия завершена или остановлена'}: прогон ${series.current} из ${series.total}. Завершено: ${series.completed}.${series.selected?` В отчёте — результат прогона ${series.selected}.`:''}`:
+      `${active?'Серия выполняется':'Серия завершена или остановлена'}: прогон ${series.current} из ${series.total}. Завершено: ${series.completed}.${series.selected?` В отчёте показан прогон ${series.selected}.`:''}`:
       `${active?'Series running':'Series finished or stopped'}: run ${series.current} of ${series.total}. Completed: ${series.completed}.${series.selected?` The report shows the result from run ${series.selected}.`:''}`):'');
     renderMeasured(j);
     if(!j)return;
     text('phase',view.phase);text('current',profileLabel(profiles.find(p=>p.name===j.current_name)||{name:j.current_name},language));$('progress').value=j.progress||0;
-    text('restore',j.state==='applied'?t('applied'):t(j.restored?'restored':'notrestored'));
+    text('restore',j.state==='applied'?t('applied'):j.restored?t('restored'):
+      !active||j.state==='restoring'?t('notrestored'):'');
     if(!validProfiles){$('results').replaceChildren();text('error',t('incomparable_result'));text('tradeoffs',tradeoffNotice(j,null,language));$('tradeoffs').hidden=false;return;}
     text('torrent-applied-note',addonNotice(j,language));
     text('measured-goal',(language==='ru'?(j.search==='synthesis'?'Отчёт генератора · цель: ':'Отчёт сравнения готовых профилей · цель: '):(j.search==='synthesis'?'Generation report · goal: ':'Existing-profile comparison · goal: '))+((j.goal||'all')==='all'?(language==='ru'?'все сервисы':'all services'):j.goal.split(',').map(s=>({youtube:'YouTube',discord:'Discord',instagram:'Instagram',torrents:language==='ru'?'Торрент-трекеры':'Torrent trackers'}[s]||s)).join(' + ')));
@@ -416,7 +468,7 @@ if(typeof document!=='undefined'){
     const comparison=customComparison(j);if(comparison){$('custom-summary').hidden=false;text('custom-summary',language==='ru'?
       `Свои сайты · до: ${comparison.before}/${comparison.total} → после: ${comparison.after}/${comparison.total}. Успешный HTTPS-ответ подтверждён в обоих замерах, отдельно для TLS 1.2 и 1.3.`:
       `Custom sites · before: ${comparison.before}/${comparison.total} → after: ${comparison.after}/${comparison.total}. Root HTTPS success in both runs, separately for TLS 1.2 and 1.3.`);}
-    text('matrix',j.matrix?(language==='ru'?`Матрица ${j.matrix.knowledge_version}: проверено ${j.matrix.tested}/${j.matrix.max_trials} опытов.${j.matrix.space_kind==='factorized_grid'?` Схема общих параметров: ${j.matrix.space_size} сочетаний до фильтрации; доменные правила сюда не входят.`:''}${j.matrix.stopped_by_budget?' Поиск ограничен бюджетом; матрица не исчерпана.':''}`:`Matrix ${j.matrix.knowledge_version}: ${j.matrix.tested}/${j.matrix.max_trials} trials.${j.matrix.space_kind==='factorized_grid'?` Shared parameter grid: ${j.matrix.space_size} combinations before filtering, excluding domain overrides.`:''}${j.matrix.stopped_by_budget?' Budget reached; the matrix was not exhausted.':''}`):'');
+    text('matrix',j.matrix?(language==='ru'?`Проверено ${j.matrix.tested} из ${j.matrix.max_trials} вариантов.${j.matrix.stopped_by_budget?' Достигнут предел проверок для этого прогона.':''}`:`Tested ${j.matrix.tested} of ${j.matrix.max_trials} options.${j.matrix.stopped_by_budget?' The run reached its test limit.':''}`):'');
     text('generation',j.generation&&view.showWinner?generationSummary(j.generation,language):'');
     const result=$('results');result.replaceChildren();
     for(const p of profiles)result.append(renderProfile(p,j,'failed'));
@@ -443,10 +495,25 @@ if(typeof document!=='undefined'){
     text('error',e.name==='AbortError'?(language==='ru'?'Статус не получен вовремя. Работа на роутере может продолжаться; повторите обновление.':'Status request timed out. Work on the router may continue; refresh again.'):t(e.message));}}
   const poller=new PickerStatusPoller(document,refresh,renderMetrics,()=>{metricsEpoch++;metrics.pause();});
   async function action(cmd,extra){
+    const newWindow=Boolean(extra.request_id&&ownedWindow?.request_id!==extra.request_id);
+    if(newWindow){
+      forgetWindow();
+      ownedWindow={request_id:extra.request_id,window_id:randomId()};
+      windowTimer=setInterval(()=>reportWindow('open'),20000);
+    }
+    const windowId=extra.request_id?ownedWindow.window_id:null;
     metricsEpoch++;busy=true;actionError='';rememberMutation({cmd,extra:{...extra}});render();
-    try{data=await call(cmd,extra);rememberMutation(null);}
+    try{
+      data=await call(cmd,windowId?{...extra,window_id:windowId}:extra);
+      observeWindow(data);
+      if(windowId===ownedWindow?.window_id)reportWindow('open');
+      rememberMutation(null);
+    }
     catch(e){
-      if(e.confirmed){rememberMutation(null);actionError=e.message;}
+      if(e.confirmed){
+        if(newWindow&&windowId===ownedWindow?.window_id)forgetWindow();
+        rememberMutation(null);actionError=e.message;
+      }
       else{
         actionError=e.message==='auth'?'auth':'request_unconfirmed';
         if(authenticated)try{data=await call('pickerstatus');reconcile(data);}catch{/* Keep the exact canonical request for an explicit retry. */}
@@ -477,7 +544,7 @@ if(typeof document!=='undefined'){
     const rounds=$('search').value==='synthesis'?$('rounds-value').value:'1';
     if(roundChoice(rounds)===null||$('search').value==='synthesis'&&roundChoice(rounds)<2){actionError='invalid_rounds';render();return;}
     if(custom&&data.custom_capability?.available!==true){actionError=data.custom_capability?.code||'unsupported_runtime';render();return;}
-    const snapshot=draftKey(),extra={request_id:crypto.getRandomValues(new Uint32Array(4)).reduce((s,n)=>s+n.toString(16).padStart(8,'0'),''),consent:'test',goal};
+    const snapshot=draftKey(),extra={request_id:randomId(),consent:'test',goal};
     let selected=null;actionError='';customErrors=[];
     if(custom){busy=true;render();try{
       const preview=await call('pickertargets',{custom_sites:$('custom-sites').value});
@@ -498,7 +565,7 @@ if(typeof document!=='undefined'){
       draftPlan={snapshot,post,plan};extra.plan_sha256=plan.plan_sha256;
     }catch(e){actionError=e.name==='AbortError'?'timed_out':e.message;return;}finally{busy=false;render();}
     ask($('search').value==='synthesis'?'pickersynthesize':($('extended').checked?'pickerextended':'pickerstart'),extra,
-      selectionDescription(goal,$('search').value,language,selected)+' '+poolDescription(draftPlan.plan.concurrency_choice,language)+' '+(language==='ru'?`Прогонов подряд: ${rounds}. Начать временное переключение стратегий? Предыдущий отчёт подбора будет заменён; сохраните его при необходимости.`:`${rounds} sequential run(s). Temporarily switch strategies? The previous selection report will be replaced.`));
+      selectionDescription(goal,$('search').value,language,selected)+' '+poolDescription(draftPlan.plan.concurrency_choice,language)+' '+(language==='ru'?`Прогонов подряд: ${rounds}. Начать подбор? Роутер будет временно менять стратегию. При необходимости сначала сохраните предыдущий отчёт.`:`${rounds} sequential run(s). Start the search? The router will switch strategies temporarily. Save the previous report first if you need it.`));
   });
   $('cancel').addEventListener('click',()=>void action('pickercancel',{id:data.job.id}));
   $('apply').addEventListener('click',()=>{if(outstanding&&outstanding.cmd!=='pickerapply')return;const j=data?.job,message=applyDescription(j,language,$('torrent-sites').checked);if(message===null){actionError='incomparable_result';render();return;}ask('pickerapply',{id:j.id,torrent_sites:$('torrent-sites').checked?'1':'0'},message);});
@@ -580,23 +647,32 @@ if(typeof document!=='undefined'){
     try{const v=await call('pickerexport',{id:data.job.id,torrent_sites:$('torrent-sites').checked?'1':'0'});shareDownload(v.raw,v.filename);}catch(e){actionError=e.message;}finally{busy=false;render();}});
   $('download').addEventListener('click',()=>{if(!data||data.active===true||!jobView(data.job,language).reportAvailable)return;downloadJson(JSON.stringify(data,null,2),'nfqws2-strategy-selection.json');});
   $('export').addEventListener('click',async()=>{busy=true;actionError='';render();try{const v=await call('pickerexport',{id:data.job.id,torrent_sites:$('torrent-sites').checked?'1':'0'});downloadJson(v.raw,v.filename);}catch(e){actionError=e.message;}finally{busy=false;render();}});
-  const labels={ru:{title:'Подобрать стратегию',intro:'Проверки выполняются на этом роутере. После сравнения вернутся исходные настройки; лучший вариант можно применить отдельно.','device-title':'Возможности устройства','start-title':'Локальный подбор','goal-title':'Цель подбора','goal-all-label':'Все сервисы','goal-selected-label':'Выбранные сервисы','goal-help':'В режиме «Все сервисы» в первую очередь проверяются YouTube, Instagram, Discord и торрент-трекеры. Остальные сайты остаются дополнительным контролем. Для выбранных сервисов поиск и оценка сосредоточены на их доменах; общие проверки сохраняются для контроля ухудшений.',warning:'Во время смены профилей соединения могут кратковременно прерываться. DNS и сетевые настройки сохраняются. Закрытие страницы не останавливает работу; для отмены нажмите «Остановить и восстановить». Проверки в этой версии выполняются по IPv4.','extended-label':'Расширенный поиск, если готовые профили не улучшат результат','extended-help':'Проверяются раздельные и совместные варианты числа повторов TCP/QUIC. Правила отдельных сервисов и игр сохраняются; число попыток ограничено.','results-title':'Сравнение',explanation:'Для каждого профиля: предварительная проверка и обучение и два измерения. Показаны диапазоны успешных проверок. DNS проверяется отдельно и не влияет на рейтинг.','skipped-title':'Пропущенные варианты и причины',note:'Проверки доменов не подтверждают воспроизведение YouTube, голосовой чат Discord или загрузку ленты Instagram. После применения проверьте нужные функции в приложениях на своих устройствах.','confirm-submit':'Продолжить','confirm-dismiss':'Отмена'},en:{title:'Local strategy selection',intro:'Checks run on this router. Original settings are restored after comparison; applying a recommendation is a separate step.','device-title':'Device capacity','start-title':'Local selection','goal-title':'Selection goal','goal-all-label':'All services','goal-selected-label':'Selected services','goal-help':'All services prioritizes YouTube, Instagram, Discord and torrent trackers. Other sites remain additional controls. A selected-service search and ranking focus on those domains; overall checks still protect against regressions.',warning:'Connections may briefly interrupt while profiles change. DNS and network settings are preserved. Closing this page does not stop the job; use “Stop and restore” to cancel. This version measures IPv4.','extended-label':'Extend the search if catalog profiles do not improve the result','extended-help':'Tests bounded separate and combined TCP/QUIC repeat-count variants. Custom service and game rules are preserved.','results-title':'Comparison',explanation:'Each profile gets the same AUTO warmup and two recorded runs. Successful-check ranges are shown. DNS is tested separately and does not affect ranking.','skipped-title':'Skipped profiles and reasons',note:'Domain checks do not confirm YouTube playback, Discord voice or Instagram feeds. Verify the features you need in your apps after applying.','confirm-submit':'Continue','confirm-dismiss':'Cancel'}};
-  Object.assign(labels.ru,{'search-label':'Способ поиска','search-synthesis':'Разработать стратегию','search-profiles':'Сравнить готовые профили','search-help':'Генератор стратегий проходит бета-тестирование. Он проверяет методы для HTTP, TLS и QUIC и уточняет поиск по результатам. Результаты прошлых запусков направляют поиск. В одной серии одинаковые поисковые сочетания исключаются; контрольные замеры исходной стратегии, соединения без обхода и лучших вариантов повторяются. Лучшие варианты проходят повторные замеры; улучшение не гарантируется. Каталог готовых стратегий не требуется. Проверки выполняются по IPv4.',explanation:'Предварительные замеры помогают выбрать варианты для повторной проверки. Итог сравнивается с вашей исходной стратегией и соединением без обхода. Применение выполняется отдельно.'});
-  Object.assign(labels.en,{'search-label':'Search method','search-synthesis':'Develop a strategy','search-profiles':'Compare existing profiles','search-help':'The strategy generator is in beta. It tests methods for HTTP, TLS and QUIC and refines the search using the results. Previous results guide the search. Identical exploratory combinations are excluded within a series; the original strategy, pass-through and leading candidates get repeated control measurements. Leading candidates are measured repeatedly; improvement is not guaranteed. No strategy catalog is required. Checks use IPv4.',explanation:'Exploratory measurements select candidates for repeat checks. The result is compared with your original strategy and pass-through. Applying it is a separate step.'});
-  Object.assign(labels.ru,{'rounds-title':'Количество прогонов','rounds-label':'Прогонов подряд: от 2 до 10','rounds-help':'Укажите число заранее: следующий прогон начнётся автоматически после восстановления настроек и новой проверки условий. При ошибке или остановке серия прекращается. Стратегия сама не применяется.'});
-  Object.assign(labels.en,{'rounds-title':'Number of runs','rounds-label':'Consecutive runs: 2 to 10','rounds-help':'Choose the count before starting. Each next run begins automatically after restoring settings and rechecking conditions. An error or Stop ends the series. A strategy is never applied automatically.'});
-  Object.assign(labels.ru,{'goal-torrents-label':'Торрент-трекеры','torrent-goal-help':'Цель «Торрент-трекеры» проверяет сайты NNMClub (nnmclub.to), RuTracker (rutracker.org), Rutor (rutor.info) и tapochek.net.','torrent-label':'Добавить торрент-трекеры','torrent-help':'Четыре сайта добавятся к области HTTPS собранного метода: nnmclub.to, rutracker.org, rutor.info, tapochek.net. Дополнение необязательно и выключено по умолчанию. Показатели выше получены для исходного комплекта до добавления дополнения; после добавления повторите проверку.'});
-  Object.assign(labels.en,{'goal-torrents-label':'Torrent trackers','torrent-goal-help':'The Torrent trackers goal checks NNMClub (nnmclub.to), RuTracker (rutracker.org), Rutor (rutor.info) and tapochek.net.','torrent-label':'Add torrent tracker websites','torrent-help':'Extend the generated HTTPS method to nnmclub.to, rutracker.org, rutor.info and tapochek.net. Optional and off by default. The scores above describe the base strategy before this extension; repeat the checks after adding it.'});
+  const labels={ru:{title:'Подбор стратегии',intro:'Роутер проверит варианты и вернёт исходные настройки. Вы сами решите, применять ли найденную стратегию.','device-title':'Состояние роутера','start-title':'Настройки подбора','goal-title':'Какие сервисы важны','goal-all-label':'Все сервисы','goal-selected-label':'Выбранные сервисы','goal-help':'Выбранные сервисы влияют на итог. Роутер проверит и другие сайты, чтобы заметить ухудшения.',warning:'Во время проверки интернет может ненадолго прерваться. Если закрыть вкладку или уйти со страницы, роутер остановит подбор и начнёт возвращать исходные настройки. При потере связи это может занять несколько минут. Чтобы проверить результат, снова откройте подбор.','extended-label':'Проверить ещё варианты, если готовые стратегии не помогут','extended-help':'Роутер попробует дополнительные настройки соединения. Правила для отдельных сервисов и игр сохранятся.','results-title':'Сравнение',explanation:'Каждую стратегию проверили дважды. В таблице показано, сколько проверок прошло успешно. Проверка DNS не влияет на сравнение.','skipped-title':'Пропущенные варианты и причины',note:'После применения проверьте видео, голосовые звонки и другие нужные функции в самих приложениях. Роутер измеряет только доступность сайтов.','confirm-submit':'Продолжить','confirm-dismiss':'Отмена'},en:{title:'Strategy search',intro:'The router tests strategies and restores your previous settings. You decide whether to apply the suggested strategy.','device-title':'Router status','start-title':'Search settings','goal-title':'Which services matter','goal-all-label':'All services','goal-selected-label':'Selected services','goal-help':'Selected services have priority in the results. The router also checks other sites to spot any decline.',warning:'Your connection may briefly drop during testing. Closing the tab or leaving this page stops the search and starts restoring your previous settings. If the connection drops, this can take a few minutes. Reopen the search to check the result.','extended-label':'Try more options if the ready-made strategies do not help','extended-help':'The router tries more connection settings and keeps your rules for individual services and games.','results-title':'Comparison',explanation:'Each strategy was measured twice. The table shows how many checks passed. DNS is checked separately and has no effect on the comparison.','skipped-title':'Skipped profiles and reasons',note:'After applying, check playback, calls, and other features you need in the apps themselves. The router only checks whether sites are reachable.','confirm-submit':'Continue','confirm-dismiss':'Cancel'}};
+  Object.assign(labels.ru,{'search-label':'Что проверить','search-synthesis':'Создать новую стратегию','search-profiles':'Сравнить готовые стратегии','search-help':'Создание новой стратегии пока в бета-версии. Роутер пробует разные настройки и повторно проверяет лучшие варианты. Улучшение не гарантируется. Проверки идут по IPv4.',explanation:'Роутер повторно проверяет лучшие варианты и сравнивает итог с вашей исходной стратегией и соединением без обхода.'});
+  Object.assign(labels.en,{'search-label':'What to test','search-synthesis':'Create a new strategy','search-profiles':'Compare existing strategies','search-help':'Creating new strategies is in beta. The router tries different settings and checks the most promising options again. Results may vary. Tests use IPv4.',explanation:'The router checks promising strategies again and compares the result with your original strategy and a connection without bypass.'});
+  Object.assign(labels.ru,{'rounds-title':'Количество прогонов','rounds-label':'Прогонов подряд: от 2 до 10','rounds-help':'Следующий прогон начнётся после восстановления настроек и проверки соединения. При остановке или ошибке вся серия завершается.'});
+  Object.assign(labels.en,{'rounds-title':'Number of runs','rounds-label':'Consecutive runs: 2 to 10','rounds-help':'Each run starts after the router restores its settings and checks that it is ready. Stopping the search or encountering an error ends the series.'});
+  Object.assign(labels.ru,{'goal-torrents-label':'Торрент-трекеры','torrent-goal-help':'Торрент-трекеры в проверке — NNMClub, RuTracker, Rutor и tapochek.net.','torrent-label':'Добавить торрент-трекеры','torrent-help':'Добавляет HTTPS-правила для NNMClub, RuTracker, Rutor и tapochek.net. Если включите их, проверьте стратегию ещё раз.'});
+  Object.assign(labels.en,{'goal-torrents-label':'Torrent trackers','torrent-goal-help':'The tracker test covers NNMClub, RuTracker, Rutor and tapochek.net.','torrent-label':'Add torrent tracker websites','torrent-help':'Adds HTTPS rules for NNMClub, RuTracker, Rutor and tapochek.net. If you turn this on, check the strategy again.'});
   words.ru.torrent_sites_incompatible='Дополнение неприменимо к этому варианту HTTPS';words.en.torrent_sites_incompatible='This HTTPS variant cannot use the tracker extension';
-  Object.assign(labels.ru,{'search-synthesis':'Разработать стратегию','custom-title':'Свои сайты','custom-enabled-label':'Добавить свои сайты к генерации','custom-sites-label':'До десяти доменов и публичных IPv4 суммарно, каждый с новой строки','custom-joint-label':'Вместе с выбранными сервисами','custom-only-label':'Только свои сайты; встроенные проверки — контроль','share-report':'Поделиться с Фрэнком','share-export':'Поделиться с Фрэнком','custom-check':'Проверить доступность','custom-examples':'Например: example.com, https://example.org или 8.8.8.8. Каждый адрес — с новой строки.','custom-help':'Проверяются корневые HTTPS-страницы по IPv4 с TLS 1.2 и 1.3. Для IP нужен сертификат, действительный для этого IP; домен не подставляется. Ошибка TLS сама по себе не доказывает блокировку. Правило IP может затрагивать другие HTTPS-сайты на том же адресе. Ответ сервера, включая 403, не означает доступность сайта. Telegram не участвует.'});
-  Object.assign(labels.en,{'search-synthesis':'Develop a strategy','custom-title':'Custom sites','custom-enabled-label':'Add custom sites to generation','custom-sites-label':'Up to ten domains and public IPv4 addresses combined, one per line','custom-joint-label':'Together with selected services','custom-only-label':'Custom sites only; built-in checks are controls','share-report':'Share with Frank','share-export':'Share with Frank','custom-check':'Check availability','custom-examples':'Examples: example.com, https://example.org or 8.8.8.8. Enter one address per line.','custom-help':'Checks root HTTPS pages over IPv4 with TLS 1.2 and 1.3. An IP requires a certificate valid for that IP; no domain is substituted. A TLS failure alone does not establish blocking. An IP rule can affect other HTTPS sites at the same address. A server response, including 403, does not mean site access. Telegram is excluded.'});
-  Object.assign(labels.ru,{'pool-title':'Одновременные запросы','pool-value-label':'Число запросов','pool-help':'Это число одновременных проверок соединения. Обычно достаточно 10–100. Большие значения не гарантируют ускорения подбора.'});
-  Object.assign(labels.en,{'pool-title':'Simultaneous requests','pool-value-label':'Request count','pool-help':'This is the number of simultaneous connection checks. Usually 10–100 is enough. Larger values do not guarantee faster selection.'});
+  Object.assign(labels.ru,{'search-synthesis':'Создать новую стратегию','custom-title':'Свои сайты','custom-enabled-label':'Добавить свои сайты к подбору','custom-sites-label':'До десяти сайтов или публичных IPv4-адресов','custom-joint-label':'Подбирать для своих сайтов и выбранных сервисов','custom-only-label':'Подбирать только для своих сайтов','share-report':'Поделиться с Фрэнком','share-export':'Поделиться с Фрэнком','custom-check':'Проверить, открываются ли сайты','custom-examples':'Один адрес на строку. Подойдут example.com, https://example.org и 8.8.8.8.','custom-help':'Роутер проверит главную страницу каждого сайта по HTTPS (TLS 1.2 и 1.3). Для IP-адреса нужен сертификат, выданный на этот адрес. Правило для IP может затронуть другие сайты на нём. Сбой защищённого соединения (TLS) может иметь разные причины. Telegram исключён.'});
+  Object.assign(labels.en,{'search-synthesis':'Create a new strategy','custom-title':'Custom sites','custom-enabled-label':'Add your own sites to the search','custom-sites-label':'Up to ten sites or public IPv4 addresses','custom-joint-label':'Search for my sites and the selected services','custom-only-label':'Search for my sites only','share-report':'Share with Frank','share-export':'Share with Frank','custom-check':'Check whether sites open','custom-examples':'Enter one address per line, such as example.com, https://example.org or 8.8.8.8.','custom-help':'The router checks the home page of each site over HTTPS (TLS 1.2 and 1.3). An IP address needs a certificate issued for that address, and an IP rule can affect other sites there. A secure connection (TLS) can fail for several reasons. Telegram is excluded.'});
+  Object.assign(labels.ru,{'pool-title':'Одновременные проверки','pool-value-label':'Число проверок','pool-help':'Обычно достаточно 10–100. Большие значения не гарантируют ускорения подбора.'});
+  Object.assign(labels.en,{'pool-title':'Simultaneous checks','pool-value-label':'Number of checks','pool-help':'Usually 10–100 is enough. A higher number may give no speed gain.'});
   Object.assign(labels.ru,{'result-columns-label':'Колонки результатов','result-columns-auto':'Авто'});
   Object.assign(labels.en,{'result-columns-label':'Result columns','result-columns-auto':'Auto'});
   $('language').addEventListener('click',()=>{language=language==='ru'?'en':'ru';document.documentElement.lang=language;$('language').textContent=language==='ru'?'EN':'RU';for(const [id,value]of Object.entries(labels[language]))text(id,value);showResultColumnCount();render();});
   let authenticated=false;
-  window.addEventListener('pagehide',()=>{pageActive=false;supplementStatusCurrent=false;supplement.invalidate();pending=null;measuredRequest++;measuredStatus='';$('confirmation').hidden=true;poller.stop();});
+  document.addEventListener('visibilitychange',()=>{if(pageActive)reportWindow('open');});
+  window.addEventListener('pagehide',()=>{
+    pageActive=false;
+    if(ownedWindow){
+      reportWindow('closed');
+      if(outstanding?.extra.request_id===ownedWindow.request_id)rememberMutation(null);
+      forgetWindow();
+    }
+    supplementStatusCurrent=false;supplement.invalidate();pending=null;measuredRequest++;measuredStatus='';$('confirmation').hidden=true;poller.stop();
+  });
   window.addEventListener('pageshow',()=>{pageActive=true;if(authenticated)poller.start();});
   void (async()=>{try{const s=await call('status');csrf=s.csrf_token;authenticated=true;poller.start();}catch(e){text('error',t(e.message));}})();
 }

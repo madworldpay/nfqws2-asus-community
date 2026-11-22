@@ -151,7 +151,9 @@ final class AsusUpdateWorker
                 'checkpoint_sha256'=>hash_file('sha256',$this->store->path('operations/'.$id.'/service-state/snapshot.json')),'intent'=>$checkpoint['intent'],'web_running'=>$this->lifecycle->webRunning(),'phase'=>'stop-requested'];
             $this->store->writeFile('operations/'.$id.'/quiesce.json',json_encode($q,JSON_THROW_ON_ERROR));
             $this->ticket($id,'stopping',['installer'=>$installer,'intent'=>$checkpoint['intent']]);$this->store->update($id,['intent'=>$checkpoint['intent'],'phase'=>'stopping']);
-            $this->quiesceDns($id,'before');$this->assertDnsUpdateReady();(new AsusSmartDnsLifecycle(new AsusSmartDnsStore()))->stop('upgrade');
+            $this->quiesceDns($id,'before');$this->assertDnsUpdateReady();
+            $smartDns=new AsusSmartDnsLifecycle(new AsusSmartDnsStore());
+            $smartDns->stop('upgrade');
             $this->lifecycle->stop(true);if($this->lifecycle->intent()['mode']!=='stopped')throw new RuntimeException('core_stop_failed');$q=$this->quiescePhase($id,$q,'stopped');
             if($this->original($this->prepare->environment(),$candidate,$id)!==$q['attestation'])throw new RuntimeException('settings_changed');
             $this->store->update($id,['phase'=>'backing_up']);
@@ -168,6 +170,7 @@ final class AsusUpdateWorker
             $this->ticket($id,'installing');if($q['web_running'])$this->lifecycle->webStop();$this->quiescePhase($id,$q,'web-stopped');
             $this->store->writeFile('operations/'.$id.'/services-stopped.json',json_encode(['stopped'=>true],JSON_THROW_ON_ERROR));
             $this->ticket($id,'installing');$this->store->update($id,['phase'=>'installing']);
+            $smartDns->verifyUpgradeDns();
             if(AsusUpdateStore::uptime()>=$guard['deadline']||$this->store->readFile('operations/'.$id.'/cancel.json',1024)!==null)throw new RuntimeException('timed_out');
             // Sticky boundary is serialized with guardian cancellation. From
             // here neither the worker nor opkg may be killed by that deadline.

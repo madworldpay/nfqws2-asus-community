@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 63352,
-      "sha256": "153d89ac386f93b6d7c7f48b1c1b324df6a34597fa1b18b62bbe00b9614e2acd"
+      "bytes": 64109,
+      "sha256": "0845dd442234e91af4c5e0c92eb5ce7631c4d85b07218edb85a60333d6ed8a41"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -52,13 +52,13 @@
     },
     {
       "file": "DOWNLOADS.en.md",
-      "bytes": 1842,
-      "sha256": "84afb36d7170982b897beb19b2402b4ba046f3092b1be728ffa69d3638c810ab"
+      "bytes": 3927,
+      "sha256": "c1ccb23dca8bfa96119ecbd3499484d5ad30ef9d1d2f943c6578a3f976707860"
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 2434,
-      "sha256": "49518497df0ef3c2c3cbb196a8bc8d3f62dc0074aac22302e42a08ea994e811a"
+      "bytes": 5007,
+      "sha256": "5fb08377a9005b10cacf1bb291e36c4eda4ade80fc9f4d38695c3fa09bb3861f"
     },
     {
       "file": "DPI-DETECTOR.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 30811,
-      "sha256": "e48c3a78a0da0d03e99708f4475c55f39c150fe60c1414c354c3b25ecc32d08e"
+      "bytes": 32013,
+      "sha256": "43f0ac4c54268693f898a33ff5c401230fb4a3575240c5497abc81e466a243d3"
     },
     {
       "file": "README.md",
-      "bytes": 49943,
-      "sha256": "057da0529c418e81c2da4c04163d6b8008b1fe0a7755318bb7be1ffe34f0a4e2"
+      "bytes": 51299,
+      "sha256": "248f1eab697d1ef5c4a646c0208ef1e9c902ca0c761900b9e583006769ed9fc6"
     },
     {
       "file": "ROADMAP.en.md",

@@ -36,6 +36,7 @@ export type DnsPreview = {
     code?: string;
   }[];
   expires_uptime: number;
+  dns_answered?: boolean;
   scope: 'dns_only' | 'configuration_only';
   service_success_tested: false;
 };

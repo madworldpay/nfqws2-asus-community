@@ -171,7 +171,7 @@ final class AsusSmartDnsConnection
     private static function digest(mixed $value): bool { return is_string($value) && (bool)preg_match('/^[a-f0-9]{64}$/D',$value); }
     private static function code(Throwable $error): string
     {
-        $allowed=['guard_unavailable','recovery_unavailable','stale_baseline','existing_dns_rules','native_fallback_unavailable','primary_dns_unverified','hook_conflict','dns_restart_failed','dns_validation_failed','insufficient_space','port_busy','timed_out','interrupted','invalid_state'];
+        $allowed=['guard_unavailable','recovery_unavailable','stale_baseline','existing_dns_rules','native_fallback_unavailable','primary_dns_unverified','hook_conflict','dns_restart_failed','dns_validation_failed','insufficient_space','storage_unavailable','busy','port_busy','timed_out','interrupted','invalid_state'];
         return in_array($error->getMessage(),$allowed,true)?$error->getMessage():'connection_failed';
     }
     public function baseline(): array
@@ -205,6 +205,7 @@ final class AsusSmartDnsConnection
         foreach (['prepare','guard','forward','dns','confirm','restore','stop','release'] as $name)
             if (!isset($this->deps[$name]) || !is_callable($this->deps[$name])) throw new RuntimeException('guard_unavailable');
         if ($preview['profile_hash']!==$profileHash || $preview['baseline_hash']!==$baselineHash) throw new RuntimeException('stale_preview');
+        if (!$preview['dns_answered']) throw new RuntimeException('dns_validation_failed');
         $baseline=$this->baseline();
         if (!hash_equals($baselineHash,$baseline['hash'])) throw new RuntimeException('stale_baseline');
         if ($baseline['conflicts']) {
@@ -217,11 +218,21 @@ final class AsusSmartDnsConnection
         $profile=$this->store->candidate($preview);
         $this->store->begin($requestId,$profileHash,$baselineHash);$guardReady=false;
         try {
+            if (($baseline['includes_need_repair']??false)===true) {
+                if ($source!=='draft' || !is_callable($this->deps['repair_includes']??null))
+                    throw new RuntimeException('existing_dns_rules');
+                $this->call('repair_includes',$baseline['snapshot']);
+                $baseline=$this->baseline();
+                if (!hash_equals($baselineHash,$baseline['hash']) || ($baseline['includes_need_repair']??false)===true)
+                    throw new RuntimeException('stale_baseline');
+            }
             $backup=$this->store->backup(['baseline'=>$baseline['snapshot'],'candidate_profile'=>$profile]);
             $job=$this->job($requestId);
             $this->call('prepare',$job,$this->store->snapshot($backup));
             // Preparing recovery files must not quietly accept a hook edit.
-            if (!hash_equals($baselineHash,$this->baseline()['hash'])) throw new RuntimeException('stale_baseline');
+            $fresh=$this->baseline();
+            if (!hash_equals($baselineHash,$fresh['hash']) || ($fresh['includes_need_repair']??false)===true)
+                throw new RuntimeException('stale_baseline');
             $identity=$this->call('guard',$job,$profile);
             if (!is_array($identity) || !is_array($identity['guard_identity']??null) || !is_array($identity['identity']??null)) throw new RuntimeException('guard_unavailable');
             $guardReady=true;

@@ -103,12 +103,18 @@ final class NfqwsPlatform
                 return ['service'=>false, 'status'=>0];
             return ['service'=>false, 'status'=>1];
         }
+        if ($profile==='asus-entware') {
+            $line=$result['output'][0]??'';
+            if ($result['status']===0 && $line==='Service NFQWS2 is running') return ['service'=>true,'status'=>0];
+            if (in_array($result['status'],[0,1],true) && $line==='Service NFQWS2 is stopped') return ['service'=>false,'status'=>0];
+            return ['service'=>false,'status'=>1];
+        }
         $running = $result['status'] === 0 && str_contains($result['output'][0] ?? '', 'is running');
         return ['service'=>$running, 'status'=>0];
     }
     public static function reader(int $owner=0,bool $mutable=false):AsusShareRead
     {
-        return self::native()?new AsusShareRead($owner,null,null,$mutable):new AsusShareRead($owner,realpath('/opt'),'/opt',$mutable);
+        return self::native()?new AsusShareRead($owner,null,null,$mutable):new AsusShareRead($owner,realpath('/opt'),'/opt',$mutable,self::current()==='keenetic-entware');
     }
     public static function sharedFile(string $name,string $sourceFallback):string
     {

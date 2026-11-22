@@ -71,7 +71,7 @@ final class AsusImportPlan
         try{return AsusSmartDnsProfile::normalize(['schema_version'=>1,'upstreams'=>$servers,'records'=>$records]);}
         catch(AsusSmartDnsProfileError $e){$problems[]=['code'=>'invalid_dns_profile','field'=>$e->field];return null;}
     }
-    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null,array $addons=[],?callable $readList=null,?callable $readFactoryList=null): array
+    public static function prepare(array $document,array $selection,string $currentConfig,array $inventory,?array $currentDraft,?string $profile=null,?array $catalogScope=null,array $addons=[],?callable $readList=null,?callable $readFactoryList=null,bool $preservePersonalAutoList=false): array
     {
         $profile??=NfqwsPlatform::current();NfqwsPlatform::settings($profile);
         self::keys($selection,array_merge(['blocks','shared','ports','files','dns','allow_shared_impact','allow_incomplete','trusted_lua'],array_key_exists('torrent_sites',$selection)?['torrent_sites']:[],array_key_exists('addons',$selection)?['addons']:[]));
@@ -85,6 +85,7 @@ final class AsusImportPlan
         foreach($selection['files']as $row){if(!is_array($row)||array_diff(array_keys($row),['id','text'])||!is_string($row['id']??null)||!isset($available[$row['id']])||isset($filePicks[$row['id']]))throw new RuntimeException('invalid_import_selection');$filePicks[$row['id']]=$row;}
         $local=[];foreach($inventory['files']??[] as $row)if(($row['state']??null)==='available')$local[$row['kind'].'/'.$row['name']]=$row;
         $aliases=[];$targets=[];$files=[];$total=0;$fingerprints=[];$virtual=$inventory['files']??[];$selectedTargets=[];
+        $keptAutoList=false;
         // Resolve only package operands in the effective selected scope, including
         // omitted shared values required by the selected blocks.
         $packageScope=$blocks+$shared;
@@ -117,7 +118,28 @@ final class AsusImportPlan
         foreach($available as $id=>$file) {
             $raw=base64_decode($file['data_base64'],true);$pick=$filePicks[$id]??null;
             if($pick!==null&&array_key_exists('text',$pick)){if($file['encoding']!=='utf8'||!is_string($pick['text'])||strlen($pick['text'])>262144||preg_match('//u',$pick['text'])!==1||str_contains($pick['text'],"\0"))throw new RuntimeException('invalid_resource');$raw=$pick['text'];}
-            $hash=hash('sha256',$raw);$name=$file['name'];
+            $name=$file['name'];
+            if($preservePersonalAutoList && $file['kind']==='lists' && $name==='auto.list'){
+                $path='/opt/etc/nfqws2/lists/auto.list';
+                if(isset($local['lists/auto.list'])){
+                    // Resolve the export's aliases against the receiver. Neither the write
+                    // journal nor undo should ever take ownership of a learned list.
+                    $targets[$id]=['path'=>$path,'selected'=>false,'reuse'=>true,
+                        'sha256'=>$local['lists/auto.list']['sha256'],'kind'=>'lists','name'=>$name];
+                    foreach($file['aliases'] as $alias)$aliases[$alias]=$path;
+                    if($pick!==null)$keptAutoList=true;
+                    continue;
+                }
+                // An incomplete scan cannot establish that the receiver is fresh.
+                if(($inventory['scan_truncated']??false) || array_filter($virtual,
+                    static fn($row)=>$row['kind']==='lists' && $row['name']==='auto.list')){
+                    if($pick!==null)$problems[]=['code'=>'unresolved_file','name'=>'auto.list'];
+                    continue;
+                }
+                // A fresh receiver starts learning locally.
+                $raw='';
+            }
+            $hash=hash('sha256',$raw);
             if(!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D',$name)||$name==='.'||$name==='..'){if($pick!==null)$problems[]=['code'=>'invalid_file_name','name'=>$name];continue;}
             if(in_array($file['kind'],['lua','blobs'],true)){
                 $name=NfqwsResourcePaths::imported($file['kind'],$hash);
@@ -125,7 +147,8 @@ final class AsusImportPlan
                     (($candidate['bundled_resource']??false)===true||$file['kind']==='lua'&&($candidate['bundled_lua']??false)===true)&&
                     $candidate['sha256']===$hash&&$candidate['byte_length']===strlen($raw)){
                     $canonical=$candidate['bundled_name']??$candidate['name'];$stock=$local[$file['kind'].'/'.$canonical]??null;
-                    $name=$stock!==null&&$stock['sha256']===$hash?$canonical:$candidate['name'];break;
+                    $stockTrusted=($stock['bundled_resource']??false)||($stock['bundled_lua']??false);
+                    $name=$stockTrusted&&$stock['sha256']===$hash?$canonical:$candidate['name'];break;
                 }
             }
             $key=$file['kind'].'/'.$name;
@@ -207,6 +230,7 @@ final class AsusImportPlan
         $diff=[];foreach($changes as $key=>$value)$diff[]=['key'=>$key,'before'=>$current[$key]??null,'after'=>$value];
         $out=['ready'=>$problems===[],'problems'=>$problems,'warnings'=>$warnings,'required'=>$required,'affected_blocks'=>$affected,
             'config'=>$newConfig,'changes'=>$diff,'files'=>$files,'draft'=>$draft,'old_draft'=>$currentDraft,'fingerprints'=>['config'=>hash('sha256',$currentConfig),'draft'=>$currentDraft===null?null:AsusSmartDnsProfile::hash($currentDraft),'files'=>$fingerprints],'input_sha256'=>$document['input_sha256']];
+        if($keptAutoList)$out['kept_auto_list']=true;
         if($torrentPreview!==null)$out['torrent_sites']=$torrentPreview;
         if($addonPreview!==null){$out['addons']=$addonPreview;$out['fingerprints']['addons']=$addonSources;}
         $out['digest']=hash('sha256',json_encode($out,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));return $out;

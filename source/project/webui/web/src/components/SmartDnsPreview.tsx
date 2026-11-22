@@ -93,7 +93,14 @@ export const SmartDnsPreview = ({
           />
         </AccordionDetails>
       </Accordion>
-      <Button variant="contained" disabled={disabled} onClick={onApply}>
+      {preview.dns_answered !== true && (
+        <Alert severity="warning">{t('smartdns.preview.no_dns_answer')}</Alert>
+      )}
+      <Button
+        variant="contained"
+        disabled={disabled || preview.dns_answered !== true}
+        onClick={onApply}
+      >
         {t('smartdns.connect')}
       </Button>
     </Stack>

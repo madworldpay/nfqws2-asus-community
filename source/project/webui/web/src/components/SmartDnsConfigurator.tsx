@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Button, Divider, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Divider, Stack, Typography } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { DpiError } from '@/api/dpiClient';
 import {
   applySmartDnsPreview,
   confirmSmartDns,
-  getSmartDnsConfigStatus,
   getSmartDnsPreview,
   repairSmartDnsHook,
   rollbackSmartDns,
   saveSmartDnsDraft,
+  smartDnsConfigQuery,
   validateSmartDnsDraft,
   type ConfigStatus,
   type ConfigView,
@@ -38,6 +39,7 @@ export const SmartDnsConfigurator = ({
   external: boolean;
 }) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [editor, setEditor] = useState<EditorState>({
     profile: emptyProfile(),
     revision: 0,
@@ -75,7 +77,7 @@ export const SmartDnsConfigurator = ({
     inFlight.current = true;
     const seq = ++reply.current;
     try {
-      const data = await getSmartDnsConfigStatus(csrf);
+      const data = await queryClient.fetchQuery(smartDnsConfigQuery(csrf));
       if (!alive.current || seq !== reply.current) return;
       updateStatus(data.status);
       setSavedProfile(data.confirmed_profile || null);
@@ -123,7 +125,7 @@ export const SmartDnsConfigurator = ({
     } finally {
       inFlight.current = false;
     }
-  }, [csrf, updateStatus]);
+  }, [csrf, queryClient, updateStatus]);
   useEffect(() => {
     const tracker = reply;
     alive.current = true;
@@ -190,7 +192,7 @@ export const SmartDnsConfigurator = ({
   const validate = () => void perform(startValidation);
   const reloadDraft = () =>
     void perform(async () => {
-      const data = await getSmartDnsConfigStatus(csrf);
+      const data = await queryClient.fetchQuery(smartDnsConfigQuery(csrf));
       change(data.draft || data.active_profile || emptyProfile());
       return data.status;
     });
@@ -282,84 +284,85 @@ export const SmartDnsConfigurator = ({
           {t('smartdns.reload_draft')}
         </Button>
       </Stack>
-      <Stack
-        component="section"
-        aria-label={t('smartdns.current_dns')}
-        spacing={1}
-      >
-        <Typography component="h3" variant="subtitle1">
+      {connected && routing === 'managed' && (
+        <Alert severity="success">{t('smartdns.confirmed')}</Alert>
+      )}
+      <Box component="details">
+        <Box
+          component="summary"
+          sx={{ cursor: 'pointer', typography: 'body2' }}
+        >
           {t('smartdns.current_dns')}
-        </Typography>
-        {dns?.default_servers.length ? (
-          <Typography variant="body2">
-            {t('smartdns.router_dns')}{' '}
-            <strong>{dns.default_servers.join(', ')}</strong>
-          </Typography>
-        ) : (
-          <Typography variant="body2">
-            {t('smartdns.current_dns_unknown')}
-          </Typography>
-        )}
-        {dns?.state === 'partial' && (
-          <Typography variant="body2">
-            {t('smartdns.current_dns_partial')}
-          </Typography>
-        )}
-        {routing === 'managed' &&
-          dns?.state === 'available' &&
-          dns.default_servers.length === 1 &&
-          dns.default_servers[0] === '127.0.0.1#6054' &&
-          activeProfile && (
-            <>
-              <Typography variant="body2">
-                {t('smartdns.connected_resolvers')}
-              </Typography>
-              <Stack component="ul" spacing={0.5} sx={{ pl: 3, m: 0 }}>
-                {activeProfile.upstreams.map((server) => (
-                  <Typography component="li" variant="body2" key={server.id}>
-                    {server.label ? `${server.label}: ` : ''}
-                    {server.protocol.toUpperCase()} ·{' '}
-                    {server.protocol === 'doh'
-                      ? server.url
-                      : `${server.address}:${server.port}`}
-                    {server.protocol === 'dot' && server.tls_name
-                      ? ` (${server.tls_name})`
-                      : ''}
-                    {server.default ? ` · ${t('smartdns.form.default')}` : ''}
-                    {server.domains.length > 0
-                      ? ` · ${server.domains.map((d) => d.name).join(', ')}`
-                      : ''}
-                  </Typography>
-                ))}
-              </Stack>
-            </>
-          )}
-        {dns && dns.conditional_servers.length > 0 && (
-          <Typography variant="body2">
-            {t('smartdns.domain_dns')} {dns.conditional_servers.join('; ')}
-          </Typography>
-        )}
-        {dns?.dhcp_dns.length ? (
-          dns.dhcp_dns.map((rule, index) => (
-            <Typography variant="body2" key={`${rule.scope}-${index}`}>
-              DHCP{rule.scope ? ` (${rule.scope})` : ''}:{' '}
-              {rule.servers.join(', ')}
+        </Box>
+        <Stack spacing={1} sx={{ mt: 1 }}>
+          {dns?.default_servers.length ? (
+            <Typography variant="body2">
+              {t('smartdns.router_dns')}{' '}
+              <strong>{dns.default_servers.join(', ')}</strong>
             </Typography>
-          ))
-        ) : (
-          <Typography variant="body2">
-            {t('smartdns.dhcp_dns_unspecified')}
+          ) : (
+            <Typography variant="body2">
+              {t('smartdns.current_dns_unknown')}
+            </Typography>
+          )}
+          {dns?.state === 'partial' && (
+            <Typography variant="body2">
+              {t('smartdns.current_dns_partial')}
+            </Typography>
+          )}
+          {routing === 'managed' &&
+            dns?.state === 'available' &&
+            dns.default_servers.length === 1 &&
+            dns.default_servers[0] === '127.0.0.1#6054' &&
+            activeProfile &&
+            JSON.stringify(activeProfile.upstreams) !==
+              JSON.stringify(editor.profile.upstreams) && (
+              <>
+                <Typography variant="body2">
+                  {t('smartdns.connected_resolvers')}
+                </Typography>
+                <Stack component="ul" spacing={0.5} sx={{ pl: 3, m: 0 }}>
+                  {activeProfile.upstreams.map((server) => (
+                    <Typography component="li" variant="body2" key={server.id}>
+                      {server.label ? `${server.label}: ` : ''}
+                      {server.protocol.toUpperCase()} ·{' '}
+                      {server.protocol === 'doh'
+                        ? server.url
+                        : `${server.address}:${server.port}`}
+                      {server.protocol === 'dot' && server.tls_name
+                        ? ` (${server.tls_name})`
+                        : ''}
+                      {server.default ? ` · ${t('smartdns.form.default')}` : ''}
+                      {server.domains.length > 0
+                        ? ` · ${server.domains.map((d) => d.name).join(', ')}`
+                        : ''}
+                    </Typography>
+                  ))}
+                </Stack>
+              </>
+            )}
+          {dns && dns.conditional_servers.length > 0 && (
+            <Typography variant="body2">
+              {t('smartdns.domain_dns')} {dns.conditional_servers.join('; ')}
+            </Typography>
+          )}
+          {dns?.dhcp_dns.length ? (
+            dns.dhcp_dns.map((rule, index) => (
+              <Typography variant="body2" key={`${rule.scope}-${index}`}>
+                DHCP{rule.scope ? ` (${rule.scope})` : ''}:{' '}
+                {rule.servers.join(', ')}
+              </Typography>
+            ))
+          ) : (
+            <Typography variant="body2">
+              {t('smartdns.dhcp_dns_unspecified')}
+            </Typography>
+          )}
+          <Typography variant="body2" color="text.secondary">
+            {t('smartdns.client_dns_scope')}
           </Typography>
-        )}
-        <Typography variant="body2" color="text.secondary">
-          {t('smartdns.client_dns_scope')}
-        </Typography>
-        {canRestore && (
-          <Typography variant="body2">
-            {t('smartdns.restore_guidance')}
-          </Typography>
-        )}
-      </Stack>
+        </Stack>
+      </Box>
       {external && <Alert severity="info">{t('smartdns.external')}</Alert>}
       {resumeInfo && (
         <Alert severity="warning">
@@ -383,9 +386,6 @@ export const SmartDnsConfigurator = ({
             )}
           </Stack>
         </Alert>
-      )}
-      {connected && routing === 'managed' && (
-        <Alert severity="success">{t('smartdns.confirmed')}</Alert>
       )}
       {status?.state === 'rolled_back' && (
         <Alert severity="info">{t('smartdns.rolled_back')}</Alert>
@@ -460,6 +460,13 @@ export const SmartDnsConfigurator = ({
       {connected && (
         <Typography variant="body2">{t('smartdns.restore_first')}</Typography>
       )}
+      {initialized.current &&
+        !external &&
+        !activeProfile &&
+        editor.profile.upstreams.length === 0 &&
+        editor.profile.records.length === 0 && (
+          <Alert severity="info">{t('smartdns.first_profile')}</Alert>
+        )}
       <SmartDnsProfileForm
         value={editor.profile}
         onChange={change}

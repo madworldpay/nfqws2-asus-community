@@ -36,6 +36,9 @@ export type Checkup = {
   >;
 };
 export type ConfigView = {
+  keenetic_runtime?: 'running' | 'external' | 'stopped' | 'unknown';
+  keenetic_profile_hash?: string | null;
+  draft_hash?: string | null;
   status: ConfigStatus;
   draft: Profile | null;
   active_profile: Profile | null;
@@ -105,6 +108,46 @@ export async function getSmartDnsConfigStatus(
   const c = (await call(csrf, 'smartdnsconfigstatus')) as ConfigView;
   status(c?.status);
   return c;
+}
+
+export const smartDnsConfigQuery = (csrf: string) => ({
+  queryKey: ['smartdns-config', csrf] as const,
+  queryFn: () => getSmartDnsConfigStatus(csrf),
+  staleTime: 0,
+  retry: false as const,
+});
+
+export function smartDnsConnectionState(view?: ConfigView) {
+  if (view?.keenetic_runtime) return view.keenetic_runtime;
+  if (
+    !view?.routing ||
+    view.routing === 'unknown' ||
+    view.status.state === 'conflict'
+  )
+    return 'unknown';
+  const { state } = view.status;
+  if (state === 'applying' || state === 'rolling_back') return 'switching';
+  if (state === 'awaiting_confirmation')
+    return view.routing === 'managed' ? 'trial' : 'unknown';
+  if (state === 'confirmed') {
+    if (view.routing === 'managed') return 'on';
+    return view.routing === 'external' ? 'off' : 'unknown';
+  }
+  return view.routing === 'inactive' ? 'off' : 'unknown';
+}
+export async function switchKeeneticSmartDns(
+  csrf: string,
+  hash: string | null,
+) {
+  const result = (await call(
+    csrf,
+    hash === null ? 'smartdnskeeneticstop' : 'smartdnskeeneticstart',
+    hash === null ? {} : { profile_hash: hash },
+  )) as ConfigView;
+  status(result?.status);
+  if (result.keenetic_runtime !== (hash === null ? 'stopped' : 'running'))
+    throw new DpiError('connection_failed');
+  return result;
 }
 export async function saveSmartDnsDraft(
   csrf: string,

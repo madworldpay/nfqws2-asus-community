@@ -321,6 +321,7 @@ function main(): void
   // These components administer ASUS or OpenWrt firmware or their package
   // channels. The companion uses the existing KeeneticOS service and web server.
   if (NfqwsPlatform::current() === 'keenetic-entware' &&
+      !in_array($_POST['cmd'], ['smartdnsconfigstatus','smartdnsdraft','smartdnsstatus','smartdnsinstall','smartdnskeeneticstart','smartdnskeeneticstop'], true) &&
       preg_match('/^(?:ark|smartdns|restartschedule|technical|iphealth|mtprotoinstall|routercheckup|wanaddresses|deviceprofiles)/D', $_POST['cmd'])) {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(400);
@@ -536,7 +537,7 @@ function main(): void
     exit();
   }
 
-  if (in_array($_POST['cmd'], ['routercheckup','wanaddresses','smartdnsconfigstatus','smartdnsdraft','smartdnsvalidate','smartdnspreview','smartdnsapply','smartdnsconfirm','smartdnsrollback','smartdnsrepairhook'], true)) {
+  if (in_array($_POST['cmd'], ['routercheckup','wanaddresses','smartdnsconfigstatus','smartdnsdraft','smartdnskeeneticstart','smartdnskeeneticstop','smartdnsvalidate','smartdnspreview','smartdnsapply','smartdnsconfirm','smartdnsrollback','smartdnsrepairhook'], true)) {
     require_once __DIR__.'/support-report.php';require_once __DIR__.'/smartdns-config-api.php';
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
     try {

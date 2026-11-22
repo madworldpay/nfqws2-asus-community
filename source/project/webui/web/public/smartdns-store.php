@@ -8,6 +8,8 @@ final class AsusSmartDnsStore
     private string $root;
     private const STATES = ['idle','validating','preview_ready','applying','awaiting_confirmation','confirmed','rolling_back','rolled_back','failed','conflict'];
     private const LIVE = ['validating','applying','awaiting_confirmation','rolling_back','conflict'];
+    private const BACKUP_LIMIT = 524288;
+    private const PERMISSION_BACKUP_LIMIT = 1572864;
     public function __construct(?string $root=null, private int $owner=0, private array $deps=[])
     { $this->root = $root ?? AsusDpiStore::optPath('/etc/nfqws-asus-web/smartdns'); }
     private function now(): float { return isset($this->deps['uptime']) ? (float)($this->deps['uptime'])() : (float)explode(' ',file_get_contents('/proc/uptime'))[0]; }
@@ -93,6 +95,19 @@ final class AsusSmartDnsStore
     }
     public function draft(): ?array
     { return $this->locked(fn()=>($p=$this->read('draft.json',65536))===null?null:AsusSmartDnsProfile::normalize($p),false); }
+    /** The enabled Keenetic resolver keeps its profile even while another draft is edited. */
+    public function keeneticProfile(): ?array
+    {
+        return $this->locked(function () {
+            $profile=$this->read('keenetic-enabled.json',65536)['profile']??null;
+            return $profile===null ? null : AsusSmartDnsProfile::normalize($profile);
+        },false);
+    }
+    public function setKeeneticProfile(?array $profile): void
+    {
+        $this->locked(fn()=>$this->write('keenetic-enabled.json',
+            ['profile'=>$profile===null ? null : AsusSmartDnsProfile::normalize($profile)],65536));
+    }
     /** Resolve a journal-bound source without ever replacing the editor draft. */
     private function selectedProfile(array $binding,string $error): array
     {
@@ -153,6 +168,13 @@ final class AsusSmartDnsStore
         if (isset($p['validation_request_id'])) {
             $job=$this->journal()['job'];
             if (($job['state']??null)!=='preview_ready' || ($job['request_id']??null)!==$p['validation_request_id'] || ($job['preview_id']??null)!==$id) throw new RuntimeException('stale_preview');
+        }
+        $p['dns_answered']=false;
+        foreach ($p['checks']??[] as $check) {
+            if (($check['stage']??null)==='profile' && ($check['name']??null)==='example.com' && ($check['ok']??null)===true) {
+                $p['dns_answered']=true;
+                break;
+            }
         }
         return $p;
     }
@@ -245,19 +267,39 @@ final class AsusSmartDnsStore
     }
     public function backup(array $snapshot): string
     {
-        return $this->locked(function()use($snapshot){
-            $j=$this->journal(); $id=bin2hex(random_bytes(16)); $this->write('backup-'.$id.'.json',$snapshot,524288);
+        return $this->saveBackup($snapshot,false);
+    }
+    /** Save every source before mode changes, without binding it as the DNS rollback image. */
+    public function backupPermissions(array $files): string
+    {
+        $snapshot=['schema_version'=>1,'purpose'=>'dns_include_permissions','files'=>[]];
+        foreach ($files as $path=>$entry) {
+            $snapshot['files'][$path]=['base64'=>base64_encode($entry['value']),'fingerprint'=>$entry['fingerprint']];
+        }
+        return $this->saveBackup($snapshot,true);
+    }
+    private function saveBackup(array $snapshot,bool $permissions): string
+    {
+        return $this->locked(function()use($snapshot,$permissions){
+            $j=$this->journal(); $id=bin2hex(random_bytes(16));
+            $this->write('backup-'.$id.'.json',$snapshot,$permissions?self::PERMISSION_BACKUP_LIMIT:self::BACKUP_LIMIT);
             array_unshift($j['backups'],$id);
-            if ($j['job']!==null && in_array($j['job']['state'],self::LIVE,true) && $j['job']['backup_id']===null) $j['job']['backup_id']=$id;
+            if (!$permissions && $j['job']!==null && in_array($j['job']['state'],self::LIVE,true) && $j['job']['backup_id']===null) $j['job']['backup_id']=$id;
             $keep=array_unique(array_filter(array_merge(array_slice($j['backups'],0,3),[$j['job']['backup_id']??null,$j['active']['backup_id']??null])));
             $remove=array_diff($j['backups'],$keep); $j['backups']=array_values(array_intersect($j['backups'],$keep));
             $this->write('state.json',$j);
-            foreach ($remove as $old) {if (!self::id($old)) throw new RuntimeException('invalid_state'); $path=$this->root.'/backup-'.$old.'.json';if ($this->regular($path,524288)!==null) unlink($path);}
+            if ($permissions && function_exists('fsync')) {
+                $directory=@fopen($this->root,'r');
+                if (!$directory) throw new RuntimeException('storage_unavailable');
+                try { if (!@fsync($directory)) throw new RuntimeException('storage_unavailable'); }
+                finally { fclose($directory); }
+            }
+            foreach ($remove as $old) {if (!self::id($old)) throw new RuntimeException('invalid_state'); $path=$this->root.'/backup-'.$old.'.json';if ($this->regular($path,self::PERMISSION_BACKUP_LIMIT)!==null) unlink($path);}
             return $id;
         });
     }
     public function snapshot(string $id): array
-    { if (!self::id($id)) throw new RuntimeException('invalid_request'); return $this->locked(fn()=>$this->read('backup-'.$id.'.json',524288)??throw new RuntimeException('invalid_state'),false); }
+    { if (!self::id($id)) throw new RuntimeException('invalid_request'); return $this->locked(fn()=>$this->read('backup-'.$id.'.json',self::BACKUP_LIMIT)??throw new RuntimeException('invalid_state'),false); }
     public function active(): ?array { return $this->locked(fn()=>$this->journal()['active'],false); }
     private static function checkedIntent(array $value): array
     {

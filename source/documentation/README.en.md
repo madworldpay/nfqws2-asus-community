@@ -1,17 +1,21 @@
-# NFQWS2 ASUS Community
+<a id="nfqws2-asus-community"></a>
+
+# NFQWS2 for ASUS, Keenetic, Netcraze and OpenWrt
 
 [Русский](README.md)
 
-[Download Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
+[Build 101 for ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 for Keenetic and Netcraze](DOWNLOADS.en.md#keenetic) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
+
+[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
 
 <details>
 <summary>All project links</summary>
 
-**Install** · [Choose a package](DOWNLOADS.en.md) · [Quick start](QUICKSTART.en.md) · [ASUS / Entware](INSTALL.en.md) · [OpenWrt](OPENWRT.en.md) · [Changelog](CHANGELOG.md)
+**Install** · [Choose a package](DOWNLOADS.en.md) · [Quick start](QUICKSTART.en.md) · [ASUS / Entware](INSTALL.en.md#asus-entware) · [Keenetic and Netcraze](INSTALL.en.md#keenetic) · [OpenWrt](OPENWRT.en.md) · [Changelog](CHANGELOG.md)
 
 **Panel** · [Import](IMPORT.en.md) · [Strategies](PRESETS.en.md) · [Device profiles](docs/DEVICE-PROFILES.en.md) · [Generator (beta)](docs/LOCAL-STRATEGY-PICKER.en.md) · [SmartDNS](SMARTDNS.en.md) · [MTProto](#telegram-proxy-guide) · [DPI Detector](DPI-DETECTOR.en.md)
 
-**Guides** · [Compatibility](COMPATIBILITY.en.md) · [Updates](PACKAGE-UPDATES.en.md) · [Troubleshooting](DIAGNOSTICS.en.md) · [Screenshots](SCREENSHOTS.en.md#build100)
+**Guides** · [Compatibility](COMPATIBILITY.en.md) · [Updates](PACKAGE-UPDATES.en.md) · [Troubleshooting](DIAGNOSTICS.en.md) · [Screenshots](SCREENSHOTS.en.md#zapret2)
 
 **Contact** · [Message Frank](https://t.me/Profy13) · [Report an issue](https://github.com/madworldpay/nfqws2-asus-community/issues)
 
@@ -27,19 +31,17 @@
 
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
-Start with **Import profile**: choose a ready-made cloud strategy, your own JSON
-or NFQWS2 text from Keenetic. Review its blocks, lists and blobs in the preview,
-save the changes and select home-network devices. NFQWS2 processes traffic on
-the router; your Android TV box, phone or PC does not need a separate client.
+Choose one of the **98 ready-made Zapret2 strategies** under **Import strategies → Zapret2 library → Full presets**. Each preset groups its rules and files. Search by name, author, technique or personal note. Preview the changes before saving. [How to import a preset](IMPORT.en.md#zapret2) · [Screenshots](SCREENSHOTS.en.md#zapret2).
+
+You can also import a cloud strategy, your own JSON or NFQWS2 text from Keenetic. Select the home devices that should use the strategy. The router processes their traffic.
 
 Test video playback, seeking and voice calls separately.
 
-**This is an application for an installed firmware:** an ASUS package for Asuswrt-Merlin/Entware
-or a native OpenWrt package. Installing the application itself does not require flashing your router.
+The panel runs on your existing firmware. It uses Entware on ASUS routers running Asuswrt-Merlin and on Keenetic and Netcraze routers. OpenWrt uses native packages.
 
-**Free · RU / EN · ASUS/Entware · OpenWrt**
+**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. Build 101 packages are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
 
-**Strategy import.** Open “Zapret2 library”, select “Full presets”, and choose one of the 98 ready-made strategies. Each preset includes its rules. Select “Preview” and then “Save selection”. Starting or restarting the service is a separate step. Add a personal note beside any strategy in the Zapret2 library or cloud catalog and search by its text. Notes stay in this browser across panel updates. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+**Free · RU / EN**
 
 **Strategy generator (beta).** Choose 2–10 runs and compare results in 1–6 columns or let them fit the window. The panel restores the original settings afterwards. Applying and exporting are separate actions. [Panel workflow](docs/LOCAL-STRATEGY-PICKER.en.md).
 
@@ -84,9 +86,13 @@ On a fresh ASUSWRT-Merlin installation, prepare Entware first:
 3. Run `amtm` over SSH, choose `ep` and wait for Entware installation to finish.
 4. Press `e`, then Enter, to leave `amtm` and return to the same SSH shell. Check Entware with `/opt/bin/opkg print-architecture`.
 
+<a id="install-command"></a>
+
 ### Install with one command
 
-The command is shared by ASUS/Entware and OpenWrt. Paste it into the router’s SSH shell:
+Paste this block into the router’s SSH shell. The same command selects the package for ASUS with Entware, Keenetic or Netcraze with Entware, and native OpenWrt.
+
+On Keenetic or Netcraze, enable the OPKG component, select the Entware drive and wait for Entware to finish installing. Open the Entware SSH shell as `root`. The installer checks the firmware and Entware architecture, installs the matching panel and prints its address. The panel uses the stock NFQWS2 service.
 
 ```sh
 (
@@ -95,7 +101,14 @@ The command is shared by ASUS/Entware and OpenWrt. Paste it into the router’s 
   mkdir "$nfqws_dir" || exit 1
   trap 'rm -rf "$nfqws_dir"' 0
   nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  if [ -x /opt/bin/opkg ]; then
+    PATH=/opt/bin:$PATH
+    if ! command -v curl >/dev/null && ! command -v uclient-fetch >/dev/null; then
+      /opt/bin/opkg update && /opt/bin/opkg install curl ca-bundle || exit 1
+    fi
+  fi
+  { curl -fL --proto '=https' --proto-redir '=https' --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" ||
+    uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
   sh "$nfqws_dir/install.sh"
 )
 ```
@@ -112,7 +125,7 @@ or the USB drive's Samba share. [Manual installation with File Explorer examples
 The installer detects the platform, selects and verifies its package, preserving settings
 during updates. The installer prints the panel address when finished.
 
-**One-time transition for older builds.** To install the current release and
+**Updating older ASUS and OpenWrt builds.** To install the current release and
 receive subsequent updates through the panel, rerun the command for your
 platform above once. Settings, lists, login credentials and the chosen service
 state are preserved. After the transition, use the panel's usual update buttons.
@@ -125,15 +138,14 @@ fallback login: **username `root`, password `asus`**.
 A separate panel password set earlier is preserved during updates; use that password.
 Use **Change password** to set your own panel password.
 
-1. Open `http://ROUTER_IP:90` and **Getting started**. On ASUS, follow the panel's ARK check. If ARK is absent, no preparation is needed.
+1. Open the panel address shown by the installer and select **Getting started**. On ASUS, follow the panel's ARK check. If ARK is absent, no preparation is needed.
 2. Select devices. Import a cloud profile or your own JSON, review the preview and save the selected contents. For NFQWS2 text from Keenetic, use **Import profile → Paste Keenetic strategy**.
 3. If needed, connect DNS through the SmartDNS wizard and confirm the result.
-4. Start NFQWS2. Test the required websites, video and voice from a selected device.
+4. If traffic processing is off and your settings are ready, start NFQWS2. Test websites, video and voice from a selected device.
 
 **DPI Detector matters when checking a strategy.** The **DPI Detector** button at the top opens installation, the original menu and help. Repeat tests **1–3** before and after changing a strategy under the same conditions to find remaining DNS, TLS or QUIC problems. The OK percentage covers only the tested targets; errors alone do not prove DPI blocking. Also check video playback, seeking and other required features on your device. Press **S** to save the result, then download TXT directly from the Detector window. [Read and compare reports](DPI-DETECTOR.en.md). The [NFQWS2 Keenetic chat](https://t.me/nfqws) can help with selecting Keenetic strategies.
 
-After a first install, processing stays off until you configure it.
-Updates preserve settings and the previous service state.
+On ASUS and OpenWrt, processing stays off after a first install until you configure it. On Keenetic and Netcraze, the panel connects to the existing NFQWS2 service. If it is already running, you can test access from a device right away.
 
 <a id="inside-the-panel"></a>
 
@@ -375,7 +387,7 @@ Start with your task; each guide contains its main steps on the page itself.
 | Strategy generator | [Strategy selection: panel workflow and results](docs/LOCAL-STRATEGY-PICKER.en.md) |
 | Update the application | [Updates](PACKAGE-UPDATES.en.md) |
 | Troubleshoot a problem | [Diagnostics](DIAGNOSTICS.en.md) · [DPI Detector](DPI-DETECTOR.en.md) |
-| Check compatibility | [ASUS / Entware](COMPATIBILITY.en.md) · [OpenWrt](OPENWRT.en.md) |
+| Check compatibility | [ASUS / Entware](COMPATIBILITY.en.md) · [Keenetic and Netcraze](COMPATIBILITY.en.md#keenetic) · [OpenWrt](OPENWRT.en.md) |
 | Share a result | [Contributing](CONTRIBUTING.en.md) |
 
 [Русский](README.md)

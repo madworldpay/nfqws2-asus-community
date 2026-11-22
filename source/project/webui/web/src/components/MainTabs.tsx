@@ -6,14 +6,19 @@ import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import { Box, Tab, Tabs } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router';
+
+import { panelApi } from '@/api/panelPaths.js';
+import {
+  smartDnsConfigQuery,
+  smartDnsConnectionState,
+} from '@/api/smartDnsConfigClient';
 
 import { mainTabsValues, type MainTabsValues } from '@/types/types';
 
 import { useStatus } from '@/hooks/useStatus';
 import { useTranslation } from '@/hooks/useTranslation';
-
-import { panelApi } from '@/api/panelPaths.js';
 
 const deviceProfilesHref = '/device-profiles-lab/device-profiles-lab.html';
 
@@ -24,7 +29,7 @@ export const MainTabs = () => {
   const { pathname } = useLocation();
 
   const { t } = useTranslation();
-  const { platform, isPending } = useStatus();
+  const { platform, isPending, csrfToken } = useStatus();
 
   const { tab } = useParams({ strict: false }) as {
     tab?: MainTabsValues;
@@ -40,6 +45,13 @@ export const MainTabs = () => {
           ? tab
           : false;
 
+  const dns = useQuery({
+    ...smartDnsConfigQuery(csrfToken ?? ''),
+    enabled: !!csrfToken,
+    refetchInterval: currentTab === 'smartdns' ? false : 30_000,
+  });
+  const dnsState = smartDnsConnectionState(dns.isError ? undefined : dns.data);
+
   return (
     <>
       <Box
@@ -53,7 +65,8 @@ export const MainTabs = () => {
         <Tabs
           value={currentTab}
           onChange={(_, value) => {
-            if (value === deviceProfilesHref || value === strategyPickerHref) return;
+            if (value === deviceProfilesHref || value === strategyPickerHref)
+              return;
             void navigate({ to: value === 'settings' ? '/' : `/${value}` });
           }}
           variant="scrollable"
@@ -101,15 +114,22 @@ export const MainTabs = () => {
             }}
           />
 
-          {platform !== 'keenetic-entware' && (
-            <Tab
-              value="smartdns"
-              icon={<DnsOutlinedIcon fontSize="small" />}
-              iconPosition="start"
-              label="SmartDNS"
-              sx={{ minHeight: 50, fontSize: 14 }}
-            />
-          )}
+          <Tab
+            value="smartdns"
+            icon={
+              <DnsOutlinedIcon
+                fontSize="small"
+                color={
+                  ['on', 'running', 'external'].includes(dnsState)
+                    ? 'success'
+                    : 'inherit'
+                }
+              />
+            }
+            iconPosition="start"
+            label={`SmartDNS · ${t(`smartdns.connection_state.${dnsState}`)}`}
+            sx={{ minHeight: 50, fontSize: 14 }}
+          />
 
           {platform !== 'keenetic-entware' && (
             <Tab

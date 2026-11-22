@@ -32,18 +32,21 @@ final class NfqwsStrategyPickerRuntime
     public static function validateRequest(array $p):void
     {
         $fields=['pickerstatus'=>[],'pickerreport'=>[],'pickertargets'=>['custom_sites'],'pickerplan'=>['search','extended'],'pickerstart'=>['request_id','consent'],'pickerextended'=>['request_id','consent'],'pickersynthesize'=>['request_id','consent'],'pickerresult'=>['id','result'],'pickerexport'=>['id'],'pickercancel'=>['id'],'pickerapply'=>['id']];
+        $fields['pickerwindow']=['request_id','window_id','presence'];
         $cmd=$p['cmd']??null;if(!is_string($cmd)||!isset($fields[$cmd]))throw new RuntimeException('invalid_request');
         $keys=array_keys($p);sort($keys);$expected=array_merge(['cmd','csrf_token'],$fields[$cmd]);sort($expected);
         if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize','pickerplan'],true)&&array_key_exists('goal',$p)){$expected[]='goal';sort($expected);}
         if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize','pickerplan'],true)&&array_key_exists('concurrency',$p)){$expected[]='concurrency';sort($expected);}
         if(($cmd==='pickersynthesize'||$cmd==='pickerplan'&&($p['search']??null)==='synthesis')&&array_key_exists('rounds',$p)){$expected[]='rounds';sort($expected);}
         if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize'],true)&&array_key_exists('plan_sha256',$p)){$expected[]='plan_sha256';sort($expected);}
+        if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize'],true)&&array_key_exists('window_id',$p)){$expected[]='window_id';sort($expected);}
         if(in_array($cmd,['pickerexport','pickerapply'],true)&&array_key_exists('torrent_sites',$p)){$expected[]='torrent_sites';sort($expected);}
         if($cmd==='pickerexport'&&array_key_exists('result',$p)){$expected[]='result';sort($expected);}
         if(($cmd==='pickersynthesize'||$cmd==='pickerplan'&&($p['search']??null)==='synthesis')&&(array_key_exists('custom_sites',$p)||array_key_exists('custom_only',$p))){$expected=array_merge($expected,['custom_sites','custom_only']);sort($expected);}
         if($keys!==$expected)throw new RuntimeException('invalid_request');
         foreach($p as $key=>$v)if(!is_string($v)||strlen($v)>($key==='custom_sites'?4096:128))throw new RuntimeException('invalid_request');
-        foreach(['id','request_id','result']as $k)if(isset($p[$k])&&!preg_match('/^[a-f0-9]{32}$/D',$p[$k]))throw new RuntimeException('invalid_request');
+        foreach(['id','request_id','result','window_id']as $k)if(isset($p[$k])&&!preg_match('/^[a-f0-9]{32}$/D',$p[$k]))throw new RuntimeException('invalid_request');
+        if($cmd==='pickerwindow'&&!in_array($p['presence'],['open','closed'],true))throw new RuntimeException('invalid_request');
         if(isset($p['consent'])&&$p['consent']!=='test')throw new RuntimeException('consent_required');
         if(isset($p['goal']))NfqwsStrategyPickerGoals::parse($p['goal']);
         if(isset($p['concurrency']))NfqwsStrategyPickerConcurrency::parse($p['concurrency']);
@@ -545,13 +548,14 @@ final class NfqwsStrategyPickerRuntime
         $plan=$this->planSelection($selection);$plan['plan_sha256']=$this->planBinding($plan);
         unset($plan['probe_domains']);return ['available'=>true,'version'=>'picker-start-plan-v1']+$plan;
     }
-    public function start(string $request,bool $extended=false,string $goal='all',bool $synthesis=false,?array $custom=null,mixed $concurrency='auto',?string $planSha=null,mixed $rounds=null):array
+    public function start(string $request,bool $extended=false,string $goal='all',bool $synthesis=false,?array $custom=null,mixed $concurrency='auto',?string $planSha=null,mixed $rounds=null,?string $window=null):array
     {
         if(!preg_match('/^[a-f0-9]{32}$/D',$request))throw new RuntimeException('invalid_request');
+        if($window!==null&&!preg_match('/^[a-f0-9]{32}$/D',$window))throw new RuntimeException('invalid_request');
         if($planSha!==null&&!preg_match('/^[a-f0-9]{64}$/D',$planSha))throw new RuntimeException('invalid_request');
         $selection=NfqwsStrategyPickerRequest::selection($extended,$goal,$synthesis,$custom,$concurrency,$rounds??($synthesis?'2':'1'));$goal=$selection['goal'];
         $admissionLease=null;$lease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();$lock=$this->store->lock();
-        try{return (new AsusImportTransaction())->writer(function()use($request,$extended,$goal,$synthesis,$custom,$concurrency,$rounds,$selection,$planSha,&$j,&$admissionLease){
+        try{return (new AsusImportTransaction())->writer(function()use($request,$extended,$goal,$synthesis,$custom,$concurrency,$rounds,$selection,$planSha,$window,&$j,&$admissionLease){
             $old=$this->store->read();
             // An old request without a count retains its recorded identity.
             // Only the exact same-request retry can return before the new minimum.
@@ -568,9 +572,10 @@ final class NfqwsStrategyPickerRuntime
             $j=$this->config->snapshot($this->running());$j['library_namespace']='job-v1';if($memory!==null)$j['synthesis_memory']=$memory;
             $j+=['request_id'=>$request,'extended'=>$extended,'search'=>$synthesis?'synthesis':'profiles','goal'=>$goal,'probe_domains'=>$domains,'budget'=>$budget,'deadline'=>null,'started_uptime'=>AsusUpdateStore::uptime(),'progress'=>0,'resources_sha256'=>$this->resourcesFingerprint()];
             $j+=$selection+['selection_sha256'=>NfqwsStrategyPickerRequest::digest($selection),'concurrency_choice'=>$choice];
+            if(file_exists($this->store->path('cancel-'.$j['id'])))throw new RuntimeException('source_changed');
+            if($window!==null){$j['window_id']=$window;$this->store->openBrowser($j);}
             if($planSha!==null)$j['plan_sha256']=$planSha;$this->store->write($j);
             if($admissionLease!==null)$admissionLease->accepted($j['id']);
-            $cancel=$this->store->path('cancel-'.$j['id']);if(file_exists($cancel))unlink($cancel);
             $this->launchPair($j['id']);return $this->status();
         });}catch(Throwable $e){
             if(isset($j)&&($this->store->read()['id']??null)===$j['id']){
@@ -587,10 +592,31 @@ final class NfqwsStrategyPickerRuntime
     }
     private function checkpoint():void
     {
-        $j=$this->store->read();if(($j['actuator_attention']??null)!==null||($j['actuator_intent']??null)!==null)throw new RuntimeException('recovery_required');if($this->actor('guard',$j['id'])===null)throw new RuntimeException('guard_lost');if(file_exists($this->store->path('cancel-'.$j['id'])))throw new RuntimeException('cancelled');
+        $j=$this->store->read();if(($j['actuator_attention']??null)!==null||($j['actuator_intent']??null)!==null)throw new RuntimeException('recovery_required');if($this->actor('guard',$j['id'])===null)throw new RuntimeException('guard_lost');if($this->stopRequested($j))throw new RuntimeException('cancelled');
         $deadline=NfqwsStrategyPickerBudget::overallDeadline($j);if($deadline!==null&&AsusUpdateStore::uptime()>=$deadline)throw new RuntimeException('timed_out');
         NfqwsStrategyPickerConcurrency::admit($j,false);
         if(hash('sha256',$this->config->raw(true))!==$j['current'])throw new RuntimeException('source_changed');
+    }
+    private function stopRequested(array $job):bool
+    {
+        return file_exists($this->store->path('cancel-'.$job['id']))||$this->store->browserState($job)==='closed';
+    }
+    /** Do not switch strategies if the starting window closed before acknowledging Start. */
+    private function awaitBrowser(array $job):bool
+    {
+        if(!isset($job['window_id']))return true;
+        do{
+            $state=$this->store->browserState($job);
+            if($this->actor('guard',$job['id'])===null)throw new RuntimeException('guard_lost');
+            if($state==='closed'||file_exists($this->store->path('cancel-'.$job['id']))){
+                if($this->running()!==$job['running_before'])throw new RuntimeException('service_state_unknown');
+                $this->assertOriginal();
+                $this->phase('complete',['state'=>'cancelled','code'=>'cancelled','restored'=>true,'finished_at'=>time()]);
+                return false;
+            }
+            if($state==='present')return true;
+            usleep(200000);
+        }while(true);
     }
     private function library():NfqwsDeviceProfilesLibrary
     {
@@ -995,7 +1021,7 @@ final class NfqwsStrategyPickerRuntime
             $lease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
             (new AsusImportTransaction())->writer(function()use($j){
                 if($j['state']==='applying'){$this->applyWork();return;}
-                $this->assertOriginal();$this->preflight();
+                $this->assertOriginal();if(!$this->awaitBrowser($j))return;$this->preflight();
                 if(($j['search']??null)==='synthesis'){$this->synthesisWork();return;}
                 $this->phase('catalog',['state'=>'running']);$profiles=$this->stage();$this->phase('dns');
                 $dns=$this->probe([1]);$this->phase('profiles',['dns'=>$dns['groups'][0]['document']['results']['dns_availability']??[]]);
@@ -1123,7 +1149,7 @@ final class NfqwsStrategyPickerRuntime
             $stopSince=null;$recoverySince=null;
             for($i=0;;$i++){
                 $j=$this->store->read();if(($j['id']??null)!==$id||!in_array($j['state'],self::ACTIVE,true))return;
-                $actor=$this->actor('work',$id);$deadline=NfqwsStrategyPickerBudget::overallDeadline($j);$expired=$deadline!==null&&AsusUpdateStore::uptime()>=$deadline;$cancel=file_exists($this->store->path('cancel-'.$id));
+                $actor=$this->actor('work',$id);$deadline=NfqwsStrategyPickerBudget::overallDeadline($j);$expired=$deadline!==null&&AsusUpdateStore::uptime()>=$deadline;$cancel=$this->stopRequested($j);
                 if($expired||$cancel)$stopSince??=AsusUpdateStore::uptime();
                 if($actor!==null&&(!$expired&&!$cancel||AsusUpdateStore::uptime()-$stopSince<NfqwsStrategyPickerBudget::STOP_GRACE_SECONDS)){
                     $recoverySince=null;
@@ -1189,6 +1215,7 @@ final class NfqwsStrategyPickerRuntime
             $this->preflight();
             $j['comparison_running_before']=$j['running_before'];$j['running_before']=$this->running();
             $j['torrent_sites']=$torrentSites;
+            unset($j['window_id']);
             $j['state']='applying';$j['phase']='applying';$j['deadline']=AsusUpdateStore::uptime()+180;$j['restored']=false;$this->store->write($j);
             $this->launchPair($id);return $this->status();
         });}finally{foreach([$lock,$lease]as $f){flock($f,LOCK_UN);fclose($f);}}
@@ -1218,11 +1245,24 @@ final class NfqwsStrategyPickerRuntime
     public function dispatch(array $post):array
     {
         self::validateRequest($post);
+        if($post['cmd']==='pickerwindow'){
+            return ['recorded'=>$this->store->updateBrowser($post['request_id'],$post['window_id'],$post['presence']==='closed')];
+        }
         if($post['cmd']==='pickertargets'){require_once __DIR__.'/strategy-picker-targets.php';return NfqwsStrategyPickerTargets::inspectMixed($post['custom_sites']);}
         if($post['cmd']==='pickerresult')return $this->synthesisMeasuredView($post['id'],$post['result']);
         if($post['cmd']==='pickerexport'&&isset($post['result']))return $this->synthesisMeasuredExport($post['id'],$post['result']);
         if($post['cmd']==='pickerplan')return $this->previewPlan(NfqwsStrategyPickerRequest::selection($post['extended']==='1',$post['goal']??'all',$post['search']==='synthesis',isset($post['custom_sites'])?NfqwsStrategyPickerRequest::custom($post['custom_sites'],$post['custom_only']):null,$post['concurrency']??'auto',$post['rounds']??($post['search']==='synthesis'?'2':'1')));
-        return match($post['cmd']){'pickerstart'=>$this->start($post['request_id'],false,$post['goal']??'all',false,null,$post['concurrency']??'auto',$post['plan_sha256']??null),'pickerextended'=>$this->start($post['request_id'],true,$post['goal']??'all',false,null,$post['concurrency']??'auto',$post['plan_sha256']??null),'pickersynthesize'=>$this->start($post['request_id'],false,$post['goal']??'all',true,isset($post['custom_sites'])?NfqwsStrategyPickerRequest::custom($post['custom_sites'],$post['custom_only']):null,$post['concurrency']??'auto',$post['plan_sha256']??null,$post['rounds']??null),'pickerexport'=>$this->synthesisExport($post['id'],($post['torrent_sites']??'0')==='1'),'pickercancel'=>$this->cancel($post['id']),'pickerapply'=>$this->apply($post['id'],($post['torrent_sites']??'0')==='1'),default=>$this->status()};
+        return match($post['cmd']){
+            'pickerstart','pickerextended'=>$this->start($post['request_id'],$post['cmd']==='pickerextended',$post['goal']??'all',
+                false,null,$post['concurrency']??'auto',$post['plan_sha256']??null,null,$post['window_id']??null),
+            'pickersynthesize'=>$this->start($post['request_id'],false,$post['goal']??'all',true,
+                isset($post['custom_sites'])?NfqwsStrategyPickerRequest::custom($post['custom_sites'],$post['custom_only']):null,
+                $post['concurrency']??'auto',$post['plan_sha256']??null,$post['rounds']??null,$post['window_id']??null),
+            'pickerexport'=>$this->synthesisExport($post['id'],($post['torrent_sites']??'0')==='1'),
+            'pickercancel'=>$this->cancel($post['id']),
+            'pickerapply'=>$this->apply($post['id'],($post['torrent_sites']??'0')==='1'),
+            default=>$this->status(),
+        };
     }
     public static function error(Throwable $e):string
     {

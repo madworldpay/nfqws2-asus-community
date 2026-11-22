@@ -36,28 +36,6 @@
     height: 22px;
   }
 
-#root .rabbit-build-stage {
-    display: contents;
-  }
-
-#root .rabbit-build-native {
-    position: static;
-    width: auto;
-  }
-
-#root .rabbit-build-native .MuiChip-root {
-    width: auto;
-  }
-
-#root .rabbit-build-native .MuiChip-label {
-    padding: 0 10px;
-  }
-
-#root .rabbit-build-sprite {
-    display: none;
-    animation: none;
-  }
-
   #root footer > .MuiCollapse-root {
     max-height: min(35svh, 240px);
     overflow-y: auto;

@@ -170,8 +170,27 @@ final class AsusImportTransaction
     public function prepare(array $documents,array $selection,?array $catalogScope=null,array $addons=[]): array
     {
         $doc=AsusImportDocument::read($documents);$raw=$this->raw($this->config);if($raw===null)throw new RuntimeException('strategy_unavailable');
+        // Reserve places in the bounded inventory for exact import destinations.
+        $preferred=[];
+        $edited=[];
+        $picks=$selection['files']??null;
+        if(is_array($picks)&&array_is_list($picks)&&count($picks)<=AsusShareResources::COUNT_LIMIT){
+            foreach($picks as $pick){
+                if(is_string($pick['id']??null)&&is_string($pick['text']??null)&&strlen($pick['text'])<=AsusShareResources::FILE_LIMIT){
+                    $edited[$pick['id']]=$pick['text'];
+                }
+            }
+        }
+        foreach(array_merge($doc['resources'],$doc['package_files']??[]) as $file) {
+            if(!in_array($file['kind'],['lua','blobs'],true))continue;
+            $digest=$file['kind']==='lua'&&isset($edited[$file['id']])?hash('sha256',$edited[$file['id']]):$file['sha256'];
+            $preferred[]=$file['kind'].'/'.NfqwsResourcePaths::imported($file['kind'],$digest);
+        }
+        foreach(NfqwsResourcePaths::references($raw.' '.implode(' ',$doc['values']))['valid'] as $ref) {
+            if(str_starts_with($ref['name'],'imported/'))$preferred[]=$ref['kind'].'/'.$ref['name'];
+        }
         $readList=fn($file)=>($file['factory_list']??false)?$this->resources->factoryList($file):base64_decode($this->resources->read($file['id'],$file['sha256'])['data_base64'],true);
-        return AsusImportPlan::prepare($doc,$selection,$raw,$this->resources->inventory(),$this->dns->draft(),null,$catalogScope,$addons,$readList,$this->resources->factoryList(...));
+        return AsusImportPlan::prepare($doc,$selection,$raw,$this->resources->inventory($preferred),$this->dns->draft(),null,$catalogScope,$addons,$readList,$this->resources->factoryList(...),preservePersonalAutoList:true);
     }
     public function inspect(array $documents): array {return AsusImportDocument::read($documents);}
     private function publicJob(?array $j): array

@@ -1,17 +1,41 @@
 # Downloads
 
-[**Open the latest release**](https://github.com/madworldpay/nfqws2-asus-community/releases/latest).
-First, identify your firmware and installation environment:
+**Build 101 releases** · [ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
+
+[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
+
+[Install with one command](QUICKSTART.en.md#install-command). Use the table if you prefer to choose the file manually.
 
 | Installation environment | Which package to choose |
 | --- | --- |
 | ASUSWRT / Merlin with Entware already installed | `nfqws2-asus_…_armv7.ipk` or `nfqws2-asus_…_aarch64-3.10.ipk`, according to the Entware architecture |
+| Keenetic or Netcraze with Entware | [Choose the panel IPK](#keenetic) for your installed Entware architecture |
 | OpenWrt 24.10 | `nfqws2-native_VERSION_ARCHITECTURE.ipk`, matching the exact `DISTRIB_ARCH` |
 | OpenWrt 25.12 | `nfqws2-native_VERSION_ARCHITECTURE.apk`, matching the exact `DISTRIB_ARCH`; the signature is checked by the native OpenWrt installer |
 
 The native file's extension identifies the OpenWrt series, and its name contains the architecture;
 check both against `cat /etc/openwrt_release`. The ASUS model alone does not determine the package:
 different firmware can run on the same model.
+
+<a id="keenetic"></a>
+
+## Keenetic and Netcraze
+
+The Build 101 panel installs alongside the stock web interface. It requires Entware, `nfqws2-keenetic` version `1.3.3` and `nfqws-keenetic-web` version `3.0.24` or later. Installation preserves the stock service configuration. [Stock NFQWS2](https://github.com/nfqws/nfqws2-keenetic) · [Stock web interface](https://github.com/nfqws/nfqws-keenetic-web).
+
+Run `opkg print-architecture` in the Entware terminal. Find your architecture in the table and download its package. A vendor entry such as `aarch64-3.10_kn` can appear alongside the base architecture. Use the package for the matching base entry, in this case `aarch64-3.10`.
+
+| Entware architecture | Build 101 package |
+| --- | --- |
+| `aarch64-3.10` | [Download ARM64](https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2/nfqws2-keenetic-community_1.3.3%2Bb101-2_aarch64-3.10.ipk) |
+| `mips-3.4` | [Download MIPS](https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2/nfqws2-keenetic-community_1.3.3%2Bb101-2_mips-3.4.ipk) |
+| `mipsel-3.4` | [Download MIPSEL](https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2/nfqws2-keenetic-community_1.3.3%2Bb101-2_mipsel-3.4.ipk) |
+
+Keenetic specifies MIPSEL for the KN-1711. [Keenetic's instructions for this model](https://support.keenetic.com/carrier/kn-1711/en/20980-installing-the-entware-repository-on-a-usb-drive.html).
+
+Check the SHA-256 digest, copy the IPK to the router and open its directory. Run `opkg install ./filename.ipk` with the downloaded filename. Then open `http://<router-address>:90/nfqws-community/`. [Release, checksums and source code](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2).
+
+## ASUS and OpenWrt
 
 For **ASUS/Entware**, choose an IPK according to the Entware architecture:
 
@@ -28,8 +52,5 @@ automatically selects the current package.
 The source archive ending in `_source.tar.gz` is available alongside the IPK files in each
 release. For your installed version, choose the sources from the same release.
 [Sources in the repository](source/).
-
-To install without choosing a file manually, use the [quick start](QUICKSTART.en.md):
-the ASUSWRT-Merlin command comes first, followed by the OpenWrt command.
 
 [Project documentation](README.en.md#documentation).

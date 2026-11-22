@@ -113,16 +113,39 @@ def validate_profile(raw, php_binary):
             raise ValueError('private key refused')
         if row['kind'] == 'blobs' and re.search(br'<!doctype\s+html|<html\b|version https://git-lfs', data[:2048], re.I):
             raise ValueError('blob is an HTML page or LFS pointer')
+    lua_operands = {'@/opt/etc/nfqws2/lua/' + name for name in INIT_FILES}
+    pinned_lua = {}
+    for ref in parsed.get('package_files', []):
+        if ref['kind'] != 'lua':
+            continue
+        name = ref['name']
+        if name not in INIT_FILES:
+            raise ValueError('unknown packaged Lua reference')
+        if name.startswith('local-'):
+            data = regular(ROOT/'asus/lua'/name, 262144)
+            sha, length = hashlib.sha256(data).hexdigest(), len(data)
+        else:
+            provenance = decode(regular(ROOT.parent/'metadata/engine-provenance.json', 262144))
+            pin = provenance['lua_resources'][name]
+            sha, length = pin['sha256'], pin['bytes']
+        if (sha, length) != (ref['sha256'], ref['byte_length']):
+            raise ValueError('packaged Lua reference does not match the shipped file')
+        pinned_lua[name] = {'sha256': sha, 'byte_length': length}
+        for alias in ref['aliases']:
+            if re.fullmatch(r'RESOURCE_[1-9][0-9]*', alias):
+                lua_operands.update((alias, '@' + alias))
     for text in (parsed['values'].values() if isinstance(parsed['values'], dict) else []):
         words = shlex.split(text)
         for pos, word in enumerate(words):
             if word == '--lua-init' or word.startswith('--lua-init='):
                 operand = words[pos+1] if word == '--lua-init' and pos+1 < len(words) else word.removeprefix('--lua-init=')
-                if not operand.startswith('@/opt/etc/nfqws2/lua/') or operand.rsplit('/', 1)[-1] not in INIT_FILES:
+                if operand not in lua_operands:
                     raise ValueError('only packaged Lua init is allowed')
-    # No Lua attachments are allowed above. These rows model only the package's
-    # explicit Lua-presence contract, not measured file bytes. Their hashes are
-    # symbolic; no file is reused, written, or trusted from this operator model.
+    # A fresh installation provides an empty auto.list. An import using its
+    # literal path will use the receiver's list without publishing its contents.
+    stock_auto = regular(ROOT/'core/etc/nfqws2/lists/auto.list', 262144)
+    if stock_auto:
+        raise ValueError('factory auto.list must be empty')
     code = """require $argv[1].'/import-plan.php';try{
       $v=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
       $doc=$v['document'];$selection=['blocks'=>[],'shared'=>[],'ports'=>[],
@@ -135,15 +158,21 @@ def validate_profile(raw, php_binary):
         'source_id'=>$source['id'],'source_sha256'=>$source['sha256'],
         'upstreams'=>$source['profile']['upstreams'],
         'records'=>array_map(fn($index,$value)=>['index'=>$index,'value'=>$value],array_keys($source['profile']['records']),$source['profile']['records'])];
-      $files=[];foreach($v['packaged_lua']as $name)$files[]=[
+      $files=[['id'=>substr(hash('sha256','/opt/etc/nfqws2/lists/auto.list'),0,32),
+        'kind'=>'lists','name'=>'auto.list','byte_length'=>0,'sha256'=>hash('sha256',''),'state'=>'available']];
+      foreach($v['packaged_lua']as $name){
+        $pin=$v['pinned_lua'][$name]??null;
+        // Legacy literal operands require presence only. Only measured
+        // package files may satisfy a hash-and-size-bound resource reference.
+        $files[]=[
         'id'=>substr(hash('sha256','/opt/etc/nfqws2/lua/'.$name),0,32),
-        'kind'=>'lua','name'=>$name,'byte_length'=>0,
-        'sha256'=>hash('sha256','package-presence:'.$name),'state'=>'available',
-        'bundled_lua'=>true,'bundled_name'=>$name];
+        'kind'=>'lua','name'=>$name,'byte_length'=>$pin['byte_length']??0,
+        'sha256'=>$pin['sha256']??hash('sha256','package-presence:'.$name),'state'=>'available',
+        'bundled_lua'=>true,'bundled_resource'=>$pin!==null,'bundled_name'=>$name];}
       $plan=AsusImportPlan::prepare($doc,$selection,'',['files'=>$files,'scan_truncated'=>false],null);
       echo json_encode(['ready'=>$plan['ready'],'problems'=>$plan['problems']],JSON_THROW_ON_ERROR);
     }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}"""
-    plan = php(php_binary, code, {'document': parsed, 'packaged_lua': sorted(INIT_FILES)})
+    plan = php(php_binary, code, {'document': parsed, 'packaged_lua': sorted(INIT_FILES), 'pinned_lua': pinned_lua})
     if not plan['ready']:
         raise ValueError('incomplete dependencies or invalid selectable profile')
     return parsed

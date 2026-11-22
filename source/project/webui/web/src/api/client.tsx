@@ -54,10 +54,10 @@ const apiClient = createAPIClient({
 });
 
 export const API = {
-  status: () =>
+  status: (watch = false) =>
     apiClient.indexPhp.postIndexCmd.useQuery({
       body: { cmd: 'status' },
-    }) as UseQueryResult<StatusResponse, OperationError<ApiError>>,
+    }, watch ? { refetchInterval: 30_000, refetchOnWindowFocus: 'always' } : {}) as UseQueryResult<StatusResponse, OperationError<ApiError>>,
 
   invalidateStatus: async () => {
     const key = apiClient.indexPhp.postIndexCmd.getQueryKey({

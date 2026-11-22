@@ -497,6 +497,10 @@ final class NfqwsStrategyPickerScore
 /** One bounded persistent journal. Names and paths are never HTTP inputs. */
 final class NfqwsStrategyPickerState
 {
+    private const BROWSER_START_SECONDS=45;
+    private const BROWSER_IDLE_SECONDS=150;
+    private const BROWSER_PHASES=['preparing','running','restoring'];
+
     private static function safe(string $directory,string $name,int $owner):string
     {return class_exists('NfqwsDeviceProfilesPaths',false)?NfqwsDeviceProfilesPaths::guard($directory,$name,$owner):NfqwsPlatform::guardFile($directory,$name,$owner);}
     public readonly string $configDirectory;
@@ -530,7 +534,7 @@ final class NfqwsStrategyPickerState
     }
     public function path(string $name):string
     {
-        if(!in_array($name,['state.json','engine.lock','actor-work.json','actor-guard.json','failure-work.json','failure-guard.json','winner-auto.json','generated-auto.json'],true)&&!preg_match('/^(?:result-[a-f0-9]{32}\.json|\.stage-[a-f0-9]{16}|cancel-[a-f0-9]{32}|unused-(?:work|guard)-[a-f0-9]{32}\.pid)$/D',$name))throw new RuntimeException('invalid_request');
+        if(!in_array($name,['state.json','browser.json','engine.lock','actor-work.json','actor-guard.json','failure-work.json','failure-guard.json','winner-auto.json','generated-auto.json'],true)&&!preg_match('/^(?:result-[a-f0-9]{32}\.json|\.stage-[a-f0-9]{16}|cancel-[a-f0-9]{32}|unused-(?:work|guard)-[a-f0-9]{32}\.pid)$/D',$name))throw new RuntimeException('invalid_request');
         if(!file_exists($this->root)){
             self::safe(dirname($this->root),basename($this->root),$this->owner);
             $mask=umask(0077);try{if(!mkdir($this->root,0700))throw new RuntimeException('storage_unavailable');}finally{umask($mask);}
@@ -563,6 +567,42 @@ final class NfqwsStrategyPickerState
             $file=$this->buffer($name);if(!$file)return null;
             $v=json_decode($file['raw'],true,32,JSON_THROW_ON_ERROR);
             if(!is_array($v))throw new RuntimeException('storage_unavailable');$pin=$file['pin'];return $v;
+        });
+    }
+    public function openBrowser(array $job):void
+    {
+        $this->write([
+            'job'=>$job['id'],
+            'window'=>$job['window_id'],
+            'state'=>'waiting',
+            'until'=>AsusUpdateStore::uptime()+self::BROWSER_START_SECONDS,
+        ],'browser.json');
+    }
+    private function browserRecord(array $job):?array
+    {
+        $record=$this->read('browser.json');
+        if(($record['job']??null)!==$job['id']||($record['window']??null)!==$job['window_id']||
+            !in_array($record['state']??null,['waiting','present'],true)||
+            !is_numeric($record['until']??null)||AsusUpdateStore::uptime()>=$record['until'])return null;
+        return $record;
+    }
+    public function browserState(array $job):string
+    {
+        if(!isset($job['window_id'])||!in_array($job['state'],self::BROWSER_PHASES,true))return 'present';
+        return $this->browserRecord($job)['state']??'closed';
+    }
+    public function updateBrowser(string $request,string $window,bool $closed):bool
+    {
+        return $this->journal(function()use($request,$window,$closed):bool{
+            $job=$this->read();
+            if(($job['request_id']??null)!==$request||($job['window_id']??null)!==$window||
+                !in_array($job['state']??null,self::BROWSER_PHASES,true)||$job['boot']!==AsusUpdateStore::boot())return false;
+            $record=$this->browserRecord($job);
+            if($record===null)return false;
+            $record['state']=$closed?'closed':'present';
+            $record['until']=$closed?0:AsusUpdateStore::uptime()+self::BROWSER_IDLE_SECONDS;
+            $this->writeHeld($record,'browser.json',$pin);
+            return true;
         });
     }
     private static function signature(array $s):array

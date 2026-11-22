@@ -7,8 +7,10 @@ import {
 } from 'react';
 import { Chip, Stack, Tooltip } from '@mui/material';
 import type { SxProps } from '@mui/system/styleFunctionSx';
+import { useQuery } from '@tanstack/react-query';
 
 import { API } from '@/api/client';
+import { getKeeneticPanelUpdate } from '@/api/packageUpdateNotes';
 import { packageUpdateBadges } from '@/api/packageUpdates';
 
 import { LoginDialog } from '@/components/LoginDialog';
@@ -41,7 +43,7 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
   } = useStatus();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const { refetch: refreshStatus } = API.status();
+  const { refetch: refreshStatus } = API.status(true);
   const { auth } = useAppStore();
   const { appearance } = useAppearanceStore();
   const [refreshingSession, setRefreshingSession] = useState(false);
@@ -55,6 +57,19 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
   const request = useRef(0);
   const started = useRef(0);
   const waitingForLogin = useRef(false);
+  const keenetic = platform === 'keenetic-entware';
+  const arch =
+    typeof document === 'undefined'
+      ? ''
+      : (document.documentElement.dataset.entwareArch ?? '');
+  const keeneticUpdate = useQuery({
+    queryKey: ['keenetic-panel-release', packageVersion, arch],
+    queryFn: ({ signal }) =>
+      getKeeneticPanelUpdate(packageVersion ?? '', arch, signal),
+    enabled: keenetic && isReady && !!packageVersion && !!arch,
+    staleTime: 3_600_000,
+    retry: false,
+  });
   const updates = usePackageUpdates(
     csrfToken,
     platform !== 'keenetic-entware' && (anonym || authenticated),
@@ -160,20 +175,36 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
     web,
     buildNumber,
   );
+  const availableUpdate = keenetic
+    ? !!keeneticUpdate.data
+    : badges.core || badges.web || badges.build;
   const rabbitState: RabbitBuildState =
-    badges.core || badges.web || badges.build
-      ? 'update'
-      : !isReady
-        ? 'unknown'
-        : !service
-          ? 'off'
-          : updates.data?.check.state === 'current'
-            ? 'idle'
-            : 'unknown';
+    !isReady || typeof service !== 'boolean'
+      ? 'unknown'
+      : !service
+        ? 'off'
+        : availableUpdate
+          ? 'update'
+          : 'idle';
   const badge = (label: ReactNode, available: boolean) => {
-    if (platform === 'keenetic-entware')
-      return <Chip key={String(label)} label={label} size="small" variant="outlined" />;
-    const chip = (
+    const chip = keenetic ? (
+      keeneticUpdate.data ? (
+        <Chip
+          component="a"
+          href={keeneticUpdate.data}
+          target="_blank"
+          rel="noopener noreferrer"
+          clickable
+          label={label}
+          size="small"
+          variant="outlined"
+          color="warning"
+          title={t('package_update.badge_available')}
+        />
+      ) : (
+        <Chip label={label} size="small" variant="outlined" />
+      )
+    ) : (
       <Tooltip
         key={String(label)}
         title={t(
@@ -215,7 +246,9 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
       >
         {packageVersion &&
           badge(
-            formatPackageVersion(packageVersion),
+            keenetic
+              ? packageVersion.replace(/\+b(\d+)-(\d+)$/, ' — Build $1-$2')
+              : formatPackageVersion(packageVersion),
             badges.core || badges.web || badges.build,
           )}
       </Stack>

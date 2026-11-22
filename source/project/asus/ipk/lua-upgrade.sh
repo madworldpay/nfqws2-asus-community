@@ -9,11 +9,24 @@ asus_lua_sidecar_file_safe() {
     [ "$owner" = "$ASUS_MIGRATION_OWNER" ] && [ "$((0x$mode & 07022))" = 0 ] && [ "$size" -le 8388608 ]
 }
 
+# Use the terse stat output supported by the packaged BusyBox.
+# Read from the right so spaces in a parent directory cannot shift the fields.
+asus_b100_list_stat() {
+    local row
+    row=$(asus_migration_cmd stat -t "$1") || return 1
+    printf '%s\n' "$row" | asus_migration_cmd awk '
+        NF < 15 { exit 1 }
+        {
+            # device, inode, mode, uid, gid, links, size, mtime, ctime
+            print $(NF-8), $(NF-7), $(NF-11), $(NF-10), $(NF-9), $(NF-6), $(NF-13), $(NF-2), $(NF-1)
+        }'
+}
+
 # b100 shipped five active lists as ordinary opkg files. The old panel
 # considers them settings, including owner edits. Preserve just the names
 # from that release's compact manifest before opkg drops its obsolete files.
 asus_b100_lists_save() {
-    local stage=$1 snapshot=$2 baseline=$3 entry name source before count=0
+    local stage=$1 snapshot=$2 baseline=$3 entry name source before copied after copy_attributes count=0
     asus_lua_sidecar_file_safe "$baseline" || return 1
     asus_migration_cmd grep -Fq '"package_version":"1.3.2-asus6+b100"' "$baseline" || {
         [ "$?" = 1 ] && return 0
@@ -31,21 +44,25 @@ asus_b100_lists_save() {
         if [ ! -e "$source" ] && [ ! -L "$source" ]; then source=$snapshot/lists/$name; fi
         [ -e "$source" ] || [ -L "$source" ] || continue
         asus_migration_blob_parent_safe "${source%/*}" && asus_migration_blob_file_safe "$source" || return 1
-        before=$(asus_migration_cmd stat -c '%d %i %f %u %g %h %s %Y %Z' "$source") || return 1
+        before=$(asus_b100_list_stat "$source") || return 1
         set -- $before
         [ "$#" = 9 ] && { [ "$4" = "$ASUS_MIGRATION_OWNER" ] || [ "$4" = 65534 ]; } &&
             [ "$((0x$3 & 07000))" = 0 ] && [ "$7" -le 8388608 ] || return 1
+        copy_attributes="$3 $4 $5 $7 $8"
         asus_migration_cmd mkdir -p "$stage/lists" && asus_migration_cmd cp -p "$source" "$stage/lists/$name" &&
-            asus_migration_cmd cmp -s "$source" "$stage/lists/$name" &&
-            [ "$(asus_migration_cmd stat -c '%f %u %g %s %Y' "$source")" = "$(asus_migration_cmd stat -c '%f %u %g %s %Y' "$stage/lists/$name")" ] &&
-            [ "$before" = "$(asus_migration_cmd stat -c '%d %i %f %u %g %h %s %Y %Z' "$source")" ] || return 1
+            asus_migration_cmd cmp -s "$source" "$stage/lists/$name" || return 1
+        copied=$(asus_b100_list_stat "$stage/lists/$name") || return 1
+        set -- $copied
+        [ "$#" = 9 ] && [ "$copy_attributes" = "$3 $4 $5 $7 $8" ] || return 1
+        after=$(asus_b100_list_stat "$source") || return 1
+        [ "$after" = "$before" ] || return 1
     done
     return 0
 }
 
 asus_b100_lists_restore() {
     local dir=/opt/var/lib/nfqws2-asus/lua-upgrade/sidecar-snapshot/lists
-    local lists=/opt/etc/nfqws2/lists source name count=0
+    local lists=/opt/etc/nfqws2/lists source name saved installed permissions count=0
     [ -e "$dir" ] || [ -L "$dir" ] || return 0
     asus_migration_blob_parent_safe "$dir" && asus_migration_blob_parent_safe "$lists" || return 1
     for source in "$dir"/z2-pack-*.list.gz; do
@@ -54,8 +71,14 @@ asus_b100_lists_restore() {
         printf '%s\n' "$name" | asus_migration_cmd grep -Eq '^z2-pack-[0-9a-f]{64}\.list\.gz$' || return 1
         count=$((count + 1));[ "$count" -le 5 ] && asus_migration_blob_file_safe "$source" || return 1
         asus_install_default "$source" "$lists/$name" && asus_migration_blob_file_safe "$lists/$name" &&
-            asus_migration_cmd cmp -s "$source" "$lists/$name" &&
-            [ "$(asus_migration_cmd stat -c '%f %u %g' "$source")" = "$(asus_migration_cmd stat -c '%f %u %g' "$lists/$name")" ] || return 1
+            asus_migration_cmd cmp -s "$source" "$lists/$name" || return 1
+        saved=$(asus_b100_list_stat "$source") || return 1
+        set -- $saved
+        [ "$#" = 9 ] || return 1
+        permissions="$3 $4 $5"
+        installed=$(asus_b100_list_stat "$lists/$name") || return 1
+        set -- $installed
+        [ "$#" = 9 ] && [ "$permissions" = "$3 $4 $5" ] || return 1
     done
     return 0
 }

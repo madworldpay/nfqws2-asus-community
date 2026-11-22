@@ -334,7 +334,7 @@ def add_lua_factory_resources(payload):
     return ''.join(sorted(conffiles))
 
 
-def build_one(cache, output, offline, arch, build_number=None):
+def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
     target = TARGETS[arch]
     nfq = asset(target['engine_asset'], cache, offline)
     core = {}
@@ -467,7 +467,7 @@ def build_one(cache, output, offline, arch, build_number=None):
             f'#!{shell_path} sh\nexec {shell_path} {applet} "$@"\n'.encode(), 0o755)
     licenses(core, 'nfqws2-asus')
 
-    web = web_payload()
+    web = web_payload(web_dist)
     light = asset(target['lighttpd_asset'], cache, offline)
     cgi = asset(target['mod_cgi_asset'], cache, offline)
     validate_elf(light['opt/sbin/lighttpd'], target, 'lighttpd')
@@ -515,10 +515,10 @@ def build_one(cache, output, offline, arch, build_number=None):
 
 
 
-def build(cache, output, offline, architectures=None, build_number=None):
+def build(cache, output, offline, architectures=None, build_number=None, web_dist=None):
     package_version(build_number)  # Reject invalid identity before producing either IPK.
     for arch in architectures or TARGETS:
-        build_one(cache, output, offline, arch, build_number)
+        build_one(cache, output, offline, arch, build_number, web_dist)
     (output/'SHA256SUMS').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n'
                                           for p in sorted(output.glob('*.ipk'))))
 
@@ -530,5 +530,6 @@ if __name__ == '__main__':
     parser.add_argument('--offline', action='store_true')
     parser.add_argument('--arch', action='append', choices=sorted(TARGETS))
     parser.add_argument('--build-number', help='Explicit release build number; defaults to BUILD_NUMBER')
+    parser.add_argument('--web-dist', type=Path, help='Production frontend directory for this package')
     cli = parser.parse_args()
-    build(cli.cache.resolve(), cli.output.resolve(), cli.offline, cli.arch, cli.build_number)
+    build(cli.cache.resolve(), cli.output.resolve(), cli.offline, cli.arch, cli.build_number, cli.web_dist)

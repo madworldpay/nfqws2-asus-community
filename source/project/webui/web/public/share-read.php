@@ -3,7 +3,7 @@
 final class AsusShareRead
 {
     private ?array $anchor=null;
-    public function __construct(private int $owner=0,private ?string $boundary=null,private ?string $alias=null,private bool $mutableFiles=false)
+    public function __construct(private int $owner=0,private ?string $boundary=null,private ?string $alias=null,private bool $mutableFiles=false,private bool $keeneticAutoList=false)
     {
         if($boundary!==null){$this->boundary=rtrim($boundary,'/');clearstatcache(true);$s=@lstat($this->boundary);$a=$alias===null?false:@lstat($alias);
             if($s&&$a&&$a['uid']===$owner&&($s['mode']&0170000)===0040000&&$s['uid']===$owner&&($s['mode']&0022)===0&&realpath($alias)===$this->boundary)$this->anchor=$s;
@@ -35,7 +35,13 @@ final class AsusShareRead
     public function stat(string $path): ?array
     {
         clearstatcache(true,$path);$s=@lstat($path);
-        return $s&&($s['mode']&0170000)===0100000&&in_array($s['uid'],[$this->owner,65534],true)&&$s['nlink']===1&&($this->mutableFiles||($s['mode']&0002)===0)?$s:null;
+        if(!$s||($s['mode']&0170000)!==0100000||$s['nlink']!==1)return null;
+        // A fresh vendor installation may still own its learning file as 1001.
+        // The import plan keeps the receiver's auto.list in place.
+        $stockAuto=$this->keeneticAutoList&&$this->mutableFiles&&$this->boundary!==null
+            &&$path===$this->boundary.'/etc/nfqws2/lists/auto.list'&&$s['uid']===1001&&$s['gid']===1001
+            &&in_array($s['mode']&07777,[0644,0664,0666],true);
+        return ($stockAuto||in_array($s['uid'],[$this->owner,65534],true))&&($this->mutableFiles||($s['mode']&0002)===0)?$s:null;
     }
     private static function same(array $a,array $b): bool
     {

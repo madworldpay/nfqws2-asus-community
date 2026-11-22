@@ -64,10 +64,24 @@ final class AsusShareResources
         $bytes=$this->bytes($path);
         return hash_equals($pin['sha256'],hash('sha256',$bytes))?$bytes:null;
     }
-    private function entries(): array
+    private function entry(string $kind,string $name,string $path,int $size): array
+    {
+        return ['id'=>substr(hash('sha256',$kind."\0".$name),0,32),'kind'=>$kind,'name'=>$name,'byte_length'=>$size,'path'=>$path];
+    }
+    private function entries(array $preferred=[]): array
     {
         if(!$this->directory($this->root))throw new RuntimeException('resource_unavailable');
-        $files=[];$skipped=0;$truncated=false;
+        $priority=[];$files=[];$skipped=0;$truncated=false;
+        $requested=array_unique($preferred);
+        if(count($requested)>self::COUNT_LIMIT)$truncated=true;
+        foreach(array_slice($requested,0,self::COUNT_LIMIT) as $relative) {
+            $ref=NfqwsResourcePaths::relative($relative);
+            if($ref===null||!str_starts_with($ref['name'],'imported/'))continue;
+            $path=$this->root.'/'.$relative;
+            if(!$this->directory(dirname($path)))continue;
+            $s=$this->stat($path);
+            if($s)$priority[$relative]=$this->entry($ref['kind'],$ref['name'],$path,$s['size']);
+        }
         foreach(self::KINDS as $kind) {
           foreach($kind==='lists'?['']:['','imported/'] as $prefix){
             $dir=$this->root.'/'.$kind.($prefix===''?'':'/imported');
@@ -81,19 +95,21 @@ final class AsusShareResources
                     if(++$count>512){$truncated=true;break;}
                     if(!self::name($name)||str_contains($name,'.notactive')||str_contains($name,'-opkg')||str_contains($name,'.opkg-')){$skipped++;continue;}
                     if($prefix!==''&&NfqwsResourcePaths::relative($kind.'/'.$prefix.$name)===null){$skipped++;continue;}
+                    $identity=$prefix.$name;$relative=$kind.'/'.$identity;
+                    if(isset($priority[$relative]))continue;
                     $path=$dir.'/'.$name;$s=$this->stat($path);if(!$s){$skipped++;continue;}
-                    if(count($files)>=self::COUNT_LIMIT){$truncated=true;break;}
-                    $identity=$prefix.$name;$files[]=['id'=>substr(hash('sha256',$kind."\0".$identity),0,32),'kind'=>$kind,'name'=>$identity,'byte_length'=>$s['size'],'path'=>$path];
+                    if(count($priority)+count($files)>=self::COUNT_LIMIT){$truncated=true;break;}
+                    $files[$relative]=$this->entry($kind,$identity,$path,$s['size']);
                 }
             } finally {closedir($handle);}
           }
         }
-        usort($files,fn($a,$b)=>strcmp($a['kind'].'/'.$a['name'],$b['kind'].'/'.$b['name']));
-        return ['files'=>$files,'skipped'=>$skipped,'scan_truncated'=>$truncated];
+        ksort($priority,SORT_STRING);ksort($files,SORT_STRING);
+        return ['files'=>array_values($priority+$files),'skipped'=>$skipped,'scan_truncated'=>$truncated];
     }
-    public function inventory(): array
+    public function inventory(array $preferred=[]): array
     {
-        $out=$this->entries();$remaining=2097152;
+        $out=$this->entries($preferred);$remaining=2097152;
         foreach($out['files'] as &$row) {
             $path=$row['path'];unset($row['path']);$row['sha256']=null;$row['bundled_lua']=false;$row['bundled_resource']=false;
             if($row['byte_length']>self::FILE_LIMIT){$row['state']='too_large';continue;}
@@ -108,6 +124,10 @@ final class AsusShareResources
                 }
             }
             if(in_array($row['kind'],['lua','blobs'],true)&&$row['state']==='available') {
+                if($row['kind']==='lua'){
+                    $stat=$this->stat($path);
+                    if(!$stat||$stat['uid']!==$this->owner||($stat['mode']&0022)!==0)continue;
+                }
                 // Prefer the actual package name, then a deterministic exact-byte
                 // match for renamed copies. Incoming documents supply no trust.
                 $known=$this->bundledLua;ksort($known);$preferred=$row['kind'].'/'.$row['name'];

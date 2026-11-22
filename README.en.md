@@ -6,6 +6,8 @@
 
 [Build 101 for ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 for Keenetic and Netcraze](DOWNLOADS.en.md#keenetic) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
 
+[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
+
 <details>
 <summary>All project links</summary>
 

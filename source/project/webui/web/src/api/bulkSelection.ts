@@ -35,6 +35,18 @@ export const selectAllDns = (
       ),
     };
   });
+
+export function selectStrategyDns(sources: DnsSource[]): DnsSelection[] {
+  for (const origin of ['active', 'draft', 'legacy'] as const) {
+    const source = sources.find((entry) => entry.origin === origin);
+    if (
+      source?.complete &&
+      (source.profile.upstreams.length || source.profile.records.length)
+    )
+      return selectAllDns([source], []);
+  }
+  return [];
+}
 export const selectImportFiles = (
   doc: ImportDocument,
   current: ImportSelection,

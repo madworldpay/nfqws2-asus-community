@@ -66,7 +66,10 @@ final class AsusSmartDnsJobs
     public function status(): array
     {
         $job=$this->locked(fn()=>$this->reconcile($this->read()));
-        return ['available'=>$this->installer->availability(),'installed'=>$this->installer->installed(),'version'=>$this->installer->artifact()['version'],
+        $availability=$this->installer->availability();
+        if (NfqwsPlatform::current()==='keenetic-entware' && $availability['code']==='unsupported_abi')
+            return ['available'=>$availability,'installed'=>['installed'=>false,'version'=>null],'version'=>'','external_detected'=>is_file('/opt/etc/init.d/S50smartdns'),'job'=>self::publicJob($job)];
+        return ['available'=>$availability,'installed'=>$this->installer->installed(),'version'=>$this->installer->artifact()['version'],
             'external_detected'=>NfqwsPlatform::native()?is_file('/etc/config/smartdns'):is_file('/opt/etc/init.d/S50smartdns')||is_file('/opt/etc/smartdns/smartdns.conf'),'job'=>self::publicJob($job)];
     }
     public function work(string $id): void

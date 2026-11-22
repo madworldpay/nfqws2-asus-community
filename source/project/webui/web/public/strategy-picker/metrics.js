@@ -41,7 +41,7 @@ export class MetricsHistory{
     const memory=valid?(ru?`Память · доступно ${mib(m.available_kib)} из ${mib(m.total_kib)} МиБ; занято ${mib(m.used_kib)} МиБ`:`RAM · available ${mib(m.available_kib)} of ${mib(m.total_kib)} MiB; used ${mib(m.used_kib)} MiB`)+(m.estimated?(ru?' · приблизительно':' · estimated'):''):(ru?'Память · ':'RAM · ')+unknown;
     const sensors=Array.isArray(this.sample?.temperatures)?this.sample.temperatures.filter(s=>['cpu','soc'].includes(s?.kind)&&/^[a-z0-9_-]{1,32}$/.test(s.sensor)&&Number.isFinite(s.celsius)&&s.celsius>=-20&&s.celsius<=150).slice(0,4):[];
     const temperature=sensors.length?sensors.map(s=>`${ru?(s.kind==='cpu'?'Температура процессора':'Температура чипа'):(s.kind==='cpu'?'CPU temperature':'Chip temperature')} · ${s.celsius.toFixed(1)} °C`).join(' · '):'';
-    const freshness=age===null?(ru?'Ожидаем данные роутера.':'Waiting for router data.'):stale?(ru?'Данные устарели. Обновление при открытой странице — раз в 8 секунд.':'Data is stale. Updates every 8 seconds while this page is visible.'):(ru?`Данные роутера обновлены ${Math.floor(age/1000)} с назад.`:`Router data updated ${Math.floor(age/1000)} s ago.`);
+    const freshness=age===null?(ru?'Ожидаем данные роутера.':'Waiting for router data.'):stale?(ru?'Данные устарели. Нажмите «Обновить состояние», чтобы проверить снова.':'Data is stale. Select “Refresh status” to check again.'):(ru?`Данные роутера обновлены ${Math.floor(age/1000)} с назад.`:`Router data updated ${Math.floor(age/1000)} s ago.`);
     return {cpu,memory,temperature,freshness,stale};
   }
 }

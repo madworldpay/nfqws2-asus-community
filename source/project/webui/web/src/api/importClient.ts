@@ -68,6 +68,7 @@ export type ImportPlan = {
   warnings: { source?: string; kind: string; name?: string }[];
   required: { files: string[]; shared: string[] };
   affected_blocks: string[];
+  kept_auto_list?: boolean;
   config: string;
   changes: { key: string; before: string | null; after: string }[];
   files: (ResourceCopy & {
@@ -341,6 +342,7 @@ export async function prepareImport(
     !Array.isArray(v.required.files) ||
     !Array.isArray(v.required.shared) ||
     !Array.isArray(v.affected_blocks) ||
+    (v.kept_auto_list !== undefined && typeof v.kept_auto_list !== 'boolean') ||
     typeof v.config !== 'string' ||
     !Array.isArray(v.changes) ||
     !Array.isArray(v.files) ||

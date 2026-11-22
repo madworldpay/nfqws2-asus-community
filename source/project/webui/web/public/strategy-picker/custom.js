@@ -81,17 +81,17 @@ export function customScope(hosts,only,goal='all',language='ru'){
   const names={youtube:'YouTube',discord:'Discord',instagram:'Instagram',torrents:language==='ru'?'Торрент-трекеры':'Torrent trackers'};
   const native=goal==='all'?(language==='ru'?'все встроенные сервисы':'all built-in services'):String(goal).split(',').map(g=>names[g]||g).join(' + ');
   const scope=(language==='ru'?'Свои сайты: ':'Custom sites: ')+hosts.join(', ');
-  const selected=only?scope+(language==='ru'?'. Встроенные проверки — контроль без ухудшений.':'. Built-in checks are nonregression controls.'):
-    scope+(language==='ru'?'. Совместная цель: ':'. Joint goal: ')+native+'.';
+  const selected=only?scope+(language==='ru'?'. Роутер проверит и другие сайты, чтобы заметить ухудшения.':'. The router also checks other sites to spot any decline.'):
+    scope+(language==='ru'?'. Вместе с сервисами: ':'. Alongside these services: ')+native+'.';
   return selected+(hosts.some(publicIpv4)?(language==='ru'?
-    ' Правило IP действует на весь HTTPS-трафик к этому адресу и может затрагивать другие HTTPS-сайты на нём. Ошибка TLS сама по себе не доказывает блокировку.':
-    ' An IP rule covers HTTPS traffic to that address and can affect other HTTPS sites on it. A TLS failure alone does not establish blocking.'):'');
+    ' Правило для IP-адреса может затронуть другие HTTPS-сайты на нём. Сбой защищённого соединения (TLS) может иметь разные причины.':
+    ' An IP rule may affect other HTTPS sites at that address. A secure connection (TLS) can fail for several reasons.'):'');
 }
 export function targetErrors(errors,language='ru'){
   const ru={empty:'Введите хотя бы один сайт.',input_too_long:'Не более 4096 байт текста.',too_many_lines:'Слишком много строк.',
     too_many_hosts:'Можно указать до десяти доменов и публичных IPv4 суммарно.',invalid_hostname:'Недопустимый домен или IPv4.',unsupported_scheme:'Допустимы адреса HTTP и HTTPS.',
-    non_public_ipv4:'Нужен публичный IPv4; локальные и зарезервированные адреса запрещены.',cidr_not_allowed:'Укажите один IPv4 без маски CIDR.',
-    credentials_not_allowed:'Адрес не должен содержать логин или пароль.',port_not_allowed:'Не указывайте порт.',telegram_excluded:'Telegram исключён из генерации.'};
+    non_public_ipv4:'Введите публичный IPv4-адрес. Локальные и зарезервированные адреса здесь недоступны.',cidr_not_allowed:'Введите один IPv4-адрес вместо диапазона CIDR.',
+    credentials_not_allowed:'Адрес не должен содержать логин или пароль.',port_not_allowed:'Не указывайте порт.',telegram_excluded:'Подбор для Telegram недоступен.'};
   const en={empty:'Enter at least one site.',input_too_long:'Use at most 4096 bytes of text.',too_many_lines:'Too many lines.',
     too_many_hosts:'Enter up to ten domains and public IPv4 addresses combined.',invalid_hostname:'Invalid domain or IPv4 address.',unsupported_scheme:'Use an HTTP or HTTPS address.',
     non_public_ipv4:'Use a public IPv4 address; local and reserved addresses are excluded.',cidr_not_allowed:'Enter one IPv4 address without a CIDR prefix.',
