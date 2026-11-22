@@ -39,7 +39,8 @@ final class AsusSmartDnsLifecycle
     /** Recheck the current dnsmasq inputs immediately before the package transaction. */
     public function verifyUpgradeDns(): void
     {
-        if (!$this->backend instanceof AsusSmartDnsNativeBackend || NfqwsPlatform::current()!=='asus-entware') return;
+        if (!($this->backend instanceof AsusSmartDnsNativeBackend && NfqwsPlatform::current()==='asus-entware') &&
+            !($this->backend instanceof NfqwsOpenWrtSmartDnsBackend && NfqwsPlatform::native())) return;
         $intent=$this->store->intent();$job=$this->store->transaction();
         if ($intent===null || ($job['state']??null)!=='rolled_back' ||
             ($job['request_id']??null)!==$intent['source_request_id'] ||
@@ -49,14 +50,19 @@ final class AsusSmartDnsLifecycle
     }
     private function repairForUpgrade(?array $job,bool $restored): void
     {
-        if (!$this->backend instanceof AsusSmartDnsNativeBackend || NfqwsPlatform::current()!=='asus-entware' ||
-            !is_string($job['backup_id']??null)) return;
-        $snapshot=$this->store->snapshot($job['backup_id']);
-        $fingerprints=$snapshot['baseline']['fingerprints']['dns_includes']??null;
-        if (!is_array($fingerprints)) return; // An old backup without this proof cannot authorize file changes.
-        try { $this->backend->repairUpgradeIncludes($job,$fingerprints,$restored); }
+        if (!is_string($job['backup_id']??null)) return;
+        try {
+            if ($this->backend instanceof NfqwsOpenWrtSmartDnsBackend && NfqwsPlatform::native()) {
+                $this->backend->repairUpgradeIncludes($job,$restored);
+            } elseif ($this->backend instanceof AsusSmartDnsNativeBackend && NfqwsPlatform::current()==='asus-entware') {
+                $snapshot=$this->store->snapshot($job['backup_id']);
+                $fingerprints=$snapshot['baseline']['fingerprints']['dns_includes']??null;
+                if (!is_array($fingerprints)) return;
+                $this->backend->repairUpgradeIncludes($job,$fingerprints,$restored);
+            } else return;
+        }
         catch (RuntimeException $e) {
-            if (in_array($e->getMessage(),['existing_dns_rules','stale_baseline'],true))
+            if (in_array($e->getMessage(),['existing_dns_rules','stale_baseline','unsafe_panel_file'],true))
                 throw new RuntimeException('dns_permissions_changed',0,$e);
             throw $e;
         }

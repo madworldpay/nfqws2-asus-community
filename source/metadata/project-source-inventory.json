@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 4,
-    "sha256": "45080860abd6d79b808dbd71836bf29e41918f1bf1f05f7ce732ada7674cc816"
+    "sha256": "77a60c200656e08ac5403f38b58657ecec155293323bd5313290399b75cf1c3d"
   },
   {
     "path": "LICENSE",
@@ -2841,8 +2841,8 @@
   },
   {
     "path": "tests/test_openwrt_smartdns.php",
-    "bytes": 5229,
-    "sha256": "29ea9058c3d687515e8be94559dba4628026eb1e82054669699f0587243aab1a"
+    "bytes": 7734,
+    "sha256": "de062adc3da8e6eaa24c1b2da4b295616751be7c0d8c3037e8cde9a5480c5561"
   },
   {
     "path": "tests/test_openwrt_smartdns.py",
@@ -2851,8 +2851,8 @@
   },
   {
     "path": "tests/test_openwrt_smartdns_connection.py",
-    "bytes": 28538,
-    "sha256": "42d73f31bbbc6afa1cb927602e01a4d204b7f2f7121a2c743535d66328862851"
+    "bytes": 28859,
+    "sha256": "6534ea9f05ade4c39367f1387445e7f48272e1cde1e19d0b16efcd8fa24ea7f6"
   },
   {
     "path": "tests/test_openwrt_smartdns_guard.py",
@@ -4791,8 +4791,8 @@
   },
   {
     "path": "webui/web/public/openwrt-smartdns-backend.php",
-    "bytes": 19975,
-    "sha256": "31d8e9144d81abffefcfc6caf810a8862d8ddac2b2abaa32c0374822415ca2d6"
+    "bytes": 21371,
+    "sha256": "4507443003774c36231b7b64d815584df957ac92ac03580f4e57c16369fe71ec"
   },
   {
     "path": "webui/web/public/openwrt-smartdns-install.php",
@@ -4801,8 +4801,8 @@
   },
   {
     "path": "webui/web/public/openwrt-smartdns-resolver.php",
-    "bytes": 13750,
-    "sha256": "a52e26f7cf575b2aa259d3a4eba7d9c2cf91b1fb19348939ce41e70adb2f83f2"
+    "bytes": 18081,
+    "sha256": "3490c4cbb1bbb6bca6f73cb907379f75cd4e682c35fb04e50169b271d7ec04d9"
   },
   {
     "path": "webui/web/public/openwrt-update-environment.php",
@@ -5001,8 +5001,8 @@
   },
   {
     "path": "webui/web/public/smartdns-config.php",
-    "bytes": 12689,
-    "sha256": "d35638cebd204a3448cdf4852e73db6d1a6a3d291441e226593af7ddfc8b47be"
+    "bytes": 13350,
+    "sha256": "b065b2ebec967f7271a4c51f07343b20e0fbe9d73198ea365b32825109960e79"
   },
   {
     "path": "webui/web/public/smartdns-connect.php",
@@ -5016,8 +5016,8 @@
   },
   {
     "path": "webui/web/public/smartdns-lifecycle.php",
-    "bytes": 13887,
-    "sha256": "eea3c81acf62259b1346460f4c50c65d11013b682012e900e2e6441b79932416"
+    "bytes": 14196,
+    "sha256": "255abcb9954c60da60c07e67ab739b6968ab6d39812f8f64be3e73a580591b1a"
   },
   {
     "path": "webui/web/public/smartdns-native.php",

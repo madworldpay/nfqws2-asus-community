@@ -17,7 +17,7 @@
 | `armv7-2.6` / `armv7-3.2` | ARMv7 |
 | `aarch64-3.10` | AArch64 |
 
-Скачайте подходящий IPK и `SHA256SUMS` из [актуального выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/latest).
+Скачайте подходящий IPK и `SHA256SUMS` из [актуального выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103).
 Проверьте скачанный файл на компьютере: в Windows PowerShell —
 `Get-FileHash .\имя-файла.ipk -Algorithm SHA256`, в Linux — `sha256sum имя-файла.ipk`.
 Вместо `имя-файла.ipk` укажите название скачанного IPK.

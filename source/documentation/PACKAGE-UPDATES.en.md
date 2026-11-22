@@ -2,9 +2,9 @@
 
 ## Current release and device profiles
 
-[Build 101](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) is available for ASUS/Entware and OpenWrt. [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+The current releases are [Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) and [Build 104 for OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104). [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 
-To upgrade from Build 99 or 100, open the update section, check for updates, then use “Prepare package” and “Install update” for Build 101. If Build 100 previously rolled back with `invalid_state`, check for updates again. Your own site lists are preserved.
+In the update section, check for updates, then use “Prepare package” and “Install update”. The panel selects the package for your firmware and architecture. If Build 100 previously rolled back with `invalid_state`, check for updates again. Your own site lists are preserved.
 
 Before updating from an active Per device mode, save and apply Common in Devices and wait for success. After installation check the version, previous service state, library and SmartDNS. Re-enable per-device mode by explicitly applying it when needed.
 
@@ -163,7 +163,7 @@ A partially replaced package is not started without verification: the log is ret
 
 **ASUSWRT-Merlin / Entware:**
 
-Download the IPK for your architecture from the [latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/latest),
+Download the IPK for your architecture from the [latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103),
 verify SHA256 against `SHA256SUMS` and copy the file to `/opt/tmp/nfqws2-asus.ipk`.
 To install with processing off, run:
 

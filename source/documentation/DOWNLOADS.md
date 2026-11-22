@@ -2,7 +2,7 @@
 
 **Выпуски Build 101** · [ASUS и OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
 
-[Build 103 для ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
+[Build 103 для ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) · [Build 104 для OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104)
 
 [Установить одной командой](QUICKSTART.md#install-command). Для ручного выбора файла используйте таблицу ниже.
 
@@ -48,7 +48,7 @@
 отдельной кнопкой в панели. Установщик
 сам выбирает актуальный пакет.
 
-[SHA256 последнего выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/latest/download/SHA256SUMS).
+Контрольные суммы SHA-256 · [ASUS Build 103](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build103/SHA256SUMS) · [OpenWrt Build 104](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build104/SHA256SUMS).
 Архив исходников с окончанием `_source.tar.gz` находится рядом с IPK в каждом
 выпуске. Для установленной версии выбирайте исходники из того же выпуска.
 [Исходники в репозитории](source/).

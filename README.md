@@ -4,9 +4,9 @@
 
 [English](README.en.md)
 
-[Build 101 для ASUS и OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 для Keenetic и Netcraze](DOWNLOADS.md#keenetic) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
+[Предыдущий общий выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 для Keenetic и Netcraze](DOWNLOADS.md#keenetic) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
 
-[Build 103 для ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
+[Build 103 для ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) · [Build 104 для OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104)
 
 <details>
 <summary>Все ссылки проекта</summary>
@@ -25,7 +25,7 @@
 
 ![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
 
-[![Release](https://img.shields.io/github/v/release/madworldpay/nfqws2-asus-community?label=release&color=79b548)](https://github.com/madworldpay/nfqws2-asus-community/releases)
+[![ASUS build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmadworldpay%2Fnfqws2-asus-community%2Fmain%2Fupdates%2Fv2%2Fasus-build.json&query=%24.build&label=ASUS&prefix=Build%20&color=79b548)](DOWNLOADS.md)
 [![GitHub Stars](https://img.shields.io/github/stars/madworldpay/nfqws2-asus-community?style=flat&logo=github)](https://github.com/madworldpay/nfqws2-asus-community/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 

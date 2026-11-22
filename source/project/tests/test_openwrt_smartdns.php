@@ -36,5 +36,39 @@ try{
  rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::select($jailed,[121],[121=>119]),'unrelated child must not match supervisor');
  rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::select($jailed,[121],[121=>121]),'cyclic ancestry must be rejected');
  foreach([[121,122],[999],[]]as $owners)rejects(fn()=>NfqwsOpenWrtDnsmasqResolver::select($instances,$owners),'ambiguous or foreign DNS owner must be rejected');
+ $leaf=$root.'/vpn.conf';$unrelated=$root.'/guest.conf';
+ chmod($leaf,0666);chmod($unrelated,0666);
+ [$bytes,$proof,$writable]=AsusSmartDnsConfig::dnsDataSource($leaf,getmyuid());
+ check($bytes===$vpn&&$writable&&($proof['file']['mode']&0777)===0644,'writable DNS rule must retain its identity and expected mode');
+ $resolver=new NfqwsOpenWrtDnsmasqResolver(getmyuid());
+ $verify=new ReflectionMethod($resolver,'verifySources');
+ $snapshot['files']=[$leaf=>hash('sha256',$vpn)];$snapshot['directories']=[];
+ $snapshot['permission_sources']=[$leaf=>['path'=>$leaf,'fingerprint'=>$proof]];
+ check(!$resolver->sourcesUnchanged($snapshot),'running guard must still detect unsafe mode');
+ $repairs=$verify->invoke($resolver,$snapshot,true);
+ check($repairs===[$leaf=>$proof],'only the referenced, pinned file may be tightened');
+ AsusSmartDnsConfig::repairKnown($repairs,static function(array $files)use($leaf,$vpn):void{
+     check($files[$leaf]['value']===$vpn&&($files[$leaf]['fingerprint']['file']['mode']&0777)===0666,'backup must precede mode change');
+ },getmyuid());
+ check($verify->invoke($resolver,$snapshot,true)===[]&&$resolver->sourcesUnchanged($snapshot),'repair must preserve the approved DNS source');
+ check((fileperms($unrelated)&0777)===0666,'unrelated DNS files must not be touched');
+ file_put_contents($root.'/replacement.conf',$vpn);chmod($root.'/replacement.conf',0666);rename($root.'/replacement.conf',$leaf);
+ rejects(fn()=>$verify->invoke($resolver,$snapshot,true),'same bytes in an unapproved inode must be rejected');
+
+ $view=static function(string $body,array $includes=[]):array{
+     $path='/var/etc/dnsmasq.conf.main';
+     return ['boot'=>'fixture','instance'=>'main','config'=>$path,'files'=>[$path=>hash('sha256',$body)]+$includes,
+         'directories'=>[],'permission_sources'=>[],'original'=>$body,'mode'=>0644,'text'=>$body];
+ };
+ $prepared=$view("server=192.0.2.1#53\n");
+ $refreshed=$view("# firmware refresh\nserver=192.0.2.1#53\n");
+ check(NfqwsOpenWrtDnsmasqResolver::sameGeneratedConfig($prepared,$refreshed),'full comments may differ at the native commit');
+ foreach([
+     $view("server=192.0.2.2#53\n"),
+     $view("server=192.0.2.1#54\n"),
+     $view("server=192.0.2.1#53\n",['/etc/vpn.conf'=>str_repeat('a',64)]),
+     array_replace($refreshed,['mode'=>0600]),
+     array_replace($refreshed,['instance'=>'guest']),
+ ] as $different)check(!NfqwsOpenWrtDnsmasqResolver::sameGeneratedConfig($prepared,$different),'a real DNS or identity change must not pass');
  echo "Native DNS CAS overlay, persistent VPN preservation and instance isolation passed\n";
 }finally{foreach(glob($root.'/*')as $p)unlink($p);rmdir($root);}

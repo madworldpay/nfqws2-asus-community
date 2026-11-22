@@ -216,8 +216,12 @@ case "$action" in start) start_service;; stop)
         finally:self.put(path,original,'644')
     def test_apply_confirm_rollback_preserves_other_instance_and_vpn_routes(self):
         guest=self.sh('cat '+self.base+'/guest.pid').stdout
-        before=self.sh('cat /tmp/dnsmasq.nfqws_main.d/vpn.conf').stdout
+        rule='/tmp/dnsmasq.nfqws_main.d/vpn.conf'
+        before=self.sh('cat '+rule).stdout
+        self.sh('chmod 0666 '+rule)
         applied=self.begin('1');id=applied['request_id']
+        self.assertEqual(self.php('echo json_encode(fileperms('+json.dumps(rule)+')&0777);'),0o644)
+        self.assertEqual(self.sh('cat '+rule).stdout,before)
         self.assertEqual(self.query('native.example')['answers'],['1.1.1.1'])
         frame=json.loads(self.sh('cat '+self.base+'/commit.json').stdout)
         self.assertEqual(frame['instances']['nfqws_main']['env']['KEEP_OPERATOR_VALUE'],'keep')
@@ -300,6 +304,7 @@ case "$action" in start) start_service;; stop)
         self.assertEqual(status['routing'],'managed',status)
         self.assertNotEqual(status['status']['request_id'],applied['request_id'])
         self.assertEqual(self.api('smartdnsrollback',request_id=status['status']['request_id'])['state'],'rolled_back')
+        self.assertIn('# firmware DNS refresh',self.sh('cat /var/etc/dnsmasq.conf.nfqws_main').stdout)
 
     def test_boot_resume_revalidates_a_refresh_before_apply_begins(self):
         applied=self.begin('b');confirmed=self.api('smartdnsconfirm',request_id=applied['request_id']);self.assertEqual(confirmed['state'],'confirmed')

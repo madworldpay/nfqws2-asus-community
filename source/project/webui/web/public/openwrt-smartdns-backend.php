@@ -71,6 +71,20 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
     {
         $b=$this->resolver->collect();$engine=$this->installer->artifact()['sha256'];$b['hash']=hash('sha256',$b['hash'].$engine);return $b;
     }
+    public function repairIncludes(array $snapshot):void
+    {
+        if($this->resolver->collect()['snapshot']!==$snapshot)throw new RuntimeException('stale_baseline');
+        $this->resolver->repairSnapshot($snapshot,'external',[$this->store,'backupPermissions']);
+    }
+    public function repairUpgradeIncludes(array $job,bool $restored):void
+    {
+        $this->locked(function()use($job,$restored){
+            $s=$this->checked($job);
+            if($s['phase']!==($restored?'rolled_back':'confirmed'))throw new RuntimeException('stale_baseline');
+            if(empty($s['resolver']['permission_sources']))return;
+            $this->resolver->repairSnapshot($s['resolver'],$restored?'external':'managed',[$this->store,'backupPermissions']);
+        });
+    }
     public function prepare(array $job,array $snapshot):void
     {
         $this->locked(function()use($job,$snapshot){
@@ -150,7 +164,8 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
     public function forward(array $job):array
     {
         return $this->locked(function($lease)use($job){$s=$this->checked($job);if($s['phase']!=='prepared'||$this->identity($s,'guard')===null||$this->identity($s,'runtime')===null)throw new RuntimeException('guard_unavailable');
-            if(!hash_equals($job['baseline_hash'],$this->baseline()['hash']))throw new RuntimeException('stale_baseline');
+            $baseline=$this->baseline();
+            if(!hash_equals($job['baseline_hash'],$baseline['hash'])||$baseline['includes_need_repair'])throw new RuntimeException('stale_baseline');
             $this->resolver->transaction($s['resolver'],'forward',$s['request_id'],$lease);$s=$this->checked($job);
             if($s['phase']!=='awaiting_confirmation'||!$this->dns())throw new RuntimeException('dns_validation_failed');return ['deadline_uptime'=>(float)$s['deadline']];
         });
@@ -174,9 +189,15 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
     public function resolverSwap(string $id,string $operation,string $instance,array $frame,string $nonce):void
     {
         $s=$this->resolverOwner($id,$operation,$instance);NfqwsOpenWrtDnsmasqResolver::validateCommit($frame,$instance,$s['resolver']['config'],$id.':'.$operation.':'.$nonce);
-        $fresh=$this->baseline();$s['resolver']=$fresh['snapshot'];$this->save($s);
+        $prepared=$s['resolver'];$fresh=$this->baseline();$s['resolver']=$fresh['snapshot'];$this->save($s);
         if($operation==='forward'){
-            if(!hash_equals($s['baseline_hash'],$fresh['hash']))throw new RuntimeException('stale_baseline');
+            $current=hash_equals($s['baseline_hash'],$fresh['hash']);
+            if(!$current&&!$fresh['includes_need_repair']){
+                $engine=$this->installer->artifact()['sha256'];
+                $current=hash_equals($s['baseline_hash'],hash('sha256',NfqwsOpenWrtDnsmasqResolver::baselineHash($prepared).$engine))&&
+                    NfqwsOpenWrtDnsmasqResolver::sameGeneratedConfig($prepared,$s['resolver'])&&$this->resolver->sourcesUnchanged($s['resolver']);
+            }
+            if(!$current||$fresh['includes_need_repair'])throw new RuntimeException('stale_baseline');
             $this->overlay->apply($s['resolver']);$s['phase']='awaiting_confirmation';$s['deadline']=sprintf('%.3f',self::now()+90);$this->save($s);
         }
     }
@@ -239,5 +260,5 @@ final class NfqwsOpenWrtSmartDnsBackend implements NfqwsSmartDnsBackend
     public function canStop():bool
     {$s=$this->state();return $s===null||$s['phase']==='rolled_back';}
     public function dependencies():array
-    {$out=[];foreach(['baseline','prepare','guard','forward','dns','confirm','restore','stop']as $name)$out[$name]=[$this,$name];$out['release']=static function(array $job):void{};return $out;}
+    {$out=[];foreach(['baseline','prepare','guard','forward','dns','confirm','restore','stop']as $name)$out[$name]=[$this,$name];$out['repair_includes']=[$this,'repairIncludes'];$out['release']=static function(array $job):void{};return $out;}
 }

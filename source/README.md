@@ -1,6 +1,6 @@
 # Исходники
 
-Для панели Keenetic и Netcraze см. [инструкцию по сборке](BUILD-KEENETIC.md). Исходники опубликованных пакетов ASUS и OpenWrt Build 101 доступны в [теге build101](https://github.com/madworldpay/nfqws2-asus-community/tree/build101/source).
+Для панели Keenetic и Netcraze см. [инструкцию по сборке](BUILD-KEENETIC.md). Исходники [ASUS Build 103](https://github.com/madworldpay/nfqws2-asus-community/tree/build103/source), [OpenWrt Build 104](https://github.com/madworldpay/nfqws2-asus-community/tree/build104/source) и [Build 101](https://github.com/madworldpay/nfqws2-asus-community/tree/build101/source) доступны в тегах выпусков.
 
 - [project/](project/) — общий WebUI, адаптации ASUS/Entware и OpenWrt, службы, модуль ASUS, тесты и серверная часть.
 - [sources/](sources/) — исходники движка, SmartDNS, BusyBox, lighttpd и библиотек.
@@ -34,3 +34,5 @@ SHA256 исходного архива указан в `metadata/kernel-archive-
 Архив соответствующих исходников приложен к каждому [выпуску](https://github.com/madworldpay/nfqws2-asus-community/releases). Выбирайте тот же выпуск, из которого установлен пакет ASUS/Entware или OpenWrt.
 
 Контрольные суммы в documentation/SHA256SUMS фиксируют IPK/APK на момент сборки исходников. Полный SHA256SUMS выпуска, включая архив и подписанную метадату, находится среди release assets.
+
+При подготовке подписанного канала ASUS запустите `python3 .github/publish-asus-channel.py /путь/к/public.json` из корня репозитория. Скрипт проверит подпись и обновит данные значка вместе с каналом.

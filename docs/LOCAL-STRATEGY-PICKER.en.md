@@ -9,10 +9,10 @@ Selection requires DPI Detector and common strategy mode with AUTO or LIST.
 1. Open **Strategy selection**. Choose **Develop a strategy**, the request pool and **Number of runs — 2 to 10**.
 2. Keep **All services**, or select the services you need. Adding custom sites is optional.
 3. Click **Start selection**, check the goals, request pool and run count, then **Continue**. Subsequent runs start automatically after restoring settings and rechecking conditions.
-4. Wait for the result and **Original configuration restored**. To cancel, use **Stop and restore**: closing the tab does not cancel selection.
-5. If the panel recommends replacing the original strategy, choose **Apply this strategy** and confirm. To transfer the result, choose **Download strategy with required files**, then open the JSON through the panel's regular import.
+4. Wait for the result and **Original settings restored**. Use **Stop and restore** to cancel. Closing the tab also starts restoration.
+5. If the panel recommends replacing the original strategy, choose **Apply this strategy** and confirm. To transfer the result, choose **Download strategy with files**, then open the JSON through the panel's regular import.
 
-**No confirmed improvement** means the comparison finished without a recommendation to replace the original strategy. On failure, the panel shows the reason and restoration state. An unconfirmed restoration blocks a new run; **Download JSON report** remains available.
+**No confirmed improvement** means the comparison finished without a recommendation to replace the original strategy. On failure, the panel shows the reason and restoration state. An unconfirmed restoration blocks a new run; **Download report** remains available.
 
 Custom sites accept up to **10 public domains or IPv4 addresses**. The adjacent availability button transfers the list to diagnostics: choose DNS and start the checks manually. It does not change the strategy or start generation.
 
@@ -56,13 +56,11 @@ CPU count, available memory and load determine the workload. Small or busy devic
 
 Optional extended search currently tests at most three bounded separate and combined repeat-count variations of existing TCP/QUIC methods, preserving custom service and game rules when ready profiles do not improve the result. It does not invent Lua or exhaustively combine methods. Results on another ISP or router are not guarantees.
 
-Connections can briefly interrupt while profiles switch. Closing the page does not cancel the job; use “Stop and restore”. Original settings and the former service state are restored after comparison. DNS settings, interfaces, IPv6 and client exclusions are preserved. A recommendation requires a separate “Apply” action, which checks the original configuration and resource fingerprints again under the shared writer lock. Existing original resource files are preserved.
+Connections can briefly interrupt while profiles switch. Leaving the selection screen or closing the page starts restoration. You can also choose “Stop and restore”. Original settings and the former service state are restored after comparison. DNS settings, interfaces, IPv6 and client exclusions are preserved. A recommendation requires a separate “Apply” action, which checks the original configuration and resource fingerprints again under the shared writer lock. Existing original resource files are preserved.
 
 Download the JSON report directly to your device, including after cancellation or failure. Unconfirmed recovery blocks further changes. Automatic restoration never overwrites foreign configuration edits.
 
 After applying, check video playback and seeking, games and your actual applications. A successful YouTube domain check does not prove video playback. Keeping the original strategy when no improvement is confirmed is a normal outcome.
-
-Installing a prepared build and publishing a package release are separate steps. This source document does not imply that published packages already include the feature.
 
 Before starting, confirmation names the search method and exact service selection. “No confirmed improvement” describes a completed comparison without sufficient evidence of a gain. “Selection did not finish” describes an error, not a final recommendation. Cancellation and unconfirmed restoration have separate states. A new run is disabled while restoration remains unconfirmed.
 

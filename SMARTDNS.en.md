@@ -75,7 +75,7 @@ message. One confirmed cause is another script recreating the shared
 `dnsmasq.postconf` with write permission for everyone (`0777`). The SmartDNS
 safety check rejects that script.
 
-For a permission error, click **“Fix permissions and validate”**. For a regular
+For a permission error, click **“Fix permissions and retry the check”**. For a regular
 root-owned script with mode `0777`, the panel saves a backup, sets `0755` and
 validates the profile again. Addon commands, ownership and DNS stay unchanged.
 The button leaves files with other owners or modes untouched. If an addon

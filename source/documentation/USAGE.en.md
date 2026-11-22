@@ -1,6 +1,6 @@
 # Using the panel
 
-New strategies are assembled from scratch. Two sequential runs are selected by default; choose two to ten before starting. The request scale runs from 10000 to 1000000. The suitable count depends on device performance.
+New strategies are assembled from scratch. Two sequential runs are selected by default; choose two to ten before starting. Enter 1 to 1,000,000 simultaneous checks. The default is 100 and 10–100 is usually enough.
 
 Panel actions are the same on ASUS/Entware and OpenWrt.
 
@@ -23,7 +23,7 @@ the strategy, use **Restart**. SmartDNS has its own connection wizard.
 
 Open **Strategy selection**. Choose the services, request pool and **Number of runs — 2 to 10**. Optionally add up to **10 public domains or IPv4 addresses**. Click **Start selection** and **Continue**: the selected runs execute sequentially without further clicks.
 
-Wait for the result and restoration of the original configuration. Use **Stop and restore** to cancel; closing the tab does not cancel the job. Apply a recommended strategy separately, or save its JSON with required files for regular import. Repeating selection may find a better variant as network conditions change, but there is no guarantee. [Full guide](docs/LOCAL-STRATEGY-PICKER.en.md).
+Wait for the result and restoration of the original configuration. Use **Stop and restore** to cancel. Leaving the selection screen or closing the tab also starts restoration. Apply a recommended strategy separately, or save its JSON with required files for regular import. Repeating selection may find a better variant as network conditions change, but there is no guarantee. [Full guide](docs/LOCAL-STRATEGY-PICKER.en.md).
 
 The adjacent availability button transfers custom targets to diagnostics, where you explicitly choose DNS and start the checks. Results show HTTPS, DNS answers and the route, with preview and text download.
 

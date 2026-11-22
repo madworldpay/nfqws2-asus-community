@@ -2,7 +2,7 @@
 
 **Build 101 releases** · [ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
 
-[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103)
+[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) · [Build 104 for OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104)
 
 [Install with one command](QUICKSTART.en.md#install-command). Use the table if you prefer to choose the file manually.
 
@@ -48,7 +48,7 @@ Each IPK contains NFQWS2 and the WebUI in RU and EN. SmartDNS is installed
 using a separate button in the panel. The installer
 automatically selects the current package.
 
-[SHA256 checksums for the latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/latest/download/SHA256SUMS).
+SHA-256 checksums · [ASUS Build 103](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build103/SHA256SUMS) · [OpenWrt Build 104](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build104/SHA256SUMS).
 The source archive ending in `_source.tar.gz` is available alongside the IPK files in each
 release. For your installed version, choose the sources from the same release.
 [Sources in the repository](source/).

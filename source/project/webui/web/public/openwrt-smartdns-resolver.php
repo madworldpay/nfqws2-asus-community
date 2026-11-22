@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/platform.php';
+require_once __DIR__.'/smartdns-config.php';
 
 /** CAS only the volatile generated file; persistent UCI/VPN sources stay intact. */
 final class NfqwsOpenWrtDnsmasqOverlay
@@ -82,6 +83,16 @@ final class NfqwsOpenWrtDnsmasqResolver
         if(!$s||$s['uid']!==$this->owner||($s['mode']&0022)!==0||$s['size']>262144)throw new RuntimeException('existing_dns_rules');
         $raw=@file_get_contents($file);if(!is_string($raw)||strlen($raw)!==$s['size']||str_contains($raw,"\0"))throw new RuntimeException('existing_dns_rules');return $raw;
     }
+    private function dataSource(string $path): array
+    {
+        $name=basename($path);
+        if(!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D',$name)||in_array($name,['.','..'],true))throw new RuntimeException('existing_dns_rules');
+        $directory=dirname(NfqwsPlatform::guardFile(dirname($path),'.directory-proof',$this->owner));
+        $path=$directory.'/'.$name;
+        [$bytes,$fingerprint,$needsRepair]=AsusSmartDnsConfig::dnsDataSource($path,$this->owner);
+        if(str_contains($bytes,"\0"))throw new RuntimeException('existing_dns_rules');
+        return [$path,$bytes,$fingerprint,$needsRepair];
+    }
     public function primary():array
     {
         $r=NfqwsPlatform::run(['/bin/ubus','call','service','list','{"name":"dnsmasq"}'],3);
@@ -109,10 +120,17 @@ final class NfqwsOpenWrtDnsmasqResolver
         $selected=$this->primary();$canonical=realpath($selected['config']);
         if(!is_string($canonical)||!str_starts_with($canonical,'/tmp/'))throw new RuntimeException('recovery_unavailable');
         $original=$this->read($selected['config']);if(str_starts_with($original,'# NFQWS2 managed volatile DNS configuration'))throw new RuntimeException('restore_required');
-        $fingerprints=[];$directories=[];$seen=[];$expanded='';
+        $fingerprints=[];$permissionSources=[];$needsRepair=false;$directories=[];$seen=[];$expanded='';
         $append=function(string $raw)use(&$expanded){$expanded.=$raw."\n";if(strlen($expanded)>262144)throw new RuntimeException('output_limit');};
-        $visit=function(string $file,int $depth=0)use(&$visit,&$directories,&$fingerprints,&$seen,$append){
-            if($depth>8||count($seen)>64||isset($seen[$file]))throw new RuntimeException('existing_dns_rules');$seen[$file]=true;$raw=$this->read($file);$fingerprints[$file]=hash('sha256',$raw);
+        $visit=function(string $file,int $depth=0)use(&$visit,&$directories,&$fingerprints,&$permissionSources,&$needsRepair,&$seen,$append,$original){
+            if($depth>8||count($seen)>64||isset($seen[$file]))throw new RuntimeException('existing_dns_rules');
+            $seen[$file]=true;$raw=$original;
+            if($depth!==0){
+                [$path,$raw,$fingerprint,$writable]=$this->dataSource($file);
+                if($fingerprint!==null)$permissionSources[$file]=['path'=>$path,'fingerprint'=>$fingerprint];
+                $needsRepair=$needsRepair||$writable;
+            }
+            $fingerprints[$file]=hash('sha256',$raw);
             foreach(explode("\n",$raw)as $line){$v=trim($line);
                 if(preg_match('/^conf-script(?:=|$)/',$v))throw new RuntimeException('existing_dns_rules');
                 if(preg_match('/^conf-file=(\/[^\s,]+)$/D',$v,$m)){$visit($m[1],$depth+1);continue;}
@@ -129,16 +147,81 @@ final class NfqwsOpenWrtDnsmasqResolver
         // Another local default resolver must remain an explicit ownership
         // choice; never bypass an existing AdGuard/DNSCrypt/etc chain silently.
         foreach(explode("\n",$expanded)as $line)if(preg_match('~^\s*server\s*=\s*(?:127\.|\[?::1)~',$line))throw new RuntimeException('existing_dns_rules');
-        ksort($fingerprints);ksort($directories);$facts=['boot'=>trim(file_get_contents('/proc/sys/kernel/random/boot_id')),'instance'=>$selected['instance'],'config'=>$selected['config'],'files'=>$fingerprints,'directories'=>$directories];
+        ksort($fingerprints);ksort($directories);ksort($permissionSources);
+        $facts=['boot'=>trim(file_get_contents('/proc/sys/kernel/random/boot_id')),'instance'=>$selected['instance'],'config'=>$selected['config'],
+            'files'=>$fingerprints,'directories'=>$directories,'permission_sources'=>$permissionSources];
         $snapshot=$facts+['original'=>$original,'mode'=>fileperms($selected['config'])&0777,'text'=>$expanded];
         if(strlen(json_encode($snapshot,JSON_THROW_ON_ERROR))>400000)throw new RuntimeException('output_limit');
-        return ['hash'=>hash('sha256',json_encode($facts,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)),'snapshot'=>$snapshot,'conflicts'=>[]];
+        return ['hash'=>self::baselineHash($facts),'snapshot'=>$snapshot,
+            'conflicts'=>[],'includes_need_repair'=>$needsRepair];
+    }
+    public static function baselineHash(array $snapshot):string
+    {
+        $facts=array_intersect_key($snapshot,array_flip(['boot','instance','config','files','directories','permission_sources']));
+        return hash('sha256',json_encode($facts,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));
+    }
+    /** procd can rewrite the volatile file between preflight and commit. Only
+     * short full-line comments there may differ; CAS still uses the raw bytes. */
+    public static function sameGeneratedConfig(array $prepared,array $fresh):bool
+    {
+        $withoutComments=static function(array $snapshot):?array{
+            $file=$snapshot['config'];
+            if(($snapshot['files'][$file]??null)!==hash('sha256',$snapshot['original']))return null;
+            unset($snapshot['files'][$file]);
+            foreach(['original','text']as $key){
+                $lines=[];
+                foreach(explode("\n",$snapshot[$key])as $line){
+                    if(preg_match('/^#[\x20-\x7e\t]{0,510}\r?$/D',$line))continue;
+                    if(str_ends_with(rtrim($line," \t\r"),'\\'))return null;
+                    $lines[]=$line;
+                }
+                $snapshot[$key]=$lines;
+            }
+            return $snapshot;
+        };
+        $expected=$withoutComments($prepared);
+        return $expected!==null&&$expected===$withoutComments($fresh);
+    }
+    public function repairSnapshot(array $snapshot,string $routing,callable $backup):void
+    {
+        $primary=$this->primary();
+        $verify=function()use($primary,$snapshot,$routing):array{
+            if($primary['instance']!==$snapshot['instance']||$primary['config']!==$snapshot['config']||$this->primary()!==$primary||
+                $snapshot['boot']!==trim(file_get_contents('/proc/sys/kernel/random/boot_id'))||
+                (new NfqwsOpenWrtDnsmasqOverlay($this->owner))->routing($snapshot)!==$routing)
+                throw new RuntimeException('stale_baseline');
+            return $this->verifySources($snapshot,true);
+        };
+        $repairs=$verify();
+        AsusSmartDnsConfig::repairKnown($repairs,static function(array $entries)use($verify,$repairs,$backup):void{
+            if($verify()!==$repairs)throw new RuntimeException('stale_baseline');
+            $backup($entries);
+            if($verify()!==$repairs)throw new RuntimeException('stale_baseline');
+        },$this->owner);
+        if($verify()!==[])throw new RuntimeException('stale_baseline');
+    }
+    private function verifySources(array $snapshot,bool $allowRepair):array
+    {
+        $repairs=[];
+        foreach($snapshot['files']as $file=>$hash){
+            if($file===$snapshot['config'])continue;
+            $proof=$allowRepair?$snapshot['permission_sources'][$file]??null:null;
+            if($proof===null)$raw=$this->read($file);
+            else{
+                [$path,$raw,$fingerprint,$writable]=$this->dataSource($file);
+                if(['path'=>$path,'fingerprint'=>$fingerprint]!==$proof)throw new RuntimeException('stale_baseline');
+                if($writable)$repairs[$path]=$fingerprint;
+            }
+            if(!hash_equals($hash,hash('sha256',$raw)))throw new RuntimeException('stale_baseline');
+        }
+        foreach($snapshot['directories']as $dir=>$v)if($this->names($dir,$v['suffix'])!==$v['names'])throw new RuntimeException('stale_baseline');
+        ksort($repairs);
+        return $repairs;
     }
     public function sourcesUnchanged(array $snapshot):bool
     {
-        try{foreach($snapshot['files']as $path=>$hash)if($path!==$snapshot['config']&&!hash_equals($hash,hash('sha256',$this->read($path))))return false;
-            foreach($snapshot['directories']as $dir=>$v)if($this->names($dir,$v['suffix'])!==$v['names'])return false;return true;
-        }catch(Throwable $e){return false;}
+        try{$this->verifySources($snapshot,false);return true;}
+        catch(Throwable $e){return false;}
     }
     /** Validate only the commit boundary; preserve the complete native payload. */
     public static function validateCommit(array $frame,string $instance,string $config,?string $generation=null):void

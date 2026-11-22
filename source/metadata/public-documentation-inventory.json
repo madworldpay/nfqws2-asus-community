@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 64109,
-      "sha256": "0845dd442234e91af4c5e0c92eb5ce7631c4d85b07218edb85a60333d6ed8a41"
+      "bytes": 64938,
+      "sha256": "84e329a819b9f3aca662dc0c806dd7d4709664469fc74a9d34edaf8dc16ba491"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -52,13 +52,13 @@
     },
     {
       "file": "DOWNLOADS.en.md",
-      "bytes": 3927,
-      "sha256": "c1ccb23dca8bfa96119ecbd3499484d5ad30ef9d1d2f943c6578a3f976707860"
+      "bytes": 4143,
+      "sha256": "5b7a552996f82c34a230dfc0d1bc539fca1382dc81412f7f1161f7c35e94670b"
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 5007,
-      "sha256": "5fb08377a9005b10cacf1bb291e36c4eda4ade80fc9f4d38695c3fa09bb3861f"
+      "bytes": 5247,
+      "sha256": "0d542bbbb48422af51d503834aed87c7c8801ff602f77280b660d0ccd2b9d404"
     },
     {
       "file": "DPI-DETECTOR.en.md",
@@ -97,13 +97,13 @@
     },
     {
       "file": "MANUAL-INSTALL.en.md",
-      "bytes": 5972,
-      "sha256": "81ebbc8194175523e3870392b3ce304ca74c08f84570ac7d9294921605218e2d"
+      "bytes": 5978,
+      "sha256": "8a79d71730a111c2709c3f21a4de414a66708b8cb2e9980a30a33109e007206e"
     },
     {
       "file": "MANUAL-INSTALL.md",
-      "bytes": 9104,
-      "sha256": "4253a7743a98d1a6c63ab4b92279f21b772a361d2f70eb6dba4dc545318389ac"
+      "bytes": 9110,
+      "sha256": "db69bd07ce48203b9659d1b96dc229742e27cdc25bc6a9060d540ac1decfea71"
     },
     {
       "file": "NEXT-BUILD.md",
@@ -122,13 +122,13 @@
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 14560,
-      "sha256": "a235ebc119c53566c6fcd7c62cb8739033c3f6f72ab00f0b96b54efb2a526348"
+      "bytes": 14679,
+      "sha256": "2a719d9be82e3e193aaa5ae337558510115646369b02c9704437dc918ee5d259"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 26500,
-      "sha256": "f685dd990dccf81e946a138731da020c360255a5f541ec253fdc1255124674d1"
+      "bytes": 26658,
+      "sha256": "5d07c190ee08e2e9387eac70ef758c70fcbbe3dd6023c3c231711f0fe388477e"
     },
     {
       "file": "PRESETS.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 32013,
-      "sha256": "43f0ac4c54268693f898a33ff5c401230fb4a3575240c5497abc81e466a243d3"
+      "bytes": 32187,
+      "sha256": "0bfc99217da16590393b93cfb2e50ef6d055987db64545236608f7263e84a76b"
     },
     {
       "file": "README.md",
-      "bytes": 51299,
-      "sha256": "248f1eab697d1ef5c4a646c0208ef1e9c902ca0c761900b9e583006769ed9fc6"
+      "bytes": 51490,
+      "sha256": "3044f9168d5bbd9bd57cbd61880a6c12e62a8b0645c76029dce7e9e80aa652fe"
     },
     {
       "file": "ROADMAP.en.md",
@@ -182,13 +182,13 @@
     },
     {
       "file": "SMARTDNS.en.md",
-      "bytes": 10487,
-      "sha256": "48dd9731941ae4854ab41f16b2a1eecd0a0d1e7e10506ff8dbdeead963adf70f"
+      "bytes": 10494,
+      "sha256": "82c423affc9b4891b9ec63233f40e159d8a866284780f9a8417d3bba14316400"
     },
     {
       "file": "SMARTDNS.md",
-      "bytes": 17922,
-      "sha256": "8cff6cbc3c85721e3d391429406b8e7d0e8c8d604566d29fc23f93123670fd12"
+      "bytes": 17939,
+      "sha256": "117d17c15b9aeedae3f1e46986b50197a9c0ea8ef029e6f18410c05bd82a4cf0"
     },
     {
       "file": "THIRD-PARTY-NOTICES.txt",
@@ -207,13 +207,13 @@
     },
     {
       "file": "USAGE.en.md",
-      "bytes": 10568,
-      "sha256": "2853965f5ff45f74606404a230c87720bed3a927bc3b7bd7e9378aec25081024"
+      "bytes": 10597,
+      "sha256": "bee155318d3b59c13fe424dba630ef96f8020a317ca66f84665ca8a44e9242b3"
     },
     {
       "file": "USAGE.md",
-      "bytes": 18640,
-      "sha256": "5a6a07c86b70e3e7adc500b1aac6c0e707e80f05b2484e2d4bc1c8af058a10b1"
+      "bytes": 18721,
+      "sha256": "097b255e1446ebc6ab059ce47a606f54087af95ce91911d806e8d97e89b514ee"
     },
     {
       "file": "build.svg",
@@ -242,13 +242,13 @@
     },
     {
       "file": "docs/LOCAL-STRATEGY-PICKER.en.md",
-      "bytes": 11063,
-      "sha256": "2fd94726c5f633a0dfec3376e05119a538e8f938031da07b4afb642a41b50a62"
+      "bytes": 10913,
+      "sha256": "c3e669781f43e8a722de986f632cfc74763580b9faef854ab4929f2fc9cff124"
     },
     {
       "file": "docs/LOCAL-STRATEGY-PICKER.md",
-      "bytes": 22666,
-      "sha256": "4bdc5890f2dced5b87261190a4592fdcad07d6118273b5f0c3032b43da8ef81c"
+      "bytes": 22678,
+      "sha256": "2a6c62fbe662aa3ad28933a8d9b75f6c02cc9eaf3acc2203255765c213526752"
     },
     {
       "file": "images/cloud-catalog.jpg",

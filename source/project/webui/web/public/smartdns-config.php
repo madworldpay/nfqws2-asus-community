@@ -104,6 +104,18 @@ final class AsusSmartDnsConfig
             throw new RuntimeException('existing_dns_rules');
         return ['value'=>$value,'fingerprint'=>['sha256'=>hash('sha256',$value),'file'=>$metadata]];
     }
+    /** A native dnsmasq include may be repairable without being an ASUS conf-file. */
+    public static function dnsDataSource(string $path,int $owner): array
+    {
+        if(self::includePath('conf-file='.$path)!==$path)throw new RuntimeException('existing_dns_rules');
+        $entry=self::read($path,$owner,true);
+        $fingerprint=$entry['fingerprint'];
+        $mode=$fingerprint['file']['mode'];
+        if(!self::repairableData($entry['value'],$mode))return [$entry['value'],null,false];
+        $fingerprint['file']['mode']&=~0022;
+        unset($fingerprint['file']['ctime']);
+        return [$entry['value'],$fingerprint,($mode&0022)!==0];
+    }
     public static function collect(string $text,int $owner=0,bool $allowRepair=false): array
     {
         $result=self::walk($text,static fn($path)=>self::read($path,$owner,$allowRepair));
