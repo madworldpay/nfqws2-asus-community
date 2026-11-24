@@ -1,6 +1,6 @@
 <a id="nfqws2-asus-community"></a>
 
-# NFQWS2 for ASUS, Keenetic, Netcraze and OpenWrt
+# NFQWS2 COMMUNITY
 
 [Русский](README.md)
 
@@ -21,7 +21,7 @@
 
 </details>
 
-![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
+![NFQWS2 COMMUNITY](images/nfqws2-asus-community.png)
 
 [![ASUS build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmadworldpay%2Fnfqws2-asus-community%2Fmain%2Fupdates%2Fv2%2Fasus-build.json&query=%24.build&label=ASUS&prefix=Build%20&color=79b548)](DOWNLOADS.en.md)
 [![GitHub Stars](https://img.shields.io/github/stars/madworldpay/nfqws2-asus-community?style=flat&logo=github)](https://github.com/madworldpay/nfqws2-asus-community/stargazers)

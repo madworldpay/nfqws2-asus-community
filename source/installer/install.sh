@@ -618,13 +618,13 @@ nfqws_keenetic_main() {
     case "$abi:$(uname -m)" in
         aarch64-3.10:aarch64)
             core_sha=1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91
-            panel_sha=402a4d674583e166b6086212ac12974ad7940448da62cd80a8fe8786b93b5820 ;;
+            panel_sha=22af3c465c99a087185b8796f92f66fa9b18c667983daa0cda8f059b054aed08 ;;
         mips-3.4:mips|mips-3.4:mips64)
             core_sha=f0d3bf7389f796e9b07481629d52fe687bda2dcd01b4a1f5518532d5c9ea7245
-            panel_sha=c2313e971407b466a8f0282db7ec833d0ddef6333387aaeb092828c5a1a8c731 ;;
+            panel_sha=45f54c7a572d356c95798d34988dd012967801a527ee148b6f98c8a86b5bb6f8 ;;
         mipsel-3.4:mips|mipsel-3.4:mipsel|mipsel-3.4:mips64|mipsel-3.4:mips64el)
             core_sha=3da1a9a57cfcc16d243fe128024ecfb2c8f11802d932643ea46509e8ec0465b5
-            panel_sha=4686c9f6766a22f8bc19178f3a4a4f02e93f4dca09907c22c919814824fc177d ;;
+            panel_sha=dd378806b105588903f7642c0082141b045e00b43947d93edd1edb99dc981480 ;;
         *) fail "Для $model с архитектурой Entware $abi совместимого пакета пока нет." ;;
     esac
     case "$model" in KN-*) brand=Keenetic;; NC-*) brand=Netcraze;; esac
