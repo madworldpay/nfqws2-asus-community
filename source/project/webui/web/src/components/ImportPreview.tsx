@@ -20,8 +20,10 @@ import { useTranslation } from '@/hooks/useTranslation';
 export const ImportPreview = ({
   plan,
   luaTrust,
+  compact = false,
 }: {
   plan: ImportPlan;
+  compact?: boolean;
   luaTrust?: {
     checked: boolean;
     disabled: boolean;
@@ -29,6 +31,25 @@ export const ImportPreview = ({
   };
 }) => {
   const { t } = useTranslation();
+  const problemAlert = (p: ImportPlan['problems'][number], i: number) => (
+    <Alert severity="info" key={i}>
+      {p.code === 'lua_trust' && (!luaTrust || compact)
+        ? t(
+            luaTrust
+              ? 'import.preset.review_scripts'
+              : 'import.local.unverified',
+          )
+        : Object.prototype.hasOwnProperty.call(en.import.problems, p.code)
+          ? t(`import.problems.${p.code}` as TranslationKey)
+          : t('import.error')}{' '}
+      {p.code === 'unresolved_file'
+        ? p.name || p.alias || p.field || p.key || p.id || ''
+        : p.key || p.name || p.field || p.alias || p.id || ''}
+    </Alert>
+  );
+  if (compact)
+    return <Stack spacing={1}>{plan.problems.map(problemAlert)}</Stack>;
+
   const strategyChanges = plan.changes.filter(
     ({ key, before, after }) =>
       before !== after && STRATEGY_KEYS.includes(key as StrategyKey),
@@ -62,7 +83,9 @@ export const ImportPreview = ({
           plan.ready
             ? 'import.ready'
             : needsLuaTrust && plan.problems.length === 1
-              ? 'import.problems.lua_trust'
+              ? luaTrust
+                ? 'import.problems.lua_trust'
+                : 'import.local.unverified'
               : 'import.needs_choice',
         )}
       </Alert>
@@ -71,16 +94,7 @@ export const ImportPreview = ({
       )}
       {plan.problems
         .filter(({ code }) => code !== 'lua_trust' || plan.problems.length > 1)
-        .map((p, i) => (
-          <Alert severity="info" key={i}>
-            {Object.prototype.hasOwnProperty.call(en.import.problems, p.code)
-              ? t(`import.problems.${p.code}` as TranslationKey)
-              : t('import.error')}{' '}
-            {p.code === 'unresolved_file'
-              ? p.name || p.alias || p.field || p.key || p.id || ''
-              : p.key || p.name || p.field || p.alias || p.id || ''}
-          </Alert>
-        ))}
+        .map(problemAlert)}
       {luaTrust && showLuaTrust && (
         <FormControlLabel
           control={

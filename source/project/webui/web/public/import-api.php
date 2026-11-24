@@ -41,9 +41,11 @@ final class AsusImportApi
         $option=AsusImportTorrentSites::requested($selection);if($option===null)return null;
         if(count($documents)!==1||!is_string($documents[0])||!hash_equals($option['sha256'],hash('sha256',$documents[0])))throw new RuntimeException('invalid_torrent_sites_source');
         $source=$this->catalog??new AsusProfileCatalogTransport();
-        try{$index=$source->catalog();}catch(Throwable $e){throw new RuntimeException('invalid_torrent_sites_source');}
-        foreach($index['profiles']as $entry)if($entry['id']===$option['catalog_id']&&$entry['category']==='global'&&
-            hash_equals($entry['sha256'],$option['sha256'])&&$entry['size']===strlen($documents[0])&&$entry['min_build']<=$source->build())return $entry;
+        foreach([true,false]as $packaged){
+            try{$index=$source->catalog($packaged);}catch(Throwable $e){continue;}
+            foreach($index['profiles']as $entry)if($entry['id']===$option['catalog_id']&&$entry['category']==='global'&&
+                hash_equals($entry['sha256'],$option['sha256'])&&$entry['size']===strlen($documents[0])&&$entry['min_build']<=$source->build())return $entry;
+        }
         throw new RuntimeException('invalid_torrent_sites_source');
     }
     private function addonSources(array $selection): array
@@ -67,7 +69,7 @@ final class AsusImportApi
             require_once __DIR__.'/zapret2-pack.php';
             if($cmd==='importlocalpack')return AsusZapret2Pack::catalog();
             if(!preg_match('/^[a-f0-9]{24}$/D',$post['entry']))throw new RuntimeException('invalid_request');
-            return ['documents'=>AsusZapret2Pack::documents($post['entry'])];
+            return ['documents'=>AsusZapret2Pack::documents($post['entry'],$this->catalog)];
         }
         if($cmd==='importsupplementstate')return $this->tx->supplementState();
         if($cmd==='importsupplementpreview')return $this->tx->supplementPreview(self::decoded($post['recipe'],false),self::decoded($post['domains'],true),

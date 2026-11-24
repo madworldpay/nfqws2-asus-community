@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { TranslationSchema } from '@/context/TranslationProvider';
 import en from '@/translations/en.json';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import {
   Alert,
@@ -14,7 +15,10 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  IconButton,
   Stack,
+  Tab,
+  Tabs,
   Typography,
 } from '@mui/material';
 
@@ -31,6 +35,7 @@ import {
   newImportRequestId,
   prepareImport,
   readImportFiles,
+  readLocalPreset,
   readMeasuredImport,
   selectImportDependencies,
   undoImport,
@@ -48,10 +53,9 @@ import { ShareError } from '@/api/shareClient';
 
 import { Editor } from '@/components/Editor';
 import { ImportAddons } from '@/components/ImportAddons';
-import { ImportCatalog } from '@/components/ImportCatalog';
-import { ImportLocalPack, readLocalPreset } from '@/components/ImportLocalPack';
 import { ImportPreview } from '@/components/ImportPreview';
 import { ImportSelectionView } from '@/components/ImportSelection';
+import { ImportStrategies } from '@/components/ImportStrategies';
 import { InlineHelp } from '@/components/InlineHelp';
 import { InlineNfqwsRestart } from '@/components/InlineNfqwsRestart';
 
@@ -74,6 +78,7 @@ export const ImportDialog = ({
   const [documents, setDocuments] = useState<string[]>([]);
   const [doc, setDoc] = useState<ImportDocument>();
   const [catalogChoice, setCatalogChoice] = useState<CatalogProfile>();
+  const [localPresetTitle, setLocalPresetTitle] = useState<string>();
   const [sourceGeneration, setSourceGeneration] = useState(0);
   const [selection, setSelection] =
     useState<ImportSelection>(emptyImportSelection);
@@ -87,15 +92,21 @@ export const ImportDialog = ({
   const [servicePending, setServicePending] = useState(false);
   const [serviceApplied, setServiceApplied] = useState(false);
   const [uncertain, setUncertain] = useState(false);
-  const [showCatalog, setShowCatalog] = useState(false);
-  const [showLocalPack, setShowLocalPack] = useState(false);
+  const [showStrategies, setShowStrategies] = useState(false);
   const [showKeenetic, setShowKeenetic] = useState(false);
   const [keeneticText, setKeeneticText] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [detailsTab, setDetailsTab] = useState<
+    'contents' | 'changes' | 'addons'
+  >('contents');
   const keeneticId = useId();
   const titleId = useId();
   const stepsId = useId();
+  const tabsId = useId();
+  const presetTitle = localPresetTitle ?? catalogChoice?.title;
+  const detailed = !presetTitle || showDetails;
   const previewRef = useRef<HTMLDivElement>(null);
-  const showingPreview = Boolean(plan);
+  const showingPreview = Boolean(plan) && !presetTitle;
   const source = useRef<'keenetic' | 'other' | null>(null);
   const mounted = useRef(false);
   const pending = useRef(false);
@@ -179,32 +190,42 @@ export const ImportDialog = ({
     },
     [csrfToken, fail],
   );
+  const resetDocuments = useCallback(() => {
+    source.current = null;
+    chosenFiles.current = [];
+    setSourceGeneration((value) => value + 1);
+    revision.current++;
+    setDoc(undefined);
+    setCatalogChoice(undefined);
+    setLocalPresetTitle(undefined);
+    setDocuments([]);
+    setPlan(undefined);
+    setSelection(emptyImportSelection());
+    setShowDetails(false);
+    setDetailsTab('contents');
+    requestId.current = '';
+    setSaved(false);
+    setUncertain(false);
+  }, []);
   const loadDocuments = useCallback(
     (
       read: () => Promise<string[]>,
-      files: File[] = [],
-      autoPreview = false,
-      catalogProfile?: CatalogProfile,
+      {
+        files = [],
+        keenetic = false,
+        catalogProfile,
+        presetTitle,
+      }: {
+        files?: File[];
+        keenetic?: boolean;
+        catalogProfile?: CatalogProfile;
+        presetTitle?: string;
+      } = {},
     ) => {
       if (pending.current || !csrfToken) return;
-      source.current = autoPreview ? 'keenetic' : 'other';
+      resetDocuments();
+      source.current = keenetic ? 'keenetic' : 'other';
       chosenFiles.current = files;
-      setSourceGeneration((value) => value + 1);
-      revision.current++;
-      setDoc(undefined);
-      setCatalogChoice(undefined);
-      setDocuments([]);
-      setPlan(undefined);
-      // The explicit before/after preview and Save action approve the selected scope.
-      // Arbitrary Lua remains untrusted; packaged helpers are verified by the server.
-      setSelection({
-        ...emptyImportSelection(),
-        allow_shared_impact: true,
-        allow_incomplete: true,
-      });
-      requestId.current = '';
-      setSaved(false);
-      setUncertain(false);
       const rev = revision.current;
       void run(async () => {
         const raw = await read();
@@ -214,13 +235,13 @@ export const ImportDialog = ({
           allow_shared_impact: true,
           allow_incomplete: true,
         });
-        if (mounted.current && rev === revision.current) {
-          setDocuments(raw);
-          setDoc(parsed);
-          setCatalogChoice(catalogProfile);
-          setSelection(selected);
-        }
-        if (autoPreview && mounted.current && rev === revision.current) {
+        if (!mounted.current || rev !== revision.current) return;
+        setDocuments(raw);
+        setDoc(parsed);
+        setCatalogChoice(catalogProfile);
+        setSelection(selected);
+        if (presetTitle) setLocalPresetTitle(presetTitle);
+        if (keenetic || presetTitle || catalogProfile) {
           const prepared = await prepareImport(csrfToken!, raw, selected);
           if (mounted.current && rev === revision.current) {
             setPlan(prepared);
@@ -229,7 +250,7 @@ export const ImportDialog = ({
         }
       });
     },
-    [csrfToken, run],
+    [csrfToken, resetDocuments, run],
   );
   useEffect(() => {
     if (
@@ -247,20 +268,15 @@ export const ImportDialog = ({
     setKeeneticText(value);
     setError('');
     if (source.current === 'keenetic') {
-      setSourceGeneration((value) => value + 1);
-      revision.current++;
-      source.current = null;
-      setDocuments([]);
-      setDoc(undefined);
-      setCatalogChoice(undefined);
-      setPlan(undefined);
-      setSelection(emptyImportSelection());
-      requestId.current = '';
-      setSaved(false);
+      resetDocuments();
     }
   };
+  const backToPresets = () => {
+    setError('');
+    resetDocuments();
+  };
   const load = (files: File[]) =>
-    loadDocuments(() => readImportFiles(files), files);
+    loadDocuments(() => readImportFiles(files), { files });
   const review = (trustedLua?: boolean) =>
     void run(async () => {
       const next = { ...selection, trusted_lua: trustedLua ?? false };
@@ -307,7 +323,7 @@ export const ImportDialog = ({
         setSaved(true);
         markRestartPending(s.config_saved);
         setUncertain(false);
-        setPlan(undefined);
+        if (!presetTitle) setPlan(undefined);
         await reload();
       } else if (
         s.id === requestId.current &&
@@ -319,14 +335,23 @@ export const ImportDialog = ({
     });
   const apply = () =>
     void run(async () => {
-      if (needSave || !plan?.ready || !plan.proof || !requestId.current) return;
+      if (needSave || saved) return;
+      let prepared = plan;
+      if (!prepared && presetTitle && !uncertain) {
+        const rev = revision.current;
+        prepared = await prepareImport(csrfToken!, documents, selection);
+        if (!mounted.current || rev !== revision.current) return;
+        setPlan(prepared);
+        requestId.current = newImportRequestId();
+      }
+      if (!prepared?.ready || !prepared.proof || !requestId.current) return;
       let result: ImportStatus;
       try {
         result = await applyImport(
           csrfToken!,
           documents,
           selection,
-          plan.proof,
+          prepared.proof,
           requestId.current,
         );
       } catch (e) {
@@ -342,7 +367,7 @@ export const ImportDialog = ({
       setUncertain(false);
       setSaved(result.state === 'committed');
       markRestartPending(result.state === 'committed' && result.config_saved);
-      setPlan(undefined);
+      if (!presetTitle || result.state !== 'committed') setPlan(undefined);
       await reload();
       const fresh = await importStatus(csrfToken!);
       if (mounted.current) setStatus(fresh);
@@ -370,6 +395,32 @@ export const ImportDialog = ({
       await reload();
     });
   const disabled = busy || uncertain || servicePending;
+  const restartReady =
+    importRestartPending &&
+    !uncertain &&
+    !pendingUndo.current &&
+    status &&
+    ['committed', 'undone'].includes(status.state);
+  const onServiceApplied = () => {
+    setImportRestartPending(false);
+    setServiceApplied(true);
+  };
+  const luaTrust = localPresetTitle
+    ? undefined
+    : {
+        checked: selection.trusted_lua,
+        disabled: disabled || needSave || saved,
+        onChange: review,
+      };
+  const panelProps = (tab: typeof detailsTab) =>
+    presetTitle
+      ? {
+          role: 'tabpanel',
+          id: `${tabsId}-panel-${tab}`,
+          'aria-labelledby': `${tabsId}-tab-${tab}`,
+          hidden: detailsTab !== tab,
+        }
+      : {};
   return (
     <Dialog
       open
@@ -385,50 +436,62 @@ export const ImportDialog = ({
         id={titleId}
         sx={{ display: 'flex', gap: 1, alignItems: 'center' }}
       >
-        <FileDownloadOutlinedIcon color="primary" />
+        {presetTitle ? (
+          <IconButton
+            aria-label={t('import.preset.back')}
+            disabled={disabled}
+            onClick={backToPresets}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+        ) : (
+          <FileDownloadOutlinedIcon color="primary" />
+        )}
         {t('import.title')}
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2} sx={{ minWidth: 0 }}>
-          <Box
-            component="section"
-            aria-labelledby={stepsId}
-            sx={{
-              p: 2,
-              border: '1px solid',
-              borderColor: 'primary.main',
-              borderRadius: 1,
-            }}
-          >
-            <Typography
-              id={stepsId}
-              component="h3"
-              variant="subtitle1"
-              fontWeight={600}
-            >
-              {t('import.steps.title')}
-            </Typography>
+          {!presetTitle && (
             <Box
-              component="ol"
-              sx={{ pl: 2.5, my: 1, '& li + li': { mt: 0.75 } }}
+              component="section"
+              aria-labelledby={stepsId}
+              sx={{
+                p: 2,
+                border: '1px solid',
+                borderColor: 'primary.main',
+                borderRadius: 1,
+              }}
             >
-              <Typography component="li" variant="body2">
-                {t('import.steps.choose')}
+              <Typography
+                id={stepsId}
+                component="h3"
+                variant="subtitle1"
+                fontWeight={600}
+              >
+                {t('import.steps.title')}
               </Typography>
-              <Typography component="li" variant="body2">
-                {t('import.steps.preview')}
-              </Typography>
-              <Typography component="li" variant="body2">
-                {t('import.steps.save')}
-              </Typography>
-              <Typography component="li" variant="body2">
-                {t('import.steps.start')}
+              <Box
+                component="ol"
+                sx={{ pl: 2.5, my: 1, '& li + li': { mt: 0.75 } }}
+              >
+                <Typography component="li" variant="body2">
+                  {t('import.steps.choose')}
+                </Typography>
+                <Typography component="li" variant="body2">
+                  {t('import.steps.preview')}
+                </Typography>
+                <Typography component="li" variant="body2">
+                  {t('import.steps.save')}
+                </Typography>
+                <Typography component="li" variant="body2">
+                  {t('import.steps.start')}
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                {t('import.steps.safety')}
               </Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary">
-              {t('import.steps.safety')}
-            </Typography>
-          </Box>
+          )}
           {needSave && <Alert severity="info">{t('import.save_first')}</Alert>}
           {!!error && (
             <Alert severity="info">
@@ -436,7 +499,20 @@ export const ImportDialog = ({
             </Alert>
           )}
           {uncertain && (
-            <Alert severity="info">
+            <Alert
+              severity="info"
+              action={
+                presetTitle && (
+                  <Button
+                    color="inherit"
+                    disabled={busy || !csrfToken}
+                    onClick={refresh}
+                  >
+                    {t('import.check_status')}
+                  </Button>
+                )
+              }
+            >
               {t(
                 pendingUndo.current
                   ? 'import.uncertain_undo'
@@ -448,25 +524,18 @@ export const ImportDialog = ({
           {serviceApplied && (
             <Alert severity="success">{t('import.service_done')}</Alert>
           )}
-          {importRestartPending &&
-            !uncertain &&
-            !pendingUndo.current &&
-            status &&
-            ['committed', 'undone'].includes(status.state) && (
-              <Stack spacing={1}>
-                {!saved && (
-                  <Alert severity="info">{t('import.restart_pending')}</Alert>
-                )}
-                <InlineNfqwsRestart
-                  disabled={busy}
-                  onPendingChange={setServicePending}
-                  onApplied={() => {
-                    setImportRestartPending(false);
-                    setServiceApplied(true);
-                  }}
-                />
-              </Stack>
-            )}
+          {!presetTitle && restartReady && (
+            <Stack spacing={1}>
+              {!saved && (
+                <Alert severity="info">{t('import.restart_pending')}</Alert>
+              )}
+              <InlineNfqwsRestart
+                disabled={busy}
+                onPendingChange={setServicePending}
+                onApplied={onServiceApplied}
+              />
+            </Stack>
+          )}
           {status?.state === 'undone' && (
             <Alert severity="success">{t('import.undone')}</Alert>
           )}
@@ -477,91 +546,100 @@ export const ImportDialog = ({
             ['prepared', 'committing', 'undoing'].includes(status.state) && (
               <Alert severity="info">{t('import.pending')}</Alert>
             )}
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <Button
-              variant="contained"
-              component="label"
-              disabled={!csrfToken || disabled || needSave}
-            >
-              {t('import.choose')}
-              <input
-                type="file"
-                hidden
-                accept=".json,application/json"
-                multiple
+          {!presetTitle && (
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Button
+                variant="contained"
+                component="label"
                 disabled={!csrfToken || disabled || needSave}
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
-                  e.target.value = '';
-                  if (files.length) load(files);
+              >
+                {t('import.choose')}
+                <input
+                  type="file"
+                  hidden
+                  accept=".json,application/json"
+                  multiple
+                  disabled={!csrfToken || disabled || needSave}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = '';
+                    if (files.length) load(files);
+                  }}
+                />
+              </Button>
+              <Button
+                variant={showStrategies ? 'contained' : 'outlined'}
+                disabled={disabled || needSave || !csrfToken}
+                aria-expanded={showStrategies}
+                onClick={() => {
+                  setShowStrategies((value) => !value);
+                  setShowKeenetic(false);
                 }}
-              />
-            </Button>
-            <Button
-              variant={showCatalog ? 'contained' : 'outlined'}
-              disabled={!csrfToken || disabled || needSave}
-              onClick={() => {
-                setShowCatalog((value) => !value);
-                setShowLocalPack(false);
-              }}
-            >
-              {t('import.catalog.choose')}
-            </Button>
-            <Button
-              variant={showLocalPack ? 'contained' : 'outlined'}
-              disabled={disabled || needSave || !csrfToken}
-              aria-expanded={showLocalPack}
-              onClick={() => {
-                setShowLocalPack((value) => !value);
-                setShowCatalog(false);
-                setShowKeenetic(false);
-              }}
-            >
-              {t('import.local.choose')}
-            </Button>
-            <Button
-              variant={showKeenetic ? 'contained' : 'outlined'}
-              disabled={!csrfToken || disabled || needSave}
-              aria-expanded={showKeenetic}
-              aria-controls={keeneticId}
-              onClick={() => {
-                setShowKeenetic((value) => !value);
-                setShowLocalPack(false);
-              }}
-            >
-              {t('import.keenetic.choose')}
-            </Button>
-            {!!chosenFiles.current.length && !doc && (
-              <Button
-                disabled={busy || !csrfToken}
-                onClick={() => load(chosenFiles.current)}
               >
-                {t('import.retry')}
+                {t('import.strategies.choose')}
               </Button>
-            )}
-            <Button disabled={busy || !csrfToken} onClick={refresh}>
-              {t('import.check_status')}
-            </Button>
-            {status?.can_undo && (
               <Button
-                color="warning"
-                disabled={disabled || needSave || !status.undo_proof}
-                onClick={undo}
+                variant={showKeenetic ? 'contained' : 'outlined'}
+                disabled={!csrfToken || disabled || needSave}
+                aria-expanded={showKeenetic}
+                aria-controls={keeneticId}
+                onClick={() => {
+                  setShowKeenetic((value) => !value);
+                  setShowStrategies(false);
+                }}
               >
-                {t('import.undo')}
+                {t('import.keenetic.choose')}
               </Button>
-            )}
-          </Stack>
-          {showLocalPack && csrfToken && (
-            <ImportLocalPack
-              csrf={csrfToken}
-              disabled={disabled || needSave}
-              onSelect={(id) =>
-                loadDocuments(() => readLocalPreset(csrfToken, id))
-              }
-            />
+              {!!chosenFiles.current.length && !doc && (
+                <Button
+                  disabled={busy || !csrfToken}
+                  onClick={() => load(chosenFiles.current)}
+                >
+                  {t('import.retry')}
+                </Button>
+              )}
+              <Button disabled={busy || !csrfToken} onClick={refresh}>
+                {t('import.check_status')}
+              </Button>
+              {status?.can_undo && (
+                <Button
+                  color="warning"
+                  disabled={disabled || needSave || !status.undo_proof}
+                  onClick={undo}
+                >
+                  {t('import.undo')}
+                </Button>
+              )}
+            </Stack>
           )}
-          {showKeenetic && (
+          {showStrategies && csrfToken && (
+            <Box hidden={Boolean(presetTitle)}>
+              <ImportStrategies
+                key={csrfToken}
+                csrf={csrfToken}
+                disabled={disabled || needSave}
+                onSelectLocal={(id, presetTitle) =>
+                  loadDocuments(() => readLocalPreset(csrfToken, id), {
+                    presetTitle,
+                  })
+                }
+                onSelectProfile={(profile) =>
+                  loadDocuments(
+                    async () => [
+                      await loadCatalogDocument(
+                        csrfToken,
+                        profile.id,
+                        profile.sha256,
+                        'package',
+                      ),
+                    ],
+                    { catalogProfile: profile },
+                  )
+                }
+              />
+            </Box>
+          )}
+          {!presetTitle && showKeenetic && (
             <Stack
               component="section"
               id={keeneticId}
@@ -589,8 +667,7 @@ export const ImportDialog = ({
                     async () => [
                       await convertKeeneticImport(csrfToken!, keeneticText),
                     ],
-                    [],
-                    true,
+                    { keenetic: true },
                   )
                 }
               >
@@ -598,137 +675,194 @@ export const ImportDialog = ({
               </Button>
             </Stack>
           )}
-          {showCatalog && csrfToken && (
-            <ImportCatalog
-              key={csrfToken}
-              csrfToken={csrfToken}
-              disabled={disabled || needSave}
-              onSelect={(profile) =>
-                loadDocuments(
-                  async () => [
-                    await loadCatalogDocument(
-                      csrfToken,
-                      profile.id,
-                      profile.sha256,
-                    ),
-                  ],
-                  [],
-                  false,
-                  profile,
-                )
-              }
-            />
-          )}
           {busy && (
             <Stack direction="row" spacing={1} alignItems="center">
               <CircularProgress size={18} />
               <Typography variant="body2">{t('import.working')}</Typography>
             </Stack>
           )}
-          {doc && (
-            <ImportSelectionView
-              key={doc.input_sha256}
-              document={doc}
-              value={selection}
-              csrfToken={csrfToken ?? ''}
-              disabled={disabled}
-              onChange={edit}
-              onError={fail}
-            />
+          {presetTitle && (
+            <Typography variant="subtitle1" sx={{ overflowWrap: 'anywhere' }}>
+              {presetTitle}
+            </Typography>
           )}
-          {doc && csrfToken && (
-            <ImportAddons
-              key={`${csrfToken}:${sourceGeneration}`}
-              csrfToken={csrfToken}
-              disabled={disabled || needSave}
-              value={selection.addons ?? []}
-              onChange={editAddons}
+          {presetTitle && showDetails && (
+            <Tabs
+              id={tabsId}
+              value={detailsTab}
+              variant="scrollable"
+              scrollButtons="auto"
+              onChange={(_, tab: typeof detailsTab) => {
+                setDetailsTab(tab);
+                if (
+                  tab === 'changes' &&
+                  !plan &&
+                  !disabled &&
+                  !needSave &&
+                  !saved
+                )
+                  review();
+              }}
+              aria-label={t('import.preset.details')}
             >
-              {catalogChoice?.category === 'global' && (
-                <Stack spacing={0.5}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={Boolean(selection.torrent_sites)}
-                        disabled={disabled || needSave}
-                        onChange={(_, checked) => {
-                          const next = { ...selection };
-                          if (checked)
-                            next.torrent_sites = {
-                              catalog_id: catalogChoice.id,
-                              sha256: catalogChoice.sha256,
-                            };
-                          else delete next.torrent_sites;
-                          edit(next);
-                        }}
-                      />
-                    }
-                    label={t('import.torrent_sites.label')}
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    {t('import.torrent_sites.help')}
-                  </Typography>
-                </Stack>
-              )}
-            </ImportAddons>
+              {(['contents', 'changes', 'addons'] as const).map((tab) => (
+                <Tab
+                  key={tab}
+                  value={tab}
+                  label={t(
+                    tab === 'addons'
+                      ? 'import.addons.title'
+                      : `import.preset.${tab}`,
+                  )}
+                  id={`${tabsId}-tab-${tab}`}
+                  aria-controls={`${tabsId}-panel-${tab}`}
+                />
+              ))}
+            </Tabs>
           )}
-          {plan && (
-            <Box ref={previewRef}>
-              <Divider />
-              {!!(
-                plan.required.files.length || plan.required.shared.length
-              ) && (
+          {doc && detailed && (
+            <Box {...panelProps('contents')}>
+              <ImportSelectionView
+                key={doc.input_sha256}
+                document={doc}
+                value={selection}
+                csrfToken={csrfToken ?? ''}
+                disabled={disabled || Boolean(presetTitle && saved)}
+                onChange={edit}
+                onError={fail}
+              />
+            </Box>
+          )}
+          {doc && detailed && csrfToken && (
+            <Box {...panelProps('addons')}>
+              <ImportAddons
+                key={`${csrfToken}:${sourceGeneration}`}
+                csrfToken={csrfToken}
+                disabled={disabled || needSave || Boolean(presetTitle && saved)}
+                value={selection.addons ?? []}
+                onChange={editAddons}
+              >
+                {catalogChoice?.category === 'global' && (
+                  <Stack spacing={0.5}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={Boolean(selection.torrent_sites)}
+                          disabled={disabled || needSave || saved}
+                          onChange={(_, checked) => {
+                            const next = { ...selection };
+                            if (checked)
+                              next.torrent_sites = {
+                                catalog_id: catalogChoice.id,
+                                sha256: catalogChoice.sha256,
+                              };
+                            else delete next.torrent_sites;
+                            edit(next);
+                          }}
+                        />
+                      }
+                      label={t('import.torrent_sites.label')}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      {t('import.torrent_sites.help')}
+                    </Typography>
+                  </Stack>
+                )}
+              </ImportAddons>
+            </Box>
+          )}
+          {presetTitle &&
+            plan &&
+            (!showDetails || detailsTab !== 'changes') && (
+              <ImportPreview plan={plan} compact luaTrust={luaTrust} />
+            )}
+          {detailed && (plan || presetTitle) && (
+            <Box ref={previewRef} {...panelProps('changes')}>
+              {!presetTitle && <Divider />}
+              {!plan && !saved && (
                 <Button
-                  disabled={disabled}
-                  onClick={() =>
-                    doc &&
-                    edit(
-                      selectImportDependencies(selection, doc, plan.required),
-                    )
-                  }
+                  disabled={disabled || needSave}
+                  onClick={() => review()}
                 >
-                  {t('import.dependencies')}
+                  {t('import.preset.refresh_preview')}
                 </Button>
               )}
-              <ImportPreview
-                plan={plan}
-                luaTrust={{
-                  checked: selection.trusted_lua,
-                  disabled: disabled || needSave,
-                  onChange: review,
-                }}
-              />
+              {plan &&
+                !!(
+                  plan.required.files.length || plan.required.shared.length
+                ) && (
+                  <Button
+                    disabled={disabled}
+                    onClick={() =>
+                      doc &&
+                      edit(
+                        selectImportDependencies(selection, doc, plan.required),
+                      )
+                    }
+                  >
+                    {t('import.dependencies')}
+                  </Button>
+                )}
+              {plan && <ImportPreview plan={plan} luaTrust={luaTrust} />}
             </Box>
           )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ flexWrap: 'wrap', gap: 0.5 }}>
-        <Button disabled={busy || servicePending} onClick={onClose}>
-          {t('common.close')}
-        </Button>
-        <Button
-          disabled={!doc || disabled || needSave || !csrfToken}
-          onClick={() => review()}
-        >
-          {t('import.preview')}
-        </Button>
-        <InlineHelp title={t('import.preview')}>
-          <Typography>{t('import.preview_help')}</Typography>
-        </InlineHelp>
+        {presetTitle ? (
+          <Button
+            aria-expanded={showDetails}
+            aria-controls={showDetails ? tabsId : undefined}
+            disabled={busy || servicePending}
+            onClick={() => setShowDetails((value) => !value)}
+            sx={{ mr: 'auto' }}
+          >
+            {t('import.preset.details')}
+          </Button>
+        ) : (
+          <>
+            <Button disabled={busy || servicePending} onClick={onClose}>
+              {t('common.close')}
+            </Button>
+            <Button
+              disabled={!doc || disabled || needSave || !csrfToken}
+              onClick={() => review()}
+            >
+              {t('import.preview')}
+            </Button>
+            <InlineHelp title={t('import.preview')}>
+              <Typography>{t('import.preview_help')}</Typography>
+            </InlineHelp>
+          </>
+        )}
         <Button
           variant="contained"
           disabled={
             busy ||
             servicePending ||
             needSave ||
-            !plan?.ready ||
-            !plan.proof ||
+            saved ||
+            (plan ? !plan.ready || !plan.proof : !presetTitle || uncertain) ||
             !csrfToken
           }
           onClick={apply}
         >
-          {t(uncertain ? 'import.retry_apply' : 'import.apply')}
+          {t(
+            uncertain
+              ? 'import.retry_apply'
+              : presetTitle
+                ? 'import.preset.apply'
+                : 'import.apply',
+          )}
         </Button>
+        {presetTitle && (
+          <InlineNfqwsRestart
+            compact
+            disabled={disabled || !saved || !restartReady}
+            onPendingChange={setServicePending}
+            onApplied={onServiceApplied}
+          />
+        )}
       </DialogActions>
     </Dialog>
   );

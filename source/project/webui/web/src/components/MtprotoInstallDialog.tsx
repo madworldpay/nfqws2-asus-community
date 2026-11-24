@@ -155,21 +155,31 @@ export function MtprotoInstallDialog({
   });
   const values = { server, port, secret: key };
   const errors = validateMtproto(values);
-  const lowPort = method !== 'docker' && Number(port) < 1024;
-  const ready = !Object.keys(errors).length && !lowPort;
+  const lowPort =
+    action === 'install' && method !== 'docker' && Number(port) < 1024;
+  const ready =
+    action === 'install'
+      ? !Object.keys(errors).length && !lowPort
+      : !errors.server;
   const script = ready
     ? buildMtprotoInstall(method, values, langcode, action)
     : '';
   const portainer = withDocker && dockerMode === 'portainer';
-  const installText = ready && portainer ? buildMtprotoCompose(values) : script;
-  const link = ready ? mtprotoLink(values) : '';
+  const installText =
+    ready && portainer && action === 'install'
+      ? buildMtprotoCompose(values)
+      : script;
+  const link = ready && action === 'install' ? mtprotoLink(values) : '';
   const download = () => {
     const url = URL.createObjectURL(
       new Blob([installText], { type: 'text/plain;charset=utf-8' }),
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = portainer ? 'compose.yaml' : `nfqws-mtproto-${method}.sh`;
+    a.download =
+      portainer && action === 'install'
+        ? 'compose.yaml'
+        : `nfqws-mtproto-${method}.sh`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -263,7 +273,7 @@ export function MtprotoInstallDialog({
               value={MTPROTO_DOCKER_IMAGE}
             />
           )}
-          {action !== 'remove' && (
+          {action !== 'remove' && !(portainer && action === 'update') && (
             <>
               <TextField
                 label={t(`mtproto.server_${method}`)}
@@ -286,41 +296,47 @@ export function MtprotoInstallDialog({
                   {t('mtproto.address_detected')}
                 </Typography>
               )}
-              <TextField
-                label={t('mtproto.port')}
-                value={port}
-                onChange={(e) => setPort(e.target.value)}
-                error={!!errors.port || lowPort}
-                helperText={
-                  lowPort ? t('mtproto.high_port') : t('mtproto.port_help')
-                }
-                fullWidth
-                slotProps={{ htmlInput: { inputMode: 'numeric' } }}
-              />
-              {!key && (
+              {action === 'install' && (
+                <TextField
+                  label={t('mtproto.port')}
+                  value={port}
+                  onChange={(e) => setPort(e.target.value)}
+                  error={!!errors.port || lowPort}
+                  helperText={
+                    lowPort ? t('mtproto.high_port') : t('mtproto.port_help')
+                  }
+                  fullWidth
+                  slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+                />
+              )}
+              {!key && action === 'install' && (
                 <Alert severity="error">{t('mtproto.random_failed')}</Alert>
               )}
               {ready && (
                 <>
-                  <CopyField
-                    key={key}
-                    label={t('mtproto.secret')}
-                    value={key}
-                  />
-                  <Button
-                    size="small"
-                    startIcon={<RefreshIcon />}
-                    sx={{ alignSelf: 'flex-start' }}
-                    onClick={() => {
-                      try {
-                        setKey(createMtprotoSecret());
-                      } catch {
-                        setKey('');
-                      }
-                    }}
-                  >
-                    {t('mtproto.new_key')}
-                  </Button>
+                  {action === 'install' && (
+                    <>
+                      <CopyField
+                        key={key}
+                        label={t('mtproto.secret')}
+                        value={key}
+                      />
+                      <Button
+                        size="small"
+                        startIcon={<RefreshIcon />}
+                        sx={{ alignSelf: 'flex-start' }}
+                        onClick={() => {
+                          try {
+                            setKey(createMtprotoSecret());
+                          } catch {
+                            setKey('');
+                          }
+                        }}
+                      >
+                        {t('mtproto.new_key')}
+                      </Button>
+                    </>
+                  )}
                   <Typography variant="subtitle2">
                     {t('mtproto.step_install')}
                   </Typography>
@@ -363,36 +379,43 @@ export function MtprotoInstallDialog({
                           blob: new Blob([installText], {
                             type: 'text/plain;charset=utf-8',
                           }),
-                          filename: portainer
-                            ? 'compose.yaml'
-                            : `nfqws-mtproto-${method}.sh`,
+                          filename:
+                            portainer && action === 'install'
+                              ? 'compose.yaml'
+                              : `nfqws-mtproto-${method}.sh`,
                         })}
                       />
-                      <Typography variant="subtitle2">
-                        {t('mtproto.step_connect')}
-                      </Typography>
-                      <Typography variant="body2">
-                        {t('mtproto.connect_help')}
-                      </Typography>
-                      <CopyField
-                        key={link}
-                        label={t('mtproto.link')}
-                        value={link}
-                      />
-                      <Link
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t('mtproto.open_telegram')}
-                      </Link>
+                      {action === 'install' && (
+                        <>
+                          <Typography variant="subtitle2">
+                            {t('mtproto.step_connect')}
+                          </Typography>
+                          <Typography variant="body2">
+                            {t('mtproto.connect_help')}
+                          </Typography>
+                          <CopyField
+                            key={link}
+                            label={t('mtproto.link')}
+                            value={link}
+                          />
+                          <Link
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {t('mtproto.open_telegram')}
+                          </Link>
+                        </>
+                      )}
                       <CopyField
                         key={method}
                         label={t('mtproto.diagnostics')}
                         value={mtprotoDiagnostics(method)}
                         lines={2}
                       />
-                      <Alert severity="warning">{t('mtproto.private')}</Alert>
+                      {action === 'install' && (
+                        <Alert severity="warning">{t('mtproto.private')}</Alert>
+                      )}
                     </Stack>
                   </Box>
                 </>

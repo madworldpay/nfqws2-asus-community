@@ -4,6 +4,7 @@ require_once __DIR__.'/share-dependencies.php';
 require_once __DIR__.'/smartdns-profile.php';
 require_once __DIR__.'/import-torrent-sites.php';
 require_once __DIR__.'/import-addons.php';
+require_once __DIR__.'/zapret2-pack.php';
 /** Deterministic, read-only proposal. The transaction consumes the same bytes. */
 final class AsusImportPlan
 {
@@ -85,7 +86,7 @@ final class AsusImportPlan
         foreach($selection['files']as $row){if(!is_array($row)||array_diff(array_keys($row),['id','text'])||!is_string($row['id']??null)||!isset($available[$row['id']])||isset($filePicks[$row['id']]))throw new RuntimeException('invalid_import_selection');$filePicks[$row['id']]=$row;}
         $local=[];foreach($inventory['files']??[] as $row)if(($row['state']??null)==='available')$local[$row['kind'].'/'.$row['name']]=$row;
         $aliases=[];$targets=[];$files=[];$total=0;$fingerprints=[];$virtual=$inventory['files']??[];$selectedTargets=[];
-        $keptAutoList=false;
+        $keptAutoList=false;$trustedLua=[];
         // Resolve only package operands in the effective selected scope, including
         // omitted shared values required by the selected blocks.
         $packageScope=$blocks+$shared;
@@ -159,6 +160,8 @@ final class AsusImportPlan
                 if(isset($selectedTargets[$path])&&$selectedTargets[$path]!==$hash)$problems[]=['code'=>'file_conflict','name'=>$name];
                 $selectedTargets[$path]=$hash;$total+=strlen($raw);if($total>524288)throw new RuntimeException('output_limit');
                 $files[]=$file+['path'=>$path,'reuse'=>$reuse,'replace'=>$replace];$n=count($files)-1;$files[$n]['sha256']=$hash;$files[$n]['byte_length']=strlen($raw);$files[$n]['data_base64']=base64_encode($raw);$files[$n]['target_name']=$name;$fingerprints[$path]=$local[$key]['sha256']??null;
+                // Use the actual bytes selected for writing, including any edits.
+                if($file['kind']==='lua'&&AsusZapret2Pack::containsLua($id,$raw))$trustedLua[$path]=true;
                 $virtual=array_values(array_filter($virtual,fn($f)=>($f['kind'].'/'.$f['name'])!==$key));
             }
             if($pick!==null||$reuse){
@@ -206,9 +209,8 @@ final class AsusImportPlan
         }
         $affected=array_values(array_unique($affected));
         if($affected&&!$selection['allow_shared_impact'])$problems[]=['code'=>'shared_impact'];
-        $hasLua=false;foreach($files as $file)if($file['kind']==='lua')$hasLua=true;foreach($changes as $value)if(preg_match('/--lua-init(?:=|\s)/',$value))$hasLua=true;
-        $trustedLua=[];foreach($local as $row)if($row['kind']==='lua'&&($row['bundled_lua']??false)===true)$trustedLua['/opt/etc/nfqws2/lua/'.$row['name']]=true;
-        $luaTrustNeeded=false;foreach($files as $file)if($file['kind']==='lua'&&(!$file['reuse']||!isset($trustedLua[$file['path']])))$luaTrustNeeded=true;
+        foreach($local as $row)if($row['kind']==='lua'&&($row['bundled_lua']??false)===true){$path='/opt/etc/nfqws2/lua/'.$row['name'];if(($selectedTargets[$path]??$row['sha256'])===$row['sha256'])$trustedLua[$path]=true;}
+        $luaTrustNeeded=false;foreach($files as $file)if($file['kind']==='lua'&&!isset($trustedLua[$file['path']]))$luaTrustNeeded=true;
         foreach($changes as $value){$words=self::words($value);for($i=0;$i<count($words);$i++){if($words[$i]==='--lua-init')$operand=$words[++$i]??'';elseif(str_starts_with($words[$i],'--lua-init='))$operand=substr($words[$i],11);else continue;$path=NfqwsResourcePaths::canonical(substr($operand,1))??substr($operand,1);if(!str_starts_with($operand,'@')||!isset($trustedLua[$path]))$luaTrustNeeded=true;}}
         if($luaTrustNeeded&&!$selection['trusted_lua'])$problems[]=['code'=>'lua_trust'];
         $newConfig=AsusImportConfig::replace($currentConfig,$changes);$warnings=[];

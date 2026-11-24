@@ -130,6 +130,29 @@ const map = (v: unknown, keys: readonly string[]): Record<string, string> => {
     return invalid();
   return v as Record<string, string>;
 };
+export async function readLocalPreset(
+  csrf: string,
+  entry: string,
+): Promise<string[]> {
+  const result = await shareRequest(
+    csrf,
+    'importlocalentry',
+    { entry },
+    4194304,
+    25000,
+  );
+  if (
+    !result ||
+    typeof result !== 'object' ||
+    !('documents' in result) ||
+    !Array.isArray(result.documents) ||
+    ![1, 2].includes(result.documents.length) ||
+    !result.documents.every((document: unknown) => typeof document === 'string')
+  )
+    throw new ShareError('invalid_import');
+  return result.documents;
+}
+
 export async function readImportFiles(files: File[]): Promise<string[]> {
   if (
     !files.length ||
@@ -167,7 +190,8 @@ export async function readMeasuredImport(
   )
     return invalid();
   const bytes = new TextEncoder().encode(value.raw);
-  if (bytes.length > 4194304 || sha256(bytes) !== value.sha256) return invalid();
+  if (bytes.length > 4194304 || sha256(bytes) !== value.sha256)
+    return invalid();
   return value.raw;
 }
 export async function convertKeeneticImport(

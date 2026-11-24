@@ -4,7 +4,7 @@
 
 [Русский](README.md)
 
-[Build 105 for ASUS, OpenWrt, Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105) · [Choose a package](DOWNLOADS.en.md) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
+[Build 106 for ASUS, OpenWrt, Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build106) · [Choose a package](DOWNLOADS.en.md) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
 
 <details>
 <summary>All project links</summary>
@@ -37,7 +37,7 @@ Test video playback, seeking and voice calls separately.
 
 The panel runs on your existing firmware. It uses Entware on ASUS routers running Asuswrt-Merlin and on Keenetic and Netcraze routers. OpenWrt uses native packages.
 
-**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. Build 105 packages are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
+**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. Build 106 packages are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
 
 **Free · RU / EN**
 

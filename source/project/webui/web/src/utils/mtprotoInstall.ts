@@ -118,21 +118,31 @@ export function buildMtprotoInstall(
   if (
     !['docker', 'entware', 'linux'].includes(method) ||
     !['install', 'update', 'remove'].includes(action) ||
-    Object.keys(validateMtproto(v)).length
+    (action === 'install' && Object.keys(validateMtproto(v)).length) ||
+    (action === 'update' && !validServer(v.server))
   )
     throw new Error('Invalid MTProto values');
-  if (method !== 'docker' && Number(v.port) < 1024)
+  if (action === 'install' && method !== 'docker' && Number(v.port) < 1024)
     throw new Error('Native service requires port >= 1024');
-  return `#!/bin/sh\n(\nset -eu\nNFQWS_MT_METHOD='${method}'\nNFQWS_MT_ACTION='${action}'\nNFQWS_MT_LANG='${language === 'ru' ? 'ru' : 'en'}'\nNFQWS_MT_PORT='${v.port}'\nNFQWS_MT_KEY='${v.secret.slice(2)}'\nNFQWS_MT_LINK='${mtprotoLink(v)}'\n${installer
+  const link =
+    action === 'install'
+      ? mtprotoLink(v)
+      : action === 'update'
+        ? 'https://t.me/proxy?' +
+          new URLSearchParams({
+            server: v.server.replace(/^\[|\]$/g, ''),
+          }).toString()
+        : '';
+  return `#!/bin/sh\n(\nset -eu\nNFQWS_MT_METHOD='${method}'\nNFQWS_MT_ACTION='${action}'\nNFQWS_MT_LANG='${language === 'ru' ? 'ru' : 'en'}'\nNFQWS_MT_PORT='${action === 'install' ? v.port : ''}'\nNFQWS_MT_KEY='${action === 'install' ? v.secret.slice(2) : ''}'\nNFQWS_MT_LINK='${link}'\n${installer
     .replace('@@MTPROTO_DOCKER_IMAGE@@', MTPROTO_DOCKER_IMAGE)
     .replace('@@MTPROTO_DOCKER_LAUNCHER@@', MTPROTO_DOCKER_LAUNCHER)
     .replace('@@MTPROTO_READINESS@@', MTPROTO_READINESS)
     .replace('@@MTPROTO_LOG_REDACTION@@', logRedaction)
     .replace(
       '@@MTPROTO_HEALTH_COMMAND@@',
-      'exec /opt/venv/bin/python -c ' +
+      'case "$PROXY_HOST" in 0.0.0.0|\'\') host=127.0.0.1;; ::) host=::1;; *) host="$PROXY_HOST";; esac; exec /opt/venv/bin/python -c ' +
         shellQuote(MTPROTO_READINESS) +
-        ' 127.0.0.1 1443 15',
+        ' "$host" "${PROXY_PORT:-1443}" 15',
     )}\n)\n`;
 }
 

@@ -492,7 +492,7 @@ entware_workspace() {
     nfqws_asus_bootstrap_lease || fail 'Другой установщик NFQWS2 уже работает или его блокировка недоступна.'
 }
 
-# Only the immutable Build 105 r2 release and its matching upstream packages.
+# Only the immutable Build 106 r2 release and its matching upstream packages.
 # Community package hashes come from the signed SHA256SUMS-keenetic.txt.
 keenetic_package_version() {
     record=$("$OPKG" status "$1") || return 1
@@ -618,18 +618,18 @@ nfqws_keenetic_main() {
     case "$abi:$(uname -m)" in
         aarch64-3.10:aarch64)
             core_sha=1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91
-            panel_sha=c49e4aab1d76609d339dc0bd99228e9708de06b0712f6a4cf02b5f1c10c0f8d6 ;;
+            panel_sha=402a4d674583e166b6086212ac12974ad7940448da62cd80a8fe8786b93b5820 ;;
         mips-3.4:mips|mips-3.4:mips64)
             core_sha=f0d3bf7389f796e9b07481629d52fe687bda2dcd01b4a1f5518532d5c9ea7245
-            panel_sha=65794f659fae25304df213f15d9f1dddc1d0ca3541317c3b7434bd3e2795df12 ;;
+            panel_sha=c2313e971407b466a8f0282db7ec833d0ddef6333387aaeb092828c5a1a8c731 ;;
         mipsel-3.4:mips|mipsel-3.4:mipsel|mipsel-3.4:mips64|mipsel-3.4:mips64el)
             core_sha=3da1a9a57cfcc16d243fe128024ecfb2c8f11802d932643ea46509e8ec0465b5
-            panel_sha=132a048853a42b208b81d12fff526eb8723ffff3a6d4179dacc8cadc6da6435c ;;
+            panel_sha=4686c9f6766a22f8bc19178f3a4a4f02e93f4dca09907c22c919814824fc177d ;;
         *) fail "Для $model с архитектурой Entware $abi совместимого пакета пока нет." ;;
     esac
     case "$model" in KN-*) brand=Keenetic;; NC-*) brand=Netcraze;; esac
     say "$brand $model · Entware $abi"
-    version='1.3.3+b105-2'
+    version='1.3.3+b106-2'
     name=nfqws2-keenetic-community
     core=nfqws2-keenetic
     web=nfqws-keenetic-web
@@ -673,9 +673,9 @@ nfqws_keenetic_main() {
         set -- "$@" "$WORK/stock/$file"
     fi
     file="${name}_${version}_${abi}.ipk"
-    keenetic_asset "$file" "$panel_sha" 'https://github.com/madworldpay/nfqws2-asus-community/releases/download/build105'
+    keenetic_asset "$file" "$panel_sha" 'https://github.com/madworldpay/nfqws2-asus-community/releases/download/build106'
     set -- "$@" "$WORK/$file"
-    if [ "$CHECK_ONLY" = 1 ]; then say "Пакеты Build 105 для $brand проверены."; return 0; fi
+    if [ "$CHECK_ONLY" = 1 ]; then say "Пакеты Build 106 для $brand проверены."; return 0; fi
     prepare_opkg
     "$OPKG" --tmp-dir "$WORK/opkg" --noaction install "$@" || fail 'Entware не смогла подготовить установку. Проверьте доступ к её репозиторию.'
     nfqws_asus_background "$OPKG" --tmp-dir "$WORK/opkg" install "$@" || fail 'Установка не завершена. Сохраните журнал opkg.'
@@ -684,7 +684,7 @@ nfqws_keenetic_main() {
         [ "$(keenetic_package_version "$core")" = '1.3.3' ] && [ -n "$web_version" ] &&
         keenetic_compare "$web_version" '>=' '3.0.24' &&
         [ -f /opt/share/www/nfqws/nfqws-community/index.php ] || fail 'Не удалось подтвердить установленную панель.'
-    say 'Готово. Пакет панели Build 105 установлен.'
+    say 'Готово. Пакет панели Build 106 установлен.'
     keenetic_panel_link
 }
 

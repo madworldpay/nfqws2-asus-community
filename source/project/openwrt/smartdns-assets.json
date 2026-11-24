@@ -4,10 +4,10 @@
   "artifacts": {
     "24.10": {
       "arm_cortex-a9": {
-        "name": "smartdns-24.10-arm_cortex-a9-e7103d89e5e92e4f.ipk",
+        "name": "smartdns-24.10-arm_cortex-a9-d2cbbbd5cef4c13e.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/arm_cortex-a9/packages/smartdns_1.2023.43-r1_arm_cortex-a9.ipk",
-        "size": 128889,
-        "sha256": "e7103d89e5e92e4fbae43fa2919cfd421f7bb3ebe47c38f2295afffd1036ffd3",
+        "size": 128877,
+        "sha256": "d2cbbbd5cef4c13e49caf578c8210c540f3f97fce45ecca8f0cc1508917132d9",
         "binary_size": 240367,
         "binary_sha256": "6d07a1fed3223e7355ff516ffcd39b58eac71ec5597f319b7fa93d3936cd7b48",
         "elf_class": 1,
@@ -17,10 +17,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "arm_cortex-a7_neon-vfpv4": {
-        "name": "smartdns-24.10-arm_cortex-a7_neon-vfpv4-edeaea1961a586ec.ipk",
+        "name": "smartdns-24.10-arm_cortex-a7_neon-vfpv4-a412c5529744dbbc.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/arm_cortex-a7_neon-vfpv4/packages/smartdns_1.2023.43-r1_arm_cortex-a7_neon-vfpv4.ipk",
-        "size": 129005,
-        "sha256": "edeaea1961a586ec030aa057c6baef35ba5784d95329a648603547e3f77ac69c",
+        "size": 128976,
+        "sha256": "a412c5529744dbbc23c140a2ca8aab029a4abe42f3c826addcb1b0c60d2832b4",
         "binary_size": 236271,
         "binary_sha256": "063d3ff323930621b4d1b06f06f0027f9fd3d4c2039f6c0d9133d81ef113627c",
         "elf_class": 1,
@@ -30,10 +30,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "arm_cortex-a15_neon-vfpv4": {
-        "name": "smartdns-24.10-arm_cortex-a15_neon-vfpv4-50ed4b369af9c627.ipk",
+        "name": "smartdns-24.10-arm_cortex-a15_neon-vfpv4-ea471e0627c39c6b.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/arm_cortex-a15_neon-vfpv4/packages/smartdns_1.2023.43-r1_arm_cortex-a15_neon-vfpv4.ipk",
-        "size": 128687,
-        "sha256": "50ed4b369af9c6274922a6640e810a23bc2e2b623648abce7fcbbdc91cbf7b54",
+        "size": 128694,
+        "sha256": "ea471e0627c39c6b7589778e2de48e3cea53211a33fe9e7abfaed1dbb1473b06",
         "binary_size": 236271,
         "binary_sha256": "65c9e8a7846952275a813b919afec399278173f2d9b37af8bb0eccd77f2b1384",
         "elf_class": 1,
@@ -43,10 +43,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "aarch64_cortex-a53": {
-        "name": "smartdns-24.10-aarch64_cortex-a53-f609f677290a192b.ipk",
+        "name": "smartdns-24.10-aarch64_cortex-a53-d7bd695d12446b9a.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/aarch64_cortex-a53/packages/smartdns_1.2023.43-r1_aarch64_cortex-a53.ipk",
-        "size": 139299,
-        "sha256": "f609f677290a192b8b8f515caae3adfd95507463a5110ccf88cc9c79664e0d83",
+        "size": 139306,
+        "sha256": "d7bd695d12446b9ae353b2a23c6f4cc33d8fdad252100b2eeb948a9302e4946e",
         "binary_size": 332947,
         "binary_sha256": "a73e9770c8a95bd628951d045d7874109445fdba69a550c0c33460fc3d61c3e3",
         "elf_class": 2,
@@ -56,10 +56,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "mipsel_24kc": {
-        "name": "smartdns-24.10-mipsel_24kc-332de600518e1ab1.ipk",
+        "name": "smartdns-24.10-mipsel_24kc-2896add9da54ea3e.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/mipsel_24kc/packages/smartdns_1.2023.43-r1_mipsel_24kc.ipk",
-        "size": 111400,
-        "sha256": "332de600518e1ab17fb4a058120fdd40a96f072753d166964f4687ed6dd5ac9c",
+        "size": 111409,
+        "sha256": "2896add9da54ea3ebba00e603d68c243a77a80b7130164a0da519c24c9fe0562",
         "binary_size": 199496,
         "binary_sha256": "dc3dc55fa3d1b372f59edf5b0ac7f8b40de2a41cd9441c2aea3cddac8ed96df6",
         "elf_class": 1,
@@ -69,10 +69,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "mipsel_74kc": {
-        "name": "smartdns-24.10-mipsel_74kc-f812b25c853b6f55.ipk",
+        "name": "smartdns-24.10-mipsel_74kc-941d42c7bc232cac.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/mipsel_74kc/packages/smartdns_1.2023.43-r1_mipsel_74kc.ipk",
-        "size": 112487,
-        "sha256": "f812b25c853b6f555ddeff09be07afa39d9f00884718bd24c7a23a73a0b519a8",
+        "size": 112475,
+        "sha256": "941d42c7bc232cacf67c3e41650359fd267e96ac89eca1a95df516e3c9457f57",
         "binary_size": 199496,
         "binary_sha256": "a0f8209866b56ae5ef108cba3df24bba986b9faec36136dba770bb6b8be50fbb",
         "elf_class": 1,
@@ -82,10 +82,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "mips_24kc": {
-        "name": "smartdns-24.10-mips_24kc-34e1e8f61aa935cb.ipk",
+        "name": "smartdns-24.10-mips_24kc-c0c8d8cc2ce8a057.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/mips_24kc/packages/smartdns_1.2023.43-r1_mips_24kc.ipk",
-        "size": 111513,
-        "sha256": "34e1e8f61aa935cbfbe6ae0b4e97d8b611296644c7dd8959a6705c6a86f05514",
+        "size": 111510,
+        "sha256": "c0c8d8cc2ce8a057093621bd1f08e322044662be794a50d6dd33b2987dfd2a3f",
         "binary_size": 199493,
         "binary_sha256": "fcb76bf1730f2fd8794835af837fdacf802a54b0d5ec3a1c5ba45de2c8d5cdc3",
         "elf_class": 1,
@@ -95,10 +95,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "mips64_octeonplus": {
-        "name": "smartdns-24.10-mips64_octeonplus-4ee7ee865fea9104.ipk",
+        "name": "smartdns-24.10-mips64_octeonplus-103721c89d308784.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/mips64_octeonplus/packages/smartdns_1.2023.43-r1_mips64_octeonplus.ipk",
-        "size": 146501,
-        "sha256": "4ee7ee865fea91045d97d12cf8e4d11f77f3e5729ee9e6ad43294c993ffdab10",
+        "size": 146507,
+        "sha256": "103721c89d30878431eb421cc4d5538910561d84c2cc7cb3abf7053b6a4cd6ea",
         "binary_size": 337503,
         "binary_sha256": "1613a731b418ac08442b70fc34dfe4d4414718a0fb410ddb36fa3a166ce5f287",
         "elf_class": 2,
@@ -108,10 +108,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "i386_pentium4": {
-        "name": "smartdns-24.10-i386_pentium4-34064dcd9353880f.ipk",
+        "name": "smartdns-24.10-i386_pentium4-bb343a07ef7c7cc3.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/i386_pentium4/packages/smartdns_1.2023.43-r1_i386_pentium4.ipk",
-        "size": 122264,
-        "sha256": "34064dcd9353880f5d2f8898a8776c3e8f20de3b660d3584dfa59a76e923133f",
+        "size": 122246,
+        "sha256": "bb343a07ef7c7cc33afb7871e400f2081c404b10fae980181ef34dbd0f445815",
         "binary_size": 252868,
         "binary_sha256": "0670a00f339afd6fb3c222496e1471a5ea7568b8c5780a5c24d40cecfdd10fc9",
         "elf_class": 1,
@@ -121,10 +121,10 @@
         "version_output": "smartdns 1.2023.43"
       },
       "x86_64": {
-        "name": "smartdns-24.10-x86_64-2d4ee21fdfaa1813.ipk",
+        "name": "smartdns-24.10-x86_64-9aa19b378ee53f9b.ipk",
         "url": "https://downloads.openwrt.org/releases/24.10.8/packages/x86_64/packages/smartdns_1.2023.43-r1_x86_64.ipk",
-        "size": 139398,
-        "sha256": "2d4ee21fdfaa18139e192b5f5fa99d975d2593a9b7a4fcb6784eeb76b394546d",
+        "size": 139389,
+        "sha256": "9aa19b378ee53f9ba64a211eb4f1405c7660a691acee3a0da1abad4ab3738334",
         "binary_size": 271747,
         "binary_sha256": "38679fd09c23483e01e16dcd88c97cbfda63dc9b6f517492c47362d1ca887645",
         "elf_class": 2,
@@ -136,12 +136,12 @@
     },
     "25.12": {
       "arm_cortex-a9": {
-        "name": "smartdns-25.12-arm_cortex-a9-e4a5b967e52ede76.apk",
+        "name": "smartdns-25.12-arm_cortex-a9-3bcca2acbaa5b65b.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/arm_cortex-a9/packages/smartdns-46.1-r1.apk",
         "size": 168515,
-        "sha256": "e4a5b967e52ede76875bb78cf9dcd789e2244b0fc6e32ae0892ac9b0472f03bd",
+        "sha256": "3bcca2acbaa5b65bc2a02574d2e862a7f770628cb4da7724a7a4b0f4345c3436",
         "binary_size": 311319,
-        "binary_sha256": "0ee6649f9fd1d40ea35fb0a534b0b33a0410c05d79eed78c330c8bd9af7b6b87",
+        "binary_sha256": "7de202a20ab671c3f559a866e95b1cab3bdcf367da7e47b3324c5a2659c010b4",
         "elf_class": 1,
         "elf_data": 1,
         "elf_machine": 40,
@@ -149,12 +149,12 @@
         "version_output": "smartdns 46.1"
       },
       "arm_cortex-a7_neon-vfpv4": {
-        "name": "smartdns-25.12-arm_cortex-a7_neon-vfpv4-5ebf7e617b05ee7c.apk",
+        "name": "smartdns-25.12-arm_cortex-a7_neon-vfpv4-81fcd504c799696c.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/arm_cortex-a7_neon-vfpv4/packages/smartdns-46.1-r1.apk",
-        "size": 168540,
-        "sha256": "5ebf7e617b05ee7c7d16fdb83e8dc225686274b97de3342797cc3a336989cd32",
+        "size": 168539,
+        "sha256": "81fcd504c799696c8dc2ea4096b72361d4e257139094f76ead5dfa382d86f668",
         "binary_size": 311319,
-        "binary_sha256": "10271032c631e96a847efd814f282988a26e5186677812d0785b238d7aa98198",
+        "binary_sha256": "8da022d70026387052f21781f6375aa8bf15949b81c57deadb1f7589da6fc465",
         "elf_class": 1,
         "elf_data": 1,
         "elf_machine": 40,
@@ -162,12 +162,12 @@
         "version_output": "smartdns 46.1"
       },
       "arm_cortex-a15_neon-vfpv4": {
-        "name": "smartdns-25.12-arm_cortex-a15_neon-vfpv4-62a5c6298fab7e7a.apk",
+        "name": "smartdns-25.12-arm_cortex-a15_neon-vfpv4-c290aabe319ba85c.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/arm_cortex-a15_neon-vfpv4/packages/smartdns-46.1-r1.apk",
-        "size": 168108,
-        "sha256": "62a5c6298fab7e7a6a49ddf94110b85a8b231b0509b13965b7e7041ac018b95c",
+        "size": 168110,
+        "sha256": "c290aabe319ba85ccd08f291a94ae322d84f9de002400fbe1bc4d20ad9dd9e26",
         "binary_size": 311319,
-        "binary_sha256": "f9003dfac72dd4d23ae85337a3e8c78ce268429be9124e8e8f1a998321780e67",
+        "binary_sha256": "d34beb6a36d63b8414ccee69c56d060679de57c5a93cce7b86a92aeb4cd383d0",
         "elf_class": 1,
         "elf_data": 1,
         "elf_machine": 40,
@@ -175,12 +175,12 @@
         "version_output": "smartdns 46.1"
       },
       "aarch64_cortex-a53": {
-        "name": "smartdns-25.12-aarch64_cortex-a53-d09f7c0735f16eb3.apk",
+        "name": "smartdns-25.12-aarch64_cortex-a53-19972ad3b2c40742.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/aarch64_cortex-a53/packages/smartdns-46.1-r1.apk",
-        "size": 182011,
-        "sha256": "d09f7c0735f16eb3be2f48f375d979ef359c9ca1514d8cec51666dc75c4e9e15",
+        "size": 182012,
+        "sha256": "19972ad3b2c40742518cd2ad2a5b09f8300aa01bdf705edcb3b42b14291d9073",
         "binary_size": 360187,
-        "binary_sha256": "f42c67a16eeffac93765ee022542715bf7cc549edb5f5cde3339d57233f738c4",
+        "binary_sha256": "f09fa4525bad223d12dfc6d3715b3500e6ad545315ed2a29857e72ea3140ffb0",
         "elf_class": 2,
         "elf_data": 1,
         "elf_machine": 183,
@@ -188,12 +188,12 @@
         "version_output": "smartdns 46.1"
       },
       "mipsel_24kc": {
-        "name": "smartdns-25.12-mipsel_24kc-e0fbbb1a53363a44.apk",
+        "name": "smartdns-25.12-mipsel_24kc-0cb6ba851ddc6936.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/mipsel_24kc/packages/smartdns-46.1-r1.apk",
-        "size": 144683,
-        "sha256": "e0fbbb1a53363a4416376f7610248078ee6bc3272ebc2038f127aefdebb56053",
+        "size": 144685,
+        "sha256": "0cb6ba851ddc6936ff4f07b0d331724657200ad28036ced6a9e11761ce2188b5",
         "binary_size": 237672,
-        "binary_sha256": "4266eb49eb7b93780df55e4b080a10286babc61392057852797018242bc20977",
+        "binary_sha256": "a85f838fa3b6f8f748d08dda1ad88e411ea583699a360b6719fdc5e0313afe95",
         "elf_class": 1,
         "elf_data": 1,
         "elf_machine": 8,
@@ -201,12 +201,12 @@
         "version_output": "smartdns 46.1"
       },
       "mipsel_74kc": {
-        "name": "smartdns-25.12-mipsel_74kc-f58c984a3a6f2103.apk",
+        "name": "smartdns-25.12-mipsel_74kc-cf779e51c2b2ea9e.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/mipsel_74kc/packages/smartdns-46.1-r1.apk",
-        "size": 146168,
-        "sha256": "f58c984a3a6f2103e7779b8ce787ed1e2d1a960cde42027d845f7560bf0cb824",
+        "size": 146165,
+        "sha256": "cf779e51c2b2ea9ecacc6e7264d64405faf6c324e6c7ac2bcd6d6ed3fbf32b50",
         "binary_size": 237672,
-        "binary_sha256": "5e72fd9a0eeba912fd2789585e726daee1aaf4bcdad0e1f4e62beac1820cefa4",
+        "binary_sha256": "0dfe84321a15d32303f5bcdf193e2b37e44521ba16d88a16cb99d18159cbb0fb",
         "elf_class": 1,
         "elf_data": 1,
         "elf_machine": 8,
@@ -214,12 +214,12 @@
         "version_output": "smartdns 46.1"
       },
       "mips_24kc": {
-        "name": "smartdns-25.12-mips_24kc-92179712c10eb084.apk",
+        "name": "smartdns-25.12-mips_24kc-1e3045b8a999a28c.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/mips_24kc/packages/smartdns-46.1-r1.apk",
-        "size": 145281,
-        "sha256": "92179712c10eb08453a58eaf1154a814165577f579f0801d426c8537b8c06a4c",
+        "size": 145282,
+        "sha256": "1e3045b8a999a28c537f21c258617d3f0372122b7401776935e08f08b90a20c1",
         "binary_size": 237669,
-        "binary_sha256": "39ab840742bfeba4bc9fc420faf3137259abb0ffe9d39958129f16969047173a",
+        "binary_sha256": "a8185b6d2dee5b19a614fb3f6cd523b92a9a3aa24bd3119168c99eeb3a29ad45",
         "elf_class": 1,
         "elf_data": 2,
         "elf_machine": 8,
@@ -227,12 +227,12 @@
         "version_output": "smartdns 46.1"
       },
       "mips64_octeonplus": {
-        "name": "smartdns-25.12-mips64_octeonplus-d7653cf0c91fbb33.apk",
+        "name": "smartdns-25.12-mips64_octeonplus-8f499bd127b11149.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/mips64_octeonplus/packages/smartdns-46.1-r1.apk",
-        "size": 181580,
-        "sha256": "d7653cf0c91fbb33074edf11eeb7115efb84bdd44138ea9aae017936aa74021c",
+        "size": 181577,
+        "sha256": "8f499bd127b11149ca32299a16c95f899c1f71849b205ef0f85d90c66937cfd9",
         "binary_size": 389832,
-        "binary_sha256": "fd3a4cedbee70ab9d3c8616fc6fbb77c96e9f2a460dfae249d309b9e77e44956",
+        "binary_sha256": "bd5874bc46425786f40399b4be6e35074bbc070293439084d51929f62e49135e",
         "elf_class": 2,
         "elf_data": 2,
         "elf_machine": 8,
@@ -240,12 +240,12 @@
         "version_output": "smartdns 46.1"
       },
       "i386_pentium4": {
-        "name": "smartdns-25.12-i386_pentium4-9b49b47675957a69.apk",
+        "name": "smartdns-25.12-i386_pentium4-b8ea6f85e64ff5b2.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/i386_pentium4/packages/smartdns-46.1-r1.apk",
-        "size": 160849,
-        "sha256": "9b49b47675957a69a8b02b5356b3fdf7cf6f7349dc9a96adeb33278254edb15d",
+        "size": 160846,
+        "sha256": "b8ea6f85e64ff5b2be5d0ad0c45f65553e4007898ffd235263c400165f70ac6e",
         "binary_size": 336068,
-        "binary_sha256": "d9017888cd6f96d39990270aa62cd9274b1535ef40ba81b4fe807c0483d6dd1e",
+        "binary_sha256": "41a865af4b87d637c928ca246710bf6ba6bffe729b5efd009695690b6f25e52e",
         "elf_class": 1,
         "elf_data": 1,
         "elf_machine": 3,
@@ -253,12 +253,12 @@
         "version_output": "smartdns 46.1"
       },
       "x86_64": {
-        "name": "smartdns-25.12-x86_64-f98103b8316c91de.apk",
+        "name": "smartdns-25.12-x86_64-32d44b97073cb57d.apk",
         "url": "https://downloads.openwrt.org/releases/25.12.6/packages/x86_64/packages/smartdns-46.1-r1.apk",
         "size": 182641,
-        "sha256": "f98103b8316c91de9721af9f99ee7508c0b897eb953407a202306a21367d889a",
+        "sha256": "32d44b97073cb57d6dfc827a195105488188e26ebde4f2d124bc76a5febcc43f",
         "binary_size": 356483,
-        "binary_sha256": "a9bdf0589c2750db32f0b1fe0894a6240a5af3a64aee8dc639d26f1c093b9aaf",
+        "binary_sha256": "41739d5cd13259f56c420242cff565f03a8beade485a364333c1896fb1fcf34d",
         "elf_class": 2,
         "elf_data": 1,
         "elf_machine": 62,

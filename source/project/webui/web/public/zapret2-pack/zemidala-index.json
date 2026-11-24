@@ -1,0 +1,1029 @@
+{
+  "pages": {
+    "data/AS12389.json": {
+      "bytes": 4922,
+      "sha256": "a885c9da84b43a1d2f520400fd4b5cf5b60a7e14e983a5b64b3e694ef957691c"
+    },
+    "data/AS16345.json": {
+      "bytes": 2377,
+      "sha256": "5059afa5a4ff1d71a5883d616040d05788f6d3d37b8d4586adced8e9354256ba"
+    },
+    "data/AS35539.json": {
+      "bytes": 2326,
+      "sha256": "b0f510cc967075ea0ebff6af66ca1558b632e47ada2478df2cc5c82e5bed5ac3"
+    },
+    "data/AS51570.json": {
+      "bytes": 702,
+      "sha256": "0046c68728127c29d7065069035ec3bdd6e5e45b2ae51db731f106308a8eee6d"
+    },
+    "data/AS51973.json": {
+      "bytes": 1744,
+      "sha256": "120e8d358907b42053ec1dd3cb3e6159673343e953d8de8882a068248c65d57f"
+    },
+    "data/AS60840.json": {
+      "bytes": 1810,
+      "sha256": "29da5613df52edce14ab729273c9571c61bc9df6f55600b84766f735d2419bf4"
+    },
+    "data/AS8359.json": {
+      "bytes": 4073,
+      "sha256": "0c17800685a59d2f52eed8319d20fffc42828d3f4773ec1e2c0046bd7848dec6"
+    },
+    "data/AS8402.json": {
+      "bytes": 2110,
+      "sha256": "869b5bba986924b787a77227cd40f38e7d53d0024cca7cf76035d75bfb9ba517"
+    },
+    "data/pending/AS12389.json": {
+      "bytes": 2877,
+      "sha256": "868b794e265d814e5dd00cd669cb8b417cac04682ef12ee9fd6a2a4657f751dd"
+    },
+    "data/pending/AS12714.json": {
+      "bytes": 2638,
+      "sha256": "6754353bfd96aeec1595c3a7d4cc31f350871fc289dd637f984cff738a7676b4"
+    },
+    "data/pending/AS12768.json": {
+      "bytes": 546,
+      "sha256": "3b6a8c54fe5821aced4986214697f2593a6c729e9fa320314dafcf35a8580b9c"
+    },
+    "data/pending/AS15774.json": {
+      "bytes": 623,
+      "sha256": "1642839963a63cf2e630141302c19d51f69b636c19ab49fe2384a6ee6c711a21"
+    },
+    "data/pending/AS16345.json": {
+      "bytes": 1590,
+      "sha256": "9a74873b272084e0b28037ce0a7b4b21b9cd3e54aedbff69899060e45b19131b"
+    },
+    "data/pending/AS196705.json": {
+      "bytes": 1037,
+      "sha256": "740524e700623caf470b085a1986e06b828161ba30329e58e79255ee0760f1e1"
+    },
+    "data/pending/AS214721.json": {
+      "bytes": 1364,
+      "sha256": "aeb78c3c105a214b9025192df734d6675abb1bf22c0ebf0ab17b7fc790e6bb28"
+    },
+    "data/pending/AS24955.json": {
+      "bytes": 1051,
+      "sha256": "865992278a6bfdc0a6cf82ea9439a4c1c9527a62f3bb32120f017aa95f2303fb"
+    },
+    "data/pending/AS25513.json": {
+      "bytes": 1934,
+      "sha256": "56ecceb7012c90e4dce891663e347603ba3b71152a1a9e3ae18b58ee94245173"
+    },
+    "data/pending/AS29124.json": {
+      "bytes": 707,
+      "sha256": "5bc83d74645c8b10b9afb268981cb9622d1bd50176edd9ccc8876cae88e334c6"
+    },
+    "data/pending/AS3216.json": {
+      "bytes": 1498,
+      "sha256": "53e7fd1d55b1bd502eec688ab9b705880e74a95d760a64d80a667dda9142d37c"
+    },
+    "data/pending/AS35125.json": {
+      "bytes": 613,
+      "sha256": "8ac1f90ad17311c3fc1c8e33139851ff0b4b26fdd5c2da07f6dfb89ee2aab685"
+    },
+    "data/pending/AS35539.json": {
+      "bytes": 712,
+      "sha256": "6d7d7434c3c7a9237d8688a8b053f55a3936a29d1d40ec6546a93ebecfd29ff5"
+    },
+    "data/pending/AS35807.json": {
+      "bytes": 6101,
+      "sha256": "e406abd3d9ec9995da4342bdaac8876158faf94cc59f3899a691d7c6824bf93e"
+    },
+    "data/pending/AS39087.json": {
+      "bytes": 1122,
+      "sha256": "1f67e52a604f2da3dd8865b189d22503996dcfa6d044b05eef437c9dec0dab45"
+    },
+    "data/pending/AS41275.json": {
+      "bytes": 619,
+      "sha256": "9f59464d3ff7dabf0948051beb5819ffc7ec4e37525f0a55de5cf74fee5c0056"
+    },
+    "data/pending/AS42065.json": {
+      "bytes": 3297,
+      "sha256": "21945b30d83cb20f19cf8b9a43afdd91f6e9eae7ef17e2e06539f8248e4388f8"
+    },
+    "data/pending/AS42610.json": {
+      "bytes": 3880,
+      "sha256": "0eec0edb36d4c3de709412700d140f4c3ec21cf5609a21e28748c6f9d55178dd"
+    },
+    "data/pending/AS44265.json": {
+      "bytes": 622,
+      "sha256": "c984a84c7b82d4c1c2c8d39e1be392c1dee54bca3f7aca9b1e8735e272bdf045"
+    },
+    "data/pending/AS47165.json": {
+      "bytes": 606,
+      "sha256": "8496fe9c6978f4243986a22aba9179fc8c05fd62e9ed185445a931ea7d36b420"
+    },
+    "data/pending/AS47236.json": {
+      "bytes": 703,
+      "sha256": "fd6a333beee4fc2d8b1f88cb9a577605bbdb30b05eddb80467dad8e8d065cbd7"
+    },
+    "data/pending/AS47954.json": {
+      "bytes": 1637,
+      "sha256": "3fb1bb2a1b7958646ada41d182d55f530e8019254ca2bce90b2134f05f85ff57"
+    },
+    "data/pending/AS50473.json": {
+      "bytes": 1803,
+      "sha256": "157c24e50f121c1d7509995a9dd2485a025b15cd826d45e7f44e571045d5fe96"
+    },
+    "data/pending/AS50923.json": {
+      "bytes": 588,
+      "sha256": "2cb8602ebc18c91463847e09a502c7b8803a8baf12f045eb4088ffb79bf27f79"
+    },
+    "data/pending/AS51032.json": {
+      "bytes": 2699,
+      "sha256": "0203bf55a576d31765cd803185a4cebce0c2afbc7ffe8af5de466a3327996fdc"
+    },
+    "data/pending/AS51819.json": {
+      "bytes": 1115,
+      "sha256": "68868f672ec2d80dedb309ec5cff61b98855b179b208d2d4811c0f0d219712ce"
+    },
+    "data/pending/AS57378.json": {
+      "bytes": 1043,
+      "sha256": "b3e26bbaf8e10c67ea7ba06c1e5e07729e8d871e8bf051e836e459830d169002"
+    },
+    "data/pending/AS8369.json": {
+      "bytes": 616,
+      "sha256": "843ab8fcacf4358c3484c33399f208acbb87eda00964ff244c32084d9d8a087b"
+    },
+    "data/pending/AS8402.json": {
+      "bytes": 619,
+      "sha256": "10ee3ff2d7fe12fbb796ad868b41d3b57ca2673d1d1af98365cf0cd16f973a55"
+    },
+    "data/pending/AS8580.json": {
+      "bytes": 567,
+      "sha256": "cf6a088c769095f6c9f581f5f197c13964630ca80cc0c8d480d0de2996374077"
+    }
+  },
+  "entries": [
+    {
+      "id": "8c3531101fe2cfadf6fea105",
+      "title": "ROSTELECOM-AS PJSC Rostelecom · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12389",
+      "updated_at": "2026-11-24",
+      "unavailable": [],
+      "source_page": "data/AS12389.json",
+      "source_id": "7f89114d1bd0"
+    },
+    {
+      "id": "672ca4ec45c183abb1cc4da3",
+      "title": "MTS MTS PJSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS3216, AS8359, AS8402, AS12389, AS13335, AS16345, AS31370, AS35539, AS35816, AS39927, AS41733, AS42387, AS42610, AS47954, AS51819, AS51973, AS60840, AS196705, AS210171, AS215439",
+      "updated_at": "2026-11-24",
+      "unavailable": [],
+      "source_page": "data/AS8359.json",
+      "source_id": "cf88516fcd18"
+    },
+    {
+      "id": "57bcc68a487aac66433c7306",
+      "title": "BEE-AS PJSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12389, AS16345, AS57214, AS60095",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/AS16345.json",
+      "source_id": "518e73d86e9a"
+    },
+    {
+      "id": "5b74c0cf3bcbae2f5f6906d2",
+      "title": "BEE-AS PJSC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12389, AS16345, AS21017, AS35807",
+      "updated_at": "2026-11-22",
+      "unavailable": [],
+      "source_page": "data/AS16345.json",
+      "source_id": "fdab50307a27"
+    },
+    {
+      "id": "8b636870e7d6b1b4ed4328b1",
+      "title": "INFOLINK-T-AS Information and Communication Technologies LLC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS16345, AS35539, AS41733, AS47954, AS51973, AS60840, AS210171",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/AS35539.json",
+      "source_id": "17524fff1fa0"
+    },
+    {
+      "id": "6a8192e31b54624b0ce51e09",
+      "title": "INFOLINK-T-AS Information and Communication Technologies LLC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8359, AS34533, AS35539",
+      "updated_at": "2026-11-13",
+      "unavailable": [],
+      "source_page": "data/AS35539.json",
+      "source_id": "b39cabe12bf1"
+    },
+    {
+      "id": "95f1b39c2dcb4d7918bef13a",
+      "title": "SPB-AS JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51570",
+      "updated_at": "2026-11-17",
+      "unavailable": [],
+      "source_page": "data/AS51570.json",
+      "source_id": "1c515c0165d9"
+    },
+    {
+      "id": "85df675f898e37739c3bc516",
+      "title": "KOLT-AS Koltushsky Internet Ltd · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51973",
+      "updated_at": "2026-11-01",
+      "unavailable": [],
+      "source_page": "data/AS51973.json",
+      "source_id": "6b8967d40fc6"
+    },
+    {
+      "id": "003583738d24b8887067ec0a",
+      "title": "TELECOMSERVICEVRN OJSC Telecom-Service · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8359, AS35807, AS42291, AS42387, AS60840",
+      "updated_at": "2026-11-21",
+      "unavailable": [],
+      "source_page": "data/AS60840.json",
+      "source_id": "e4f032ac33d2"
+    },
+    {
+      "id": "826687140706762cd6360d58",
+      "title": "MTS MTS PJSC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8359",
+      "updated_at": "2026-11-24",
+      "unavailable": [],
+      "source_page": "data/AS8359.json",
+      "source_id": "0bb73442bbfa"
+    },
+    {
+      "id": "0e0c76d6d1d4720e8ce5e46b",
+      "title": "MTS MTS PJSC · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8359",
+      "updated_at": "2026-11-24",
+      "unavailable": [],
+      "source_page": "data/AS8359.json",
+      "source_id": "79644ca910bf"
+    },
+    {
+      "id": "5cfb136cf2f9eaf9f3a13acf",
+      "title": "MTS MTS PJSC · TLS 4",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8359, AS12389, AS50473, AS214721",
+      "updated_at": "2026-11-24",
+      "unavailable": [],
+      "source_page": "data/AS8359.json",
+      "source_id": "9141bfca6058"
+    },
+    {
+      "id": "572fc84902e96baea65f695d",
+      "title": "MTS MTS PJSC · TLS 5",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8359",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/AS8359.json",
+      "source_id": "8ae91cb657eb"
+    },
+    {
+      "id": "d19cf0a9efae8f4fd3e030e2",
+      "title": "CORBINA-AS PJSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8402",
+      "updated_at": "2026-11-22",
+      "unavailable": [],
+      "source_page": "data/AS8402.json",
+      "source_id": "564b5223a232"
+    },
+    {
+      "id": "3876d1af9dc91cb8a7c53f54",
+      "title": "ROSTELECOM-AS PJSC Rostelecom · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12389",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS12389.json",
+      "source_id": "c6816250d95a"
+    },
+    {
+      "id": "a395ea666e6abd143f3d0782",
+      "title": "MEGAFON-AS PJSC MegaFon · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12714, AS42610",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS12714.json",
+      "source_id": "b69c38afaea8"
+    },
+    {
+      "id": "ca0937e9e0050bda4e87964c",
+      "title": "MEGAFON-AS PJSC MegaFon · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12714, AS35807",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS12714.json",
+      "source_id": "d38bf744b4f8"
+    },
+    {
+      "id": "12d2940a6678c04859cb1919",
+      "title": "MEGAFON-AS PJSC MegaFon · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12714, AS48416, AS49641",
+      "updated_at": "2026-11-14",
+      "unavailable": [],
+      "source_page": "data/pending/AS12714.json",
+      "source_id": "2206b1f8ef8b"
+    },
+    {
+      "id": "57c726651182f47bf3093177",
+      "title": "AS12714 · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12714",
+      "updated_at": "2026-11-15",
+      "unavailable": [],
+      "source_page": "data/pending/AS12714.json",
+      "source_id": "1ddfb9123401"
+    },
+    {
+      "id": "2cec1ad87751d0080b180db5",
+      "title": "MEGAFON-AS PJSC MegaFon · TLS 4",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12714",
+      "updated_at": "2026-11-21",
+      "unavailable": [],
+      "source_page": "data/pending/AS12714.json",
+      "source_id": "3bbf386490ef"
+    },
+    {
+      "id": "feb78e08de7095082dd6c825",
+      "title": "ER-TELECOM-AS JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS12768, AS24955, AS31363, AS35807, AS49821",
+      "updated_at": "2026-11-22",
+      "unavailable": [],
+      "source_page": "data/pending/AS12768.json",
+      "source_id": "b4f4f730810b"
+    },
+    {
+      "id": "e47e339a9d314e771504935e",
+      "title": "TTK-RTL Limited Liability Company · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS15774",
+      "updated_at": "2026-11-22",
+      "unavailable": [],
+      "source_page": "data/pending/AS15774.json",
+      "source_id": "63df32772950"
+    },
+    {
+      "id": "87ee4a283ead85b4f9b49247",
+      "title": "BEE-AS PJSC · HTTP 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS16345",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS16345.json",
+      "source_id": "075296161077"
+    },
+    {
+      "id": "1dc791dbd5d29845a44e4069",
+      "title": "BEE-AS PJSC · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS16345",
+      "updated_at": "2026-11-22",
+      "unavailable": [],
+      "source_page": "data/pending/AS16345.json",
+      "source_id": "ae9e40d3a2dc"
+    },
+    {
+      "id": "8e8bf369d37726c814f2e936",
+      "title": "Ardinvest Ardinvest LTD · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS196705",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS196705.json",
+      "source_id": "d47c89ed39f0"
+    },
+    {
+      "id": "22f64fd3c00598d4f10f1c72",
+      "title": "PHOENIX-AS STATE UNITARY ENTERPRISE OF THE DONETSK PEOPLE'S REPUBLIC · HTTP 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS214721",
+      "updated_at": "2026-11-07",
+      "unavailable": [],
+      "source_page": "data/pending/AS214721.json",
+      "source_id": "5e5e587d7953"
+    },
+    {
+      "id": "3d7387137ad08769cd96c85d",
+      "title": "UBN-AS JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS24955, AS42610",
+      "updated_at": "2026-11-13",
+      "unavailable": [],
+      "source_page": "data/pending/AS24955.json",
+      "source_id": "29c01f811de8"
+    },
+    {
+      "id": "269fd41ff731f65d44909ba0",
+      "title": "SOVAM-AS PJSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS3216, AS25159, AS35807, AS42610, AS44724, AS47118, AS47895, AS51032",
+      "updated_at": "2026-11-23",
+      "unavailable": [],
+      "source_page": "data/pending/AS3216.json",
+      "source_id": "6afe8b5342c8"
+    },
+    {
+      "id": "a019d3d2714f4f9553735214",
+      "title": "ASN-MGTS-USPD PJSC Moscow city telephone network · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS25513",
+      "updated_at": "2026-11-21",
+      "unavailable": [],
+      "source_page": "data/pending/AS25513.json",
+      "source_id": "7deb640fad4f"
+    },
+    {
+      "id": "22a741825d5cd8f717582171",
+      "title": "ISKRATELECOM-AS Iskratelecom JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS29124",
+      "updated_at": "2026-11-23",
+      "unavailable": [],
+      "source_page": "data/pending/AS29124.json",
+      "source_id": "025652f11f54"
+    },
+    {
+      "id": "89451598babda413e675a16a",
+      "title": "SOVAM-AS PJSC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS3216, AS8359",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS3216.json",
+      "source_id": "8d221b855682"
+    },
+    {
+      "id": "9a3c8e3868b718b871686c43",
+      "title": "SMOLENSK-AS PJSC Rostelecom · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35125",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS35125.json",
+      "source_id": "057371e60653"
+    },
+    {
+      "id": "8aea2866c78dd88024193a62",
+      "title": "INFOLINK-T-AS Information and Communication Technologies LLC · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35539",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS35539.json",
+      "source_id": "3d396184835c"
+    },
+    {
+      "id": "2cbfb0242f38eb50d4a15623",
+      "title": "AS-SKYNET-SPB SkyNet Ltd. · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35807",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS35807.json",
+      "source_id": "a0e2919246ed"
+    },
+    {
+      "id": "02812aa72449e7b2961c9074",
+      "title": "AS-SKYNET-SPB SkyNet Ltd. · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35807",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS35807.json",
+      "source_id": "e6e3afa14440"
+    },
+    {
+      "id": "84d49a8d632876580745725d",
+      "title": "SANDY MTS PJSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8580, AS35807",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS8580.json",
+      "source_id": "664844d99b96"
+    },
+    {
+      "id": "59f5a515a095d591e5836d72",
+      "title": "AS-SKYNET-SPB SkyNet Ltd. · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35807, AS48416",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS35807.json",
+      "source_id": "42525244638e"
+    },
+    {
+      "id": "19efbdc68db8004dabc2177e",
+      "title": "AS-SKYNET-SPB SkyNet Ltd. · TLS 4",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35807",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS35807.json",
+      "source_id": "2c90852b067b"
+    },
+    {
+      "id": "ff6f4915dac5594dbefa3cb3",
+      "title": "AS-SKYNET-SPB SkyNet Ltd. · TLS 5",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS35807",
+      "updated_at": "2026-11-20",
+      "unavailable": [],
+      "source_page": "data/pending/AS35807.json",
+      "source_id": "528fcde7e1b3"
+    },
+    {
+      "id": "ee1c5bc63fa5af4e7d185a7e",
+      "title": "PAKT-AS P.A.K.T LLC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS39087",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS39087.json",
+      "source_id": "d4377009d59e"
+    },
+    {
+      "id": "2ec2bc104e882615481b1d74",
+      "title": "PAKT-AS P.A.K.T LLC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS39087",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS39087.json",
+      "source_id": "1f88c8e254ff"
+    },
+    {
+      "id": "0d6fcc394f89418936f09c15",
+      "title": "LEALTA-AS Lovitel LLC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS41275",
+      "updated_at": "2026-11-12",
+      "unavailable": [],
+      "source_page": "data/pending/AS41275.json",
+      "source_id": "79d1ccaf2183"
+    },
+    {
+      "id": "5364a75f525a13c850a263b6",
+      "title": "ETELECOM-AS Global Network Management Inc · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42065",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS42065.json",
+      "source_id": "4ba36614a22c"
+    },
+    {
+      "id": "fe83beaa92bd5d308b6c6db3",
+      "title": "ETELECOM-AS Global Network Management Inc · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42065",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS42065.json",
+      "source_id": "985b32c856e8"
+    },
+    {
+      "id": "cdf24133e10009f255070121",
+      "title": "ETELECOM-AS Global Network Management Inc · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42065",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS42065.json",
+      "source_id": "2d33be0fb3a7"
+    },
+    {
+      "id": "a17375681fd5db851a4d8874",
+      "title": "ETELECOM-AS Global Network Management Inc · TLS 4",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42065",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS42065.json",
+      "source_id": "d980dd84bc0f"
+    },
+    {
+      "id": "f6a9da029fb9db990aee08f4",
+      "title": "ETELECOM-AS Global Network Management Inc · TLS 5",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42065",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS42065.json",
+      "source_id": "084aa5bf47c0"
+    },
+    {
+      "id": "954451be6b10ae2290d8f35f",
+      "title": "ETELECOM-AS Global Network Management Inc · TLS 6",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42065",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS42065.json",
+      "source_id": "844772ad7529"
+    },
+    {
+      "id": "29fbaab7f795b4eb8cc52b70",
+      "title": "NCNET-AS PJSC Rostelecom · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42610",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS42610.json",
+      "source_id": "bbc3f07c24ff"
+    },
+    {
+      "id": "36c3d34e9446895fc8099e25",
+      "title": "NCNET-AS PJSC Rostelecom · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42610",
+      "updated_at": "2026-11-18",
+      "unavailable": [],
+      "source_page": "data/pending/AS42610.json",
+      "source_id": "a381e3079369"
+    },
+    {
+      "id": "c92adcfc851bb1ab847f0fdb",
+      "title": "NCNET-AS PJSC Rostelecom · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS42610",
+      "updated_at": "2026-11-21",
+      "unavailable": [],
+      "source_page": "data/pending/AS42610.json",
+      "source_id": "41edc0a4ba83"
+    },
+    {
+      "id": "121459f9d946aa64ff5c59ca",
+      "title": "SMOLTELECOM-NET OOO Smoltelecom · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS44265",
+      "updated_at": "2026-11-14",
+      "unavailable": [],
+      "source_page": "data/pending/AS44265.json",
+      "source_id": "b5777f6287b7"
+    },
+    {
+      "id": "9b1307985d5bf901991d49e4",
+      "title": "OMKC-AS Omskie kabelnye seti Ltd. · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS47165",
+      "updated_at": "2026-11-07",
+      "unavailable": [],
+      "source_page": "data/pending/AS47165.json",
+      "source_id": "f390ea551d8c"
+    },
+    {
+      "id": "432e24514c831b9c284b7666",
+      "title": "CITYLINK-AS CityLink Ltd · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS47236",
+      "updated_at": "2026-11-13",
+      "unavailable": [],
+      "source_page": "data/pending/AS47236.json",
+      "source_id": "202567181aa0"
+    },
+    {
+      "id": "17cbf7e787d715d719d39491",
+      "title": "AlfaNetTelecom-AS Alpha Net Telecom Ltd · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS47954",
+      "updated_at": "2026-11-10",
+      "unavailable": [],
+      "source_page": "data/pending/AS47954.json",
+      "source_id": "d422e4e59790"
+    },
+    {
+      "id": "660fed90db5c1b3797cac12e",
+      "title": "ECO-AS Altagen JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS50473",
+      "updated_at": "2026-11-12",
+      "unavailable": [],
+      "source_page": "data/pending/AS50473.json",
+      "source_id": "84c2749d63cc"
+    },
+    {
+      "id": "191ab0d9d9a9f0be3474aca7",
+      "title": "ECO-AS Altagen JSC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS50473",
+      "updated_at": "2026-11-12",
+      "unavailable": [],
+      "source_page": "data/pending/AS50473.json",
+      "source_id": "f98bca9531e8"
+    },
+    {
+      "id": "af00ce5bb2bd667e211191db",
+      "title": "METRO-SET-AS Metroset Ltd. · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS50923",
+      "updated_at": "2026-11-21",
+      "unavailable": [],
+      "source_page": "data/pending/AS50923.json",
+      "source_id": "a17ef68b77e5"
+    },
+    {
+      "id": "2285e9f5a769c4f732ec2044",
+      "title": "NEVOD-AS LLC POWERNET · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51032",
+      "updated_at": "2026-11-06",
+      "unavailable": [],
+      "source_page": "data/pending/AS51032.json",
+      "source_id": "867447a9391d"
+    },
+    {
+      "id": "5197747770ea37d910b3ac5d",
+      "title": "NEVOD-AS LLC POWERNET · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51032",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS51032.json",
+      "source_id": "168f71b66c3a"
+    },
+    {
+      "id": "fdceb5ea05119d0711ccbd65",
+      "title": "NEVOD-AS LLC POWERNET · TLS 3",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51032",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS51032.json",
+      "source_id": "b1cb5868c0d6"
+    },
+    {
+      "id": "bcda0a320766c2de318ad098",
+      "title": "NEVOD-AS LLC POWERNET · TLS 4",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51032",
+      "updated_at": "2026-11-19",
+      "unavailable": [],
+      "source_page": "data/pending/AS51032.json",
+      "source_id": "7cfa34de4e83"
+    },
+    {
+      "id": "998fa4f21bf0927a438cda98",
+      "title": "YAR-AS JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS51819",
+      "updated_at": "2026-11-11",
+      "unavailable": [],
+      "source_page": "data/pending/AS51819.json",
+      "source_id": "e575feb8fe0f"
+    },
+    {
+      "id": "be2df8680519afd335a07af3",
+      "title": "ROSTOV-AS JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS57378",
+      "updated_at": "2026-11-09",
+      "unavailable": [],
+      "source_page": "data/pending/AS57378.json",
+      "source_id": "57f09a6292a6"
+    },
+    {
+      "id": "f239c68b3f7a8ec163951b73",
+      "title": "ROSTOV-AS JSC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS57378",
+      "updated_at": "2026-11-11",
+      "unavailable": [],
+      "source_page": "data/pending/AS57378.json",
+      "source_id": "cb80918537bf"
+    },
+    {
+      "id": "29d36bbec15e18ca78d47e7a",
+      "title": "INTERSVYAZ-AS Intersvyaz-2 JSC · TLS 1",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8369",
+      "updated_at": "2026-11-21",
+      "unavailable": [],
+      "source_page": "data/pending/AS8369.json",
+      "source_id": "5d9cc53a0047"
+    },
+    {
+      "id": "54aca4f2902093034c5a20d0",
+      "title": "CORBINA-AS PJSC · TLS 2",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "zemidala",
+      "attribution": "Zemidala",
+      "description": "AS8402",
+      "updated_at": "2026-11-14",
+      "unavailable": [],
+      "source_page": "data/pending/AS8402.json",
+      "source_id": "bc196fef0f22"
+    }
+  ]
+}

@@ -21,6 +21,9 @@ import tarfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+_catalog_spec = importlib.util.spec_from_file_location('nfqws_packaged_catalog', ROOT/'profile-catalog/packaged.py')
+packaged_catalog = importlib.util.module_from_spec(_catalog_spec)
+_catalog_spec.loader.exec_module(packaged_catalog)
 _blob_spec = importlib.util.spec_from_file_location('nfqws_blob_bundle', ROOT/'asus/blob_bundle.py')
 blob_bundle = importlib.util.module_from_spec(_blob_spec)
 _blob_spec.loader.exec_module(blob_bundle)
@@ -416,6 +419,7 @@ def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
     core['opt/share/nfqws2-asus/package-manifest.schema.json'] = local('updates/package-manifest.schema.json')
     core['opt/share/nfqws2-asus/update-release-key.pem'] = local('updates/trusted-release-key.pem')
     core['opt/share/nfqws2-asus/profile-catalog-public.pem'] = local('asus/profile-catalog-public.pem')
+    core.update({'opt/share/nfqws2-asus/'+name: value for name, value in packaged_catalog.payload(ROOT).items()})
     core['opt/share/nfqws2-asus/technical-channel-public.pem'] = local('technical-channel/technical-channel-public.pem')
     for name in ['worker.php','session.sh','guard.sh']:
         core['opt/lib/nfqws2-asus/technical-channel/'+name] = local('asus/technical-channel/'+name,name.endswith('.sh'))

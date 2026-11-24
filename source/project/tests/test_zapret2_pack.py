@@ -17,7 +17,7 @@ class Zapret2PackTests(unittest.TestCase):
     def test_exact_module_and_every_catalog_section_are_visible(self):
         catalog = self.php("echo json_encode(AsusZapret2Pack::catalog());")
         self.assertEqual(catalog['source_sha256'], 'd18cce3864ff72fd19117e85833bd4d8f5b93f19d5cb62006cc44a8522d862ed')
-        entries = catalog['entries']
+        entries = [row for row in catalog['entries'] if not row.get('collection')]
         self.assertEqual(collections.Counter(row['group'] for row in entries),
                          {'presets': 98, 'http80': 161, 'tcp': 395, 'udp': 58, 'voice': 69})
         self.assertEqual(len({row['id'] for row in entries}), len(entries))
@@ -69,13 +69,13 @@ class Zapret2PackTests(unittest.TestCase):
         self.assertTrue(audit['complete'])
         self.assertEqual(audit['unresolved'], [])
 
-    def test_entire_library_resolves_in_the_normal_import_preview(self):
+    def test_entire_offline_library_resolves_in_the_normal_import_preview(self):
         result = self.php("""
         require $argv[1].'/import-plan.php';
-        $catalog=AsusZapret2Pack::catalog();$counts=[];$errors=[];$presetsRequiringTrust=0;
+        $catalog=AsusZapret2Pack::catalog();$counts=[];$errors=[];$changedLuaRejected=false;
         $ctx='ASUS_CLIENTS4="192.0.2.9"'."\\n";
         foreach(array_merge($catalog['entries'],$catalog['assets']) as $row){
-            if(!empty($row['unavailable'])||!empty($row['resident']))continue;
+            if(($row['collection']??null)==='zemidala'||!empty($row['unavailable'])||!empty($row['resident']))continue;
             try {
                 $doc=AsusImportDocument::read(AsusZapret2Pack::documents($row['id']));
                 $local=[];
@@ -91,28 +91,28 @@ class Zapret2PackTests(unittest.TestCase):
                 foreach($doc['resources'] as $f)$selection['files'][]=['id'=>$f['id']];
                 $inventory=['files'=>$local,'scan_truncated'=>false];
                 $plan=AsusImportPlan::prepare($doc,$selection,$ctx,$inventory,null);
-                if(array_column($plan['problems'],'code')===['lua_trust']){
-                    if($plan['ready']||($row['group']==='presets'&&!$plan['changes']))
-                        throw new RuntimeException('The Lua confirmation must block saving and leave comparison available');
-                    $comparison=$plan['changes'];
-                    $selection['trusted_lua']=true;
-                    $plan=AsusImportPlan::prepare($doc,$selection,$ctx,$inventory,null);
-                    if($plan['changes']!==$comparison)
-                        throw new RuntimeException('Lua confirmation changed the planned strategy');
-                    if($row['group']==='presets')$presetsRequiringTrust++;
+                foreach($doc['resources'] as $file){
+                    if($changedLuaRejected||$file['kind']!=='lua'||$row['group']!=='presets')continue;
+                    $edited=$selection;
+                    foreach($edited['files'] as &$pick)if($pick['id']===$file['id']){
+                        $pick['text']=base64_decode($file['data_base64'],true)."\n-- edited\n";
+                    }
+                    unset($pick);
+                    $changed=AsusImportPlan::prepare($doc,$edited,$ctx,$inventory,null);
+                    $changedLuaRejected=!$changed['ready']&&in_array('lua_trust',array_column($changed['problems'],'code'),true);
                 }
-                $unexpected=array_filter($plan['warnings'],fn($w)=>($w['kind']??'')!=='lua_dependencies_unchecked');
+                $unexpected=$plan['warnings'];
                 if(!$plan['ready']||$unexpected||!str_contains($plan['config'],$ctx)||str_contains($plan['config'],'RESOURCE_'))
                     throw new RuntimeException(json_encode([$plan['problems'],$unexpected]));
-                $counts[$row['group']]=1+($counts[$row['group']]??0);
+                if(empty($row['collection']))$counts[$row['group']]=1+($counts[$row['group']]??0);
             } catch(Throwable $e){$errors[]=[$row['title'],$e->getMessage()];}
         }
-        echo json_encode([$counts,$errors,$presetsRequiringTrust]);
+        echo json_encode([$counts,$errors,$changedLuaRejected]);
         """)
-        counts, errors, presets_requiring_trust = result
+        counts, errors, changed_lua_rejected = result
         self.assertEqual(errors[:4], [])
         self.assertEqual(counts['presets'], 98)
-        self.assertEqual(presets_requiring_trust, 26)
+        self.assertTrue(changed_lua_rejected)
         self.assertGreater(sum(counts[k] for k in ('http80','tcp','udp','voice')), 600)
 
     def test_new_module_components_reach_a_real_queue_within_the_existing_budget(self):

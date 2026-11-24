@@ -33,8 +33,15 @@ const text = (v: unknown, max: number, min = 0): v is string =>
 
 export async function loadProfileCatalog(
   csrf: string,
+  source?: 'package',
 ): Promise<ProfileCatalog> {
-  const value = await shareRequest(csrf, 'importcatalog', {}, 262144, 25000);
+  const value = await shareRequest(
+    csrf,
+    'importcatalog',
+    source ? { source } : {},
+    262144,
+    25000,
+  );
   if (
     !object(value) ||
     !exact(value, ['schema_version', 'revision', 'build', 'profiles']) ||
@@ -91,13 +98,14 @@ export async function loadCatalogDocument(
   csrf: string,
   id: string,
   sha256: string,
+  source?: 'package',
 ): Promise<string> {
   if (!ID.test(id) || !HASH.test(sha256))
     throw new ShareError('catalog_invalid');
   const value = await shareRequest(
     csrf,
     'importcatalogload',
-    { id, sha256 },
+    source ? { id, sha256, source } : { id, sha256 },
     8388672,
     25000,
   );

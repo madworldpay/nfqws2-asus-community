@@ -108,6 +108,7 @@ def panel(dist):
     for path in sorted((PROJECT/'support').glob('*.json')):
         result[SHARE+'/'+path.name] = path.read_bytes(), 0o644
     result[SHARE+'/profile-catalog-public.pem'] = entware.local('asus/profile-catalog-public.pem')
+    result.update({SHARE+'/'+name: value for name, value in entware.packaged_catalog.payload(PROJECT).items()})
     result[SHARE+'/defaults/nfqws2.conf'] = entware.local('core/etc/nfqws2/nfqws2.conf')
     entware.licenses(result, PACKAGE)
     for name in ('LICENSE','THIRD-PARTY-NOTICES.txt'):

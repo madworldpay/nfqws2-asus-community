@@ -11,7 +11,7 @@ final class AsusProfileCatalogTransport
     private mixed $read;
     private mixed $clock;
     private int $build;
-    public function __construct(?string $publicKey=null,?callable $read=null,?string $cache=null,private int $owner=0,?callable $clock=null,?int $build=null,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt')
+    public function __construct(?string $publicKey=null,?callable $read=null,?string $cache=null,private int $owner=0,?callable $clock=null,?int $build=null,private string $ca='/opt/etc/ssl/certs/ca-certificates.crt',private ?string $packageRoot=null)
     {
         $this->ca=NfqwsPlatform::translate($this->ca);
         $keyFile=NfqwsPlatform::sharedFile('profile-catalog-public.pem',dirname(__DIR__,3).'/asus/profile-catalog-public.pem');
@@ -25,7 +25,7 @@ final class AsusProfileCatalogTransport
         if(is_file($path)) {
             $v=json_decode((string)@file_get_contents($path,false,null,0,131073),true);
             if(NfqwsPlatform::native()&&is_int($v['build_number']??null)&&$v['build_number']>0&&$v['build_number']<1000000000)return $v['build_number'];
-            if(preg_match('/\+b([1-9][0-9]{0,8})$/D',$v['package_version']??'',$m))return (int)$m[1];
+            if(preg_match('/\+b([1-9][0-9]{0,8})(?:-[1-9][0-9]{0,8})?$/D',$v['package_version']??'',$m))return (int)$m[1];
         }
         $raw=trim((string)@file_get_contents(dirname(__DIR__,3).'/BUILD_NUMBER'));
         return preg_match('/^[1-9][0-9]{0,8}$/D',$raw)?(int)$raw:0;
@@ -127,15 +127,55 @@ final class AsusProfileCatalogTransport
         if($old!==null&&$index['revision']<$old['index']['revision'])throw new RuntimeException('catalog_changed');
         $this->save($raw,$now);return $index;
     }
-    public function catalog(): array {return $this->index(microtime(true)+20);}
-    public function document(string $id,string $sha256): string
+    private function packaged(string $relative,int $cap): string
+    {
+        $root=$this->packageRoot??NfqwsPlatform::settings()['share'].'/profile-catalog/v1';
+        $path=$root.'/'.$relative;
+        foreach(array_unique([$root,dirname($path)])as $directory){
+            clearstatcache(true,$directory);$s=@lstat($directory);
+            if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$this->owner||($s['mode']&0022)!==0)throw new RuntimeException('catalog_unavailable');
+        }
+        clearstatcache(true,$path);$s=@lstat($path);
+        if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$this->owner||($s['mode']&0022)!==0||$s['nlink']!==1)throw new RuntimeException('catalog_unavailable');
+        if($s['size']>$cap)throw new RuntimeException('catalog_limit');
+        $f=@fopen($path,'rb');if(!$f)throw new RuntimeException('catalog_unavailable');
+        try{
+            $actual=fstat($f);
+            if(!$actual||$actual['ino']!==$s['ino']||$actual['dev']!==$s['dev'])throw new RuntimeException('catalog_unavailable');
+            $raw=stream_get_contents($f,$cap+1);
+        }finally{fclose($f);}
+        if(!is_string($raw)||strlen($raw)!==$s['size'])throw new RuntimeException('catalog_invalid');
+        return $raw;
+    }
+    public function catalog(bool $packaged=false): array
+    {
+        if($packaged)return AsusProfileCatalog::verify($this->packaged('catalog.json',AsusProfileCatalog::ENVELOPE_LIMIT),$this->key);
+        return $this->index(microtime(true)+20);
+    }
+    public function zemidalaPage(string $path, int $bytes, string $sha256): string
+    {
+        if (!preg_match('~^data/(?:pending/)?AS[1-9][0-9]{0,9}\.json$~D', $path) ||
+            $bytes < 1 || $bytes > 16384 || !preg_match('/^[a-f0-9]{64}$/D', $sha256)) {
+            throw new RuntimeException('resource_unavailable');
+        }
+        $deadline = microtime(true) + 12;
+        $origin = 'https://raw.githubusercontent.com/zemidala/nfqws2-strategies/ceb68b94cecf3494eba202a64c54dce5243fef8c/';
+        $raw = ($this->read)($origin.$path, $bytes, $deadline);
+        if (microtime(true) > $deadline || !is_string($raw) || strlen($raw) !== $bytes ||
+            !hash_equals($sha256, hash('sha256', $raw))) {
+            throw new RuntimeException('resource_unavailable');
+        }
+        return $raw;
+    }
+    public function document(string $id,string $sha256,bool $packaged=false): string
     {
         if(!preg_match('/^[a-z0-9][a-z0-9-]{0,63}$/D',$id)||!preg_match('/^[a-f0-9]{64}$/D',$sha256))throw new RuntimeException('invalid_request');
-        $deadline=microtime(true)+20;$index=$this->index($deadline);$selected=null;
+        $deadline=microtime(true)+20;$index=$packaged?$this->catalog(true):$this->index($deadline);$selected=null;
         foreach($index['profiles'] as $entry)if($entry['id']===$id&&hash_equals($entry['sha256'],$sha256))$selected=$entry;
         if($selected===null)throw new RuntimeException('catalog_changed');
         if($selected['min_build']>$this->build)throw new RuntimeException('catalog_version');
-        $raw=$this->fetch('files/'.$sha256.'.json',$selected['size'],$deadline);
+        $path='files/'.$sha256.'.json';
+        $raw=$packaged?$this->packaged($path,$selected['size']):$this->fetch($path,$selected['size'],$deadline);
         if(strlen($raw)!==$selected['size']||!hash_equals($sha256,hash('sha256',$raw)))throw new RuntimeException('catalog_invalid');
         AsusImportDocument::read([$raw]);return $raw;
     }

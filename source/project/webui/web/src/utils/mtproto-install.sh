@@ -37,6 +37,9 @@ removed_was_enabled=no
 dc_ips='2:149.154.167.220 4:149.154.167.220'
 pool_size=2
 cf_domain=pclead.co.uk
+proxy_host=0.0.0.0
+proxy_port=1443
+publish_host=''
 refresh_link() {
     link_server=${NFQWS_MT_LINK%%&port=*}
     NFQWS_MT_LINK="$link_server&port=$NFQWS_MT_PORT&secret=dd$NFQWS_MT_KEY"
@@ -94,11 +97,27 @@ if [ "$NFQWS_MT_METHOD" = docker ]; then
             lordarrin/tg-ws-proxy@sha256:*proxy/tg_ws_proxy.py*) ;;
             *) fail 'This container is not our previous MTProto installation; nothing was changed.' 'Этот контейнер не является нашей прежней установкой MTProto; ничего не изменено.';;
         esac
-        old_env=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' nfqws-mtproto)
+        # Go-quoted rows keep embedded newlines visible to strict validation;
+        # they must not turn into unrelated environment entries or be decoded.
+        old_env=$(docker inspect --format '{{range .Config.Env}}{{printf "%q\n" .}}{{end}}' nfqws-mtproto)
         NFQWS_MT_KEY=''
+        known_env=''
         while IFS= read -r item; do
             case "$item" in
+                \"*\") item=${item#\"}; item=${item%\"};;
+                *) fail 'Ambiguous previous proxy environment; nothing was changed.' 'Прежние параметры прокси неоднозначны; ничего не изменено.';;
+            esac
+            name=${item%%=*}
+            case "$name" in
+                PROXY_SECRET|PROXY_HOST|PROXY_PORT|PROXY_DC_IPS|PROXY_POOL_SIZE|CFPROXY_DOMAIN)
+                    case " $known_env " in *" $name "*) fail 'Ambiguous previous proxy environment; nothing was changed.' 'Прежние параметры прокси неоднозначны; ничего не изменено.';; esac
+                    known_env="$known_env $name";;
+                PROXY_*|CFPROXY_*) fail 'Unsupported previous proxy parameters; nothing was changed.' 'Прежние параметры прокси не поддерживаются; ничего не изменено.';;
+            esac
+            case "$item" in
                 PROXY_SECRET=*) NFQWS_MT_KEY=${item#*=};;
+                PROXY_HOST=*) proxy_host=${item#*=};;
+                PROXY_PORT=*) proxy_port=${item#*=};;
                 PROXY_DC_IPS=*) dc_ips=${item#*=};;
                 PROXY_POOL_SIZE=*) pool_size=${item#*=};;
                 CFPROXY_DOMAIN=*) cf_domain=${item#*=};;
@@ -106,7 +125,19 @@ if [ "$NFQWS_MT_METHOD" = docker ]; then
         done <<EOF
 $old_env
 EOF
-        NFQWS_MT_PORT=$(docker inspect --format '{{(index (index .HostConfig.PortBindings "1443/tcp") 0).HostPort}}' nfqws-mtproto)
+        for name in PROXY_SECRET PROXY_HOST PROXY_PORT PROXY_DC_IPS PROXY_POOL_SIZE CFPROXY_DOMAIN; do
+            case " $known_env " in *" $name "*) ;; *) fail 'Incomplete previous proxy parameters; nothing was changed.' 'Прежние параметры прокси неполны; ничего не изменено.';; esac
+        done
+        case "$proxy_port:$pool_size" in *[!0-9:]*) fail 'Invalid previous proxy parameters; nothing was changed.' 'Прежние параметры прокси некорректны; ничего не изменено.';; esac
+        [ -n "$proxy_port" ] && [ "${#proxy_port}" -le 5 ] && [ "$proxy_port" -ge 1 ] && [ "$proxy_port" -le 65535 ] &&
+            [ -n "$pool_size" ] && [ "${#pool_size}" -le 5 ] && [ "$pool_size" -ge 1 ] && [ "$pool_size" -le 65535 ] || fail 'Invalid previous proxy parameters; nothing was changed.' 'Прежние параметры прокси некорректны; ничего не изменено.'
+        case "$proxy_host" in ''|*[!a-zA-Z0-9.:-]*) fail 'Invalid previous listening address; nothing was changed.' 'Прежний адрес прослушивания некорректен; ничего не изменено.';; esac
+        [ "${#proxy_host}" -le 253 ] && [ "${#cf_domain}" -le 253 ] &&
+            printf '%s\n' "$cf_domain" | grep -Eq '^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' &&
+            printf '%s\n' "$dc_ips" | grep -Eq '^[1-5]:[][0-9a-fA-F.:-]+( [1-5]:[][0-9a-fA-F.:-]+)*$' || fail 'Invalid previous relay parameters; nothing was changed.' 'Прежние параметры соединений некорректны; ничего не изменено.'
+        binding=$(docker inspect --format "{{if eq (len .HostConfig.PortBindings) 1}}{{with index .HostConfig.PortBindings \"$proxy_port/tcp\"}}{{if eq (len .) 1}}{{(index . 0).HostIp}}|{{(index . 0).HostPort}}{{else}}invalid{{end}}{{else}}invalid{{end}}{{else}}invalid{{end}}" nfqws-mtproto)
+        case "$binding" in *'|'*) publish_host=${binding%%|*}; NFQWS_MT_PORT=${binding#*|};; *) fail 'Ambiguous previous published port; nothing was changed.' 'Прежний опубликованный порт неоднозначен; ничего не изменено.';; esac
+        case "$publish_host" in *[!0-9a-fA-F.:]*) fail 'Invalid previous port binding; nothing was changed.' 'Прежняя привязка порта некорректна; ничего не изменено.';; esac
         case "$NFQWS_MT_KEY" in ''|*[!0-9a-fA-F]*) fail 'Invalid existing proxy secret; nothing was changed.' 'Некорректный прежний ключ прокси; ничего не изменено.';; esac
         [ "${#NFQWS_MT_KEY}" = 32 ] || fail 'Invalid existing proxy secret.' 'Некорректный прежний ключ прокси.'
         case "$NFQWS_MT_PORT" in ''|*[!0-9]*) fail 'Cannot read the existing proxy port.' 'Не удалось прочитать прежний порт прокси.';; esac
@@ -117,7 +148,6 @@ EOF
     fi
 else
     [ "$(id -u)" = 0 ] || fail 'Run this command as root (sudo sh).' 'Выполните команду от root (sudo sh).'
-    [ "$NFQWS_MT_PORT" -ge 1024 ] || fail 'Native service requires a port >= 1024.' 'Для запуска без Docker выберите порт от 1024.'
     if [ "$NFQWS_MT_METHOD" = entware ]; then
         [ -x /opt/bin/opkg ] && [ -d /opt/etc/init.d ] || fail 'Entware is required.' 'Нужен установленный Entware.'
         candidate=/opt/share/nfqws-mtproto
@@ -129,29 +159,42 @@ else
     fi
     if [ -e "$candidate" ] || [ -L "$candidate" ] || [ -e "$service" ] || [ -L "$service" ]; then
         if [ "${NFQWS_MT_FRESH_ONLY:-no}" = yes ]; then exit 18; fi
-        [ -d "$candidate" ] && [ ! -L "$candidate" ] && [ -f "$candidate/config.json" ] && [ -f "$candidate/run.py" ] && [ -f "$service" ] && [ ! -L "$service" ] || fail 'Incomplete previous MTProto installation; nothing was changed.' 'Прежняя установка MTProto неполна; ничего не изменено.'
+        [ -d "$candidate" ] && [ ! -L "$candidate" ] && [ -f "$candidate/config.json" ] && [ ! -L "$candidate/config.json" ] && [ -f "$candidate/run.py" ] && [ -f "$service" ] && [ ! -L "$service" ] || fail 'Incomplete previous MTProto installation; nothing was changed.' 'Прежняя установка MTProto неполна; ничего не изменено.'
         grep -F "$candidate/run.py" "$service" >/dev/null && grep -F 'from proxy.tg_ws_proxy import main' "$candidate/run.py" >/dev/null || fail 'These files are not our previous MTProto installation; nothing was changed.' 'Эти файлы не являются нашей прежней установкой MTProto; ничего не изменено.'
         if [ "$NFQWS_MT_METHOD" = entware ]; then
             settings_python=/opt/bin/python3
-            if "$service" status >/dev/null 2>&1; then previous_running=yes; fi
         else
             settings_python="$candidate/venv/bin/python"
             [ -x "$settings_python" ] || settings_python=$(findexe python3)
-            if systemctl is-active --quiet nfqws-mtproto.service; then previous_running=yes; fi
         fi
-        settings=$("$settings_python" - "$candidate/config.json" <<'PY'
+        settings=$("$settings_python" - "$candidate/config.json" 2>/dev/null <<'PY'
 import json, re, sys
-with open(sys.argv[1]) as f:
-    c = json.load(f)
+def unique(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError('ambiguous config')
+        result[key] = value
+    return result
+def constant(value):
+    raise ValueError('invalid config')
+with open(sys.argv[1], 'rb') as f:
+    raw = f.read(65537)
+assert len(raw) <= 65536
+c = json.loads(raw, object_pairs_hook=unique, parse_constant=constant)
+assert isinstance(c, dict)
 assert type(c['port']) is int and 1024 <= c['port'] <= 65535
 assert isinstance(c['secret'], str) and re.fullmatch(r'[0-9a-fA-F]{32}', c['secret'])
 print(str(c['port']) + ':' + c['secret'])
 PY
-)
+) || fail 'Invalid or ambiguous previous proxy configuration; nothing was changed.' 'Прежняя конфигурация прокси некорректна или неоднозначна; ничего не изменено.'
         NFQWS_MT_PORT=${settings%%:*}
         NFQWS_MT_KEY=${settings#*:}
         updating=yes
         refresh_link
+        if [ "$NFQWS_MT_METHOD" = entware ]; then
+            if "$service" status >/dev/null 2>&1; then previous_running=yes; fi
+        elif systemctl is-active --quiet nfqws-mtproto.service; then previous_running=yes; fi
     elif [ "$NFQWS_MT_METHOD" = linux ] && systemctl cat nfqws-mtproto.service >/dev/null 2>&1; then
         fail 'Another MTProto unit exists; nothing was changed.' 'Уже существует другая служба MTProto; ничего не изменено.'
     fi
@@ -164,6 +207,17 @@ case "${NFQWS_MT_ACTION:-install}" in
     update|remove) [ "$updating" = yes ] || fail 'Our previous proxy installation was not found; nothing was changed.' 'Наша прежняя установка прокси не найдена; ничего не изменено.';;
     *) fail 'Unknown proxy action.' 'Неизвестное действие с прокси.';;
 esac
+probe_host=$proxy_host
+case "$probe_host" in 0.0.0.0|'') probe_host=127.0.0.1;; ::) probe_host=::1;; esac
+case "$publish_host" in
+    '') published="$NFQWS_MT_PORT:$proxy_port";;
+    *:*) published="[$publish_host]:$NFQWS_MT_PORT:$proxy_port";;
+    *) published="$publish_host:$NFQWS_MT_PORT:$proxy_port";;
+esac
+if [ "$NFQWS_MT_METHOD" != docker ]; then
+    case "$NFQWS_MT_PORT" in ''|*[!0-9]*) fail 'Invalid proxy port; nothing was changed.' 'Некорректный порт прокси; ничего не изменено.';; esac
+    [ "$NFQWS_MT_PORT" -ge 1024 ] && [ "$NFQWS_MT_PORT" -le 65535 ] || fail 'Native service requires a port from 1024 to 65535.' 'Для запуска без Docker выберите порт от 1024 до 65535.'
+fi
 if [ "${NFQWS_MT_ACTION:-install}" = remove ]; then
     if [ "$NFQWS_MT_METHOD" = docker ]; then
         old_id=$(docker inspect --format '{{.Id}}' nfqws-mtproto)
@@ -237,15 +291,15 @@ SH
         --health-cmd "$health" --health-interval 5m --health-timeout 20s --health-start-period 10s --health-retries 3 \
         --log-opt max-size=5m --log-opt max-file=2 \
         --cap-drop ALL --security-opt no-new-privileges:true \
-        -p "$NFQWS_MT_PORT:1443" -e "PROXY_SECRET=$NFQWS_MT_KEY" \
-        -e PROXY_HOST=0.0.0.0 -e PROXY_PORT=1443 \
+        -p "$published" -e "PROXY_SECRET=$NFQWS_MT_KEY" \
+        -e "PROXY_HOST=$proxy_host" -e "PROXY_PORT=$proxy_port" \
         -e "PROXY_DC_IPS=$dc_ips" \
         -e "PROXY_POOL_SIZE=$pool_size" -e "CFPROXY_DOMAIN=$cf_domain" \
         "$image" -- /bin/sh -c "$launcher")
     docker start "$container" >/dev/null
     sleep 3
     [ "$(docker inspect --format '{{.State.Running}}' "$container")" = true ] || fail 'Proxy stopped. Check Docker logs.' 'Прокси остановился. Проверьте журнал Docker.'
-    docker exec "$container" /opt/venv/bin/python -c "$probe" 127.0.0.1 1443 15 || fail 'Telegram did not respond; the new container was rolled back.' 'Telegram не ответил; новый контейнер удалён.'
+    docker exec "$container" /opt/venv/bin/python -c "$probe" "$probe_host" "$proxy_port" 15 || fail 'Telegram did not respond; the new container was rolled back.' 'Telegram не ответил; новый контейнер удалён.'
 else
     if [ "$updating" = yes ]; then root=$(mktemp -d "$candidate.new.XXXXXX")
     else mkdir "$candidate"; root=$candidate; fi
@@ -273,9 +327,9 @@ else
         "$python" -m pip install --disable-pip-version-check --timeout 15 --retries 2 'cryptography==46.0.5' 'httpx[http2]==0.28.1' certifi
         chmod -R a+rX "$root/venv"
     fi
-    NFQWS_MT_CONFIG_KEY="$NFQWS_MT_KEY" "$python" - "$root" "$NFQWS_MT_PORT" "$updating" <<'PY'
+    NFQWS_MT_CONFIG_KEY="$NFQWS_MT_KEY" "$python" - "$root" "$NFQWS_MT_PORT" "$updating" "$candidate/config.json" <<'PY'
 import json, os, pwd, socket, sys
-root, port, updating = sys.argv[1:]
+root, port, updating, previous = sys.argv[1:]
 secret = os.environ['NFQWS_MT_CONFIG_KEY']
 assert sys.version_info >= (3, 8), 'Python 3.8+ required'
 pwd.getpwnam('nobody')
@@ -285,8 +339,23 @@ import httpx, certifi, h2
 if updating != 'yes':
     with socket.socket() as s:
         s.bind(('0.0.0.0', int(port)))
-with open(root + '/config.json', 'x') as f:
-    json.dump({'port': int(port), 'secret': secret}, f)
+    raw = json.dumps({'port': int(port), 'secret': secret}).encode()
+else:
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError('ambiguous config')
+            result[key] = value
+        return result
+    with open(previous, 'rb') as f:
+        raw = f.read(65537)
+    assert len(raw) <= 65536
+    config = json.loads(raw, object_pairs_hook=unique)
+    assert type(config['port']) is int and config['port'] == int(port)
+    assert config['secret'] == secret, 'Previous config changed; retry the update'
+with open(root + '/config.json', 'xb') as f:
+    f.write(raw)
 os.chmod(root + '/config.json', 0o600)
 PY
     cat > "$root/run.py" <<'PY'
@@ -412,6 +481,13 @@ EOF
             exit 19
         }
 fi
+if [ "$updating" = yes ] && [ "$previous_running" = no ]; then
+    if [ "$NFQWS_MT_METHOD" = docker ]; then docker stop "$container" >/dev/null
+    elif [ "$NFQWS_MT_METHOD" = linux ]; then systemctl stop nfqws-mtproto.service
+    else "$unit" stop; fi
+    msg 'Update verified; the proxy was returned to its previous stopped state. Saved connection:' 'Обновление проверено; прокси возвращён в прежнее остановленное состояние. Сохранённая ссылка:'
+else
+    msg 'Telegram response verified. Add the proxy:' 'Ответ Telegram проверен. Добавьте прокси:'
+fi
 committed=yes
-msg 'Telegram response verified. Add the proxy:' 'Ответ Telegram проверен. Добавьте прокси:'
 printf '%s\n' "$NFQWS_MT_LINK"

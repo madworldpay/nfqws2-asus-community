@@ -1,0 +1,6 @@
+{
+  "build": 106,
+  "selected_openwrt_smartdns_sha256": "a030dcb9d444e99d7ab7b6c75e460553856728a7d2183b4fcdc97b9738d36c1e",
+  "zemidala_sha256": "c7d36c5a192d6ed8b58313452fec65c9d6e40a121b6e3387a70dacefec59d01a",
+  "selected_openwrt_smartdns": "Official signed indices. 24.10 binaries identical, 25.12 wrapper and binaries refreshed with verified same ABI."
+}

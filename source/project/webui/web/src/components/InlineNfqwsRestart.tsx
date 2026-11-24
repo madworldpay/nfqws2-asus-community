@@ -11,10 +11,12 @@ import { useTranslation } from '@/hooks/useTranslation';
 /** An explicit service action beside a saved change. Never runs on mount/save. */
 export const InlineNfqwsRestart = ({
   disabled = false,
+  compact = false,
   onPendingChange,
   onApplied,
 }: {
   disabled?: boolean;
+  compact?: boolean;
   onPendingChange?: (pending: boolean) => void;
   onApplied: () => void;
 }) => {
@@ -61,12 +63,20 @@ export const InlineNfqwsRestart = ({
   return (
     <Stack spacing={1}>
       <Button
-        variant="contained"
+        variant={compact ? 'outlined' : 'contained'}
         disabled={disabled || needSave || working || !canControl}
         onClick={() => void run()}
         aria-busy={working}
       >
-        {t(service ? 'import.restart_service' : 'import.start_service')}
+        {t(
+          service
+            ? compact
+              ? 'import.preset.restart'
+              : 'import.restart_service'
+            : compact
+              ? 'import.preset.start'
+              : 'import.start_service',
+        )}
       </Button>
       {failed && <Alert severity="error">{t('import.service_failed')}</Alert>}
     </Stack>

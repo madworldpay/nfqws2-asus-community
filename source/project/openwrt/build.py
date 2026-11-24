@@ -22,6 +22,9 @@ import urllib.request
 
 ROOT=Path(__file__).resolve().parents[1]
 HERE=Path(__file__).resolve().parent
+catalog_spec=importlib.util.spec_from_file_location('nfqws_native_packaged_catalog',ROOT/'profile-catalog/packaged.py')
+packaged_catalog=importlib.util.module_from_spec(catalog_spec)
+catalog_spec.loader.exec_module(packaged_catalog)
 ASSETS=json.loads((HERE/'assets.json').read_text())
 spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platform.py')
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
@@ -195,6 +198,7 @@ def payload_files(target,engine,source=None):
     files['usr/lib/nfqws2/dpi/paths.sh']=((HERE/'dpi-paths.sh').read_bytes(),0o644)
     files['usr/bin/nfqws2-dpi']=((ROOT/'asus/dpi/cli.sh').read_bytes().replace(b'/opt/bin/php-cgi',b'/usr/bin/php-cgi').replace(b'/opt/lib/nfqws2-asus/dpi/cli.php',b'/usr/lib/nfqws2/dpi/cli.php'),0o755)
     files['usr/share/nfqws2/profile-catalog-public.pem']=((ROOT/'asus/profile-catalog-public.pem').read_bytes(),0o644)
+    files.update({'usr/share/nfqws2/'+name: value for name, value in packaged_catalog.payload(ROOT).items()})
     files['usr/share/nfqws2/technical-channel-public.pem']=((ROOT/'technical-channel/technical-channel-public.pem').read_bytes(),0o644)
     for name in ['worker.php','session.sh','guard.sh']:
         data=(ROOT/'asus/technical-channel'/name).read_bytes().replace(b'/opt/share/nfqws-asus-web',b'/usr/share/nfqws2-web').replace(b'/opt/lib/nfqws2-asus',b'/usr/lib/nfqws2').replace(b'/opt/bin/php-cgi',b'/usr/bin/php-cgi')

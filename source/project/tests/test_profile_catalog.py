@@ -1,6 +1,6 @@
 """A signed catalog never turns a selection into an arbitrary download."""
-import base64, copy, hashlib, json, os, pathlib, subprocess, tempfile, unittest
-from test_dpi_normalize import PHP, PUBLIC
+import base64, copy, hashlib, importlib.util, json, os, pathlib, subprocess, tempfile, unittest
+from test_dpi_normalize import PHP, PUBLIC, ROOT
 
 
 class ProfileCatalogTests(unittest.TestCase):
@@ -96,4 +96,72 @@ class ProfileCatalogTests(unittest.TestCase):
         self.assertEqual(out['error'],'catalog_changed');self.assertFalse(any('/files/' in url for url in out['calls']))
         out=self.transport({'responses':{origin+'catalog.json':self.signed(new)},'next':self.signed(old)},body+"$t->catalog();echo '{}';")
         self.assertEqual(out['error'],'catalog_changed')
+
+    def test_package_api_reads_only_signed_snapshot_and_verifies_document(self):
+        from test_import_document import STRATEGY
+        raw=json.dumps(STRATEGY).encode()
+        digest=hashlib.sha256(raw).hexdigest()
+        manifest=self.manifest()
+        manifest['profiles'][0].update(size=len(raw),sha256=digest)
+        code="""require $argv[1].'/profile-catalog-api.php';
+        $key=file_get_contents($argv[2]);$read=function(){throw new RuntimeException('network_used');};
+        $source=new AsusProfileCatalogTransport($key,$read,$argv[3].'/unused-cache',
+            (int)$argv[4],build:68,packageRoot:$argv[3]);
+        $api=new AsusProfileCatalogApi($source);
+        $post=['cmd'=>'importcatalog','csrf_token'=>'test','source'=>'package'];
+        $list=$api->handle($post);$post['cmd']='importcatalogload';$post['id']='example-profile';$post['sha256']=$argv[5];
+        $loaded=$api->handle($post);
+        file_put_contents($argv[3].'/files/'.$argv[5].'.json',str_repeat(' ',strlen($loaded['document'])));
+        try{$api->handle($post);$tamper='accepted';}catch(RuntimeException $e){$tamper=$e->getMessage();}
+        $post['source']='network';
+        try{$api->handle($post);$mode='accepted';}catch(RuntimeException $e){$mode=$e->getMessage();}
+        echo json_encode(['list'=>$list,'raw'=>$loaded['document'],'tamper'=>$tamper,'mode'=>$mode]);"""
+        with tempfile.TemporaryDirectory() as directory:
+            root=pathlib.Path(directory)
+            (root/'files').mkdir(mode=0o755)
+            (root/'files'/f'{digest}.json').write_bytes(raw)
+            (root/'files'/f'{digest}.json').chmod(0o644)
+            (root/'catalog.json').write_text(self.signed(manifest))
+            (root/'catalog.json').chmod(0o644)
+            (root/'public.pem').write_text(self.public)
+            result=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(root/'public.pem'),str(root),str(os.getuid()),digest],
+                                  capture_output=True,text=True,timeout=15)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            self.assertFalse((root/'unused-cache').exists())
+        self.assertEqual(json.loads(result.stdout),{'list':{**manifest,'build':68},'raw':raw.decode(),
+                         'tamper':'catalog_invalid','mode':'invalid_request'})
+
+    def test_packager_checks_signed_envelope_and_copies_only_exact_bound_documents(self):
+        spec=importlib.util.spec_from_file_location('packaged_catalog',ROOT/'profile-catalog/packaged.py')
+        packaged=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(packaged)
+        raw=b'{}'
+        manifest=self.manifest()
+        digest=manifest['profiles'][0]['sha256']
+        with tempfile.TemporaryDirectory() as directory:
+            project=pathlib.Path(directory)
+            snapshot=project/'profile-catalog/snapshot/v1'
+            (snapshot/'files').mkdir(parents=True)
+            (project/'asus').mkdir()
+            (project/'asus/profile-catalog-public.pem').write_text(self.public)
+            catalog=self.signed(manifest).encode()
+            (snapshot/'catalog.json').write_bytes(catalog)
+            document=snapshot/'files'/f'{digest}.json'
+            document.write_bytes(raw)
+            self.assertEqual(packaged.payload(project),{
+                'profile-catalog/v1/catalog.json':(catalog,0o644),
+                f'profile-catalog/v1/files/{digest}.json':(raw,0o644),
+            })
+            document.write_bytes(b'[]')
+            with self.assertRaisesRegex(RuntimeError,'catalog snapshot'):
+                packaged.payload(project)
+            document.write_bytes(raw)
+            (snapshot/'files'/'extra.json').write_bytes(raw)
+            with self.assertRaisesRegex(RuntimeError,'catalog snapshot'):
+                packaged.payload(project)
+            (snapshot/'files'/'extra.json').unlink()
+            broken=json.loads(catalog);broken['signature']=base64.b64encode(b'\0'*384).decode()
+            (snapshot/'catalog.json').write_text(json.dumps(broken))
+            with self.assertRaisesRegex(RuntimeError,'catalog snapshot'):
+                packaged.payload(project)
 

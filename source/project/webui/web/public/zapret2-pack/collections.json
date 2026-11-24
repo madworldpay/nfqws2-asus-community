@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "collections": {
+    "avatar": {
+      "title": "Avatar / avatarDD zapret-gui",
+      "repository": "avatarDD/zapret-gui",
+      "commit": "582e518cddde85187bec0aac9b38dee94f9a4186",
+      "snapshot_at": "2026-11-21T20:49:20Z",
+      "license": "MIT",
+      "license_text": "MIT License\n\nCopyright (c) 2026 avatarDD\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+      "verification": "Original raw files and LICENSE match GitHub blob SHAs at the pinned commit; no device or strategy execution. Local DPI Detector runs: 0."
+    }
+  },
+  "entries": [
+    {
+      "id": "f94ac1feb6be03907445e178",
+      "title": "Alt 1 — fake + tcp_md5",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "avatar",
+      "source_id": "tcp_alt1",
+      "sha256": "fe1f26637c9888b0c083feb0d82cb32f130395db755ac884a22f522bdde51205",
+      "attribution": "avatarDD/zapret-gui",
+      "updated_at": "2026-11-21",
+      "methods": [
+        "fake",
+        "multisplit"
+      ],
+      "unavailable": [],
+      "adapted": [],
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_alt1.json",
+      "description": "HTTP/TLS: fake с TCP MD5 и multisplit. QUIC: встроенный fake ×6."
+    },
+    {
+      "id": "a982d750522f3b2eda4c2fb5",
+      "title": "HostFake — подмена SNI в fake-пакетах",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "avatar",
+      "source_id": "tcp_hostfake",
+      "sha256": "99215abcd31f18c9157f07739a88105b7d33c45daffcfcefeb79b4e2b05b729a",
+      "attribution": "avatarDD/zapret-gui",
+      "updated_at": "2026-11-21",
+      "methods": [
+        "fake",
+        "hostfakesplit"
+      ],
+      "unavailable": [],
+      "adapted": [],
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_hostfake.json",
+      "description": "HTTP/TLS: fake ×3 с TCP MD5 и hostfakesplit. QUIC: встроенный fake ×6."
+    },
+    {
+      "id": "05d8dff06708190651ad1c70",
+      "title": "Full Combo — HTTP + TLS + QUIC",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "avatar",
+      "source_id": "full_combo",
+      "sha256": "ad3672d88dab7a187e14360ac0307e951323b61808bd986b971dfd26632108fe",
+      "attribution": "avatarDD/zapret-gui",
+      "updated_at": "2026-11-21",
+      "methods": [
+        "fake",
+        "multidisorder"
+      ],
+      "unavailable": [],
+      "adapted": [],
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/full_combo.json",
+      "source_aliases": [
+        "tcp_alt2"
+      ],
+      "description": "HTTP/TLS: fake с TCP MD5 и multidisorder; TLS tcp_seq=-10000. QUIC: fake ×6."
+    },
+    {
+      "id": "d8dcf29d3351df071a21a789",
+      "title": "FakeSplit · HTTP/TLS",
+      "group": "presets",
+      "kind": "strategy",
+      "collection": "avatar",
+      "source_id": "tcp_oob",
+      "sha256": "ffac33e50e459f4b197b64b19f707e282925ae9bc37038cdad0f12aaca26f951",
+      "attribution": "avatarDD/zapret-gui",
+      "updated_at": "2026-11-21",
+      "methods": [
+        "fakedsplit"
+      ],
+      "unavailable": [],
+      "adapted": [
+        "TLS fakedsplit pos=1,midsld normalized to pos=1: pinned v1.0.7 single-marker parse_int16 uses atoi and already resolves the original to absolute byte offset 1; no SNI/midsld split or urgent TCP flag is claimed."
+      ],
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_oob.json",
+      "description": "HTTP 80 и TLS 443: fakedsplit с TTL 4; TLS offset 1."
+    }
+  ],
+  "assets": [],
+  "templates": {
+    "f94ac1feb6be03907445e178": {
+      "config": "NFQWS_ARGS_CUSTOM=\"--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5 --lua-desync=multisplit:pos=1,midsld --new --filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6\"\nNFQWS_ARGS=\"\"\nNFQWS_ARGS_QUIC=\"\"\nNFQWS_ARGS_UDP=\"\"\nNFQWS_BASE_ARGS=\"--lua-init=@RESOURCE_1 --lua-init=@RESOURCE_2\"\nNFQWS_EXTRA_ARGS=\"\"\nNFQWS_ARGS_IPSET=\"\"\nTCP_PORTS=\"80,443\"\nUDP_PORTS=\"443\"\n",
+      "resources": [
+        "36598d78118fd5144c9cfe130bd73981",
+        "927f16944241e3c31a0e0837dc8ba5aa"
+      ]
+    },
+    "a982d750522f3b2eda4c2fb5": {
+      "config": "NFQWS_ARGS_CUSTOM=\"--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5:repeats=3 --lua-desync=hostfakesplit:nofake1:midhost=midsld:tcp_md5 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:repeats=3 --lua-desync=hostfakesplit:nofake1:midhost=midsld:tcp_md5 --new --filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6\"\nNFQWS_ARGS=\"\"\nNFQWS_ARGS_QUIC=\"\"\nNFQWS_ARGS_UDP=\"\"\nNFQWS_BASE_ARGS=\"--lua-init=@RESOURCE_1 --lua-init=@RESOURCE_2\"\nNFQWS_EXTRA_ARGS=\"\"\nNFQWS_ARGS_IPSET=\"\"\nTCP_PORTS=\"80,443\"\nUDP_PORTS=\"443\"\n",
+      "resources": [
+        "36598d78118fd5144c9cfe130bd73981",
+        "927f16944241e3c31a0e0837dc8ba5aa"
+      ]
+    },
+    "05d8dff06708190651ad1c70": {
+      "config": "NFQWS_ARGS_CUSTOM=\"--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multidisorder:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld --new --filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6\"\nNFQWS_ARGS=\"\"\nNFQWS_ARGS_QUIC=\"\"\nNFQWS_ARGS_UDP=\"\"\nNFQWS_BASE_ARGS=\"--lua-init=@RESOURCE_1 --lua-init=@RESOURCE_2\"\nNFQWS_EXTRA_ARGS=\"\"\nNFQWS_ARGS_IPSET=\"\"\nTCP_PORTS=\"80,443\"\nUDP_PORTS=\"443\"\n",
+      "resources": [
+        "36598d78118fd5144c9cfe130bd73981",
+        "927f16944241e3c31a0e0837dc8ba5aa"
+      ]
+    },
+    "d8dcf29d3351df071a21a789": {
+      "config": "NFQWS_ARGS_CUSTOM=\"--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fakedsplit:pos=method+2:ip_ttl=4:ip6_ttl=4 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fakedsplit:pos=1:ip_ttl=4:ip6_ttl=4\"\nNFQWS_ARGS=\"\"\nNFQWS_ARGS_QUIC=\"\"\nNFQWS_ARGS_UDP=\"\"\nNFQWS_BASE_ARGS=\"--lua-init=@RESOURCE_1 --lua-init=@RESOURCE_2\"\nNFQWS_EXTRA_ARGS=\"\"\nNFQWS_ARGS_IPSET=\"\"\nTCP_PORTS=\"80,443\"\nUDP_PORTS=\"\"\n",
+      "resources": [
+        "36598d78118fd5144c9cfe130bd73981",
+        "927f16944241e3c31a0e0837dc8ba5aa"
+      ]
+    }
+  },
+  "resources": {},
+  "sources": {
+    "tcp_alt1": {
+      "path": "config/strategies/builtin/tcp_alt1.json",
+      "sha256": "fe1f26637c9888b0c083feb0d82cb32f130395db755ac884a22f522bdde51205",
+      "git_blob_sha1": "479aad863b9555a76adbe80dbad55b154d793732",
+      "data_base64": "ewogICJpZCI6ICJ0Y3BfYWx0MSIsCiAgIm5hbWUiOiAiQWx0IDEg4oCUIGZha2UgKyB0Y3BfbWQ1IiwKICAiZGVzY3JpcHRpb24iOiAi0JDQu9GM0YLQtdGA0L3QsNGC0LjQstC90LDRjyDRgdGC0YDQsNGC0LXQs9C40Y86IGZha2Ug0YEgVENQIE1ENSDQvtC/0YbQuNC10Lkg0LTQu9GPINC+0LHRhdC+0LTQsCBEUEkiLAogICJ0eXBlIjogImNvbWJpbmVkIiwKICAidmVyc2lvbiI6IDEsCiAgInByb2ZpbGVzIjogWwogICAgewogICAgICAiaWQiOiAiaHR0cDgwIiwKICAgICAgIm5hbWUiOiAiSFRUUCAo0L/QvtGA0YIgODApIiwKICAgICAgImVuYWJsZWQiOiB0cnVlLAogICAgICAiYXJncyI6ICItLWZpbHRlci10Y3A9ODAgLS1maWx0ZXItbDc9aHR0cCAtLXBheWxvYWQ9aHR0cF9yZXEgLS1sdWEtZGVzeW5jPWZha2U6YmxvYj1mYWtlX2RlZmF1bHRfaHR0cDp0Y3BfbWQ1IC0tbHVhLWRlc3luYz1tdWx0aXNwbGl0OnBvcz1tZXRob2QrMiIKICAgIH0sCiAgICB7CiAgICAgICJpZCI6ICJ0bHM0NDMiLAogICAgICAibmFtZSI6ICJUTFMgKNC/0L7RgNGCIDQ0MykiLAogICAgICAiZW5hYmxlZCI6IHRydWUsCiAgICAgICJhcmdzIjogIi0tZmlsdGVyLXRjcD00NDMgLS1maWx0ZXItbDc9dGxzIC0tcGF5bG9hZD10bHNfY2xpZW50X2hlbGxvIC0tbHVhLWRlc3luYz1mYWtlOmJsb2I9ZmFrZV9kZWZhdWx0X3Rsczp0Y3BfbWQ1IC0tbHVhLWRlc3luYz1tdWx0aXNwbGl0OnBvcz0xLG1pZHNsZCIKICAgIH0sCiAgICB7CiAgICAgICJpZCI6ICJxdWljNDQzIiwKICAgICAgIm5hbWUiOiAiUVVJQy9VRFAgKNC/0L7RgNGCIDQ0MykiLAogICAgICAiZW5hYmxlZCI6IHRydWUsCiAgICAgICJhcmdzIjogIi0tZmlsdGVyLXVkcD00NDMgLS1maWx0ZXItbDc9cXVpYyAtLXBheWxvYWQ9cXVpY19pbml0aWFsIC0tbHVhLWRlc3luYz1mYWtlOmJsb2I9ZmFrZV9kZWZhdWx0X3F1aWM6cmVwZWF0cz02IgogICAgfQogIF0KfQo=",
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_alt1.json"
+    },
+    "tcp_hostfake": {
+      "path": "config/strategies/builtin/tcp_hostfake.json",
+      "sha256": "99215abcd31f18c9157f07739a88105b7d33c45daffcfcefeb79b4e2b05b729a",
+      "git_blob_sha1": "c9f2c13e4cee83224c751787ecd7841356217793",
+      "data_base64": "ewogICJpZCI6ICJ0Y3BfaG9zdGZha2UiLAogICJuYW1lIjogIkhvc3RGYWtlIOKAlCDQv9C+0LTQvNC10L3QsCBTTkkg0LIgZmFrZS3Qv9Cw0LrQtdGC0LDRhSIsCiAgImRlc2NyaXB0aW9uIjogItCY0YHQv9C+0LvRjNC30YPQtdGCIGhvc3RmYWtlc3BsaXQ6INC/0L7QtNC80LXQvdGP0LXRgiDQtNC+0LzQtdC9INCyIGZha2Ut0L/QsNC60LXRgtC1LCDQvtCx0YXQvtC00LjRgiBTTkktYmFzZWQgRFBJIiwKICAidHlwZSI6ICJjb21iaW5lZCIsCiAgInZlcnNpb24iOiAxLAogICJwcm9maWxlcyI6IFsKICAgIHsKICAgICAgImlkIjogImh0dHA4MCIsCiAgICAgICJuYW1lIjogIkhUVFAgKNC/0L7RgNGCIDgwKSIsCiAgICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICAgImFyZ3MiOiAiLS1maWx0ZXItdGNwPTgwIC0tZmlsdGVyLWw3PWh0dHAgLS1wYXlsb2FkPWh0dHBfcmVxIC0tbHVhLWRlc3luYz1mYWtlOmJsb2I9ZmFrZV9kZWZhdWx0X2h0dHA6dGNwX21kNTpyZXBlYXRzPTMgLS1sdWEtZGVzeW5jPWhvc3RmYWtlc3BsaXQ6bm9mYWtlMTptaWRob3N0PW1pZHNsZDp0Y3BfbWQ1IgogICAgfSwKICAgIHsKICAgICAgImlkIjogInRsczQ0MyIsCiAgICAgICJuYW1lIjogIlRMUyAo0L/QvtGA0YIgNDQzKSIsCiAgICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICAgImFyZ3MiOiAiLS1maWx0ZXItdGNwPTQ0MyAtLWZpbHRlci1sNz10bHMgLS1wYXlsb2FkPXRsc19jbGllbnRfaGVsbG8gLS1sdWEtZGVzeW5jPWZha2U6YmxvYj1mYWtlX2RlZmF1bHRfdGxzOnRjcF9tZDU6cmVwZWF0cz0zIC0tbHVhLWRlc3luYz1ob3N0ZmFrZXNwbGl0Om5vZmFrZTE6bWlkaG9zdD1taWRzbGQ6dGNwX21kNSIKICAgIH0sCiAgICB7CiAgICAgICJpZCI6ICJxdWljNDQzIiwKICAgICAgIm5hbWUiOiAiUVVJQy9VRFAgKNC/0L7RgNGCIDQ0MykiLAogICAgICAiZW5hYmxlZCI6IHRydWUsCiAgICAgICJhcmdzIjogIi0tZmlsdGVyLXVkcD00NDMgLS1maWx0ZXItbDc9cXVpYyAtLXBheWxvYWQ9cXVpY19pbml0aWFsIC0tbHVhLWRlc3luYz1mYWtlOmJsb2I9ZmFrZV9kZWZhdWx0X3F1aWM6cmVwZWF0cz02IgogICAgfQogIF0KfQo=",
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_hostfake.json"
+    },
+    "full_combo": {
+      "path": "config/strategies/builtin/full_combo.json",
+      "sha256": "ad3672d88dab7a187e14360ac0307e951323b61808bd986b971dfd26632108fe",
+      "git_blob_sha1": "833e618077c9618616ffdb56aa59e4a02d7ddee5",
+      "data_base64": "ewogICJpZCI6ICJmdWxsX2NvbWJvIiwKICAibmFtZSI6ICJGdWxsIENvbWJvIOKAlCBIVFRQICsgVExTICsgUVVJQyIsCiAgImRlc2NyaXB0aW9uIjogItCc0LDQutGB0LjQvNCw0LvRjNC90L7QtSDQv9C+0LrRgNGL0YLQuNC1OiDQstGB0LUg0L/RgNC+0YLQvtC60L7Qu9GLINGBINCw0LPRgNC10YHRgdC40LLQvdGL0LzQuCDQv9Cw0YDQsNC80LXRgtGA0LDQvNC4IGRlc3luYyIsCiAgInR5cGUiOiAiY29tYmluZWQiLAogICJ2ZXJzaW9uIjogMSwKICAicHJvZmlsZXMiOiBbCiAgICB7CiAgICAgICJpZCI6ICJodHRwODAiLAogICAgICAibmFtZSI6ICJIVFRQICjQv9C+0YDRgiA4MCkiLAogICAgICAiZW5hYmxlZCI6IHRydWUsCiAgICAgICJhcmdzIjogIi0tZmlsdGVyLXRjcD04MCAtLWZpbHRlci1sNz1odHRwIC0tcGF5bG9hZD1odHRwX3JlcSAtLWx1YS1kZXN5bmM9ZmFrZTpibG9iPWZha2VfZGVmYXVsdF9odHRwOnRjcF9tZDUgLS1sdWEtZGVzeW5jPW11bHRpZGlzb3JkZXI6cG9zPW1ldGhvZCsyIgogICAgfSwKICAgIHsKICAgICAgImlkIjogInRsczQ0MyIsCiAgICAgICJuYW1lIjogIlRMUyAo0L/QvtGA0YIgNDQzKSIsCiAgICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICAgImFyZ3MiOiAiLS1maWx0ZXItdGNwPTQ0MyAtLWZpbHRlci1sNz10bHMgLS1wYXlsb2FkPXRsc19jbGllbnRfaGVsbG8gLS1sdWEtZGVzeW5jPWZha2U6YmxvYj1mYWtlX2RlZmF1bHRfdGxzOnRjcF9tZDU6dGNwX3NlcT0tMTAwMDAgLS1sdWEtZGVzeW5jPW11bHRpZGlzb3JkZXI6cG9zPTEsbWlkc2xkIgogICAgfSwKICAgIHsKICAgICAgImlkIjogInF1aWM0NDMiLAogICAgICAibmFtZSI6ICJRVUlDL1VEUCAo0L/QvtGA0YIgNDQzKSIsCiAgICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICAgImFyZ3MiOiAiLS1maWx0ZXItdWRwPTQ0MyAtLWZpbHRlci1sNz1xdWljIC0tcGF5bG9hZD1xdWljX2luaXRpYWwgLS1sdWEtZGVzeW5jPWZha2U6YmxvYj1mYWtlX2RlZmF1bHRfcXVpYzpyZXBlYXRzPTYiCiAgICB9CiAgXQp9Cg==",
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/full_combo.json"
+    },
+    "tcp_oob": {
+      "path": "config/strategies/builtin/tcp_oob.json",
+      "sha256": "ffac33e50e459f4b197b64b19f707e282925ae9bc37038cdad0f12aaca26f951",
+      "git_blob_sha1": "a72489cbcb56cdbcfdf7bc3c29caf2741a91a85f",
+      "data_base64": "ewogICJpZCI6ICJ0Y3Bfb29iIiwKICAibmFtZSI6ICJPT0Ig4oCUIGZha2Vkc3BsaXQgKyBkaXNvcmRlciIsCiAgImRlc2NyaXB0aW9uIjogItCh0YLRgNCw0YLQtdCz0LjRjyDRgSBmYWtlZHNwbGl0INC4INC90LDRgNGD0YjQtdC90LjQtdC8INC/0L7RgNGP0LTQutCwINC/0LDQutC10YLQvtCyLCDQuNGB0L/QvtC70YzQt9GD0LXRgiBUVEwgZm9vbGluZyIsCiAgInR5cGUiOiAiY29tYmluZWQiLAogICJ2ZXJzaW9uIjogMSwKICAicHJvZmlsZXMiOiBbCiAgICB7CiAgICAgICJpZCI6ICJodHRwODAiLAogICAgICAibmFtZSI6ICJIVFRQICjQv9C+0YDRgiA4MCkiLAogICAgICAiZW5hYmxlZCI6IHRydWUsCiAgICAgICJhcmdzIjogIi0tZmlsdGVyLXRjcD04MCAtLWZpbHRlci1sNz1odHRwIC0tcGF5bG9hZD1odHRwX3JlcSAtLWx1YS1kZXN5bmM9ZmFrZWRzcGxpdDpwb3M9bWV0aG9kKzI6aXBfdHRsPTQ6aXA2X3R0bD00IgogICAgfSwKICAgIHsKICAgICAgImlkIjogInRsczQ0MyIsCiAgICAgICJuYW1lIjogIlRMUyAo0L/QvtGA0YIgNDQzKSIsCiAgICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICAgImFyZ3MiOiAiLS1maWx0ZXItdGNwPTQ0MyAtLWZpbHRlci1sNz10bHMgLS1wYXlsb2FkPXRsc19jbGllbnRfaGVsbG8gLS1sdWEtZGVzeW5jPWZha2Vkc3BsaXQ6cG9zPTEsbWlkc2xkOmlwX3R0bD00OmlwNl90dGw9NCIKICAgIH0KICBdCn0K",
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_oob.json"
+    },
+    "tcp_alt2": {
+      "path": "config/strategies/builtin/tcp_alt2.json",
+      "sha256": "9798a0f7537b61c99d8c554b52fbebfc71b6b954f1600f671b6787bc9fdef098",
+      "git_blob_sha1": "aa22bebe5056b5c3cba32fa7f0121cf388ab80a5",
+      "data_base64": "ewogICJpZCI6ICJ0Y3BfYWx0MiIsCiAgIm5hbWUiOiAiQWx0IDIg4oCUIG11bHRpZGlzb3JkZXIgKyB0Y3Bfc2VxIG9mZnNldCIsCiAgImRlc2NyaXB0aW9uIjogImZha2Ug0YEgdGNwX21kNSDQuCDRgdC80LXRidC10L3QuNC10Lwgc2VxdWVuY2UgbnVtYmVyLCBtdWx0aWRpc29yZGVyINCy0LzQtdGB0YLQviBtdWx0aXNwbGl0IiwKICAidHlwZSI6ICJjb21iaW5lZCIsCiAgInZlcnNpb24iOiAxLAogICJwcm9maWxlcyI6IFsKICAgIHsKICAgICAgImlkIjogImh0dHA4MCIsCiAgICAgICJuYW1lIjogIkhUVFAgKNC/0L7RgNGCIDgwKSIsCiAgICAgICJlbmFibGVkIjogdHJ1ZSwKICAgICAgImFyZ3MiOiAiLS1maWx0ZXItdGNwPTgwIC0tZmlsdGVyLWw3PWh0dHAgLS1wYXlsb2FkPWh0dHBfcmVxIC0tbHVhLWRlc3luYz1mYWtlOmJsb2I9ZmFrZV9kZWZhdWx0X2h0dHA6dGNwX21kNSAtLWx1YS1kZXN5bmM9bXVsdGlkaXNvcmRlcjpwb3M9bWV0aG9kKzIiCiAgICB9LAogICAgewogICAgICAiaWQiOiAidGxzNDQzIiwKICAgICAgIm5hbWUiOiAiVExTICjQv9C+0YDRgiA0NDMpIiwKICAgICAgImVuYWJsZWQiOiB0cnVlLAogICAgICAiYXJncyI6ICItLWZpbHRlci10Y3A9NDQzIC0tZmlsdGVyLWw3PXRscyAtLXBheWxvYWQ9dGxzX2NsaWVudF9oZWxsbyAtLWx1YS1kZXN5bmM9ZmFrZTpibG9iPWZha2VfZGVmYXVsdF90bHM6dGNwX21kNTp0Y3Bfc2VxPS0xMDAwMCAtLWx1YS1kZXN5bmM9bXVsdGlkaXNvcmRlcjpwb3M9MSxtaWRzbGQiCiAgICB9LAogICAgewogICAgICAiaWQiOiAicXVpYzQ0MyIsCiAgICAgICJuYW1lIjogIlFVSUMvVURQICjQv9C+0YDRgiA0NDMpIiwKICAgICAgImVuYWJsZWQiOiB0cnVlLAogICAgICAiYXJncyI6ICItLWZpbHRlci11ZHA9NDQzIC0tZmlsdGVyLWw3PXF1aWMgLS1wYXlsb2FkPXF1aWNfaW5pdGlhbCAtLWx1YS1kZXN5bmM9ZmFrZTpibG9iPWZha2VfZGVmYXVsdF9xdWljOnJlcGVhdHM9NiIKICAgIH0KICBdCn0K",
+      "source_url": "https://github.com/avatarDD/zapret-gui/blob/582e518cddde85187bec0aac9b38dee94f9a4186/config/strategies/builtin/tcp_alt2.json"
+    }
+  },
+  "deferred": [
+    {
+      "collection": "avatar",
+      "source_id": "tcp_alt2",
+      "sha256": "9798a0f7537b61c99d8c554b52fbebfc71b6b954f1600f671b6787bc9fdef098",
+      "reason": "Identical enabled profile arguments to full_combo; preserve it as that entry's source alias, not a duplicate strategy."
+    },
+    {
+      "collection": "avatar",
+      "source_id": "quic_only",
+      "sha256": "957c7cc3bb439e7c3b89b2d78da527724d71acbff28bdee9943e7114e8ef47d7",
+      "reason": "The repeated QUIC fake technique is already present in Build105; no additional single-technique row.",
+      "related_build105_ids": [
+        "4f3785fd6c53a9be63480cd6"
+      ]
+    },
+    {
+      "collection": "avatar",
+      "source_id": "tcp_default",
+      "sha256": "d693a436318629e443bb6182639f598ac054a1e12cbddae33c97b53f741fa677",
+      "reason": "Deferred by technique-level novelty only: fake plus multisplit already exists in Build105. The exact three-profile source program is not claimed to be a byte-identical duplicate.",
+      "related_build105_ids": [
+        "ac89334af827a86e8b3a7d64",
+        "797e2b590e9de155191490eb"
+      ]
+    },
+    {
+      "collection": "avatar",
+      "source_id": "tcp_syndata",
+      "sha256": "cfc3125759a1bb9d03cc7f4fba45cbfa023aa5869bfae928b21361e268487632",
+      "reason": "Source L7/payload filters exclude SYN; a safe phase-zero adaptation needs explicit limited target scope and hostname-cache warm-up, which this source does not supply."
+    },
+    {
+      "collection": "zemidala",
+      "source_id": "0adf38777f40",
+      "source_commit": "ceb68b94cecf3494eba202a64c54dce5243fef8c",
+      "source_path": "data/AS8402.json",
+      "source_file_sha256": "869b5bba986924b787a77227cd40f38e7d53d0024cca7cf76035d75bfb9ba517",
+      "source_record_sha256": "14d2aee8cec5434c76cb187a8d0c4a3e9931c23aef882bf2b8fe1ee6da09fa9d",
+      "reason": "Redistribution permission is unconfirmed: no license or grant in the pinned repository tree, README or submission form. Steps are not redistributed; community confirmations are not local DPI Detector measurements."
+    },
+    {
+      "collection": "zemidala",
+      "source_id": "1c515c0165d9",
+      "source_commit": "ceb68b94cecf3494eba202a64c54dce5243fef8c",
+      "source_path": "data/AS51570.json",
+      "source_file_sha256": "0046c68728127c29d7065069035ec3bdd6e5e45b2ae51db731f106308a8eee6d",
+      "source_record_sha256": "bed19b4b82c3fecfdc7cde4c12fcaf6dad0d5c6501e91a10912bebe26cce1314",
+      "reason": "Redistribution permission is unconfirmed: no license or grant in the pinned repository tree, README or submission form. Steps are not redistributed; community confirmations are not local DPI Detector measurements."
+    }
+  ]
+}
