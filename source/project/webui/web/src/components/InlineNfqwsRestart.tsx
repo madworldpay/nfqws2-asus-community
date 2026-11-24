@@ -12,9 +12,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 export const InlineNfqwsRestart = ({
   disabled = false,
   onPendingChange,
+  onApplied,
 }: {
   disabled?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  onApplied: () => void;
 }) => {
   const { t } = useTranslation();
   const { csrfToken, isReady, nfqws2, service, authenticated, anonym } =
@@ -22,7 +24,7 @@ export const InlineNfqwsRestart = ({
   const { auth, needSave } = useAppStore();
   const pending = useRef(false);
   const [working, setWorking] = useState(false);
-  const [result, setResult] = useState<'done' | 'failed'>();
+  const [failed, setFailed] = useState(false);
   const canControl =
     !!auth &&
     isReady &&
@@ -34,24 +36,27 @@ export const InlineNfqwsRestart = ({
     if (pending.current || disabled || needSave || !canControl) return;
     pending.current = true;
     setWorking(true);
-    setResult(undefined);
+    setFailed(false);
     onPendingChange?.(true);
+    let applied = false;
     try {
       const { data, error } = await API.action(service ? 'restart' : 'start');
-      setResult(!error && data?.status === 0 ? 'done' : 'failed');
+      applied = !error && data?.status === 0;
     } catch {
-      setResult('failed');
+      applied = false;
     } finally {
       try {
         await API.invalidateStatus();
       } catch {
-        setResult('failed');
+        // The action response is authoritative even if the status refresh fails.
       } finally {
         pending.current = false;
         setWorking(false);
         onPendingChange?.(false);
       }
     }
+    if (applied) onApplied();
+    else setFailed(true);
   };
   return (
     <Stack spacing={1}>
@@ -63,13 +68,7 @@ export const InlineNfqwsRestart = ({
       >
         {t(service ? 'import.restart_service' : 'import.start_service')}
       </Button>
-      {result && (
-        <Alert severity={result === 'done' ? 'success' : 'error'}>
-          {t(
-            result === 'done' ? 'import.service_done' : 'import.service_failed',
-          )}
-        </Alert>
-      )}
+      {failed && <Alert severity="error">{t('import.service_failed')}</Alert>}
     </Stack>
   );
 };

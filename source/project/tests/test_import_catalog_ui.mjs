@@ -8,17 +8,23 @@ import { build } from '../webui/web/node_modules/esbuild/lib/main.js';
 const { chromium } = await import(process.env.NFQWS_PLAYWRIGHT_MODULE || 'playwright');
 const web=fileURLToPath(new URL('../webui/web/',import.meta.url));
 const dir=await mkdtemp(join(tmpdir(),'catalog-ui-'));let browser,server;
+const luaFlow=process.env.NFQWS_TEST_SCOPE==='lua-flow';
 try {
   await build({stdin:{resolveDir:web,loader:'tsx',contents:`
-    import React from 'react';import {createRoot} from 'react-dom/client';
+    import React, {useState} from 'react';import {createRoot} from 'react-dom/client';
     import {ImportDialog} from './src/components/ImportDialog';
     import {Layout} from './src/components/Layout';
     import {TranslationContext} from './src/context/TranslationContext';
+    import {useAppStore} from './src/store/useAppStore';
     import ru from './src/translations/ru.json';import en from './src/translations/en.json';
     const pack=new URLSearchParams(location.search).get('lang')==='en'?en:ru;
     const t=k=>k.split('.').reduce((v,p)=>v?.[p],pack)||k;
-    createRoot(document.getElementById('root')).render(<Layout><TranslationContext.Provider value={{t,langcode:pack===en?'en':'ru'}}><ImportDialog onClose={()=>{}}/></TranslationContext.Provider></Layout>);
-  `},bundle:true,platform:'browser',format:'iife',outfile:join(dir,'fixture.js'),jsx:'automatic',logLevel:'silent',tsconfig:join(web,'tsconfig.app.json'),plugins:[{name:'status-boundary',setup(b){b.onLoad({filter:/hooks\/useStatus\.tsx$/},()=>({contents:'export const useStatus=()=>({csrfToken:"fixture-csrf"});',loader:'tsx'}));b.onLoad({filter:/components\/Editor\.tsx$/},()=>({contents:'import React from "react";export const Editor=({value})=><textarea readOnly value={value}/>;',loader:'tsx'}));}}]});
+    useAppStore.getState().setAuth(true);
+    function Fixture(){const [open,setOpen]=useState(true);return open
+      ? <ImportDialog onClose={()=>setOpen(false)}/>
+      : <button onClick={()=>setOpen(true)}>Open import test</button>;}
+    createRoot(document.getElementById('root')).render(<Layout><TranslationContext.Provider value={{t,langcode:pack===en?'en':'ru'}}><Fixture/></TranslationContext.Provider></Layout>);
+  `},bundle:true,platform:'browser',format:'iife',outfile:join(dir,'fixture.js'),jsx:'automatic',logLevel:'silent',tsconfig:join(web,'tsconfig.app.json'),plugins:[{name:'status-boundary',setup(b){b.onLoad({filter:/hooks\/useStatus\.tsx$/},()=>({contents:'export const useStatus=()=>({csrfToken:"fixture-csrf",service:true,nfqws2:true,isReady:true,authenticated:true});',loader:'tsx'}));b.onLoad({filter:/components\/Editor\.tsx$/},()=>({contents:'import React from "react";export const Editor=({value})=><textarea readOnly value={value}/>;',loader:'tsx'}));}}]});
   const script=await readFile(join(dir,'fixture.js'));
   server=createServer((req,res)=>{res.setHeader('Content-Type',req.url==='/fixture.js'?'text/javascript':'text/html');res.end(req.url==='/fixture.js'?script:'<!doctype html><html><body><div id="root"></div><script src="/fixture.js"></script></body></html>');});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -33,24 +39,46 @@ try {
   const calls=[],selections=[];let offline=false,catalogError='catalog_unavailable';
   const localPack=JSON.parse(await readFile(join(web,'public/zapret2-pack/catalog.json'),'utf8'));
   let localResponse=localPack;
+  const idle={state:'idle',id:null,can_undo:false,config_saved:false,dns_draft_saved:false};
+  let receipt=idle;
   let profiles=[{...profile,id:'provider',title:'Provider preset',category:'provider',provider:'Example ISP',region:'Example region',description:'Адаптация под АСУС. Проверено TCP 8/10. Результат зависит от провайдера.'},profile];
   const bodies=[];
   await page.context().route('**/index.php',async route=>{
-    const post=new URLSearchParams(route.request().postData());const cmd=post.get('cmd');calls.push(cmd);
+    const request=route.request();
+    const post=await new Response(request.postDataBuffer(),{
+      headers:{'content-type':request.headers()['content-type']},
+    }).formData();
+    const cmd=post.get('cmd');calls.push(cmd);
     bodies.push([...post.values()].join('\n'));
     let body;
     if(cmd==='importlocalpack')return route.fulfill({json:localResponse});
     if(cmd==='importlocalentry')return route.fulfill({json:{documents:['{}','{}']}});
-    if(cmd==='importstatus')body={state:'idle',id:null,can_undo:false,config_saved:false,dns_draft_saved:false};
+    if(cmd==='importstatus')body=receipt;
     else if(cmd==='importcatalog')body=offline?{error:catalogError}:{schema_version:1,revision:1,build:68,profiles};
     else if(cmd==='importaddoncatalog')body={schema_version:1,revision:1,build:92,addons:[]};
     else if(cmd==='importcatalogload'){await new Promise(resolve=>setTimeout(resolve,100));body={document:'{}'};}
     else if(cmd==='importinspect')body=document;
-    else if(cmd==='importprepare'){selections.push(JSON.parse(post.get('selection')));body={ready:false,problems:[],warnings:[],required:{files:[],shared:[]},affected_blocks:[],config:'',changes:[],files:[],draft:null,old_draft:null,digest:'e'.repeat(64),proof:null};}
+    else if(cmd==='importprepare'){
+      const selection=JSON.parse(post.get('selection'));selections.push(selection);
+      body={ready:false,problems:[],warnings:[],required:{files:[],shared:[]},affected_blocks:[],config:'',changes:[],files:[],draft:null,old_draft:null,digest:'e'.repeat(64),proof:null};
+      if(luaFlow)Object.assign(body,{
+        ready:selection.trusted_lua,
+        proof:selection.trusted_lua?'fixture-proof':null,
+        problems:selection.trusted_lua?[]:[{code:'lua_trust'}],
+        warnings:[{kind:'lua_dependencies_unchecked',source:'lua'},{kind:'inventory_partial',source:'inventory'}],
+        changes:[{key:'NFQWS_ARGS',before:'old strategy rule',after:'new strategy rule'}],
+      });
+    }
+    else if(luaFlow&&cmd==='importapply'){
+      assert.equal(JSON.parse(post.get('selection')).trusted_lua,true);
+      assert.equal(post.get('proof'),'fixture-proof');
+      body=receipt={...idle,state:'committed',id:post.get('request_id'),can_undo:true,config_saved:true};
+    }
+    else if(luaFlow&&cmd==='restart')body={status:0,output:[]};
     else throw new Error('Unexpected mutation or request: '+cmd);
     await route.fulfill({status:offline&&cmd==='importcatalog'?503:200,contentType:'application/json',body:JSON.stringify(body)});
   });
-  if(!['local-pack','catalog-cards','notes'].includes(process.env.NFQWS_TEST_SCOPE)){
+  if(!['local-pack','catalog-cards','notes','lua-flow'].includes(process.env.NFQWS_TEST_SCOPE)){
   await page.goto(base);assert.equal(calls.includes('importcatalog'),false,'Catalog is fetched only when requested');
   await page.getByRole('button',{name:'Из облака',exact:true}).click();
   await page.getByText('Глобальные стратегии',{exact:true}).waitFor();
@@ -165,6 +193,49 @@ try {
       }
     }
     console.log('PASS strategy notes: right-aligned fields, private storage, cross-tab edits, text search, publisher revisions and identifier isolation');
+  }
+  if(luaFlow){
+    const button=(name)=>page.getByRole('button',{name,exact:true});
+    const save=button('Сохранить выбранное');
+    const restart=button('Перезапустить NFQWS2');
+    const trust=page.getByRole('checkbox',{name:/Доверяю источнику/});
+    await page.goto(base);
+    await button('Библиотека Zapret2').click();
+    const cards=page.getByRole('list',{name:'Библиотека Zapret2'}).getByRole('button');
+    await cards.first().click();
+    await button('Предпросмотр').filter({hasText:'Предпросмотр'}).click();
+    await page.getByText('old strategy rule',{exact:true}).waitFor();
+    await page.getByText('new strategy rule',{exact:true}).waitFor();
+    assert.equal(await trust.isChecked(),false);
+    assert.equal(await save.isDisabled(),true);
+    await trust.check();
+    await save.waitFor({state:'visible'});
+    await page.getByText(/Изменения готовы к сохранению/).waitFor();
+    assert.equal(await save.isEnabled(),true);
+    assert.equal(await page.getByText('new strategy rule',{exact:true}).isVisible(),true);
+    await trust.uncheck();
+    await page.getByText(/Для сохранения этой стратегии подтвердите/).waitFor();
+    assert.equal(await save.isDisabled(),true);
+    assert.deepEqual(selections.map(s=>s.trusted_lua),[false,true,false]);
+    assert.ok(!calls.includes('importapply')&&!calls.includes('restart'));
+    await trust.check();
+    await save.click();
+    await restart.waitFor();
+    assert.ok(!calls.includes('restart'),'Saving never starts or restarts the service');
+    await cards.nth(1).click();
+    assert.equal(await restart.isVisible(),true,'Choosing another preset keeps the pending restart');
+    await button('Закрыть').click();
+    await button('Open import test').click();
+    await restart.waitFor();
+    await restart.click();
+    await page.getByText(/Команда выполнена/).waitFor();
+    assert.equal(await restart.count(),0);
+    assert.equal(calls.filter(cmd=>cmd==='restart').length,1);
+    await button('Закрыть').click();
+    await button('Open import test').click();
+    await page.getByRole('button',{name:'Отменить последний импорт'}).waitFor();
+    assert.equal(await restart.count(),0,'Confirmed activation stays cleared after reopening');
+    console.log('PASS Lua consent, visible comparison, explicit save, pending restart across selection and reopening, explicit activation');
   }
   await page.setViewportSize({width:374,height:710});
   await page.goto(base);

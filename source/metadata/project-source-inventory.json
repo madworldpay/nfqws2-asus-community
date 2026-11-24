@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 4,
-    "sha256": "77a60c200656e08ac5403f38b58657ecec155293323bd5313290399b75cf1c3d"
+    "sha256": "2fcae9c346ff9530cd3b7303a6456e3a296ff1876b18b50c324343638ec2bdf3"
   },
   {
     "path": "LICENSE",
@@ -1146,8 +1146,8 @@
   },
   {
     "path": "keenetic/build.py",
-    "bytes": 10251,
-    "sha256": "285d8c67d8f57c0900e9273876f897ec2bdce75a9d9bceb7d1f99be8f202c12f"
+    "bytes": 11257,
+    "sha256": "5a626aef546107fb76ae2702e9268a187588e6d0f1b417f39fd05fbeeef19ca7"
   },
   {
     "path": "keenetic/check.php",
@@ -1166,13 +1166,28 @@
   },
   {
     "path": "keenetic/postinst",
-    "bytes": 209,
-    "sha256": "91ac5db497a13293f977d558f9db3bf65562d1b9b18da537e41a851bd5c9353f"
+    "bytes": 360,
+    "sha256": "168a899b7bc072de735803dcef1e9148f49b131a38cf7dcbd2f7fdd4309987c8"
   },
   {
     "path": "keenetic/preinst",
     "bytes": 1782,
     "sha256": "f7f6a78772d9ba3b67b85007246cc9e9158e6039c6502492090ed6a9c66dac8e"
+  },
+  {
+    "path": "keenetic/resource-layout.php",
+    "bytes": 6794,
+    "sha256": "374e6a957d0fea84eb927d4cf9242030c7700f45294c37add041b369dbcffa22"
+  },
+  {
+    "path": "keenetic/smartdns-init.sh",
+    "bytes": 308,
+    "sha256": "abe58af0b913835f179d6d5a57357f8339f67296a51ef9314803f2d85e4ea696"
+  },
+  {
+    "path": "keenetic/smartdns.php",
+    "bytes": 6952,
+    "sha256": "2210312c4abf801f1e2d055525daa90cbc5ad93f56bf428d94d99562b88e44da"
   },
   {
     "path": "keenetic/stock.php",
@@ -2386,8 +2401,8 @@
   },
   {
     "path": "tests/test_import_catalog_ui.mjs",
-    "bytes": 18014,
-    "sha256": "b260491ec17411bc4e0b51d6d89d8b4d6d1c7d3625b907bc824f90f708b6c809"
+    "bytes": 21947,
+    "sha256": "2313f88055ff8ca92bcda366f70b7cb23fde4c91694a7d4494566de29e8282ca"
   },
   {
     "path": "tests/test_import_client.mjs",
@@ -4221,8 +4236,8 @@
   },
   {
     "path": "tests/test_zapret2_pack.py",
-    "bytes": 7619,
-    "sha256": "46ba87e4b211e7e0fd9684ccdab35505cca7ee04869e829c6c1dcbef90801821"
+    "bytes": 8514,
+    "sha256": "ca95f585f3921aa5e2e1bae04b466647862ffaa104f3b2efb9d715973ff27986"
   },
   {
     "path": "updates/openwrt-package-manifest.schema.json",
@@ -5806,8 +5821,8 @@
   },
   {
     "path": "webui/web/src/components/Header.tsx",
-    "bytes": 20513,
-    "sha256": "7babd12084ce101be46ba082b106cbabf9bf4eb031cdf0f299f3eab66c564c86"
+    "bytes": 20662,
+    "sha256": "d6d65154b1166f2499c1709cf5cc6ed03865d256305fec0f60d3e09ebcb46e91"
   },
   {
     "path": "webui/web/src/components/ImportAddons.tsx",
@@ -5821,8 +5836,8 @@
   },
   {
     "path": "webui/web/src/components/ImportDialog.tsx",
-    "bytes": 22963,
-    "sha256": "4a3e8c23c4b5b2fd553225bda06d025fbbb8c7f930160e37b63e6695d202a6af"
+    "bytes": 24027,
+    "sha256": "c8a146ff4008c7696105c708a5e9dfd97dd241d0578e8a1f09a4720c13f3ff71"
   },
   {
     "path": "webui/web/src/components/ImportLocalPack.tsx",
@@ -5831,13 +5846,13 @@
   },
   {
     "path": "webui/web/src/components/ImportPreview.tsx",
-    "bytes": 5895,
-    "sha256": "aa35053ee0ac74469e77c20027979b07e646878def0952d15e5c361e11bb6343"
+    "bytes": 7441,
+    "sha256": "fd2ca8183661f53c9b404b868a22823b8b3325b00347f74d5f94291c4bab3e57"
   },
   {
     "path": "webui/web/src/components/ImportSelection.tsx",
-    "bytes": 13308,
-    "sha256": "f2a80151abe4b0b42f402ae93857f91c6a899d3ad5814c85da129d4deadaae6f"
+    "bytes": 12757,
+    "sha256": "975eaeb65d1f6a94e851b8daa19f31747bb2e5ef305676e6ee0db34f5ce63ace"
   },
   {
     "path": "webui/web/src/components/InlineHelp.tsx",
@@ -5846,8 +5861,8 @@
   },
   {
     "path": "webui/web/src/components/InlineNfqwsRestart.tsx",
-    "bytes": 2182,
-    "sha256": "f7140f61926a10933ace13335695c82a0fae11fd36b89e4989f09325e40bab49"
+    "bytes": 2170,
+    "sha256": "32f4519482585168ecb74383a5744e3924c52b24b99620fee4564deea00121ac"
   },
   {
     "path": "webui/web/src/components/IpHealthPanel.tsx",
@@ -6141,8 +6156,8 @@
   },
   {
     "path": "webui/web/src/store/useAppStore.tsx",
-    "bytes": 679,
-    "sha256": "66ed73c0825a6139643ca81bb6668a02c375513e86e987550c61b33f54937256"
+    "bytes": 878,
+    "sha256": "c92732a7d7064942aede2adddd0405a661af7be649641d3f6baa9155299cbd74"
   },
   {
     "path": "webui/web/src/store/useAppearanceStore.ts",
@@ -6151,13 +6166,13 @@
   },
   {
     "path": "webui/web/src/translations/en.json",
-    "bytes": 104814,
-    "sha256": "8a5cb057fa9fffab6b66b2d0980dc1e7dae440daabe173028685d0f27c984957"
+    "bytes": 105032,
+    "sha256": "f28eda5c63291927f84bd5353ad1774b4fba69aee575b0fa8f6b71bbaf9f01a3"
   },
   {
     "path": "webui/web/src/translations/ru.json",
-    "bytes": 167355,
-    "sha256": "a8a1d0385b8a350e4a2ec0442482666630fd0f78a6685a3716758a3f418af274"
+    "bytes": 167686,
+    "sha256": "e567150a510e5ee0a1ae5e2b1bf4f77a8fc6c2151eb6b94af7fcb1d9311357c2"
   },
   {
     "path": "webui/web/src/types/types.ts",

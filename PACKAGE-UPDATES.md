@@ -2,13 +2,13 @@
 
 ## Keenetic и Netcraze
 
-Для этих роутеров Build 101 выпущен отдельным пакетом Entware `nfqws2-keenetic-community`. Архитектуру установленной Entware покажет `opkg print-architecture`. [Выбрать пакет и проверить контрольную сумму](DOWNLOADS.md#keenetic).
+Для этих роутеров Build 105 выпущен отдельным пакетом Entware `nfqws2-keenetic-community`. Архитектуру установленной Entware покажет `opkg print-architecture`. [Выбрать пакет и проверить контрольную сумму](DOWNLOADS.md#keenetic).
 
 <a id="текущая-сборка-и-профили-устройств"></a>
 
 ## ASUS и OpenWrt
 
-Актуальные выпуски — [Build 103 для ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) и [Build 104 для OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104). [Скриншоты Build 100](SCREENSHOTS.md#build100).
+Актуальный общий выпуск — [Build 105](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105). [Скриншоты Build 100](SCREENSHOTS.md#build100).
 
 Чтобы обновиться, откройте в панели «Обновление» и нажмите «Проверить обновления». Панель предложит пакет для вашей прошивки и архитектуры. Нажмите «Подготовить пакет», затем «Установить обновление». Если предыдущая попытка установки Build 100 откатилась с ошибкой `invalid_state`, проверьте обновления заново. Ваши собственные списки сайтов сохранятся.
 
@@ -203,7 +203,7 @@ SmartDNS заново. После обновления проверьте вер
 
 **ASUSWRT-Merlin / Entware:**
 
-Скачайте IPK своей архитектуры из [последнего выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103),
+Скачайте IPK своей архитектуры из [последнего выпуска](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105),
 проверьте SHA256 по `SHA256SUMS` и передайте файл в `/opt/tmp/nfqws2-asus.ipk`.
 Для установки с выключенной обработкой выполните:
 

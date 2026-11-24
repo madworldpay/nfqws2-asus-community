@@ -1,5 +1,7 @@
 # Установка и удаление
 
+<a id="asus-entware"></a>
+
 ## ASUSWRT-Merlin / Entware
 
 ### Перед установкой
@@ -23,34 +25,9 @@
 
 ### Установить одной командой
 
-В SSH роутера с готовой Entware выполните:
+Скопируйте [общую команду установки](QUICKSTART.md#install-command) в SSH-консоль роутера. Установщик выберет пакет для ASUS и проверит его SHA-256. Для установки нужны 128 МБ свободного места в Entware и 32 МБ доступной оперативной памяти.
 
-```sh
-(
-  set -e
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir"
-  trap 'rm -rf "$nfqws_dir"' 0
-  curl -fL --connect-timeout 10 --max-time 60 \
-    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
-    -o "$nfqws_dir/install.sh"
-  sh "$nfqws_dir/install.sh"
-)
-```
-
-Команда одинаковая для поддерживаемых ARMv7 и AArch64.
-
-Установщик скачивает актуальный IPK по HTTPS и сверяет SHA256. Команда выше использует штатный `curl` Merlin; сам установщик также поддерживает GNU `wget`. Для установки нужны
-не менее 128 МБ свободного места в Entware и 32 МБ доступной
-оперативной памяти. Временные файлы размещаются в `/opt/tmp` и удаляются после
-завершения. Чужие файлы установщик не удаляет.
-
-Первый запуск обработки выполняется в панели после настройки. При обновлении
-сохраняются настройки и выбранное состояние службы «включено / выключено». Если актуальная версия
-уже установлена, повторная команда только покажет ссылку на панель.
-
-Для проверки без установки запустите уже скачанный скрипт как `sh install.sh --check`. Этот режим не устанавливает пакет и недостающие компоненты.
+После настройки запустите NFQWS2 из панели. При обновлении сохраняются настройки и состояние службы. Чтобы выполнить проверку скачанным установщиком, используйте `sh install.sh --check`.
 
 ### Установить IPK
 
@@ -106,21 +83,17 @@ IPv6-обработка по умолчанию выключена; это не 
 только нужные ему отсутствующие штатные списки. Существующие файлы сохраняются.
 При ошибке остановки сохраните диагностику и разберите причину, не применяйте force.
 
+<a id="keenetic"></a>
+
+## Keenetic и Netcraze
+
+Включите компонент OPKG в настройках роутера и выберите накопитель для Entware. Когда Entware установится, войдите в её SSH-консоль как `root`. Для установки вручную узнайте архитектуру командой `opkg print-architecture`. [Быстрый старт](QUICKSTART.md#install-command) · [Пакеты для ручной установки](DOWNLOADS.md#keenetic).
+
+В домашней сети откройте `http://<адрес-роутера>:90/nfqws-community/`. Чтобы удалить панель сообщества, выполните в Entware `opkg remove nfqws2-keenetic-community`. Штатной службой NFQWS2 управляет пакет `nfqws2-keenetic`.
+
 ## OpenWrt
 
-Нативный пакет устанавливается без Entware. В SSH роутера от `root` выполните:
-
-```sh
-(
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
-  trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
-  sh "$nfqws_dir/install.sh"
-)
-```
+Подключитесь к роутеру по SSH как `root` и выполните [общую команду установки](QUICKSTART.md#install-command). Установщик подберёт нативный пакет OpenWrt.
 
 После установки откройте адрес панели, выберите устройства и стратегию, сохраните
 настройки и запустите NFQWS2. Для остановки: `/etc/init.d/nfqws2-native stop`.

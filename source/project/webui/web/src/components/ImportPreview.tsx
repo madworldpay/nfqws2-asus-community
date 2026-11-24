@@ -6,16 +6,41 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
+  Checkbox,
+  FormControlLabel,
   Stack,
   Typography,
 } from '@mui/material';
 
 import type { ImportPlan } from '@/api/importClient';
+import { STRATEGY_KEYS, type StrategyKey } from '@/api/shareClient';
 
 import { useTranslation } from '@/hooks/useTranslation';
 
-export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
+export const ImportPreview = ({
+  plan,
+  luaTrust,
+}: {
+  plan: ImportPlan;
+  luaTrust?: {
+    checked: boolean;
+    disabled: boolean;
+    onChange: (checked: boolean) => void;
+  };
+}) => {
   const { t } = useTranslation();
+  const strategyChanges = plan.changes.filter(
+    ({ key, before, after }) =>
+      before !== after && STRATEGY_KEYS.includes(key as StrategyKey),
+  );
+  const openComparison =
+    strategyChanges.find(({ key }) => key === 'NFQWS_ARGS_CUSTOM') ??
+    strategyChanges[0];
+  const needsLuaTrust = plan.problems.some(({ code }) => code === 'lua_trust');
+  const showLuaTrust =
+    needsLuaTrust ||
+    (luaTrust?.checked &&
+      plan.warnings.some(({ kind }) => kind === 'lua_dependencies_unchecked'));
   const text = (v: unknown) => (
     <Typography
       component="pre"
@@ -33,21 +58,41 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
   return (
     <Stack spacing={1}>
       <Alert severity={plan.ready ? 'success' : 'info'}>
-        {t(plan.ready ? 'import.ready' : 'import.needs_choice')}
+        {t(
+          plan.ready
+            ? 'import.ready'
+            : needsLuaTrust && plan.problems.length === 1
+              ? 'import.problems.lua_trust'
+              : 'import.needs_choice',
+        )}
       </Alert>
       {plan.kept_auto_list && (
         <Typography variant="body2">{t('import.kept_auto_list')}</Typography>
       )}
-      {plan.problems.map((p, i) => (
-        <Alert severity="info" key={i}>
-          {Object.prototype.hasOwnProperty.call(en.import.problems, p.code)
-            ? t(`import.problems.${p.code}` as TranslationKey)
-            : t('import.error')}{' '}
-          {p.code === 'unresolved_file'
-            ? p.name || p.alias || p.field || p.key || p.id || ''
-            : p.key || p.name || p.field || p.alias || p.id || ''}
-        </Alert>
-      ))}
+      {plan.problems
+        .filter(({ code }) => code !== 'lua_trust' || plan.problems.length > 1)
+        .map((p, i) => (
+          <Alert severity="info" key={i}>
+            {Object.prototype.hasOwnProperty.call(en.import.problems, p.code)
+              ? t(`import.problems.${p.code}` as TranslationKey)
+              : t('import.error')}{' '}
+            {p.code === 'unresolved_file'
+              ? p.name || p.alias || p.field || p.key || p.id || ''
+              : p.key || p.name || p.field || p.alias || p.id || ''}
+          </Alert>
+        ))}
+      {luaTrust && showLuaTrust && (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={luaTrust.checked}
+              disabled={luaTrust.disabled}
+              onChange={(_, checked) => luaTrust.onChange(checked)}
+            />
+          }
+          label={t('import.trust_lua')}
+        />
+      )}
       {plan.problems.some((p) => p.code === 'unresolved_file') && (
         <Alert severity="info" sx={{ overflowWrap: 'anywhere' }}>
           {t('import.keenetic.missing_files')}
@@ -110,16 +155,22 @@ export const ImportPreview = ({ plan }: { plan: ImportPlan }) => {
       )}
       {plan.warnings.map((warning, index) => (
         <Alert severity="info" key={index}>
-          {t(
-            warning.kind === 'lua_dependencies_unchecked'
-              ? 'import.lua_warning'
-              : 'import.analysis_warning',
-          )}{' '}
-          {warning.source} {warning.name ?? ''}
+          {warning.kind === 'inventory_partial' ? (
+            t('import.inventory_warning')
+          ) : (
+            <>
+              {t(
+                warning.kind === 'lua_dependencies_unchecked'
+                  ? 'import.lua_warning'
+                  : 'import.analysis_warning',
+              )}{' '}
+              {warning.source} {warning.name ?? ''}
+            </>
+          )}
         </Alert>
       ))}
       {plan.changes.map((c) => (
-        <Accordion key={c.key}>
+        <Accordion key={c.key} defaultExpanded={c === openComparison}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             {Object.prototype.hasOwnProperty.call(en.form, c.key)
               ? t(`form.${c.key}` as TranslationKey)

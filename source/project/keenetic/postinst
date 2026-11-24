@@ -6,3 +6,9 @@ state="$root/opt/etc/nfqws-asus-web"
 if [ ! -e "$state" ]; then
     (umask 077 && mkdir "$state")
 fi
+if [ -n "$root" ]; then
+    php=php-cgi
+else
+    php=/opt/bin/php-cgi
+fi
+exec "$php" -n -q -f "$root/opt/lib/nfqws2-asus/keenetic-resource-layout.php"

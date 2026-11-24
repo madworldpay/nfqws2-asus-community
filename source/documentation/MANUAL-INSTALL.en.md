@@ -17,7 +17,7 @@ In the router's SSH session, check the architecture:
 | `armv7-2.6` / `armv7-3.2` | ARMv7 |
 | `aarch64-3.10` | AArch64 |
 
-Download the appropriate IPK and `SHA256SUMS` from the [current release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103).
+Download the appropriate IPK and `SHA256SUMS` from the [current release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105).
 Check the downloaded file on your computer: in Windows PowerShell, use
 `Get-FileHash .\filename.ipk -Algorithm SHA256`; in Linux, use `sha256sum filename.ipk`.
 Replace `filename.ipk` with the name of the downloaded IPK.

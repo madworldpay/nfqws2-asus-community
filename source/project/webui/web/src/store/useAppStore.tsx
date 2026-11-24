@@ -10,6 +10,9 @@ type AppStore = {
   needReload: boolean;
   setNeedReload: (v: boolean) => void;
 
+  importRestartPending: boolean;
+  setImportRestartPending: (v: boolean) => void;
+
   onSave: () => Promise<void>;
   setOnSave: (v: () => Promise<void>) => void;
 };
@@ -23,6 +26,9 @@ export const useAppStore = create<AppStore>((set) => ({
 
   needReload: false,
   setNeedReload: (needReload: boolean) => set({ needReload }),
+
+  importRestartPending: false,
+  setImportRestartPending: (importRestartPending) => set({ importRestartPending }),
 
   onSave: async () => {},
   setOnSave: (onSave: () => Promise<void>) => set({ onSave }),

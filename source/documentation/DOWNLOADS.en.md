@@ -1,8 +1,6 @@
 # Downloads
 
-**Build 101 releases** · [ASUS and OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2)
-
-[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) · [Build 104 for OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104)
+**[Build 105 for all supported platforms](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105)**
 
 [Install with one command](QUICKSTART.en.md#install-command). Use the table if you prefer to choose the file manually.
 
@@ -21,19 +19,19 @@ different firmware can run on the same model.
 
 ## Keenetic and Netcraze
 
-The Build 101 panel installs alongside the stock web interface. It requires Entware, `nfqws2-keenetic` version `1.3.3` and `nfqws-keenetic-web` version `3.0.24` or later. Installation preserves the stock service configuration. [Stock NFQWS2](https://github.com/nfqws/nfqws2-keenetic) · [Stock web interface](https://github.com/nfqws/nfqws-keenetic-web).
+The Build 105 panel installs alongside the stock web interface. It requires Entware, `nfqws2-keenetic` version `1.3.3` and `nfqws-keenetic-web` version `3.0.24` or later. Installation preserves the stock service configuration. [Stock NFQWS2](https://github.com/nfqws/nfqws2-keenetic) · [Stock web interface](https://github.com/nfqws/nfqws-keenetic-web).
 
 Run `opkg print-architecture` in the Entware terminal. Find your architecture in the table and download its package. A vendor entry such as `aarch64-3.10_kn` can appear alongside the base architecture. Use the package for the matching base entry, in this case `aarch64-3.10`.
 
-| Entware architecture | Build 101 package |
+| Entware architecture | Build 105 package |
 | --- | --- |
-| `aarch64-3.10` | [Download ARM64](https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2/nfqws2-keenetic-community_1.3.3%2Bb101-2_aarch64-3.10.ipk) |
-| `mips-3.4` | [Download MIPS](https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2/nfqws2-keenetic-community_1.3.3%2Bb101-2_mips-3.4.ipk) |
-| `mipsel-3.4` | [Download MIPSEL](https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2/nfqws2-keenetic-community_1.3.3%2Bb101-2_mipsel-3.4.ipk) |
+| `aarch64-3.10` | [Download ARM64](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build105/nfqws2-keenetic-community_1.3.3%2Bb105-2_aarch64-3.10.ipk) |
+| `mips-3.4` | [Download MIPS](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build105/nfqws2-keenetic-community_1.3.3%2Bb105-2_mips-3.4.ipk) |
+| `mipsel-3.4` | [Download MIPSEL](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build105/nfqws2-keenetic-community_1.3.3%2Bb105-2_mipsel-3.4.ipk) |
 
 Keenetic specifies MIPSEL for the KN-1711. [Keenetic's instructions for this model](https://support.keenetic.com/carrier/kn-1711/en/20980-installing-the-entware-repository-on-a-usb-drive.html).
 
-Check the SHA-256 digest, copy the IPK to the router and open its directory. Run `opkg install ./filename.ipk` with the downloaded filename. Then open `http://<router-address>:90/nfqws-community/`. [Release, checksums and source code](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build101-r2).
+Check the SHA-256 digest, copy the IPK to the router and open its directory. Run `opkg install ./filename.ipk` with the downloaded filename. Then open `http://<router-address>:90/nfqws-community/`. [Release, checksums and source code](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105).
 
 ## ASUS and OpenWrt
 
@@ -48,7 +46,7 @@ Each IPK contains NFQWS2 and the WebUI in RU and EN. SmartDNS is installed
 using a separate button in the panel. The installer
 automatically selects the current package.
 
-SHA-256 checksums · [ASUS Build 103](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build103/SHA256SUMS) · [OpenWrt Build 104](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build104/SHA256SUMS).
+[SHA-256 checksums for all packages](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build105/SHA256SUMS).
 The source archive ending in `_source.tar.gz` is available alongside the IPK files in each
 release. For your installed version, choose the sources from the same release.
 [Sources in the repository](source/).

@@ -198,6 +198,8 @@ export const Header = () => {
         `> ${platformDisplay[platform].service} ${command}\n${lines}${failed ? `\n${t(command === 'restart' ? 'restart_schedule.restart_failed' : 'restart_schedule.action_failed')}` : ''}`,
       );
       if (!failed && command === 'upgrade') setNeedReload(true);
+      if (!failed && (command === 'start' || command === 'restart'))
+        useAppStore.getState().setImportRestartPending(false);
     } catch {
       setOutput(
         t(
@@ -393,7 +395,7 @@ export const Header = () => {
             {auth && (
               <CommunityActions
                 onImport={() => setImportOpen(true)}
-                importDisabled={needSave}
+                importDisabled={needSave || actionPending}
                 onShare={() => {
                   setShareThanks(0);
                   setShareOpen(true);

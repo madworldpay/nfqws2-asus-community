@@ -43,7 +43,6 @@ export const ImportSelectionView = ({
   csrfToken,
   onChange,
   onError,
-  needsLuaTrust = false,
 }: {
   document: ImportDocument;
   value: ImportSelection;
@@ -51,7 +50,6 @@ export const ImportSelectionView = ({
   csrfToken: string;
   onChange: (value: ImportSelection) => void;
   onError: (e: unknown) => void;
-  needsLuaTrust?: boolean;
 }) => {
   const { t } = useTranslation();
   const [showStrategies, setShowStrategies] = useState(false);
@@ -257,23 +255,6 @@ export const ImportSelectionView = ({
           {t('import.package_files')}:{' '}
           {document.package_files.map((f) => f.name).join(', ')}
         </Alert>
-      )}
-      {(needsLuaTrust ||
-        document.resources.some(
-          (f) => f.kind === 'lua' && value.files.some((p) => p.id === f.id),
-        )) && (
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={value.trusted_lua}
-              disabled={disabled}
-              onChange={(_, checked) =>
-                onChange({ ...value, trusted_lua: checked })
-              }
-            />
-          }
-          label={t('import.trust_lua')}
-        />
       )}
       {!!document.resources.length && (
         <Stack spacing={1}>

@@ -81,6 +81,7 @@ def panel(dist):
     result[PUBLIC+'/index.php'] = (HERE/'web-entry.php').read_bytes(), 0o644
     result[PUBLIC+'/brand.php'] = (HERE/'brand.php').read_bytes(), 0o644
     result[WEB+'/keenetic-stock.php'] = (HERE/'stock.php').read_bytes(), 0o644
+    result[WEB+'/keenetic-smartdns.php'] = (HERE/'smartdns.php').read_bytes(), 0o644
     result[WEB+'/platform-profile.json'] = (b'{"schema_version":1,"platform":"keenetic-entware"}\n', 0o644)
     manifest = json.loads(files[WEB+'/manifest.json'][0])
     manifest.update(name='NFQWS2 · Keenetic / Netcraze', short_name='NFQWS2', start_url='/nfqws-community/')
@@ -96,6 +97,11 @@ def panel(dist):
     result[LIB+'/import-config.php'] = entware.local('webui/web/public/import-config.php')
     result[LIB+'/diagnostics.sh'] = entware.local('asus/diagnostics.sh')
     result[LIB+'/keenetic-diagnostics.sh'] = entware.local('keenetic/diagnostics.sh', True)
+    result[LIB+'/keenetic-resource-layout.php'] = entware.local('keenetic/resource-layout.php')
+    worker, _ = entware.local('asus/smartdns/worker.sh')
+    result[LIB+'/smartdns/worker.sh'] = worker.replace(b'bb=/opt/libexec/nfqws2-asus/busybox', b'bb=/opt/bin/busybox'), 0o755
+    result[LIB+'/smartdns/worker.php'] = entware.local('asus/smartdns/worker.php')
+    result['opt/etc/init.d/S49nfqws-community-smartdns'] = entware.local('keenetic/smartdns-init.sh', True)
     for name in ('guard.sh','probe.sh','drop.sh','stop.sh','worker.php','cli.php'):
         result[LIB+'/dpi/'+name] = entware.local('asus/dpi/'+name)
     result[LIB+'/dpi/paths.sh'] = entware.local('keenetic/dpi-paths.sh')
@@ -128,6 +134,9 @@ def build(args):
         family, checksum=TARGETS[arch]
         stock=vendor_files(args.cache/f'nfqws2-keenetic_{STOCK_VERSION}_{arch}.ipk',checksum)
         files=dict(common)
+        index = PUBLIC+'/index.html'
+        page, mode = files[index]
+        files[index] = page.replace(b'<html ', f'<html data-entware-arch="{arch}" '.encode(), 1), mode
         # Factories are separate from the operator's active config and lists.
         files[SHARE+'/defaults/nfqws2.conf']=stock['opt/etc/nfqws2/nfqws2.conf'],0o600
         resources={}
@@ -141,6 +150,11 @@ def build(args):
                 continue
             files[dest]=raw,0o644
             resources[key]={'bytes':len(raw),'sha256':digest(raw)}
+        for name in ('local-guarded-ts.lua', 'local-tls13-stun.lua'):
+            raw, _ = entware.local('asus/lua/'+name)
+            key = 'lua/'+name
+            files[SHARE+'/factory/'+key] = raw, 0o644
+            resources[key] = {'bytes':len(raw), 'sha256':digest(raw)}
         entware.blob_bundle.add_bundle(files, SHARE, SHARE+'/defaults')
         lists=entware.blob_bundle.add_module_resources(files, SHARE+'/factory/lists', SHARE+'/defaults/blobs')
         for path,(raw,_) in files.items():

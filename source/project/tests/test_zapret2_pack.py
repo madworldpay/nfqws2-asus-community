@@ -72,7 +72,7 @@ class Zapret2PackTests(unittest.TestCase):
     def test_entire_library_resolves_in_the_normal_import_preview(self):
         result = self.php("""
         require $argv[1].'/import-plan.php';
-        $catalog=AsusZapret2Pack::catalog();$counts=[];$errors=[];
+        $catalog=AsusZapret2Pack::catalog();$counts=[];$errors=[];$presetsRequiringTrust=0;
         $ctx='ASUS_CLIENTS4="192.0.2.9"'."\\n";
         foreach(array_merge($catalog['entries'],$catalog['assets']) as $row){
             if(!empty($row['unavailable'])||!empty($row['resident']))continue;
@@ -82,25 +82,37 @@ class Zapret2PackTests(unittest.TestCase):
                 foreach($doc['package_files'] as $f)$local[]=$f+['state'=>'available','bundled_resource'=>true,
                     'bundled_name'=>$f['name'],'bundled_lua'=>$f['kind']==='lua'];
                 $selection=['blocks'=>[],'shared'=>[],'ports'=>[],'files'=>[], 'dns'=>[],
-                    'trusted_lua'=>true,'allow_shared_impact'=>true,'allow_incomplete'=>true];
+                    'trusted_lua'=>false,'allow_shared_impact'=>true,'allow_incomplete'=>true];
                 foreach($doc['values'] as $key=>$value){
                     $area=in_array($key,AsusImportConfig::BLOCKS,true)?'blocks':'shared';
                     $selection[$area][]=compact('key','value');
                 }
                 foreach($doc['ports'] as $key=>$value)$selection['ports'][]=compact('key','value');
                 foreach($doc['resources'] as $f)$selection['files'][]=['id'=>$f['id']];
-                $plan=AsusImportPlan::prepare($doc,$selection,$ctx,['files'=>$local,'scan_truncated'=>false],null);
+                $inventory=['files'=>$local,'scan_truncated'=>false];
+                $plan=AsusImportPlan::prepare($doc,$selection,$ctx,$inventory,null);
+                if(array_column($plan['problems'],'code')===['lua_trust']){
+                    if($plan['ready']||($row['group']==='presets'&&!$plan['changes']))
+                        throw new RuntimeException('The Lua confirmation must block saving and leave comparison available');
+                    $comparison=$plan['changes'];
+                    $selection['trusted_lua']=true;
+                    $plan=AsusImportPlan::prepare($doc,$selection,$ctx,$inventory,null);
+                    if($plan['changes']!==$comparison)
+                        throw new RuntimeException('Lua confirmation changed the planned strategy');
+                    if($row['group']==='presets')$presetsRequiringTrust++;
+                }
                 $unexpected=array_filter($plan['warnings'],fn($w)=>($w['kind']??'')!=='lua_dependencies_unchecked');
                 if(!$plan['ready']||$unexpected||!str_contains($plan['config'],$ctx)||str_contains($plan['config'],'RESOURCE_'))
                     throw new RuntimeException(json_encode([$plan['problems'],$unexpected]));
                 $counts[$row['group']]=1+($counts[$row['group']]??0);
             } catch(Throwable $e){$errors[]=[$row['title'],$e->getMessage()];}
         }
-        echo json_encode([$counts,$errors]);
+        echo json_encode([$counts,$errors,$presetsRequiringTrust]);
         """)
-        counts, errors = result
+        counts, errors, presets_requiring_trust = result
         self.assertEqual(errors[:4], [])
         self.assertEqual(counts['presets'], 98)
+        self.assertEqual(presets_requiring_trust, 26)
         self.assertGreater(sum(counts[k] for k in ('http80','tcp','udp','voice')), 600)
 
     def test_new_module_components_reach_a_real_queue_within_the_existing_budget(self):

@@ -4,9 +4,7 @@
 
 [English](README.en.md)
 
-[Предыдущий общий выпуск](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 для Keenetic и Netcraze](DOWNLOADS.md#keenetic) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
-
-[Build 103 для ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) · [Build 104 для OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104)
+[Build 105 для ASUS, OpenWrt, Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105) · [Выбрать пакет](DOWNLOADS.md) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
 
 <details>
 <summary>Все ссылки проекта</summary>
@@ -31,7 +29,7 @@
 
 **Настройте доступ к YouTube, Instagram и Discord без VPN — прямо на роутере.**
 
-В окне **«Импорт стратегий → Библиотека Zapret2 → Полные пресеты»** можно выбрать одну из **98 готовых стратегий Zapret2**. В каждом пресете собраны его правила и файлы. Поиск работает по названию, автору, приёму и личной заметке. Перед сохранением панель показывает изменения. [Как импортировать пресет](IMPORT.md#zapret2) · [Скриншоты](SCREENSHOTS.md#zapret2).
+В окне **«Импорт стратегий → Библиотека Zapret2 → Полные пресеты»** можно выбрать одну из **98 готовых стратегий Zapret2**. В каждом пресете собраны его правила и файлы. Поиск работает по названию, автору, приёму и личной заметке. Перед сохранением панель показывает изменения. [Как импортировать пресет](IMPORT.md#zapret2) · [Скриншоты](SCREENSHOTS.md#zapret2). Сравнение раскрывается в предпросмотре. Там же можно подтвердить доверие к Lua, если это требуется.
 
 Из того же окна можно импортировать стратегию из облака, свой JSON или текст NFQWS2 с Keenetic. Выберите домашние устройства, для которых нужна стратегия. Их трафик обрабатывает роутер.
 
@@ -39,7 +37,7 @@
 
 Панель устанавливается в текущую прошивку. На ASUS с Asuswrt-Merlin, Keenetic и Netcraze она использует Entware. Для OpenWrt выпускаются нативные пакеты.
 
-**Keenetic и Netcraze.** Панель сообщества использует штатную службу `nfqws2-keenetic`. В домашней сети она открывается по адресу `http://<адрес-роутера>:90/nfqws-community/`. Для Build 101 выпущены пакеты ARM64, MIPS и MIPSEL. [Установка](INSTALL.md#keenetic) · [Пакеты по архитектурам](DOWNLOADS.md#keenetic).
+**Keenetic и Netcraze.** Панель сообщества использует штатную службу `nfqws2-keenetic`. В домашней сети она открывается по адресу `http://<адрес-роутера>:90/nfqws-community/`. Для Build 105 выпущены пакеты ARM64, MIPS и MIPSEL. [Установка](INSTALL.md#keenetic) · [Пакеты по архитектурам](DOWNLOADS.md#keenetic).
 
 **Бесплатно · RU / EN**
 

@@ -1,8 +1,14 @@
 # Updates
 
-## Current release and device profiles
+## Keenetic and Netcraze
 
-The current releases are [Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) and [Build 104 for OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104). [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+For these routers, Build 105 ships as a separate Entware package called `nfqws2-keenetic-community`. Run `opkg print-architecture` to identify your Entware architecture. [Choose a package and verify its checksum](DOWNLOADS.en.md#keenetic).
+
+<a id="current-release-and-device-profiles"></a>
+
+## ASUS and OpenWrt
+
+The current combined release is [Build 105](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105). [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 
 In the update section, check for updates, then use “Prepare package” and “Install update”. The panel selects the package for your firmware and architecture. If Build 100 previously rolled back with `invalid_state`, check for updates again. Your own site lists are preserved.
 
@@ -163,7 +169,7 @@ A partially replaced package is not started without verification: the log is ret
 
 **ASUSWRT-Merlin / Entware:**
 
-Download the IPK for your architecture from the [latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103),
+Download the IPK for your architecture from the [latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105),
 verify SHA256 against `SHA256SUMS` and copy the file to `/opt/tmp/nfqws2-asus.ipk`.
 To install with processing off, run:
 

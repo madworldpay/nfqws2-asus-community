@@ -1,13 +1,13 @@
 [
   {
     "file": "project/webui/web/package.json",
-    "sha256": "f643269526eb26e6e0013ea1d25fa217eb10b75c4240981d72c2fff14d7ee803",
-    "bytes": 2217
+    "sha256": "8b1e7449adf7866d0474d12a92876fe7bae75c0ee643ba871dc482fe14193066",
+    "bytes": 2280
   },
   {
     "file": "project/webui/web/yarn.lock",
-    "sha256": "bf5746ebe22eac43eb4ab457648ff9607f24a77b693e65ea500181c43167ecd8",
-    "bytes": 202891
+    "sha256": "37368e693384b897908773a9fce588e0823020f378004ad97be638eaef7953d2",
+    "bytes": 203505
   },
   {
     "file": "project/webui/web/.yarnrc.yml",

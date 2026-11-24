@@ -69,7 +69,8 @@ export const ImportDialog = ({
 }) => {
   const { t } = useTranslation();
   const { csrfToken } = useStatus();
-  const { needSave } = useAppStore();
+  const { needSave, importRestartPending, setImportRestartPending } =
+    useAppStore();
   const [documents, setDocuments] = useState<string[]>([]);
   const [doc, setDoc] = useState<ImportDocument>();
   const [catalogChoice, setCatalogChoice] = useState<CatalogProfile>();
@@ -83,9 +84,8 @@ export const ImportDialog = ({
     keyof TranslationSchema['import']['errors'] | ''
   >('');
   const [saved, setSaved] = useState(false);
-  const [needsServiceApply, setNeedsServiceApply] = useState(false);
   const [servicePending, setServicePending] = useState(false);
-  const [localLuaTrustRequired, setLocalLuaTrustRequired] = useState(false);
+  const [serviceApplied, setServiceApplied] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
   const [showLocalPack, setShowLocalPack] = useState(false);
@@ -94,6 +94,8 @@ export const ImportDialog = ({
   const keeneticId = useId();
   const titleId = useId();
   const stepsId = useId();
+  const previewRef = useRef<HTMLDivElement>(null);
+  const showingPreview = Boolean(plan);
   const source = useRef<'keenetic' | 'other' | null>(null);
   const mounted = useRef(false);
   const pending = useRef(false);
@@ -124,6 +126,9 @@ export const ImportDialog = ({
       mounted.current = false;
     };
   }, [csrfToken, fail]);
+  useEffect(() => {
+    if (showingPreview) previewRef.current?.scrollIntoView({ block: 'start' });
+  }, [showingPreview]);
   const reload = async () => {
     await Promise.all([
       API.invalidateFileContent('nfqws2.conf'),
@@ -135,11 +140,13 @@ export const ImportDialog = ({
       value: ImportSelection | ((current: ImportSelection) => ImportSelection),
     ) => {
       revision.current++;
-      setSelection(value);
+      setSelection((current) => ({
+        ...(typeof value === 'function' ? value(current) : value),
+        trusted_lua: false,
+      }));
       setPlan(undefined);
       requestId.current = '';
       setSaved(false);
-      setNeedsServiceApply(false);
       setError('');
     },
     [],
@@ -197,8 +204,6 @@ export const ImportDialog = ({
       });
       requestId.current = '';
       setSaved(false);
-      setNeedsServiceApply(false);
-      setLocalLuaTrustRequired(false);
       setUncertain(false);
       const rev = revision.current;
       void run(async () => {
@@ -219,9 +224,6 @@ export const ImportDialog = ({
           const prepared = await prepareImport(csrfToken!, raw, selected);
           if (mounted.current && rev === revision.current) {
             setPlan(prepared);
-            setLocalLuaTrustRequired(
-              prepared.problems.some((p) => p.code === 'lua_trust'),
-            );
             requestId.current = newImportRequestId();
           }
         }
@@ -255,24 +257,36 @@ export const ImportDialog = ({
       setSelection(emptyImportSelection());
       requestId.current = '';
       setSaved(false);
-      setNeedsServiceApply(false);
-      setLocalLuaTrustRequired(false);
     }
   };
   const load = (files: File[]) =>
     loadDocuments(() => readImportFiles(files), files);
-  const review = () =>
+  const review = (trustedLua?: boolean) =>
     void run(async () => {
-      setPlan(undefined);
+      const next = { ...selection, trusted_lua: trustedLua ?? false };
+      requestId.current = '';
+      if (trustedLua === undefined) setPlan(undefined);
+      setSelection(next);
       const rev = revision.current;
-      const p = await prepareImport(csrfToken!, documents, selection);
-      if (mounted.current && rev === revision.current) {
-        setPlan(p);
-        if (p.problems.some((problem) => problem.code === 'lua_trust'))
-          setLocalLuaTrustRequired(true);
-        requestId.current = newImportRequestId();
+      try {
+        const p = await prepareImport(csrfToken!, documents, next);
+        if (mounted.current && rev === revision.current) {
+          setPlan(p);
+          requestId.current = newImportRequestId();
+        }
+      } catch (e) {
+        if (mounted.current && rev === revision.current) {
+          setPlan(undefined);
+          setSelection({ ...next, trusted_lua: false });
+        }
+        throw e;
       }
     });
+  const markRestartPending = (configChanged: boolean) => {
+    if (!configChanged) return;
+    setServiceApplied(false);
+    setImportRestartPending(true);
+  };
   const refresh = () =>
     void run(async () => {
       const s = await importStatus(csrfToken!);
@@ -280,7 +294,7 @@ export const ImportDialog = ({
       setStatus(s);
       if (pendingUndo.current) {
         if (s.id === pendingUndo.current.id && s.state === 'undone') {
-          setNeedsServiceApply(pendingUndo.current.configChanged);
+          markRestartPending(pendingUndo.current.configChanged);
           pendingUndo.current = null;
           setSaved(false);
           setUncertain(false);
@@ -291,7 +305,7 @@ export const ImportDialog = ({
       }
       if (s.id === requestId.current && s.state === 'committed') {
         setSaved(true);
-        setNeedsServiceApply(s.config_saved);
+        markRestartPending(s.config_saved);
         setUncertain(false);
         setPlan(undefined);
         await reload();
@@ -327,7 +341,7 @@ export const ImportDialog = ({
       setStatus(result);
       setUncertain(false);
       setSaved(result.state === 'committed');
-      setNeedsServiceApply(result.state === 'committed' && result.config_saved);
+      markRestartPending(result.state === 'committed' && result.config_saved);
       setPlan(undefined);
       await reload();
       const fresh = await importStatus(csrfToken!);
@@ -338,7 +352,7 @@ export const ImportDialog = ({
       if (needSave || !status?.id || !status.undo_proof) return;
       pendingUndo.current = {
         id: status.id,
-        configChanged: status.config_saved || needsServiceApply,
+        configChanged: status.config_saved,
       };
       setUncertain(true);
       setPlan(undefined);
@@ -346,7 +360,7 @@ export const ImportDialog = ({
       if (s.id !== pendingUndo.current.id || s.state !== 'undone')
         throw new Error('unconfirmed_undo');
       if (mounted.current) {
-        setNeedsServiceApply(pendingUndo.current.configChanged);
+        markRestartPending(pendingUndo.current.configChanged);
         pendingUndo.current = null;
         setStatus(s);
         setSaved(false);
@@ -431,15 +445,27 @@ export const ImportDialog = ({
             </Alert>
           )}
           {saved && <Alert severity="success">{t('import.saved')}</Alert>}
-          {needsServiceApply &&
+          {serviceApplied && (
+            <Alert severity="success">{t('import.service_done')}</Alert>
+          )}
+          {importRestartPending &&
             !uncertain &&
             !pendingUndo.current &&
             status &&
             ['committed', 'undone'].includes(status.state) && (
-              <InlineNfqwsRestart
-                disabled={busy}
-                onPendingChange={setServicePending}
-              />
+              <Stack spacing={1}>
+                {!saved && (
+                  <Alert severity="info">{t('import.restart_pending')}</Alert>
+                )}
+                <InlineNfqwsRestart
+                  disabled={busy}
+                  onPendingChange={setServicePending}
+                  onApplied={() => {
+                    setImportRestartPending(false);
+                    setServiceApplied(true);
+                  }}
+                />
+              </Stack>
             )}
           {status?.state === 'undone' && (
             <Alert severity="success">{t('import.undone')}</Alert>
@@ -608,7 +634,6 @@ export const ImportDialog = ({
               disabled={disabled}
               onChange={edit}
               onError={fail}
-              needsLuaTrust={localLuaTrustRequired}
             />
           )}
           {doc && csrfToken && (
@@ -648,7 +673,7 @@ export const ImportDialog = ({
             </ImportAddons>
           )}
           {plan && (
-            <>
+            <Box ref={previewRef}>
               <Divider />
               {!!(
                 plan.required.files.length || plan.required.shared.length
@@ -665,8 +690,15 @@ export const ImportDialog = ({
                   {t('import.dependencies')}
                 </Button>
               )}
-              <ImportPreview plan={plan} />
-            </>
+              <ImportPreview
+                plan={plan}
+                luaTrust={{
+                  checked: selection.trusted_lua,
+                  disabled: disabled || needSave,
+                  onChange: review,
+                }}
+              />
+            </Box>
           )}
         </Stack>
       </DialogContent>
@@ -676,7 +708,7 @@ export const ImportDialog = ({
         </Button>
         <Button
           disabled={!doc || disabled || needSave || !csrfToken}
-          onClick={review}
+          onClick={() => review()}
         >
           {t('import.preview')}
         </Button>

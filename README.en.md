@@ -4,9 +4,7 @@
 
 [Русский](README.md)
 
-[Previous combined release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build101) · [Build 101 for Keenetic and Netcraze](DOWNLOADS.en.md#keenetic) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
-
-[Build 103 for ASUS](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build103) · [Build 104 for OpenWrt](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build104)
+[Build 105 for ASUS, OpenWrt, Keenetic and Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105) · [Choose a package](DOWNLOADS.en.md) · [Guides](#project-guides) · [Telegram chat](https://t.me/nfqws2AsusCommunityChat) · [Donate](#project-support)
 
 <details>
 <summary>All project links</summary>
@@ -31,7 +29,7 @@
 
 **Set up access to YouTube, Instagram and Discord without a VPN — directly on your router.**
 
-Choose one of the **98 ready-made Zapret2 strategies** under **Import strategies → Zapret2 library → Full presets**. Each preset groups its rules and files. Search by name, author, technique or personal note. Preview the changes before saving. [How to import a preset](IMPORT.en.md#zapret2) · [Screenshots](SCREENSHOTS.en.md#zapret2).
+Choose one of the **98 ready-made Zapret2 strategies** under **Import strategies → Zapret2 library → Full presets**. Each preset groups its rules and files. Search by name, author, technique or personal note. Preview the changes before saving. [How to import a preset](IMPORT.en.md#zapret2) · [Screenshots](SCREENSHOTS.en.md#zapret2). Comparison opens in the preview, where you can also confirm trust in Lua if required.
 
 You can also import a cloud strategy, your own JSON or NFQWS2 text from Keenetic. Select the home devices that should use the strategy. The router processes their traffic.
 
@@ -39,7 +37,7 @@ Test video playback, seeking and voice calls separately.
 
 The panel runs on your existing firmware. It uses Entware on ASUS routers running Asuswrt-Merlin and on Keenetic and Netcraze routers. OpenWrt uses native packages.
 
-**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. Build 101 packages are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
+**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. Build 105 packages are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
 
 **Free · RU / EN**
 

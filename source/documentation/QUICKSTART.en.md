@@ -1,5 +1,32 @@
 # Quick start
 
+<a id="install-command"></a>
+
+## Install with one command
+
+Paste this block into the router’s SSH shell. The same command selects the package for ASUS with Entware, Keenetic or Netcraze with Entware, and native OpenWrt.
+
+On ASUS and KeeneticOS, prepare Entware first. The steps for each family are below.
+
+```sh
+(
+  umask 077
+  nfqws_dir=/tmp/nfqws2-install.$$
+  mkdir "$nfqws_dir" || exit 1
+  trap 'rm -rf "$nfqws_dir"' 0
+  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
+  if [ -x /opt/bin/opkg ]; then
+    PATH=/opt/bin:$PATH
+    if ! command -v curl >/dev/null && ! command -v uclient-fetch >/dev/null; then
+      /opt/bin/opkg update && /opt/bin/opkg install curl ca-bundle || exit 1
+    fi
+  fi
+  { curl -fL --proto '=https' --proto-redir '=https' --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" ||
+    uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
+  sh "$nfqws_dir/install.sh"
+)
+```
+
 ## ASUSWRT-Merlin / Entware
 
 For a router running ASUSWRT-Merlin.
@@ -14,27 +41,7 @@ On a fresh ASUSWRT-Merlin installation, prepare Entware first:
 3. Run `amtm` over SSH, choose `ep` and wait for Entware installation to finish.
 4. Press `e`, then Enter, to leave `amtm` and return to the same SSH shell. Check Entware with `/opt/bin/opkg print-architecture`.
 
-Paste the complete command into that same SSH shell:
-
-```sh
-(
-  set -e
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir"
-  trap 'rm -rf "$nfqws_dir"' 0
-  curl -fL --connect-timeout 10 --max-time 60 \
-    https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh \
-    -o "$nfqws_dir/install.sh"
-  sh "$nfqws_dir/install.sh"
-)
-```
-
-It selects the current IPK for your Entware architecture, verifies SHA256
-and installs the package while preserving settings. After a first install,
-processing stays off; updates retain the previous state. The panel address is printed at the end.
-
-The command uses `curl` supplied with Merlin.
+[Run the common installation command](#install-command) in that SSH shell. On ASUS, first installation leaves processing off. Updates preserve the previous service state.
 
 **Manual installation:** instead of the command above, download the IPK and transfer it
 using WinSCP/SCP or copy it into a USB network share through Samba.
@@ -66,22 +73,16 @@ to stop traffic processing, run:
 /opt/etc/init.d/S51nfqws2 stop
 ```
 
+## Keenetic and Netcraze
+
+On Keenetic or Netcraze, enable the OPKG component, select the Entware drive and wait for Entware to finish installing. Open the Entware SSH shell as `root`. The installer checks the firmware and Entware architecture, installs the matching panel and prints its address. The panel uses the stock NFQWS2 service. [Run the common installation command](#install-command). Open `http://<router-address>:90/nfqws-community/` on your LAN.
+
+On a fresh installation the command verifies the stock IPKs and stages them in a temporary directory to preserve ownership of existing Entware directories. If the stock engine and web interface already meet the version requirements, only the community panel is installed.
+
 ## OpenWrt
 
 For a router running OpenWrt. Entware is not required.
-Connect to the router over SSH as `root` and run:
-
-```sh
-(
-  umask 077
-  nfqws_dir=/tmp/nfqws2-install.$$
-  mkdir "$nfqws_dir" || exit 1
-  trap 'rm -rf "$nfqws_dir"' 0
-  nfqws_url=https://raw.githubusercontent.com/madworldpay/nfqws2-asus-community/main/install.sh
-  { curl -fL --connect-timeout 10 --max-time 60 "$nfqws_url" -o "$nfqws_dir/install.sh" || uclient-fetch -T 20 -O "$nfqws_dir/install.sh" "$nfqws_url"; } &&
-  sh "$nfqws_dir/install.sh"
-)
-```
+Connect over SSH as `root` and [run the common installation command](#install-command).
 
 The installer selects a native package for your OpenWrt version and architecture,
 verifies the signature and SHA256, then prints the panel address.
