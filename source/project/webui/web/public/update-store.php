@@ -118,8 +118,9 @@ final class AsusUpdateStore
         $this->pruneTree('operations/'.$id.'/quiesced-backup','snapshot.json',false,false,false,NfqwsUpdateSnapshotLimits::FILES+1);
         if($this->readFile('operations/'.$id.'/service-state/staging.json')!==null)$this->pruneTree('operations/'.$id.'/service-state','staging.json',true);
         $this->pruneTree('operations/'.$id.'/service-state','cleanup-index.json');
-        if($this->readFile('operations/'.$id.'/rollback/staging.json')!==null)$this->pruneTree('operations/'.$id.'/rollback','staging.json',true,false,true);
-        $this->pruneTree('operations/'.$id.'/rollback','cleanup-index.json',false,false,true);
+        $rollback='operations/'.$id.'/rollback';
+        if($this->readFile($rollback.'/staging.json')!==null)$this->pruneTree($rollback,'staging.json',true,false,true,NfqwsUpdateSnapshotLimits::ASUS_ROLLBACK_INDEX_FILES);
+        $this->pruneTree($rollback,'cleanup-index.json',false,false,true,NfqwsUpdateSnapshotLimits::ASUS_ROLLBACK_INDEX_FILES);
         $partial=$this->readFile('operations/'.$id.'/runtime/staging.json')!==null;
         $this->pruneTree('operations/'.$id.'/runtime',$partial?'staging.json':'closure.json',$partial,true);
         foreach(['apk-keys-prepare','apk-keys-apply']as $ring){$partial=$this->readFile('operations/'.$id.'/'.$ring.'/staging.json')!==null;$this->pruneTree('operations/'.$id.'/'.$ring,$partial?'staging.json':'keys-index.json',$partial);}

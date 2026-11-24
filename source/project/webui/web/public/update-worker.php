@@ -69,7 +69,7 @@ final class AsusUpdateWorker
         $this->store->writeFile('operations/'.$id.'/quiesce-result.json',json_encode(['core_state'=>$core,'version'=>$env['installed'],'restored'=>true,'settings_verified'=>$verified],JSON_THROW_ON_ERROR));$this->quiescePhase($id,$v,'restored');
     }
     private function ticket(string $id,string $phase,array $patch=[]): array
-    {return $this->store->withLock(function()use($id,$phase,$patch){$t=$this->guard()->context($id);$t=array_replace($t,$patch,['phase'=>$phase]);$this->writeTicket($t);return $t;});}
+    {return $this->store->withRetryLock(function()use($id,$phase,$patch){$t=$this->guard()->context($id);$t=array_replace($t,$patch,['phase'=>$phase]);$this->writeTicket($t);return $t;});}
     private function validate(string $id,bool $fresh): array
     {
         $job=$this->store->readOperation($id);if($job['state']!=='applying'||$job['boot_id']!==AsusUpdateStore::boot())throw new RuntimeException('interrupted');

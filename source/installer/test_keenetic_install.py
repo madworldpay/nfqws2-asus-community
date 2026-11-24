@@ -14,7 +14,8 @@ import test_install
 CORE = "nfqws2-keenetic"
 WEB = "nfqws-keenetic-web"
 PANEL = "nfqws2-keenetic-community"
-VERSION = "1.3.3+b106-2"
+BUILD = (test_install.ROOT / "source/project/BUILD_NUMBER").read_text().strip()
+VERSION = f"1.3.3+b{BUILD}-2"
 ABI = {"mipsel-3.4": "mips", "mips-3.4": "mips", "aarch64-3.10": "aarch64"}
 ENTRY = "opt/share/www/nfqws/nfqws-community/index.php"
 OPKG = r"""
@@ -229,7 +230,7 @@ shutil.copyfile(work/"http"/name, args[args.index("-o")+1])
         f = self.fixture
         for changes in [
             {"packages": {CORE: "1.3.4"}},
-            {"packages": {PANEL: "1.3.3+b106-3"}},
+            {"packages": {PANEL: f"1.3.3+b{BUILD}-3"}},
             {"packages": {"nfqws2-asus": "1"}},
             {"packages": {PANEL: VERSION}, "status": "install user unpacked"},
             {"arches": "arch mipsel-3.4 110\narch mips-3.4 110\n"},

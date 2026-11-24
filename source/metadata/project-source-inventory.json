@@ -2,7 +2,7 @@
   {
     "path": "BUILD_NUMBER",
     "bytes": 4,
-    "sha256": "79f0cdc11a64b21e76816c25cc0d066a873134770fba891b54e01445c2620c4c"
+    "sha256": "bcea5d7d8b256f1bda5f90a3ede41899e94b89fccb4e4d2786073b5bfaa0002a"
   },
   {
     "path": "LICENSE",
@@ -275,6 +275,11 @@
     "sha256": "dc9e69304c5f212b3c2c525107b1adcb2c3b1335edc7ac18044a4354498dd32a"
   },
   {
+    "path": "asus/ip-health-sockets.json",
+    "bytes": 2975,
+    "sha256": "c9cfc537c0cc7713aa13f943b4ac379866479f88a55f7095a363ed3b9cb3f4fb"
+  },
+  {
     "path": "asus/ip-health-sockets/control.sh",
     "bytes": 976,
     "sha256": "ed9618c8566d6968b24df9d15aa3b1f5a67ccbe7a9d82b9fb8d2580759b9e889"
@@ -283,11 +288,6 @@
     "path": "asus/ip-health-sockets/worker.php",
     "bytes": 2876,
     "sha256": "0cd88edff25236f8cf8472489d202231cb0aad9b378b1d5583ff4299214ac5e9"
-  },
-  {
-    "path": "asus/ip-health-sockets.json",
-    "bytes": 2975,
-    "sha256": "c9cfc537c0cc7713aa13f943b4ac379866479f88a55f7095a363ed3b9cb3f4fb"
   },
   {
     "path": "asus/ipk/core-postinst",
@@ -350,6 +350,11 @@
     "sha256": "5172c99fc5e2c0c555c853adbd3d3cdcda24d51efb29f9f69d92ce0233656686"
   },
   {
+    "path": "asus/legacy.sh",
+    "bytes": 1288,
+    "sha256": "1d9a3df59557149a35730b1f3a93d8d8a613593807e6a1b2d16188945eba6c38"
+  },
+  {
     "path": "asus/legacy/rt-ac87u-384.13_10/COPYING",
     "bytes": 18693,
     "sha256": "af8067302947c01fd9eee72befa54c7e3ef8a48fecde7fd71277f2290b2bf0f7"
@@ -390,14 +395,14 @@
     "sha256": "8b57aa958571e37e5457be3c43f7328c34df95cde53d49088f5a1baea321af58"
   },
   {
-    "path": "asus/legacy.sh",
-    "bytes": 1288,
-    "sha256": "1d9a3df59557149a35730b1f3a93d8d8a613593807e6a1b2d16188945eba6c38"
-  },
-  {
     "path": "asus/lifecycle.sh",
     "bytes": 13404,
     "sha256": "9003858e1d56c3c654f5430a869b38a909f34f70aa8c4ce7ccca84ef5345ac34"
+  },
+  {
+    "path": "asus/lua-upgrade.php",
+    "bytes": 1232,
+    "sha256": "69a31cee0cb459439b2187f6d6139e2f5b715fa5c641effa350f0e7c1a0f0fcd"
   },
   {
     "path": "asus/lua/local-guarded-ts.lua",
@@ -408,11 +413,6 @@
     "path": "asus/lua/local-tls13-stun.lua",
     "bytes": 3490,
     "sha256": "e77f9d5514469bec59d3ee74d90a83514c2408a4a410d7be7f3e1d42a0900791"
-  },
-  {
-    "path": "asus/lua-upgrade.php",
-    "bytes": 1232,
-    "sha256": "69a31cee0cb459439b2187f6d6139e2f5b715fa5c641effa350f0e7c1a0f0fcd"
   },
   {
     "path": "asus/mtproto/worker.php",
@@ -1715,111 +1715,6 @@
     "sha256": "b8392765f5de5a3794ab3a5723fef40eb860fc2ab2ecd8ed9ae07483af045ffb"
   },
   {
-    "path": "support/dns-share.schema.json",
-    "bytes": 7919,
-    "sha256": "15cbd3d78c5aa71b4acd2763001513a492fa0ffde03486c641e2ec47578909eb"
-  },
-  {
-    "path": "support/dpi-analysis-v2.schema.json",
-    "bytes": 81738,
-    "sha256": "ee25a91e9e310daaeddfc332adfaf13886e30413d8ce71dc08aec165c46174ce"
-  },
-  {
-    "path": "support/dpi-catalog.json",
-    "bytes": 7513,
-    "sha256": "52707b3e160db4402d8b84d79b735a5c83c704195c3f292e66f9227f81354f6c"
-  },
-  {
-    "path": "support/dpi-detector-MIT.txt",
-    "bytes": 1066,
-    "sha256": "4388d45f8991e92b72eee74917664fb4d5bb1340ad63e3f6b0eac8854fd39152"
-  },
-  {
-    "path": "support/dpi-envelope.schema.json",
-    "bytes": 2570,
-    "sha256": "a2ea87ee5f251629a12882742d97168b16de0347bd552553ff59a1ce7cca6d2f"
-  },
-  {
-    "path": "support/dpi-native-defaults.json",
-    "bytes": 39743,
-    "sha256": "f273f8d65cd0077ea53075f2f952879675335058def1bacc3d4747b0b054b5c5"
-  },
-  {
-    "path": "support/dpi-profile.json",
-    "bytes": 6029,
-    "sha256": "20cd83c3c4504f852a787bb7afa3ac463c345209d410bd8fd80a0798c5d76887"
-  },
-  {
-    "path": "support/dpi-report.schema.json",
-    "bytes": 86472,
-    "sha256": "971764cec0d5a6044e2b791eedbdb8de5c0d26c3dd55f663eabd30640720424e"
-  },
-  {
-    "path": "support/dpi-saved.schema.json",
-    "bytes": 70761,
-    "sha256": "ef2bdf708f48f5ef487672912c45707735aa593e9ec651b37541f28c9a6b36c6"
-  },
-  {
-    "path": "support/import-addon-catalog.schema.json",
-    "bytes": 1891,
-    "sha256": "fa0ef5a2c20f380e400b86d35e8acabd7ab6706aea98e58a84f56fce8d9a1416"
-  },
-  {
-    "path": "support/import-addon.schema.json",
-    "bytes": 916,
-    "sha256": "352e9030f67c3c068d70d39f2e7dffcda438c7ed0961659a97add4fd58b3ea7d"
-  },
-  {
-    "path": "support/profile-catalog.schema.json",
-    "bytes": 2329,
-    "sha256": "855f5f64846b5b05d99b6f49f44530b5ba64ad79e07527fdeaecacc8c1664129"
-  },
-  {
-    "path": "support/report.schema.json",
-    "bytes": 151768,
-    "sha256": "8d9edfd2a2bc6690a8f33c361404d7cebe942430d6fb78c7f7f0a73a98b8581b"
-  },
-  {
-    "path": "support/resources-v2.schema.json",
-    "bytes": 7075,
-    "sha256": "3a50216186a43f636747762e2cea885971e039d2ee533edb0cc64ed5a1813a59"
-  },
-  {
-    "path": "support/resources.schema.json",
-    "bytes": 5793,
-    "sha256": "04b4e2810f7083f14b59ae45eec93bad3ffaf2039e27619759810f5783896e0c"
-  },
-  {
-    "path": "support/share-envelope.schema.json",
-    "bytes": 4204,
-    "sha256": "b2670f02e0f1f7df05ad4256fc4485e73810dff99a496fa80642b634dcccbab8"
-  },
-  {
-    "path": "support/share-v4.schema.json",
-    "bytes": 5571,
-    "sha256": "48c1b0a4bb2b4a303beaf3b164daa8462d2672e3c03afcdf1cb9b49bb685e406"
-  },
-  {
-    "path": "support/smartdns-catalog.json",
-    "bytes": 2312,
-    "sha256": "c725f601175c60f985934d05be0508ef2a219dba48de9bf834f6242cd060cc5a"
-  },
-  {
-    "path": "support/smartdns-preset-bootstrap.json",
-    "bytes": 1404,
-    "sha256": "e307beac3efc4de94271d235afdc7089470b03bd3c242ff4f77d85c2b878242b"
-  },
-  {
-    "path": "support/strategy-v2.schema.json",
-    "bytes": 3619,
-    "sha256": "7de23e3365cbff8101401e5fde6d685d154b2c5f557b68b8924e773a68e3b8f5"
-  },
-  {
-    "path": "support/strategy.schema.json",
-    "bytes": 3110,
-    "sha256": "727a688c6ae2039ab6fbe2c0debce61a344cabaf724846de079c56428bc1c823"
-  },
-  {
     "path": "support-relay/README.md",
     "bytes": 13683,
     "sha256": "be1402b8ef919bd45afadc35f548655ae6c96049da16a00304c52eeec3c3110a"
@@ -1948,6 +1843,111 @@
     "path": "support-relay/src/nfqws_support/validation.py",
     "bytes": 3097,
     "sha256": "9582e78fa45d3e9b8ebe8517848b4dc44aa1e94129010a359648cf44c062d34e"
+  },
+  {
+    "path": "support/dns-share.schema.json",
+    "bytes": 7919,
+    "sha256": "15cbd3d78c5aa71b4acd2763001513a492fa0ffde03486c641e2ec47578909eb"
+  },
+  {
+    "path": "support/dpi-analysis-v2.schema.json",
+    "bytes": 81738,
+    "sha256": "ee25a91e9e310daaeddfc332adfaf13886e30413d8ce71dc08aec165c46174ce"
+  },
+  {
+    "path": "support/dpi-catalog.json",
+    "bytes": 7513,
+    "sha256": "52707b3e160db4402d8b84d79b735a5c83c704195c3f292e66f9227f81354f6c"
+  },
+  {
+    "path": "support/dpi-detector-MIT.txt",
+    "bytes": 1066,
+    "sha256": "4388d45f8991e92b72eee74917664fb4d5bb1340ad63e3f6b0eac8854fd39152"
+  },
+  {
+    "path": "support/dpi-envelope.schema.json",
+    "bytes": 2570,
+    "sha256": "a2ea87ee5f251629a12882742d97168b16de0347bd552553ff59a1ce7cca6d2f"
+  },
+  {
+    "path": "support/dpi-native-defaults.json",
+    "bytes": 39743,
+    "sha256": "f273f8d65cd0077ea53075f2f952879675335058def1bacc3d4747b0b054b5c5"
+  },
+  {
+    "path": "support/dpi-profile.json",
+    "bytes": 6029,
+    "sha256": "20cd83c3c4504f852a787bb7afa3ac463c345209d410bd8fd80a0798c5d76887"
+  },
+  {
+    "path": "support/dpi-report.schema.json",
+    "bytes": 86472,
+    "sha256": "971764cec0d5a6044e2b791eedbdb8de5c0d26c3dd55f663eabd30640720424e"
+  },
+  {
+    "path": "support/dpi-saved.schema.json",
+    "bytes": 70761,
+    "sha256": "ef2bdf708f48f5ef487672912c45707735aa593e9ec651b37541f28c9a6b36c6"
+  },
+  {
+    "path": "support/import-addon-catalog.schema.json",
+    "bytes": 1891,
+    "sha256": "fa0ef5a2c20f380e400b86d35e8acabd7ab6706aea98e58a84f56fce8d9a1416"
+  },
+  {
+    "path": "support/import-addon.schema.json",
+    "bytes": 916,
+    "sha256": "352e9030f67c3c068d70d39f2e7dffcda438c7ed0961659a97add4fd58b3ea7d"
+  },
+  {
+    "path": "support/profile-catalog.schema.json",
+    "bytes": 2329,
+    "sha256": "855f5f64846b5b05d99b6f49f44530b5ba64ad79e07527fdeaecacc8c1664129"
+  },
+  {
+    "path": "support/report.schema.json",
+    "bytes": 151768,
+    "sha256": "8d9edfd2a2bc6690a8f33c361404d7cebe942430d6fb78c7f7f0a73a98b8581b"
+  },
+  {
+    "path": "support/resources-v2.schema.json",
+    "bytes": 7075,
+    "sha256": "3a50216186a43f636747762e2cea885971e039d2ee533edb0cc64ed5a1813a59"
+  },
+  {
+    "path": "support/resources.schema.json",
+    "bytes": 5793,
+    "sha256": "04b4e2810f7083f14b59ae45eec93bad3ffaf2039e27619759810f5783896e0c"
+  },
+  {
+    "path": "support/share-envelope.schema.json",
+    "bytes": 4204,
+    "sha256": "b2670f02e0f1f7df05ad4256fc4485e73810dff99a496fa80642b634dcccbab8"
+  },
+  {
+    "path": "support/share-v4.schema.json",
+    "bytes": 5571,
+    "sha256": "48c1b0a4bb2b4a303beaf3b164daa8462d2672e3c03afcdf1cb9b49bb685e406"
+  },
+  {
+    "path": "support/smartdns-catalog.json",
+    "bytes": 2312,
+    "sha256": "c725f601175c60f985934d05be0508ef2a219dba48de9bf834f6242cd060cc5a"
+  },
+  {
+    "path": "support/smartdns-preset-bootstrap.json",
+    "bytes": 1404,
+    "sha256": "e307beac3efc4de94271d235afdc7089470b03bd3c242ff4f77d85c2b878242b"
+  },
+  {
+    "path": "support/strategy-v2.schema.json",
+    "bytes": 3619,
+    "sha256": "7de23e3365cbff8101401e5fde6d685d154b2c5f557b68b8924e773a68e3b8f5"
+  },
+  {
+    "path": "support/strategy.schema.json",
+    "bytes": 3110,
+    "sha256": "727a688c6ae2039ab6fbe2c0debce61a344cabaf724846de079c56428bc1c823"
   },
   {
     "path": "technical-channel/README.en.md",
@@ -3181,8 +3181,8 @@
   },
   {
     "path": "tests/test_package_update_apply.py",
-    "bytes": 34738,
-    "sha256": "2c2899b16c788bc66a1602a7a06922bb389672893b0874f44f9c6cd147232666"
+    "bytes": 36944,
+    "sha256": "6f91496c2ad4af18a5b2051ddba76af690e0e90369cdaa18815baefc7567686b"
   },
   {
     "path": "tests/test_package_update_budget.py",
@@ -3236,8 +3236,8 @@
   },
   {
     "path": "tests/test_package_update_prepare.py",
-    "bytes": 47811,
-    "sha256": "065baa04b4a0c22ff0a44969cba9b38ab07199e97ad7a94b8a3c383d036ae3bd"
+    "bytes": 49548,
+    "sha256": "2dd5a0abfbd14c4922c2dde05713e084ffb698487b982003592d54f6b9535641"
   },
   {
     "path": "tests/test_package_update_progress.mjs",
@@ -3271,8 +3271,8 @@
   },
   {
     "path": "tests/test_package_update_rollback.py",
-    "bytes": 48157,
-    "sha256": "39482d3ff35cdefe718ff3bfa9b4bd1b1e71a0064e4180d826f75367ced60eb7"
+    "bytes": 50866,
+    "sha256": "07d2b2d415ce2190b23d74a2216c19388ffcd1dbb0cc72f333a3bb1f36ac4f04"
   },
   {
     "path": "tests/test_package_update_runtime.py",
@@ -4420,26 +4420,6 @@
     "sha256": "b6976be8b8f2befc6daf9e9ce69b33e9b75cea70ed59c2a71bf0f36c908ae462"
   },
   {
-    "path": "updates/openwrt-package-manifest.schema.json",
-    "bytes": 2523,
-    "sha256": "dc4de6f2bf4ca52c4830997cf6066f504f8fc48b9fca9f05aacfb54a0908186a"
-  },
-  {
-    "path": "updates/package-manifest.schema.json",
-    "bytes": 2051,
-    "sha256": "55e2e485ffead63c0df94133004315af664e1edfccc282fbf9a4422587aa99a4"
-  },
-  {
-    "path": "updates/trusted-release-key-legacy.pem",
-    "bytes": 625,
-    "sha256": "6f8572dc3bada188fdd1c3aa7df9306d0206553e7456c55945a0ebc92c875103"
-  },
-  {
-    "path": "updates/trusted-release-key.pem",
-    "bytes": 625,
-    "sha256": "71962562fd9732ae24bc3abce3f48c0e3a0da4b73582d4b2a207e346a6ac2fb8"
-  },
-  {
     "path": "updates-feed/README.md",
     "bytes": 4512,
     "sha256": "1307dfda84a4a66b1aa9c7163f1db75d2d648445a291f793000e3f1ce0e330d9"
@@ -4468,6 +4448,26 @@
     "path": "updates-feed/server.py",
     "bytes": 5615,
     "sha256": "ec8e5caedc20d67e20777955257f242c888ba25a522a00ad4f93929e9508d386"
+  },
+  {
+    "path": "updates/openwrt-package-manifest.schema.json",
+    "bytes": 2523,
+    "sha256": "dc4de6f2bf4ca52c4830997cf6066f504f8fc48b9fca9f05aacfb54a0908186a"
+  },
+  {
+    "path": "updates/package-manifest.schema.json",
+    "bytes": 2051,
+    "sha256": "55e2e485ffead63c0df94133004315af664e1edfccc282fbf9a4422587aa99a4"
+  },
+  {
+    "path": "updates/trusted-release-key-legacy.pem",
+    "bytes": 625,
+    "sha256": "6f8572dc3bada188fdd1c3aa7df9306d0206553e7456c55945a0ebc92c875103"
+  },
+  {
+    "path": "updates/trusted-release-key.pem",
+    "bytes": 625,
+    "sha256": "71962562fd9732ae24bc3abce3f48c0e3a0da4b73582d4b2a207e346a6ac2fb8"
   },
   {
     "path": "webui/.github/ISSUE_TEMPLATE/bug_report.md",
@@ -4588,6 +4588,11 @@
     "path": "webui/screenshot.jpg",
     "bytes": 309972,
     "sha256": "82bb9c4a32908bd3cbcc70adc0bab02b95cd10ba37236404d77fd293e14be730"
+  },
+  {
+    "path": "webui/web.mk",
+    "bytes": 2822,
+    "sha256": "0f9588302be7453137e206eeea977cb5f2178bdb4d181402f9d4ee10b3fa7b2a"
   },
   {
     "path": "webui/web/.editorconfig",
@@ -5245,41 +5250,6 @@
     "sha256": "461b5bb81dbd94a17fb7a9d96319cb712330d2fc525b39032e78d3fbb60cf6e3"
   },
   {
-    "path": "webui/web/public/strategy-picker/concurrency.js",
-    "bytes": 3073,
-    "sha256": "66fe10f8312b9844a038832c7f87ad74f3b0c977bfdffeb7c9f181bcb5893c08"
-  },
-  {
-    "path": "webui/web/public/strategy-picker/custom.js",
-    "bytes": 8648,
-    "sha256": "db6ebebefe89630838e0d1bdef09786f7dcb9684ecfc4dd082afa9abd4bcaf49"
-  },
-  {
-    "path": "webui/web/public/strategy-picker/index.html",
-    "bytes": 11973,
-    "sha256": "d8578fd975f550df0a5d6b21f14fa5bc1a3fadf39382d456c785000e5e182afc"
-  },
-  {
-    "path": "webui/web/public/strategy-picker/metrics.js",
-    "bytes": 5293,
-    "sha256": "280a6bbc271cbb9be26a4146184a141609e0058de62027ac8540b08597c90b95"
-  },
-  {
-    "path": "webui/web/public/strategy-picker/picker.css",
-    "bytes": 6488,
-    "sha256": "4109b4058f4e3f3f32762c7c834ae86b3b3e135a4351540c88649b277045a6ea"
-  },
-  {
-    "path": "webui/web/public/strategy-picker/picker.js",
-    "bytes": 77828,
-    "sha256": "be2816a3a3ef29400893a7f9735b2d20e664e81149b26361fb6c45f84c7e7d9b"
-  },
-  {
-    "path": "webui/web/public/strategy-picker/supplement.js",
-    "bytes": 10004,
-    "sha256": "28416b25d86818051caf9c6c3708be227a6c3c65cde2ccff516656a924eabdb8"
-  },
-  {
     "path": "webui/web/public/strategy-picker-admission.php",
     "bytes": 15437,
     "sha256": "cf35549a11321790c959ed1479555963857bf97b519ccdfc4e677d2756c6436c"
@@ -5343,6 +5313,41 @@
     "path": "webui/web/public/strategy-picker-targets.php",
     "bytes": 5442,
     "sha256": "887ebcb4b32123cedb26d0444e557c4ed43a7430b13a8d343e4809566ae0b95a"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/concurrency.js",
+    "bytes": 3073,
+    "sha256": "66fe10f8312b9844a038832c7f87ad74f3b0c977bfdffeb7c9f181bcb5893c08"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/custom.js",
+    "bytes": 8648,
+    "sha256": "db6ebebefe89630838e0d1bdef09786f7dcb9684ecfc4dd082afa9abd4bcaf49"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/index.html",
+    "bytes": 11973,
+    "sha256": "d8578fd975f550df0a5d6b21f14fa5bc1a3fadf39382d456c785000e5e182afc"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/metrics.js",
+    "bytes": 5293,
+    "sha256": "280a6bbc271cbb9be26a4146184a141609e0058de62027ac8540b08597c90b95"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/picker.css",
+    "bytes": 6488,
+    "sha256": "4109b4058f4e3f3f32762c7c834ae86b3b3e135a4351540c88649b277045a6ea"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/picker.js",
+    "bytes": 77828,
+    "sha256": "be2816a3a3ef29400893a7f9735b2d20e664e81149b26361fb6c45f84c7e7d9b"
+  },
+  {
+    "path": "webui/web/public/strategy-picker/supplement.js",
+    "bytes": 10004,
+    "sha256": "28416b25d86818051caf9c6c3708be227a6c3c65cde2ccff516656a924eabdb8"
   },
   {
     "path": "webui/web/public/strategy-supplement.php",
@@ -5496,13 +5501,13 @@
   },
   {
     "path": "webui/web/public/update-prepare.php",
-    "bytes": 21008,
-    "sha256": "4c5bb22ce553a69d52a5c363a4b66e4a5135be935340d9b4b0f57fa6a4bc7c57"
+    "bytes": 21117,
+    "sha256": "31499ba29c77d236a56f04573ae475880495395c8dcf3b5bc69ec19606255ff0"
   },
   {
     "path": "webui/web/public/update-rollback.php",
-    "bytes": 52773,
-    "sha256": "0ce2a936737a5a8355fc6cf3d0e04c849ae29e1b0de41282b2650cd516ebda93"
+    "bytes": 52871,
+    "sha256": "6ef0883489df2145148a8cab8ba65aa511d886cf46b667b1da3c89f8771ac5ef"
   },
   {
     "path": "webui/web/public/update-runtime.php",
@@ -5516,13 +5521,13 @@
   },
   {
     "path": "webui/web/public/update-snapshot-limits.php",
-    "bytes": 223,
-    "sha256": "7057e721523e430d311b0250beec21f1643e86bda3b31e1c449980af3153d2c3"
+    "bytes": 510,
+    "sha256": "05575f525d7250067f3aa971cfc352a2ed2f99140303f9b315ea21996629a076"
   },
   {
     "path": "webui/web/public/update-store.php",
-    "bytes": 20592,
-    "sha256": "8aa6768dc32ffab583d2753a7d01cb59de03ef650071f1d72bfafe82f978d671"
+    "bytes": 20690,
+    "sha256": "0acb0bd07131713e8166573e3e88637e56939d483c739595c4d4833583b4c337"
   },
   {
     "path": "webui/web/public/update-transport.php",
@@ -5536,8 +5541,8 @@
   },
   {
     "path": "webui/web/public/update-worker.php",
-    "bytes": 31529,
-    "sha256": "ccc7b4b33ebaee68a40c64c5d2ed9c983d1006e82bc85c285ee8172fbb64bc83"
+    "bytes": 31534,
+    "sha256": "6f0ecc204015feeea11d93745a66ab1cea0009e363f4243a71a32ef8b2004e47"
   },
   {
     "path": "webui/web/public/vendor-idna/idn/Idn.php",
@@ -5650,6 +5655,11 @@
     "sha256": "0afac6f8baae6d55fe700ffd5159e9ee9206b2dd770e2911758868ffba08937c"
   },
   {
+    "path": "webui/web/public/zapret2-pack.php",
+    "bytes": 9678,
+    "sha256": "93a84996d7d4859db68350c28b8e2c8c98560f08f06da61e95eb0271f22a5061"
+  },
+  {
     "path": "webui/web/public/zapret2-pack/COLLECTIONS-NOTES.md",
     "bytes": 5259,
     "sha256": "8c0b075fa46ca101b129649d84b415acbdda5dd93af923b1dd68e3573b338624"
@@ -5708,11 +5718,6 @@
     "path": "webui/web/public/zapret2-pack/zemidala-index.json",
     "bytes": 32588,
     "sha256": "3e41daa64a8b9bc61fac7878f9279686dacd35f009b9c0533550130ef269c638"
-  },
-  {
-    "path": "webui/web/public/zapret2-pack.php",
-    "bytes": 9678,
-    "sha256": "93a84996d7d4859db68350c28b8e2c8c98560f08f06da61e95eb0271f22a5061"
   },
   {
     "path": "webui/web/src/api/.gitignore",
@@ -6543,11 +6548,6 @@
     "path": "webui/web/yarn.lock",
     "bytes": 203505,
     "sha256": "37368e693384b897908773a9fce588e0823020f378004ad97be638eaef7953d2"
-  },
-  {
-    "path": "webui/web.mk",
-    "bytes": 2822,
-    "sha256": "0f9588302be7453137e206eeea977cb5f2178bdb4d181402f9d4ee10b3fa7b2a"
   },
   {
     "path": "webui/zemidala-offline.json",

@@ -265,7 +265,7 @@ final class AsusUpdateRollback
         foreach($m['aux']['migration']['files'] as $name=>$_)$names[]='aux/migration/'.$name;
         foreach($m['aux']['owners'] as $name=>$meta)if($meta!==null)$names[]='aux/owners/'.$name;
         $files=[];foreach(array_merge($names,$quarantined) as $name){
-            self::name($name);if(count($files)>=512)throw new RuntimeException('rollback_failed');$meta=self::file($directory.'/'.$name,$owner,self::CAP,true);
+            self::name($name);if(count($files)>=NfqwsUpdateSnapshotLimits::ASUS_ROLLBACK_INDEX_FILES)throw new RuntimeException('rollback_failed');$meta=self::file($directory.'/'.$name,$owner,self::CAP,true);
             $files[$name]=['mode'=>$meta['mode'],'size'=>$meta['size'],'sha256'=>$meta['sha256'],'uid'=>$meta['uid']];
         }ksort($files);$raw=json_encode(['files'=>$files],JSON_THROW_ON_ERROR);if(strlen($raw)>131072)throw new RuntimeException('rollback_failed');
         $tmp=$directory.'/.cleanup-'.bin2hex(random_bytes(8));self::write($tmp,$raw);if(!rename($tmp,$directory.'/cleanup-index.json'))throw new RuntimeException('rollback_failed');
@@ -280,7 +280,7 @@ final class AsusUpdateRollback
         $add('archive/debian-binary',4,hash('sha256',"2.0\n"));
         foreach(['package.ipk','archive/data.tar.gz','archive/control.tar.gz'] as $name)$add($name,self::CAP,str_repeat('0',64));
         $add('snapshot.json',131072,str_repeat('0',64));$raw=json_encode(['files'=>$files],JSON_THROW_ON_ERROR);
-        if(count($files)>512||strlen($raw)>131072)throw new RuntimeException('rollback_unavailable');self::write($directory.'/staging.json',$raw);
+        if(count($files)>NfqwsUpdateSnapshotLimits::ASUS_ROLLBACK_INDEX_FILES||strlen($raw)>131072)throw new RuntimeException('rollback_unavailable');self::write($directory.'/staging.json',$raw);
     }
     private static function defaults(array $defaults,array $settings):array
     {

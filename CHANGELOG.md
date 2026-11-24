@@ -2,6 +2,13 @@
 
 [Чат сообщества в Telegram](https://t.me/nfqws2AsusCommunityChat)
 
+## Build 107 для ASUS, OpenWrt, Keenetic и Netcraze
+
+- Исправлено обновление ASUS из панели с сохранением списков автообучения.
+- Установщик поддерживает более крупные резервные копии для отката и корректно работает, когда панель проверяет ход установки.
+- Для всех поддерживаемых семейств действует [одна команда установки](README.md#install-command).
+- [Переход со старых сборок ASUS](PACKAGE-UPDATES.md#переход-на-build-107-после-ошибки-обновления-asus) · [Скачать Build 107](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build107).
+
 ## Build 106 для ASUS, OpenWrt, Keenetic и Netcraze
 
 - В импорте один раздел «Стратегии» с поиском по названиям, авторам и личным заметкам.

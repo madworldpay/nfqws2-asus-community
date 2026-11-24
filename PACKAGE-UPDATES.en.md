@@ -1,5 +1,12 @@
 # Updates
 
+## Upgrading to Build 107 after an ASUS update error
+
+If the panel stopped with `invalid_state`, `rollback_unavailable`, or `busy`, run the
+[unified installation command](README.en.md#install-command) once via SSH.
+The installer selects the package automatically. You can upgrade directly from
+Build 105 or 106. Refresh the panel when it completes. Future updates are available in the panel.
+
 ## Keenetic and Netcraze
 
 For these routers, Build 105 ships as a separate Entware package called `nfqws2-keenetic-community`. Run `opkg print-architecture` to identify your Entware architecture. [Choose a package and verify its checksum](DOWNLOADS.en.md#keenetic).

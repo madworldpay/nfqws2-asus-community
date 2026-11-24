@@ -427,6 +427,39 @@ class PackageUpdatePrepareTests(unittest.TestCase):
         code="require $argv[1].'/update-prepare.php';$m=new ReflectionMethod('AsusUpdateSnapshot','ownerAllowed');$base='etc/nfqws2/device-profiles/';$out=[];foreach([['saved-0123456789abcdef/lists/auto.list',0100644],['stock/lists/custom-auto.list',0100644],['saved-0123456789abcdef/lua/injected.lua',0100644],['bad-id/lists/auto.list',0100644],['saved-0123456789abcdef/lists/auto.list',0100666],['saved-0123456789abcdef/lists',0040755]]as [$p,$mode])$out[]=$m->invoke(null,$base.$p,['uid'=>65534,'mode'=>$mode],0);echo json_encode($out);"
         r=subprocess.run([PHP,'-n','-r',code,str(PUBLIC)],capture_output=True,text=True,timeout=5)
         self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(r.stdout,'[true,true,false,false,false,false]')
+
+    def test_update_snapshot_accepts_learning_lists_from_picker_runs(self):
+        job = '0123456789abcdef' * 2
+        base = f'etc/nfqws2/strategy-picker/{job}/saved-0123456789abcdef'
+        cases = [
+            (f'{base}/lists/auto.list', 0o100644, 65534, True),
+            (f'{base}/lists/synthesis-auto.list', 0o100644, 65534, True),
+            (f'{base}/lists/custom-auto.list', 0o100644, 65534, True),
+            (f'{base}/lists/auto.list', 0o100664, 65534, False),
+            (f'{base}/lists/auto.list', 0o120777, 65534, False),
+            (f'{base}/lists/auto.list', 0o100644, 1000, False),
+            (f'{base}/lists', 0o040755, 65534, False),
+            (f'{base}/lua/custom.lua', 0o100644, 65534, False),
+            (f'{base}/lists/imported/auto.list', 0o100644, 65534, False),
+            (f'{base}/lists/..', 0o100644, 65534, False),
+            (f'etc/nfqws2/strategy-picker/{job[:-1]}/saved-0123456789abcdef/lists/auto.list', 0o100644, 65534, False),
+        ]
+        code = """
+        require $argv[1].'/update-prepare.php';
+        $predicate = new ReflectionMethod('AsusUpdateSnapshot', 'ownerAllowed');
+        $results = [];
+        foreach (json_decode($argv[2], true) as [$path, $mode, $uid, $expected]) {
+            $results[] = $predicate->invoke(null, $path, ['mode' => $mode, 'uid' => $uid], 0);
+        }
+        echo json_encode($results, JSON_THROW_ON_ERROR);
+        """
+        result = subprocess.run(
+            [PHP, '-n', '-r', code, str(PUBLIC), json.dumps(cases)],
+            capture_output=True, text=True, timeout=5,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), [expected for *_, expected in cases])
+
     def test_snapshot_tracks_original_owner_and_group_but_keeps_backup_private(self):
         opt,config,web=self.fixture();self.assertIn('value',self.call('snapshot'))
         snapshot=json.loads((self.base/'backup/snapshot.json').read_text());row=snapshot['files']['etc/nfqws2/nfqws2.conf']

@@ -17,6 +17,50 @@ from test_dpi_normalize import PHP, PUBLIC, ROOT
 OPKG = ROOT / '.work/packaging-audit-20261012/opkg-x64'
 
 
+class PackageRollbackIndexTests(unittest.TestCase):
+    def test_rollback_indexes_accept_combined_payload_and_migration_counts(self):
+        with tempfile.TemporaryDirectory() as work:
+            code = r"""
+            require $argv[1].'/update-rollback.php';
+            $store = new AsusUpdateStore($argv[2], (int)$argv[3]);
+            $directory = $store->directory('rollback');
+            $meta = ['size' => 0, 'sha256' => hash('sha256', '')];
+            $files = []; $migration = [];
+            for ($i = 0; $i < 456; $i++) $files['share/nfqws2-asus/file-'.$i] = $meta;
+            for ($i = 0; $i < 63; $i++) $migration['snapshot/lists/file-'.$i] = $meta;
+            $metadata = array_fill_keys(['control', 'conffiles', 'preinst', 'postinst', 'prerm',
+                'postrm', 'busybox-migration-aarch64-3.10'], $meta);
+            $aux = ['migration' => ['files' => $migration], 'owners' => []];
+            $staging = new ReflectionMethod('AsusUpdateRollback', 'staging');
+            $staging->invoke(null, $directory, $files, $metadata, $aux, "#!/bin/sh\nexit 0\n");
+            $names = array_keys(json_decode(file_get_contents($directory.'/staging.json'), true)['files']);
+            foreach ($names as $name) {
+                $path = $directory.'/'.$name;
+                if (!is_dir(dirname($path))) mkdir(dirname($path), 0700, true);
+                touch($path); chmod($path, 0600);
+            }
+            file_put_contents($directory.'/snapshot.json', json_encode([
+                'payload' => $files, 'metadata' => $metadata, 'aux' => $aux,
+            ]));
+            $index = new ReflectionMethod('AsusUpdateRollback', 'index');
+            $index->invoke(null, $directory, (int)$argv[3]);
+            $complete = json_decode(file_get_contents($directory.'/cleanup-index.json'), true)['files'];
+            $store->writeFile('rollback/foreign-note', 'keep');
+            $prune = new ReflectionMethod('AsusUpdateStore', 'pruneTree');
+            $prune->invoke($store, 'rollback', 'cleanup-index.json', false, false, true,
+                NfqwsUpdateSnapshotLimits::ASUS_ROLLBACK_INDEX_FILES);
+            echo json_encode([count($names), count($complete),
+                !file_exists($directory.'/payload/share/nfqws2-asus/file-455'),
+                file_get_contents($directory.'/foreign-note')]);
+            """
+            result = subprocess.run(
+                [PHP, '-n', '-r', code, str(PUBLIC), work, str(os.getuid())],
+                capture_output=True, text=True, timeout=10,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertEqual(json.loads(result.stdout), [535, 535, True, 'keep'])
+
+
 @unittest.skipUnless(OPKG.is_file(), 'actual Entware opkg fixture required')
 class PackageRollbackTests(unittest.TestCase):
     def setUp(self):

@@ -16,9 +16,12 @@ final class AsusUpdateSnapshot
         if($stat['uid']===$owner)return true;
         if($stat['uid']!==65534||($stat['mode']&0170000)!==0100000)return false;
         if(preg_match('~^etc/nfqws2/lists/[a-zA-Z0-9_.-]+$~D',$relative)===1)return true;
-        // Isolated strategies learn as nobody too. Only their bounded list
-        // namespace is delegated; metadata, Lua and directories remain root-owned.
-        return ($stat['mode']&0022)===0&&preg_match('~^etc/nfqws2/device-profiles/(?:stock|saved-[a-f0-9]{16})/lists/[a-zA-Z0-9_.-]{1,128}$~D',$relative)===1;
+        // Saved strategies and individual picker runs delegate learning lists
+        // to nobody. Their directories and all other resources stay root-owned.
+        return ($stat['mode']&0022)===0&&preg_match(
+            '~^etc/nfqws2/(?:device-profiles/(?:stock|saved-[a-f0-9]{16})|strategy-picker/[a-f0-9]{32}/(?:stock|saved-[a-f0-9]{16}))/lists/(?!\.{1,2}$)[a-zA-Z0-9_.-]{1,128}$~D',
+            $relative
+        )===1;
     }
     private static function collect(string $opt,int $owner): array
     {

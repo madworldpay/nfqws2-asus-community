@@ -325,6 +325,48 @@ class PackageUpdateApplyTests(unittest.TestCase):
             self.assertFalse((self.base/'installs').exists())
         first=self.client_apply();second=self.client_apply()
         self.assertEqual(first['id'],second['id']);self.assertEqual(self.await_finished()['state'],'succeeded');self.assertEqual((self.base/'installs').read_text(),'opkg')
+    def test_worker_ticket_advances_after_brief_control_lock_contention(self):
+        code = r"""
+        require $argv[1].'/update-worker.php';
+        $store = new AsusUpdateStore($argv[2], (int)$argv[3]);
+        $id = $argv[4];
+        $identity = AsusUpdateLifecycle::identity(getmypid());
+        $store->writeFile('transaction.json', json_encode([
+            'schema' => 1, 'id' => $id, 'boot_id' => AsusUpdateStore::boot(),
+            'worker' => $identity, 'installer' => null, 'phase' => 'validating',
+            'intent' => ['mode' => 'stopped'],
+        ], JSON_THROW_ON_ERROR));
+        echo "ready\n";
+        if (fgets(STDIN) !== "advance\n") exit(2);
+        $worker = new AsusUpdateWorker($store, new AsusUpdatePrepare($store),
+            options: ['owner' => (int)$argv[3]]);
+        try {
+            $ticket = (new ReflectionMethod($worker, 'ticket'))->invoke($worker, $id, 'stopping');
+            echo json_encode(['phase' => $ticket['phase']], JSON_THROW_ON_ERROR);
+        } catch (Throwable $error) {
+            echo json_encode(['error' => $error->getMessage()], JSON_THROW_ON_ERROR);
+        }
+        """
+        command = [str(self.php), '-n', '-r', code, str(self.application),
+                   str(self.state), str(os.getuid()), self.id]
+        with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, text=True) as worker:
+            try:
+                self.assertEqual(worker.stdout.readline(), 'ready\n')
+                with (self.state/'control.lock').open('r+b') as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX)
+                    worker.stdin.write('advance\n')
+                    worker.stdin.flush()
+                    try:
+                        worker.wait(timeout=.2)
+                    except subprocess.TimeoutExpired:
+                        pass
+                stdout, stderr = worker.communicate(timeout=3)
+                self.assertEqual(worker.returncode, 0, stderr + stdout)
+                self.assertEqual(json.loads(stdout), {'phase': 'stopping'})
+            finally:
+                if worker.poll() is None:
+                    worker.kill()
     def client_apply(self):
         # The HTTP API maps a short nonblocking journal lock to 409 busy.
         # Reuse the same request ID just as a client retry does.
