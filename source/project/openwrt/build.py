@@ -25,6 +25,9 @@ HERE=Path(__file__).resolve().parent
 catalog_spec=importlib.util.spec_from_file_location('nfqws_native_packaged_catalog',ROOT/'profile-catalog/packaged.py')
 packaged_catalog=importlib.util.module_from_spec(catalog_spec)
 catalog_spec.loader.exec_module(packaged_catalog)
+engine_spec=importlib.util.spec_from_file_location('nfqws_engine_release',ROOT/'core/engine_release.py')
+engine_release=importlib.util.module_from_spec(engine_spec)
+engine_spec.loader.exec_module(engine_release)
 ASSETS=json.loads((HERE/'assets.json').read_text())
 spec=importlib.util.spec_from_file_location('nfqws_native_platform',HERE/'platform.py')
 platform=importlib.util.module_from_spec(spec);spec.loader.exec_module(platform)
@@ -88,7 +91,13 @@ def source_payload(cache,offline=False):
         data=outer.extractfile(member).read()
     with tarfile.open(fileobj=io.BytesIO(data))as inner:
         # Read individual regular files. Never extract upstream archive paths.
-        return {m.name.removeprefix('./'):inner.extractfile(m).read()for m in inner if m.isfile()}
+        files = {m.name.removeprefix('./'):inner.extractfile(m).read()for m in inner if m.isfile()}
+    for name, raw in engine_release.read(cache).items():
+        if name.startswith('lua/'):
+            files['opt/etc/nfqws2/'+name+'.gz'] = gzip.compress(raw,compresslevel=9,mtime=0)
+        else:
+            files[name] = raw
+    return files
 
 
 def prepare_engine(target,source,upx=None):
@@ -168,7 +177,7 @@ def payload_files(target,engine,source=None):
     list_pins = blob_bundle.add_module_resources(
         files, 'usr/share/nfqws2/factory/lists', 'usr/share/nfqws2/defaults/blobs')
     baseline={'schema_version':1,'package_version':target['version'],'web_version':(ROOT/'VERSION').read_text().strip(),
-        'build_number':target['application_build'], 'engine':{'version':'1.0.7','provider':'nfqws2-keenetic',
+        'build_number':target['application_build'], 'engine':{**engine_release.PROVENANCE,
             'sha256':hashlib.sha256(engine).hexdigest(),'elf_class':target['elf']['class'],'elf_machine':target['elf']['machine']},'resources':{},'package_lists':list_pins}
     for name,(data,_)in files.items():
         for kind,directory in [('lua','lua'),('blob','blobs')]:
@@ -359,7 +368,10 @@ def build_native(series,package_arch,cache,output,offline=False,upx=None,release
     target=native_metadata(series,package_arch,release);output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
     source=source_payload(cache,offline);engine=prepare_engine(target,source,upx)
     with tempfile.TemporaryDirectory(prefix='nfqws-native-package-')as td:
-        payload=device_profiles.integrate(payload_files(target,engine,source)|web_payload()|smartdns_payload(target,cache,offline),'openwrt')
+        payload = payload_files(target,engine,source) | web_payload() | smartdns_payload(target,cache,offline)
+        public_payload.add_synthesis_seeds(payload, 'usr/share/nfqws2-web', 'usr/share/nfqws2',
+                                           'usr/share/nfqws2/defaults/lua', target['application_build'])
+        payload = device_profiles.integrate(payload, 'openwrt')
         stage=Path(td)/'payload';write_files(stage,payload)
         hooks={key:package_hook(target,action)for key,action in [('preinst','preinstall'),('postinst','postinstall'),('prerm','preremove'),('postrm','postremove')]}
         if target['format']=='ipk':

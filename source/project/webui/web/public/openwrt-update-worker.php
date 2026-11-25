@@ -123,7 +123,8 @@ final class NfqwsOpenWrtUpdateWorker
                 $this->store->writeFile('native-transaction.json',json_encode(['schema'=>1,'id'=>$id,'boot_id'=>AsusUpdateStore::boot(),'worker'=>$identity,'manager'=>null,'phase'=>'validating','format'=>$environment['format'],'intent'=>$intent],JSON_THROW_ON_ERROR));$ticket=true;
                 $this->store->update($id,['identity'=>$identity,'intent'=>$intent,'phase'=>'validating']);$this->guard()->context($id);
                 $candidate=$this->prepare->candidate($id,true);$preflight=$this->prepare->inspect($id,$candidate,'apk-keys-apply');
-                NfqwsOpenWrtUpdatePackage::space($environment['overlay_free'],$environment['ram_free'],$candidate['package'],NfqwsOpenWrtUpdateSnapshot::estimate($root),$environment['runtime_bytes']);
+                // The verified local archive and runtime already occupy space in this filesystem.
+                NfqwsOpenWrtUpdatePackage::space($environment['overlay_free'],$environment['ram_free'],$candidate['package'],NfqwsOpenWrtUpdateSnapshot::estimate($root),$environment['runtime_bytes'],staged:true);
                 $this->store->writeFile($base.'/native-preflight.json',json_encode($preflight,JSON_THROW_ON_ERROR));
                 $original=NfqwsOpenWrtUpdatePayload::capture($environment['format']);$this->store->writeFile($base.'/original-payload.json',json_encode($original,JSON_THROW_ON_ERROR));
                 $this->store->writeFile($base.'/original-settings.json',json_encode(NfqwsOpenWrtUpdateSnapshot::state($root),JSON_THROW_ON_ERROR));

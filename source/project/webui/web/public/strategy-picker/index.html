@@ -10,10 +10,13 @@
 <p id="warning">Во время проверки интернет может ненадолго прерваться. Если закрыть вкладку или уйти со страницы, роутер остановит подбор и начнёт возвращать исходные настройки. При потере связи это может занять несколько минут. Чтобы проверить результат, снова откройте подбор.</p>
 <label><span id="search-label">Что проверить</span> <select id="search" disabled><option id="search-synthesis" value="synthesis">Создать новую стратегию</option><option id="search-profiles" value="profiles">Сравнить готовые стратегии</option></select></label>
 <p id="search-help">Создание новой стратегии пока в бета-версии. Роутер пробует разные настройки и повторно проверяет лучшие варианты. Улучшение не гарантируется. Проверки идут по IPv4.</p>
-<p id="repeat-hint">Каждый прогон использует результаты предыдущего. Лучший вариант можно применить после завершения подбора.</p>
 <fieldset id="rounds-fieldset" disabled><legend id="rounds-title">Количество прогонов</legend>
 <label for="rounds-value" id="rounds-label">Прогонов подряд: от 2 до 10</label>
 <input id="rounds-value" type="text" value="2" inputmode="numeric" pattern="[2-9]|10" maxlength="2" autocomplete="off" aria-describedby="rounds-help rounds-error">
+<details id="round-help"><summary id="round-help-title">Как работают прогоны</summary>
+<ol><li id="round-help-first">В первом прогоне роутер замеряет исходную стратегию и, если доступно для выбранной цели, сток. Затем он проверяет варианты до указанного лимита и повторно измеряет перспективные.</li>
+<li id="round-help-next">Во втором и следующих прогонах генератор использует результаты предыдущих. Он развивает удачные находки и пробует другие сочетания. Уже проверенные сочетания пропускаются, пока они есть в памяти. При сравнении со стоком удачную стратегию предыдущего прогона проверяют отдельно ещё дважды.</li></ol>
+</details>
 <p id="rounds-help">Следующий прогон начнётся после восстановления настроек и проверки соединения. При остановке или ошибке вся серия завершается.</p><p id="rounds-error" role="alert"></p></fieldset>
 <p id="series-status" aria-live="polite"></p>
 <fieldset id="pool-fieldset" disabled><legend id="pool-title">Одновременные проверки</legend>
@@ -23,11 +26,13 @@
 <p id="pool-selected" aria-live="polite"></p><p id="pool-error" role="alert"></p>
 <p id="pool-help">Обычно достаточно 10–100. Большие значения не гарантируют ускорения подбора.</p></fieldset>
 <fieldset id="goals" disabled><legend id="goal-title">Какие сервисы важны</legend>
-<label><input type="radio" name="scope" id="goal-all" checked><span id="goal-all-label">Все сервисы</span></label>
+<label><input type="radio" name="scope" id="goal-main" checked><span id="goal-main-label">Основные сервисы — YouTube, Discord и Instagram</span></label>
+<label><input type="radio" name="scope" id="goal-all"><span id="goal-all-label">Все сервисы</span></label>
 <label><input type="radio" name="scope" id="goal-selected"><span id="goal-selected-label">Выбранные сервисы</span></label>
-<div class="service-choices"><label><input type="checkbox" id="goal-youtube" checked>YouTube</label><label><input type="checkbox" id="goal-discord" checked>Discord</label><label><input type="checkbox" id="goal-instagram" checked>Instagram</label><label><input type="checkbox" id="goal-torrents" checked><span id="goal-torrents-label">Торрент-трекеры</span></label></div>
+<div id="goal-options" hidden>
+<div class="service-choices"><label><input type="checkbox" id="goal-youtube" checked>YouTube</label><label><input type="checkbox" id="goal-discord" checked>Discord</label><label><input type="checkbox" id="goal-instagram" checked>Instagram</label><label><input type="checkbox" id="goal-torrents"><span id="goal-torrents-label">Торрент-трекеры</span></label></div>
+<p id="torrent-goal-help">Торрент-трекеры в проверке — NNMClub, RuTracker, Rutor и tapochek.net.</p></div>
 </fieldset>
-<p id="torrent-goal-help">Торрент-трекеры в проверке — NNMClub, RuTracker, Rutor и tapochek.net.</p>
 <p id="goal-help">Выбранные сервисы влияют на итог. Роутер проверит и другие сайты, чтобы заметить ухудшения.</p>
 <fieldset id="custom-fieldset" disabled><legend id="custom-title">Свои сайты</legend>
 <label><input type="checkbox" id="custom-enabled"><span id="custom-enabled-label">Добавить свои сайты к подбору</span></label>
@@ -47,34 +52,19 @@
 <p id="error" role="alert"></p>
 <div id="confirmation" role="dialog" aria-modal="false" aria-labelledby="confirmation-text" hidden><p id="confirmation-text"></p><div class="actions"><button id="confirm-submit" type="button">Продолжить</button><button id="confirm-dismiss" type="button">Отмена</button></div></div>
 </section>
-<section id="progress-section" hidden><h2 id="phase"></h2><progress id="progress" max="100" value="0"></progress><p id="current"></p><p id="matrix"></p><p id="restore"></p><button id="download" type="button">Скачать отчёт</button><button id="share-report" type="button" hidden>Поделиться с Фрэнком</button></section>
+<section id="progress-section" hidden><h2 id="phase"></h2><progress id="progress" max="100" value="0"></progress><p id="current"></p><p id="matrix"></p><p id="restore"></p>
+<button id="download" type="button">Скачать отчёт</button><button id="share-report" type="button" hidden>Поделиться с Фрэнком</button></section>
 <section id="results-section" hidden><h2 id="results-title">Сравнение</h2><p id="measured-goal"></p><p id="explanation">Роутер сравнил варианты с вашей исходной стратегией и соединением без обхода.</p><p id="generation"></p><p id="custom-summary" hidden></p>
 <div class="result-layout">
   <label for="result-columns" id="result-columns-label">Колонки результатов</label>
   <select id="result-columns"><option id="result-columns-auto" value="auto">Авто</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
   <span id="result-column-count" role="status"></span>
+  <label><input type="checkbox" id="result-show-totals"><span id="result-show-totals-label">Показать общие показатели</span></label>
 </div>
-<div id="results"></div><p id="winner"></p>
-<p id="tradeoffs" hidden></p><p id="torrent-applied-note"></p><div id="torrent-control" hidden><label><input id="torrent-sites" type="checkbox" disabled><span id="torrent-label">Добавить торрент-трекеры</span></label><p id="torrent-help">Добавляет HTTPS-правила для NNMClub, RuTracker, Rutor и tapochek.net. Если включите их, проверьте стратегию ещё раз.</p></div>
-<div class="actions"><button id="export" type="button" hidden>Скачать стратегию с файлами</button><button id="share-export" type="button" hidden>Поделиться с Фрэнком</button><button id="apply" type="button" hidden>Применить этот вариант</button></div><details><summary id="skipped-title">Пропущенные варианты и причины</summary><ul id="skipped"></ul></details></section>
-<section id="measured-section" hidden>
-<h2 id="measured-title">Замеры по прогонам</h2>
-<label for="measured-select" id="measured-label">Какой вариант посмотреть</label>
-<select id="measured-select"></select>
-<p id="measured-status" role="status"></p>
-<div id="measured-detail"></div>
-<div class="actions">
-<button id="measured-report" type="button" hidden>Скачать замеры</button>
-<button id="measured-export" type="button" hidden>Скачать стратегию</button>
-<button id="measured-import" type="button" hidden>Открыть для импорта</button>
+<div id="result-toolbar" class="result-toolbar" hidden>
+  <div id="result-rounds" class="result-filter-buttons" role="group" aria-label="Прогоны"></div>
 </div>
-</section>
-<section id="supplement-section" hidden><button id="supplement-open" type="button" aria-expanded="false" aria-controls="supplement-form">Дополнить текущую стратегию</button>
-<div id="supplement-form" hidden><h2 id="supplement-title">Дополнение к стратегии</h2><p id="supplement-help"></p>
-<label id="supplement-domains-label" for="supplement-domains">От одного до пяти доменов, каждый с новой строки</label>
-<textarea id="supplement-domains" rows="5" maxlength="4096" spellcheck="false" autocapitalize="none" autocomplete="off" aria-describedby="supplement-help supplement-error"></textarea>
-<button id="supplement-submit" type="button">Посмотреть изменения</button><p id="supplement-error" role="alert"></p>
-<div id="supplement-output" aria-live="polite" hidden><p id="supplement-scope"></p><h3 id="supplement-additions-title">Добавляемые правила</h3><pre id="supplement-rules"></pre><h3 id="supplement-files-title">Файлы стратегии</h3><ul id="supplement-files"></ul></div>
-<p id="supplement-note"></p></div></section>
+<p id="result-feed-status" role="status" hidden></p>
+<div id="results"></div></section>
 <footer id="note">После применения проверьте видео, голосовые звонки и другие нужные функции в самих приложениях. Роутер измеряет только доступность сайтов.</footer>
 </main><script type="module" src="picker.js"></script></body></html>

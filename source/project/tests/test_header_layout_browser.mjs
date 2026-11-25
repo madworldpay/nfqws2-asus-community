@@ -118,11 +118,12 @@ try {
       await page.goto(`http://127.0.0.1:${server.address().port}/`);
       await page.locator('header .MuiChip-root').waitFor();
       await page.getByRole('button', { name: 'DPI Detector', exact: true }).waitFor();
+      await page.locator('header button img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
       const result = await page.locator('header').evaluate(header => {
         const controls = [...header.querySelectorAll('button:not(.rabbit-build-video-trigger),.MuiChip-root')].map(node => { const r = node.getBoundingClientRect(); return { text: node.getAttribute('aria-label') || node.textContent, chip: node.classList.contains('MuiChip-root'), x: r.x, y: r.y, width: r.width, height: r.height }; });
         const sprites = [...header.querySelectorAll('.rabbit-build-sprite')].map(node => { const r = node.getBoundingClientRect(); return { display: getComputedStyle(node).display, top: r.top, bottom: r.bottom }; });
         const r = header.getBoundingClientRect();
-        const transfers = [...header.querySelectorAll('button img[src^="/community/"]')].map(image => {
+        const transfers = [...header.querySelectorAll('button img')].map(image => {
           const r = image.getBoundingClientRect();
           return { src: image.getAttribute('src'), loaded: image.complete && image.naturalWidth > 0, width: r.width, height: r.height };
         });
@@ -143,9 +144,8 @@ try {
       const rows = [...new Set(result.controls.map(control => Math.round(control.y)))].sort((a, b) => a - b);
       for (let i = 1; i < rows.length; i++) assert.ok(rows[i] - rows[i - 1] <= 45, `${label}: adjacent control rows have compact gaps ${rows}`);
       if (appearance === 'rabbit') {
-        const compact = viewport.width < 600 || viewport.height <= 600;
-        assert.ok(result.sprites.every(sprite => sprite.display === (compact ? 'none' : 'block')), `${label}: desktop rabbit retained, compact rabbit hidden`);
-        if (!compact) assert.ok(result.sprites.every(sprite => sprite.top >= result.top && sprite.bottom <= result.bottom), `${label}: desktop artwork remains inside the header`);
+        assert.ok(result.sprites.length && result.sprites.every(sprite => sprite.display === 'block'), `${label}: rabbit visible`);
+        assert.ok(result.sprites.every(sprite => sprite.top >= result.top && sprite.bottom <= result.bottom), `${label}: artwork remains inside the header`);
       }
       if (process.env.NFQWS_HEADER_SCREENSHOT_DIR && platform === (process.env.NFQWS_HEADER_PLATFORM || 'openwrt') && language === 'ru' && appearance === 'rabbit') {
         await mkdir(process.env.NFQWS_HEADER_SCREENSHOT_DIR, { recursive: true });

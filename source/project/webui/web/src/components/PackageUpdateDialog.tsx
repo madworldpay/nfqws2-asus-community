@@ -22,6 +22,7 @@ import { copyText } from '@/utils/copyText';
 import {
   packageUpdateErrorText,
   packageUpdateProgress,
+  visiblePackageOperation,
 } from '@/utils/packageUpdateProgress';
 import { formatPackageVersion } from '@/utils/packageVersion';
 
@@ -94,7 +95,7 @@ export function PackageUpdateDialog({
   const [copyResult, setCopyResult] = useState<{ text: string; ok: boolean }>();
   const check = updates.data?.check;
   const candidate = check?.state === 'available' ? check.candidate : null;
-  const operation = updates.data?.operation;
+  const operation = visiblePackageOperation(updates.data?.operation, check);
   const completedVersion =
     operation?.state === 'succeeded'
       ? formatPackageVersion(

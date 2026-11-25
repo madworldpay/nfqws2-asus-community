@@ -16,7 +16,25 @@ class PickerJournalReaderTests(unittest.TestCase):
         code=r'''require $argv[1].'/strategy-picker-core.php';$d=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);$r=$argv[2];$u=(int)$argv[3];
         $wrapper=<<<'PHP'
         namespace JournalReaderProbe;
-        use \NfqwsPlatform;use \NfqwsDeviceProfilesPaths;use \AsusImportConfig;use \NfqwsStrategyPickerMode;use \RuntimeException;use \Throwable;
+        use \NfqwsPlatform;use \AsusImportConfig;use \NfqwsStrategyPickerMode;use \RuntimeException;use \Throwable;
+        final class NfqwsDeviceProfilesPaths {
+            public static function guard($directory,$name,$owner) {
+                if($GLOBALS['armed']&&$GLOBALS['mode']==='before_lock'&&$name==='state.json'){
+                    $handle=\fopen($directory,'rb');
+                    try{
+                        $acquired=\flock($handle,LOCK_EX|LOCK_NB);
+                        $GLOBALS['guard_checks'][]=$acquired;
+                        if($acquired)throw new RuntimeException('unsafe_panel_file');
+                    }finally{\fclose($handle);}
+                }
+                return \class_exists('NfqwsDeviceProfilesPaths',false)
+                    ?\NfqwsDeviceProfilesPaths::guard($directory,$name,$owner)
+                    :NfqwsPlatform::guardFile($directory,$name,$owner);
+            }
+        }
+        function class_exists($class,$autoload=true){
+            return ($class==='NfqwsDeviceProfilesPaths'&&$GLOBALS['mode']==='before_lock')||\class_exists($class,$autoload);
+        }
         function swap(){if($GLOBALS['drifted'])return;$GLOBALS['drifted']=true;$p=$GLOBALS['target'];$raw=\file_get_contents($p);\rename($p,$GLOBALS['r'].'/displaced-journal');\file_put_contents($p,$raw);\chmod($p,0600);}
         function lstat($p){
             if($GLOBALS['armed']&&$GLOBALS['mode']==='between'&&$p===$GLOBALS['target']&&$GLOBALS['reads']===1&&!$GLOBALS['drifted']){
@@ -35,7 +53,7 @@ class PickerJournalReaderTests(unittest.TestCase):
         function file_get_contents($p,...$args){return afterRead($p,\file_get_contents($p,...$args),'file');}
         function stream_get_contents($f,...$args){return afterRead(\stream_get_meta_data($f)['uri'],\stream_get_contents($f,...$args),'fd');}
         PHP;
-        $GLOBALS['r']=$r;$GLOBALS['mode']=$d['mode'];$GLOBALS['armed']=false;$GLOBALS['drifted']=false;$GLOBALS['reads']=0;$GLOBALS['read_kind']='';$GLOBALS['postread_stats']=0;$GLOBALS['events']=[];eval($wrapper.$d['body']);
+        $GLOBALS['r']=$r;$GLOBALS['mode']=$d['mode'];$GLOBALS['armed']=false;$GLOBALS['drifted']=false;$GLOBALS['reads']=0;$GLOBALS['read_kind']='';$GLOBALS['postread_stats']=0;$GLOBALS['events']=[];$GLOBALS['guard_checks']=[];eval($wrapper.$d['body']);
         $pin=static function($p){clearstatcache(true,$p);return array_intersect_key(lstat($p),array_flip(['dev','ino','mode','uid','gid','nlink','size','mtime','ctime']));};$record=static function($p)use($pin){return ['pin'=>$pin($p),'raw_base64'=>base64_encode(file_get_contents($p))];};
         $mode=$d['mode'];$global=in_array($mode,['pin','missing','default','invalid','cap','clean_config'],true);$s=$global?new NfqwsStrategyPickerState($r.'/picker',$u):new \JournalReaderProbe\NfqwsStrategyPickerState($r.'/picker',$u);$lock=$s->lock();$name=$mode==='actor'?'actor-guard.json':'state.json';$p=$s->path($name);$GLOBALS['target']=$p;$out=[];
         if(in_array($mode,['between','clean_config'],true)){$cf=$r.'/nfqws2.conf';file_put_contents($cf,"ORIGINAL_OWNER_CONFIG\n");chmod($cf,0664);$c=$global?new NfqwsStrategyPickerConfig($s,$cf,$u):new \JournalReaderProbe\NfqwsStrategyPickerConfig($s,$cf,$u);$c->snapshot(false);$out['config_before']=$record($cf);}
@@ -48,7 +66,7 @@ class PickerJournalReaderTests(unittest.TestCase):
             else $out['result']=$s->read($name);
             $out['success']=true;
         }catch(Throwable $e){$out['error']=$e->getMessage();}
-        $GLOBALS['armed']=false;$out['observed_pin']=$observed;$out['after']=file_exists($p)?$record($p):null;$out['events']=$GLOBALS['events'];$out['actual_target_reads']=$GLOBALS['reads'];$out['drifted']=$GLOBALS['drifted'];if(file_exists($r.'/displaced-journal'))$out['displaced']=$record($r.'/displaced-journal');if(isset($cf))$out['config_after']=$record($cf);
+        $GLOBALS['armed']=false;$out['observed_pin']=$observed;$out['after']=file_exists($p)?$record($p):null;$out['events']=$GLOBALS['events'];$out['actual_target_reads']=$GLOBALS['reads'];$out['drifted']=$GLOBALS['drifted'];$out['guard_checks']=$GLOBALS['guard_checks'];if(file_exists($r.'/displaced-journal'))$out['displaced']=$record($r.'/displaced-journal');if(isset($cf))$out['config_after']=$record($cf);
         flock($lock,LOCK_UN);fclose($lock);$l=fopen($r.'/picker/engine.lock','rb');$out['lock_free_after']=flock($l,LOCK_EX|LOCK_NB);if($out['lock_free_after'])flock($l,LOCK_UN);fclose($l);echo json_encode($out,JSON_THROW_ON_ERROR);'''
         request=json.dumps({'mode':mode,'body':body}).encode()
         for name,raw in [('php-r.private',code.encode()),('request.private.json',request),('actual-classes.private',body.encode())]:(self.root/name).write_bytes(raw)
@@ -93,6 +111,13 @@ class PickerJournalReaderTests(unittest.TestCase):
                 if process.poll() is None:process.kill()
                 process.wait(timeout=5)
 
+    def test_named_journal_validation_waits_for_the_directory_lock(self):
+        result=self.call('before_lock')
+        self.assertTrue(result.get('success'),result.get('error'))
+        self.assertEqual(result['guard_checks'],[False,False])
+        self.assertEqual(result['result']['kind'],'LOCAL_READER_BYTES_ONLY')
+        self.assertEqual(result['after'],result['before'])
+
     def test_global_read_returns_actual_full_PHP9_pin_of_same_guarded_JSON(self):
         v=self.call('pin');self.assertTrue(v.get('success'),v.get('error'));self.assertEqual(v['observed_pin'],v['before']['pin']);self.assertEqual(v['after'],v['before']);self.assertEqual(v['result']['kind'],'LOCAL_READER_BYTES_ONLY')
     def test_missing_global_read_clears_optional_pin_and_returns_null(self):
@@ -115,6 +140,48 @@ class PickerJournalReaderTests(unittest.TestCase):
         v=self.call('cap');self.assertIn('error',v);self.assertNotIn('success',v);self.assertEqual(v['after'],v['before']);self.assertEqual(v['after']['pin']['size'],1048577)
     def test_global_Config_bound_reader_accepts_actual_clean_same_journal(self):
         v=self.call('clean_config');self.assertTrue(v.get('success'),v.get('error'));self.assertEqual(v['config_after'],v['config_before']);self.assertEqual(v['after'],v['before']);self.assertEqual(v['result_raw'],v['config_before']['raw_base64'])
+
+    def test_browser_close_and_connection_expiry_are_permanent_for_that_job(self):
+        code = r"""
+        require $argv[1].'/strategy-picker-runtime.php';
+        $store=new NfqwsStrategyPickerState($argv[2].'/picker',(int)$argv[3]);
+        $runtime=new NfqwsStrategyPickerRuntime($store);
+        $job=['id'=>str_repeat('a',32),'request_id'=>str_repeat('b',32),
+            'window_id'=>str_repeat('c',32),'state'=>'preparing','boot'=>AsusUpdateStore::boot()];
+        $presence=['cmd'=>'pickerwindow','csrf_token'=>'fixture','request_id'=>$job['request_id'],
+            'window_id'=>$job['window_id'],'presence'=>'open'];
+        $out=[];
+        $out['too_early']=$runtime->dispatch($presence)['recorded'];
+        $store->openBrowser($job);
+        $store->write($job);
+        $out['initial']=$store->browserState($job);
+        $out['foreign']=$runtime->dispatch(array_replace($presence,['window_id'=>str_repeat('d',32),'presence'=>'closed']))['recorded'];
+        $out['first_pulse']=$runtime->dispatch($presence)['recorded'];
+        $out['live']=$store->browserState($job);
+        $out['exit']=$runtime->dispatch(array_replace($presence,['presence'=>'closed']))['recorded'];
+        $out['after_exit']=$store->browserState($job);
+        $out['late_after_exit']=$runtime->dispatch($presence)['recorded'];
+        $job['id']=str_repeat('e',32);
+        $store->openBrowser($job);
+        $store->write($job);
+        $pulse=$store->read('browser.json');
+        $pulse['until']=AsusUpdateStore::uptime()-1;
+        $store->write($pulse,'browser.json');
+        $out['after_loss']=$store->browserState($job);
+        $out['late_after_loss']=$runtime->dispatch($presence)['recorded'];
+        $out['apply']=$store->browserState(array_replace($job,['state'=>'applying']));
+        unset($job['window_id']);
+        $out['legacy']=$store->browserState($job);
+        echo json_encode($out,JSON_THROW_ON_ERROR);
+        """
+        result=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(self.root),str(os.getuid())],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual((result.returncode,result.stderr),(0,''),result.stdout+result.stderr)
+        self.assertEqual(json.loads(result.stdout),{
+            'too_early':False,'initial':'waiting','foreign':False,'first_pulse':True,'live':'present',
+            'exit':True,'after_exit':'closed','late_after_exit':False,'after_loss':'closed',
+            'late_after_loss':False,'apply':'present','legacy':'present',
+        })
 
 
 if __name__=='__main__':unittest.main()

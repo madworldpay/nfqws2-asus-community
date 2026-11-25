@@ -2,6 +2,32 @@
 
 [Чат сообщества в Telegram](https://t.me/nfqws2AsusCommunityChat)
 
+## Build 108 для ASUS, OpenWrt, Keenetic и Netcraze
+
+- Обновили zapret2 до 1.0.8 для ASUS и OpenWrt.
+- Доработали генератор стратегий (бета). Варианты пронумерованы, можно выбрать прогон, сравнить измерения и применить стратегию из карточки. Измеренные варианты доступны после остановки подбора.
+- Для новых установок SmartDNS на ASUS и поддерживаемых Keenetic и Netcraze доступен Release48.5. Обновлены пакеты SmartDNS для OpenWrt.
+- Работа над процессом обновления.
+- [Скачать Build 108](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108) · [Ручная установка](PACKAGE-UPDATES.md#manual-install).
+
+## Build 107 для ASUS, OpenWrt, Keenetic и Netcraze
+
+- Исправлено обновление ASUS из панели с сохранением списков автообучения.
+- Установщик поддерживает более крупные резервные копии для отката и корректно работает, когда панель проверяет ход установки.
+- Для всех поддерживаемых семейств действует [одна команда установки](README.md#install-command).
+- [Переход со старых сборок ASUS](PACKAGE-UPDATES.md#переход-на-build-107-после-ошибки-обновления-asus) · [Скачать Build 107](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build107).
+
+## Build 106 для ASUS, OpenWrt, Keenetic и Netcraze
+
+- В импорте один раздел «Стратегии» с поиском по названиям, авторам и личным заметкам.
+- Насечки на полосе прокрутки ведут к началу блока каждого автора.
+- Добавлены четыре пресета Avatar и 67 правил Zemidala. Все 67 открываются из пакета без доступа к GitHub. Спасибо [Zemidala](https://github.com/zemidala/nfqws2-strategies) за стратегии!
+- Для выбранной стратегии доступны отдельные кнопки просмотра, применения и перезапуска.
+- Обновление MTProto сохраняет действующий секрет.
+- Для OpenWrt 25.12 обновлены пакеты SmartDNS 46.1 из официальных репозиториев.
+- Генератор стратегий остаётся в бета-версии.
+- В едином выпуске 25 пакетов. [Скачать Build 106](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build106).
+
 ## Build 105 для ASUS, OpenWrt, Keenetic и Netcraze
 
 - Исправление импорта из раздела «Облако».

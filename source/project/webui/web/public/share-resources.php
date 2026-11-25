@@ -8,9 +8,11 @@ final class AsusShareResources
     public const FILE_LIMIT=262144;
     public const TOTAL_LIMIT=524288;
     public const COUNT_LIMIT=128;
+    private const PICKER_COUNT_LIMIT=256;
     private const KINDS=['lists','lua','blobs'];
     private string $root;
     private AsusShareRead $reader;
+    private int $scanCount=self::COUNT_LIMIT;
     public function __construct(?string $root=null,private int $owner=0,private ?array $bundledLua=null,?AsusShareRead $reader=null,private ?string $factoryLists=null)
     {
         $this->root=$root??AsusDpiStore::optPath('/etc/nfqws2');$this->reader=$reader??($root===null?NfqwsPlatform::reader($owner,true):new AsusShareRead($owner,null,null,true));
@@ -19,6 +21,13 @@ final class AsusShareResources
         // The trusted build manifest uses singular blob/, the runtime directory
         // is blobs/. This mapping never accepts names from an imported document.
         foreach($this->bundledLua as $name=>$row)if(str_starts_with($name,'blob/'))$this->bundledLua['blobs/'.substr($name,5)]=$row;
+    }
+    /** Full local inputs for the picker's independently bounded library. */
+    public static function forPicker(string $root,int $owner,?array $bundledLua,AsusShareRead $reader):self
+    {
+        $source=new self($root,$owner,$bundledLua,$reader);
+        $source->scanCount=self::PICKER_COUNT_LIMIT;
+        return $source;
     }
     /** A pinned firmware-owned /opt alias may resolve to USB or internal storage. */
     public static function packageLua(string $alias='/opt',int $owner=0): array
@@ -73,8 +82,8 @@ final class AsusShareResources
         if(!$this->directory($this->root))throw new RuntimeException('resource_unavailable');
         $priority=[];$files=[];$skipped=0;$truncated=false;
         $requested=array_unique($preferred);
-        if(count($requested)>self::COUNT_LIMIT)$truncated=true;
-        foreach(array_slice($requested,0,self::COUNT_LIMIT) as $relative) {
+        if(count($requested)>$this->scanCount)$truncated=true;
+        foreach(array_slice($requested,0,$this->scanCount) as $relative) {
             $ref=NfqwsResourcePaths::relative($relative);
             if($ref===null||!str_starts_with($ref['name'],'imported/'))continue;
             $path=$this->root.'/'.$relative;
@@ -98,7 +107,7 @@ final class AsusShareResources
                     $identity=$prefix.$name;$relative=$kind.'/'.$identity;
                     if(isset($priority[$relative]))continue;
                     $path=$dir.'/'.$name;$s=$this->stat($path);if(!$s){$skipped++;continue;}
-                    if(count($priority)+count($files)>=self::COUNT_LIMIT){$truncated=true;break;}
+                    if(count($priority)+count($files)>=$this->scanCount){$truncated=true;break;}
                     $files[$relative]=$this->entry($kind,$identity,$path,$s['size']);
                 }
             } finally {closedir($handle);}

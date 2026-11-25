@@ -50,12 +50,13 @@ final class NfqwsOpenWrtUpdatePackage
         }
         return self::metadata($record,$candidate,$environment);
     }
-    public static function space(int|float $overlay,int|float $ram,array $package,int $snapshot,int $runtime):bool
+    public static function space(int|float $overlay,int|float $ram,array $package,int $snapshot,int $runtime,bool $staged=false):bool
     {
         $stored=$package['installed_size']??null;$download=$package['size']??null;
         if(!is_int($stored)||$stored<1||$stored>134217728||!is_int($download)||$download<1||$download>33554432)throw new RuntimeException('invalid_package');
+        $additional=$staged?0:$download+$runtime;
         if(!is_finite((float)$overlay)||!is_finite((float)$ram)||min($overlay,$ram,$snapshot,$runtime)<0||
-            $overlay<$stored+4194304||$ram<$download+$snapshot+$runtime+4194304)throw new RuntimeException('insufficient_space');
+            $overlay<$stored+4194304||$ram<$additional+$snapshot+4194304)throw new RuntimeException('insufficient_space');
         return true;
     }
 }

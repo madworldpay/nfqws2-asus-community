@@ -31,6 +31,6 @@ licenses and copyright notices; the distribution is not licensed solely under MI
 NFQWS2 Keenetic, WebUI Keenetic, zapret2 and DPI Detector retain their MIT notices.
 BusyBox and the legacy Linux module use GPLv2; netfilter libraries use GPLv2/LGPLv2.1.
 lighttpd uses BSD-3-Clause. LuaJIT, musl, Rust and frontend dependencies retain
-their individual notices. Optional SmartDNS Release48.4 uses GPLv3.
+their individual notices. Optional SmartDNS releases 48.4 and 48.5 use GPLv3.
 
 See UPSTREAM.md and THIRD-PARTY-NOTICES.txt for the component/source inventory.

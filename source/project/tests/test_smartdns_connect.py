@@ -96,12 +96,24 @@ class SmartDnsConnectionTests(unittest.TestCase):
         code=r'''require $argv[1].'/smartdns-connect.php';
         if(!class_exists('AsusSmartDnsConnection')){echo json_encode(['error'=>'missing_transaction']);exit;}
         $in=json_decode(stream_get_contents(STDIN),true);$time=100.0;$events=[];$reads=0;$journalReader=null;
+        $permissions=in_array($in['mode'],['repair_permissions','permissions_changed_again','unrepairable_permissions'],true);
         $store=new AsusSmartDnsStore($argv[2],(int)$argv[3],['boot'=>fn()=>'boot-a','uptime'=>function()use(&$time){return $time;}]);
         $hash=$store->saveDraft($in['profile']);$base=str_repeat('a',64);$id=str_repeat('b',32);$preview=str_repeat('1',32);
-        $store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>700]);
+        $checks=[['stage'=>'profile','name'=>'example.com','ok'=>$in['mode']!=='candidate_no_answer']];
+        $store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>700,'checks'=>$checks]);
         $deps=['uptime'=>function()use(&$time){return $time;},
-          'baseline'=>function()use(&$reads,$base,$in){$reads++;return ['hash'=>$in['mode']==='changed_baseline'&&$reads>1?str_repeat('c',64):$base,'snapshot'=>['hook'=>'foreign'],'conflicts'=>$in['conflicts']];},
-          'prepare'=>function($job,$snapshot)use(&$events){$events[]='prepare';},
+          'baseline'=>function()use(&$reads,&$permissions,$base,$in){$reads++;return ['hash'=>$in['mode']==='changed_baseline'&&$reads>1?str_repeat('c',64):$base,'snapshot'=>['hook'=>'foreign'],'conflicts'=>$in['conflicts'],'includes_need_repair'=>$permissions];},
+          'repair_includes'=>function($snapshot)use(&$events,&$permissions,$store,$in){
+            $events[]='repair_includes';if($in['mode']==='unrepairable_permissions')throw new RuntimeException('existing_dns_rules');
+            $raw=str_repeat('x',262144);
+            $file=['value'=>$raw,'fingerprint'=>['sha256'=>hash('sha256',$raw),'file'=>['mode'=>0100666]]];
+            $backup=$store->backupPermissions(['/a.conf'=>$file,'/b.conf'=>$file]);
+            if($store->transaction()['backup_id']!==null||filesize($store->directory().'/backup-'.$backup.'.json')<=524288)throw new RuntimeException('invalid_state');
+            $permissions=false;
+          },
+          'prepare'=>function($job,$snapshot)use(&$events,&$permissions,$in){
+            $events[]='prepare';if($in['mode']==='permissions_changed_again')$permissions=true;
+          },
           'guard'=>function($job,$profile)use(&$events,$in,$argv,&$journalReader){$events[]='guard';if($in['mode']==='guard_fails')throw new RuntimeException('guard_unavailable');
             if($in['mode']==='journal_reader_after_guard'){
               $ready=$argv[2].'/reader-ready';
@@ -143,6 +155,12 @@ class SmartDnsConnectionTests(unittest.TestCase):
         self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'')
         return json.loads(p.stdout)
 
+    def test_nonanswering_candidate_never_changes_home_dns(self):
+        value=self.scenario(mode='candidate_no_answer')
+        self.assertEqual(value['results'],[{'error':'dns_validation_failed'}])
+        self.assertEqual(value['events'],[])
+        self.assertEqual(value['status']['state'],'idle')
+
     def test_baseline_hook_permissions_are_reported_before_any_dns_change(self):
         value=self.scenario(conflicts=['hook_permissions'])
         self.assertEqual(value['results'],[{'error':'hook_permissions'}])
@@ -170,6 +188,22 @@ class SmartDnsConnectionTests(unittest.TestCase):
         self.assertLess(value['events'].index('guard'),value['events'].index('forward'))
         self.assertNotIn('confirm',value['events']);self.assertIsNone(value['active'])
         self.assertEqual(value['status']['deadline_remaining_s'],120)
+
+    def test_apply_keeps_permission_backup_separate_and_repairs_before_prepare(self):
+        value=self.scenario('repair_permissions', action='none')
+        self.assertEqual(value['status']['state'],'awaiting_confirmation')
+        self.assertEqual(value['events'][:4],['repair_includes','prepare','guard','forward'])
+
+    def test_unrepairable_or_reopened_permissions_block_forwarding(self):
+        for mode,code,events in [
+            ('unrepairable_permissions','existing_dns_rules',['repair_includes']),
+            ('permissions_changed_again','stale_baseline',['repair_includes','prepare']),
+        ]:
+            with self.subTest(mode=mode):
+                value=self.scenario(mode)
+                self.assertEqual(value['status']['state'],'failed')
+                self.assertEqual(value['status']['code'],code)
+                self.assertEqual(value['events'],events)
 
     def test_polling_reader_after_guard_does_not_abort_or_replay_connection(self):
         value=self.scenario('journal_reader_after_guard')

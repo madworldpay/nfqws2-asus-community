@@ -17,6 +17,10 @@ MODULES=[PUBLIC/name for name in [
     'openwrt-update-environment.php','openwrt-update-package.php',
     'openwrt-update-manager.php','openwrt-apk-trust.php','update-github.php',
 ]]+[ROOT/'openwrt/install-plan.php',ROOT/'openwrt/install-state.php',ROOT/'openwrt/install-prepare.php',ROOT/'openwrt/install-execute.php']
+BUILD107_APPLY={
+    'openwrt-update-package.php':'db65daea31bd9872ac983cef11fb581f684b82b37a3f652920fae52f73b352ce',
+    'openwrt-update-worker.php':'be0f157e7533e920c9f16c0f953dafb66aeaf9f39affb18d4b634f8d84ba8d87',
+}
 
 def literal(text):
     return "'"+text.replace('\\','\\\\').replace("'","\\'")+"'"
@@ -46,8 +50,19 @@ def bridge(public_key=None):
     trusted='const NFQWS_NATIVE_INSTALL_KEY = '+literal(key.decode())+';\n'
     trusted+='const NFQWS_NATIVE_INSTALL_SCHEMA = '+literal((ROOT/'updates/openwrt-package-manifest.schema.json').read_text())+';\n'
     trusted+='const NFQWS_NATIVE_INSTALL_DISCOVERY = '+literal((PUBLIC/'update-github.php').read_text())+';\n'
+    overrides=[literal(name)+'=>['+literal(digest)+','+literal((PUBLIC/name).read_text())+']'
+               for name,digest in BUILD107_APPLY.items()]
+    trusted+='const NFQWS_NATIVE_INSTALL_BUILD107_APPLY = ['+','.join(overrides)+'];\n'
+    runtime=(PUBLIC/'openwrt-update-runtime.php').read_text()
+    include="<?php\nrequire_once __DIR__.'/update-store.php';\n"
+    declaration='final class NfqwsOpenWrtUpdateRuntime\n'
+    if not runtime.startswith(include) or runtime.count(declaration)!=1:
+        raise ValueError('Unexpected OpenWrt runtime source')
+    # The bridge already loads the installed store and runtime classes. Only
+    # preparation uses this bundled stager. The installed loader checks its seal.
+    runtime=runtime[len(include):].replace(declaration,'final class NfqwsOpenWrtInstallRuntime\n',1)
     modules=''.join((ROOT/'openwrt'/name).read_text()[6:]+'\n'for name in ['install-local-source.php','install-trust.php'])
-    return (ROOT/'openwrt/install-update.php').read_text().replace('try{', trusted+modules+'\ntry{',1)
+    return (ROOT/'openwrt/install-update.php').read_text().replace('try{', trusted+modules+runtime+'\ntry{',1)
 
 def shell(public_key=None):
     code=render(public_key,entry=True).decode()
@@ -62,7 +77,10 @@ def embed(path):
         a=text.index(start);b=text.index(end,a)+len(end);text=text[:a]+block+text[b:]
     else:
         marker='# Keep the entry point last so an incomplete piped download cannot run a partial installer.'
-        text=text.replace(marker,block+'\n'+marker).replace('main "$@"\n','if [ -f /etc/openwrt_release ]; then nfqws_native_main "$@"; else main "$@"; fi\n')
+        text=text.replace(marker,block+'\n'+marker)
+        # Only older, ASUS-only templates end with a standalone main command.
+        if text.endswith('\nmain "$@"\n'):
+            text=text[:-len('main "$@"\n')]+'if [ -f /etc/openwrt_release ]; then nfqws_native_main "$@"; else main "$@"; fi\n'
     path.write_text(text)
 
 def main():

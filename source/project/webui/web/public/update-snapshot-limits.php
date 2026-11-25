@@ -1,8 +1,7 @@
 <?php
-/** Existing settings plus eight saved strategies and the stock resource copy. */
+/** Byte budgets for owner settings, history and the protected backup index. */
 final class NfqwsUpdateSnapshotLimits
 {
-    public const FILES=4096;
     public const BYTES=67108864;
     public const JSON=2097152;
 

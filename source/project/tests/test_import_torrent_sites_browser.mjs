@@ -38,6 +38,7 @@ try {
     await page.route('**/index.php',async route=>{
       const post=new URLSearchParams(route.request().postData()),cmd=post.get('cmd');calls.push(cmd);let body;
       if(cmd==='importstatus')body={state:'idle',id:null,can_undo:false,config_saved:false,dns_draft_saved:false};
+      else if(cmd==='importlocalpack')body={entries:[],assets:[],archive_date:'2026-11-01',attribution:'Test'};
       else if(cmd==='importcatalog')body={schema_version:1,revision:1,build:88,profiles};
       else if(cmd==='importaddoncatalog')body={schema_version:1,revision:1,build:92,addons:[]};
       else if(cmd==='importcatalogload')body={document:'{}'};
@@ -50,27 +51,41 @@ try {
       await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/?lang=${lang}`);
-    await page.getByRole('button',{name:texts.import.catalog.choose,exact:true}).click();
+    const action=name=>page.getByRole('button',{name,exact:true});
+    const tab=name=>page.getByRole('tab',{name,exact:true});
+    const showAddons=async()=>{
+      await action(texts.import.preset.details).click();
+      await tab(texts.import.addons.title).click();
+    };
+    await page.getByRole('button',{name:texts.import.strategies.choose,exact:true}).click();
+    const search=page.getByRole('searchbox');
+    await search.fill('Provider fixture');
     await page.getByRole('button',{name:/Provider fixture/}).click();
-    await page.getByText('Cloud fixture',{exact:false}).first().waitFor();
+    await showAddons();
     assert.equal(await page.getByRole('checkbox',{name:/torrent|торрент/i}).count(),0,'provider imports have no option');
+    await action(texts.import.preset.back).click();
+    await search.fill('General fixture');
     await page.getByRole('button',{name:/General fixture/}).click();
+    await showAddons();
     const choice=page.getByRole('checkbox',{name:lang==='ru'?'Добавить обход для сайтов торрент-трекеров':'Add bypass for torrent tracker websites',exact:true});
     await choice.waitFor();assert.equal(await choice.isChecked(),false,'new global import starts off');
-    await choice.check();await page.getByRole('button',{name:texts.import.preview,exact:true}).first().click();
-    const apply=page.getByRole('button',{name:texts.import.apply,exact:true});await apply.waitFor();
+    await choice.check();await tab(texts.import.preset.changes).click();
+    const apply=action(texts.import.preset.apply);await apply.waitFor();
     await page.getByText(block,{exact:true}).waitFor();assert.equal(await apply.isEnabled(),true);
     assert.deepEqual(selections.at(-1).torrent_sites,{catalog_id:'global',sha256:'a'.repeat(64)});
     assert.deepEqual(selections.at(-1).blocks,[{key:'NFQWS_ARGS',value:doc.values.NFQWS_ARGS}]);
     assert.deepEqual(documents.at(-1),['{}'],'raw cloud document remains unchanged');
-    await choice.uncheck();assert.equal(await apply.isDisabled(),true,'toggle invalidates old preview/proof');
+    await tab(texts.import.addons.title).click();
+    await choice.uncheck();
     assert.equal(await page.getByText(block,{exact:true}).count(),0);
-    await page.getByRole('button',{name:texts.import.preview,exact:true}).first().click();
+    await tab(texts.import.preset.changes).click();
     await page.waitForFunction(()=>!document.querySelector('[role="progressbar"]'));
     assert.equal(Object.hasOwn(selections.at(-1),'torrent_sites'),false,'off omits the optional selection');
     assert.deepEqual(documents.at(-1),['{}']);assert.equal(calls.includes('importapply'),false);
+    await action(texts.import.preset.back).click();
+    await search.fill('Provider fixture');
     await page.getByRole('button',{name:/Provider fixture/}).click();
-    await page.getByText('Cloud fixture',{exact:false}).first().waitFor();
+    await showAddons();
     assert.equal(await page.getByRole('checkbox',{name:/torrent|торрент/i}).count(),0,'new source clears the option');
     await page.close();
   }

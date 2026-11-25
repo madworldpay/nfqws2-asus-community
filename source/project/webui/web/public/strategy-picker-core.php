@@ -19,6 +19,7 @@ final class NfqwsStrategyPickerMode
 /** Fixed services from the native domain test; no URL or shell input. */
 final class NfqwsStrategyPickerGoals
 {
+    public const MAIN_SERVICES='youtube,discord,instagram';
     public const DOMAINS=[
         'youtube'=>['youtube.com','www.youtube.com'],
         'discord'=>['discord.com','gateway.discord.gg','media.discordapp.net'],
@@ -532,14 +533,18 @@ final class NfqwsStrategyPickerState
             !in_array($version,[1,2],true))throw new RuntimeException('source_changed');
         return new self($this->root.'/round-'.($version===2?$id.'-':'').$number,$this->owner,$this->configDirectory);
     }
-    public function path(string $name):string
+    private function ensureRoot():void
     {
-        if(!in_array($name,['state.json','browser.json','engine.lock','actor-work.json','actor-guard.json','failure-work.json','failure-guard.json','winner-auto.json','generated-auto.json'],true)&&!preg_match('/^(?:result-[a-f0-9]{32}\.json|\.stage-[a-f0-9]{16}|cancel-[a-f0-9]{32}|unused-(?:work|guard)-[a-f0-9]{32}\.pid)$/D',$name))throw new RuntimeException('invalid_request');
         if(!file_exists($this->root)){
             self::safe(dirname($this->root),basename($this->root),$this->owner);
             $mask=umask(0077);try{if(!mkdir($this->root,0700))throw new RuntimeException('storage_unavailable');}finally{umask($mask);}
             self::syncDirectory(dirname($this->root),$this->owner);
         }
+    }
+    public function path(string $name):string
+    {
+        if(!in_array($name,['state.json','browser.json','engine.lock','actor-work.json','actor-guard.json','failure-work.json','failure-guard.json','winner-auto.json','generated-auto.json'],true)&&!preg_match('/^(?:result-[a-f0-9]{32}\.json|\.stage-[a-f0-9]{16}|cancel-[a-f0-9]{32}|unused-(?:work|guard)-[a-f0-9]{32}\.pid)$/D',$name))throw new RuntimeException('invalid_request');
+        $this->ensureRoot();
         return self::safe($this->root,$name,$this->owner);
     }
     private $journalLock=null;
@@ -547,7 +552,10 @@ final class NfqwsStrategyPickerState
     private function journal(callable $fn):mixed
     {
         if(is_resource($this->journalLock))return $fn();
-        $directory=dirname($this->path('state.json'));$fields=array_flip(['dev','ino','uid','gid','mode']);
+        $this->ensureRoot();
+        // A writer may replace the state file until this directory lock is held.
+        $directory=dirname(self::safe($this->root,'.picker-sync-check',$this->owner));
+        $fields=array_flip(['dev','ino','uid','gid','mode']);
         clearstatcache(true,$directory);$before=@lstat($directory);$f=@fopen($directory,'rbe');
         if(!$before||!is_resource($f))throw new RuntimeException('storage_unavailable');
         try{

@@ -1,10 +1,10 @@
 <a id="nfqws2-asus-community"></a>
 
-# NFQWS2 для ASUS, Keenetic, Netcraze и OpenWrt
+# NFQWS2 COMMUNITY
 
 [English](README.en.md)
 
-[Build 105 для ASUS, OpenWrt, Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105) · [Выбрать пакет](DOWNLOADS.md) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
+[Build 108 для ASUS, OpenWrt, Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108) · [Выбрать пакет](DOWNLOADS.md) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
 
 <details>
 <summary>Все ссылки проекта</summary>
@@ -21,7 +21,7 @@
 
 </details>
 
-![NFQWS2 ASUS Community](images/nfqws2-asus-community.png)
+![NFQWS2 COMMUNITY](images/nfqws2-asus-community.png)
 
 [![ASUS build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmadworldpay%2Fnfqws2-asus-community%2Fmain%2Fupdates%2Fv2%2Fasus-build.json&query=%24.build&label=ASUS&prefix=Build%20&color=79b548)](DOWNLOADS.md)
 [![GitHub Stars](https://img.shields.io/github/stars/madworldpay/nfqws2-asus-community?style=flat&logo=github)](https://github.com/madworldpay/nfqws2-asus-community/stargazers)
@@ -37,7 +37,7 @@
 
 Панель устанавливается в текущую прошивку. На ASUS с Asuswrt-Merlin, Keenetic и Netcraze она использует Entware. Для OpenWrt выпускаются нативные пакеты.
 
-**Keenetic и Netcraze.** Панель сообщества использует штатную службу `nfqws2-keenetic`. В домашней сети она открывается по адресу `http://<адрес-роутера>:90/nfqws-community/`. Для Build 105 выпущены пакеты ARM64, MIPS и MIPSEL. [Установка](INSTALL.md#keenetic) · [Пакеты по архитектурам](DOWNLOADS.md#keenetic).
+**Keenetic и Netcraze.** Панель сообщества использует штатную службу `nfqws2-keenetic`. В домашней сети она открывается по адресу `http://<адрес-роутера>:90/nfqws-community/`. Для Build 108 выпущены пакеты ARM64, MIPS и MIPSEL. [Установка](INSTALL.md#keenetic) · [Пакеты по архитектурам](DOWNLOADS.md#keenetic).
 
 **Бесплатно · RU / EN**
 

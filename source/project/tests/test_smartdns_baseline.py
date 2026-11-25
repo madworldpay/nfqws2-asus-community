@@ -25,8 +25,9 @@ class SmartDnsBaselineTests(unittest.TestCase):
             if hook.exists():hook.chmod(0o755)
             if operation=='unsafe_mode':hook.chmod(0o777)
             if operation=='nonexec_mode':hook.chmod(0o644)
+            if operation=='repairable_input':(root/'opt/vpn.conf').chmod(0o666)
             command=root/'nvram';command.write_text("#!/bin/sh\ncat <<'FIXTURE'\njffs2_scripts=1\nwan0_dnsenable_x=0\nwan0_dns1_x=9.9.9.9\n"+nvram+"\nFIXTURE\n");command.chmod(0o700)
-            before={str(f.relative_to(root)):f.read_bytes() for f in root.rglob('*') if f.is_file()}
+            before={str(f.relative_to(root)):(f.read_bytes(),f.stat().st_mode) for f in root.rglob('*') if f.is_file()}
             code=r'''$file=$argv[1].'/smartdns-baseline.php';if(!is_file($file)){echo json_encode(['error'=>'missing_baseline']);exit;}
             require $file;$r=$argv[2];$roots=[];foreach(['opt','proc','tmp','jffs','etc','sys','ark'] as $name)$roots[$name]=$r.'/'.$name;
             $roots['commands']=['nvram'=>[$r.'/nvram']];$engine=str_repeat('a',64);
@@ -40,7 +41,8 @@ class SmartDnsBaselineTests(unittest.TestCase):
             }catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}'''
             p=subprocess.run([PHP,'-n','-r',code,str(PUBLIC),str(root),str(os.getuid()),operation or 'none'],capture_output=True,text=True,timeout=8)
             self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertEqual(p.stderr,'')
-            if operation is None:self.assertEqual(before,{str(f.relative_to(root)):f.read_bytes() for f in root.rglob('*') if f.is_file()})
+            if operation in (None,'repairable_input'):
+                self.assertEqual(before,{str(f.relative_to(root)):(f.read_bytes(),f.stat().st_mode) for f in root.rglob('*') if f.is_file()})
             return json.loads(p.stdout)
 
     def test_unchanged_readonly_baseline_is_stable_and_preserves_private_snapshot(self):
@@ -70,6 +72,15 @@ class SmartDnsBaselineTests(unittest.TestCase):
                           'opt/vpn.conf':'filter-AAAA\nipset=/video.example/geo_dst\nserver=1.1.1.1@vpn0\n'},operation='include')
         self.assertIsInstance(out,list)
         self.assertNotEqual(out[0]['hash'],out[1]['hash'])
+
+    def test_preview_recognizes_only_safe_permission_repairs_without_writing(self):
+        for body,want in [('server=9.9.9.9@vpn0\n',True),('dhcp-script=/opt/untrusted\n',False)]:
+            with self.subTest(want=want):
+                out=self.collect({'tmp/etc/dnsmasq.conf':'server=1.1.1.1\nconf-file=@ROOT@/opt/vpn.conf\n',
+                                  'opt/vpn.conf':body},operation='repairable_input')
+                self.assertEqual(out[0]['includes_need_repair'],want)
+                self.assertEqual('existing_dns_rules' in out[0]['conflicts'],not want)
+                self.assertEqual(out[0]['hash'],out[1]['hash'])
 
     def test_foreign_runtime_configuration_is_a_conflict_not_a_takeover(self):
         out=self.collect({'opt/etc/smartdns/smartdns.conf':'server-https https://example.org/?PRIVATE_CANARY\n'})

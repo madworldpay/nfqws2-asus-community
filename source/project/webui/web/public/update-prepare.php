@@ -25,12 +25,15 @@ final class AsusUpdateSnapshot
     }
     private static function collect(string $opt,int $owner): array
     {
-        AsusUpdateStore::noLinks($opt);$files=[];$total=0;
-        $scan=function(string $relative)use(&$scan,&$files,&$total,$opt,$owner){$p=$opt.'/'.$relative;AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s)return;
+        AsusUpdateStore::noLinks($opt);$files=[];$total=0;$indexBytes=0;
+        $scan=function(string $relative)use(&$scan,&$files,&$total,&$indexBytes,$opt,$owner){$p=$opt.'/'.$relative;AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s)return;
             if(!self::ownerAllowed($relative,$s,$owner))throw new RuntimeException('invalid_state');$type=$s['mode']&0170000;
             if($type===0040000){$names=@scandir($p);if(!is_array($names))throw new RuntimeException('invalid_state');foreach($names as $name)if($name!=='.'&&$name!=='..'){if(!preg_match('/^[a-zA-Z0-9_.-]{1,128}$/D',$name))throw new RuntimeException('invalid_state');$scan($relative.'/'.$name);}return;}
-            if($type!==0100000||$s['nlink']!==1||($s['mode']&07000)!==0||$s['size']>8388608||count($files)>=NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException('invalid_state');$total+=$s['size'];if($total>NfqwsUpdateSnapshotLimits::BYTES)throw new RuntimeException('output_limit');
-            $hash=hash_file('sha256',$p);if($hash===false)throw new RuntimeException('invalid_state');$files[$relative]=['mode'=>$s['mode']&0777,'size'=>$s['size'],'sha256'=>$hash,'uid'=>$s['uid'],'gid'=>$s['gid']];
+            if($type!==0100000||$s['nlink']!==1||($s['mode']&07000)!==0||$s['size']>8388608)throw new RuntimeException('invalid_state');$total+=$s['size'];if($total>NfqwsUpdateSnapshotLimits::BYTES)throw new RuntimeException('output_limit');
+            $hash=hash_file('sha256',$p);if($hash===false)throw new RuntimeException('invalid_state');$record=['mode'=>$s['mode']&0777,'size'=>$s['size'],'sha256'=>$hash,'uid'=>$s['uid'],'gid'=>$s['gid']];
+            $indexBytes+=strlen(json_encode([$relative=>$record],JSON_THROW_ON_ERROR))-1;
+            if($indexBytes>NfqwsUpdateSnapshotLimits::JSON)throw new RuntimeException('output_limit');
+            $files[$relative]=$record;
         };
         $scan('etc/nfqws2');foreach(['auth.json','support-relay.json','update-channel.json'] as $n)$scan('etc/nfqws-asus-web/'.$n);ksort($files);
         // Only proven stock resources may change with a package. Existing
@@ -127,7 +130,7 @@ final class AsusUpdatePrepare implements NfqwsUpdatePreparation
     {$this->store=$store??new AsusUpdateStore();}
     public static function code(Throwable $error): string
     {
-        $known=['channel_unconfigured','invalid_channel','invalid_manifest','invalid_signature','signature_unavailable','download_failed','download_size','download_hash','timed_out','channel_auth_failed','release_changed','unsupported_abi','unsupported_version','unsupported_package','invalid_package','package_reader_unavailable','missing_dependencies','dependency_change','pending_packages','insufficient_space','settings_changed','invalid_state','output_limit','stale_revision','busy','request_conflict','missing_operation','runtime_changed','core_stop_failed','core_start_failed','web_start_failed','web_health_failed','intent_mismatch','opkg_busy','install_failed','version_mismatch','launch_failed','interrupted'];
+        $known=['channel_unconfigured','invalid_channel','invalid_manifest','invalid_signature','signature_unavailable','download_failed','download_size','download_hash','timed_out','channel_auth_failed','release_changed','unsupported_abi','unsupported_version','unsupported_package','invalid_package','package_reader_unavailable','missing_dependencies','dependency_change','pending_packages','insufficient_space','settings_changed','invalid_state','output_limit','stale_revision','busy','request_conflict','missing_operation','runtime_changed','runtime_limit','core_stop_failed','core_start_failed','web_start_failed','web_health_failed','intent_mismatch','opkg_busy','install_failed','version_mismatch','launch_failed','interrupted'];
         $known=array_merge($known,['invalid_request','consent_required','check_required','auth_required','csrf_failed','dns_restore_required','dns_restore_failed','dns_permissions_changed','recovery_required','rollback_unavailable','rollback_failed','update_rolled_back','web_stop_failed','dns_resume_stop_failed']);
         return in_array($error->getMessage(),$known,true)?$error->getMessage():'update_failed';
     }

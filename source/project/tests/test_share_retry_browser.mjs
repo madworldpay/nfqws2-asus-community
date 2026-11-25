@@ -16,6 +16,13 @@ let previewFailures = [];
 const sends = [], previews = [], errors = [];
 const calls = [];
 const heldDrafts = [], heldFiles = [];
+const draftDns = {
+  id: 'draft', origin: 'draft', sha256: 'd'.repeat(64), complete: true, warnings: [],
+  scope: 'upstreams_and_domain_rules',
+  profile: { schema_version: 1, upstreams: [], records: [
+    { name: 'poster.example', include_subdomains: false, addresses: ['192.0.2.5'], checked_at: null },
+  ] },
+};
 const resource = Buffer.from('example.com\n');
 const resourceMeta = { id: 'c'.repeat(32), kind: 'lists', name: 'user.list', byte_length: resource.length, sha256: createHash('sha256').update(resource).digest('hex'), state: 'available' };
 const source = { model: 'GT-BE19000AI', firmware: { firmver: '3006.102', buildno: '9', extendno: '0' }, kernel: '4.19.294', versions: { core: '1.3.2-asus6+b79', web: '0.1.4' } };
@@ -58,7 +65,7 @@ try {
       case 'shareresourceread':
         if (guidance) await new Promise(resolve => heldFiles.push(resolve));
         value = { ...resourceMeta, encoding: 'utf8', text: resource.toString(), data_base64: resource.toString('base64') }; break;
-      case 'sharednssources': value = { sources: [], warnings: [] }; break;
+      case 'sharednssources': value = { sources: guidance ? [draftDns] : [], warnings: [] }; break;
       case 'sharestrategydraft':
         if (guidance) await new Promise(resolve => heldDrafts.push(resolve));
         value = { blocks: [{ key: 'NFQWS_ARGS', value: '--filter-tcp=443' }], config: initial }; break;
@@ -81,6 +88,10 @@ try {
         const selection = JSON.parse(p.get('selection')); prepared++;
         assert.equal(selection.strategy.mode, 'config');
         assert.equal(selection.strategy.config, initial);
+        if (guidance) assert.deepEqual(selection.dns, [{
+          source_id: 'draft', source_sha256: draftDns.sha256, upstreams: [],
+          records: [{ index: 0, value: draftDns.profile.records[0] }],
+        }]);
         const body = Buffer.from(JSON.stringify({ type: 'nfqws2_strategy', schema_version: 2, mode: 'config', config: initial, ...selection.context }));
         const file = { type: 'strategy', filename: `NFQWS2_STRATEGY_2026-11-01_11-00-0${prepared}Z.json`, byte_length: body.length, sha256: createHash('sha256').update(body).digest('hex'), data_base64: body.toString('base64') };
         previews.push(file);
@@ -157,6 +168,16 @@ try {
     assert.ok((await notice.innerText()).includes(pack.share.preview_guidance.operator));
     assert.equal(mutationCount(), guidanceStart, 'incomplete taps must not prepare or send');
     await guidancePage.getByRole('checkbox', { name: pack.share.full_config, exact: true }).check();
+    const dnsToggle = guidancePage.getByRole('checkbox', { name: new RegExp(pack.share.strategy_dns) });
+    assert.ok(await dnsToggle.isChecked(), 'strategy includes the available DNS draft by default');
+    await dnsToggle.uncheck();
+    const refreshDns = guidancePage.getByRole('button', { name: pack.share.refresh_dns });
+    const refreshed = guidancePage.waitForResponse(response => response.request().postData()?.includes('sharednssources') === true);
+    await refreshDns.click();
+    await refreshed;
+    await guidancePage.getByRole('button', { name: new RegExp(pack.share.dns_origins.draft) }).waitFor();
+    assert.equal(await dnsToggle.isChecked(), false, 'refresh retains an explicit opt-out');
+    await dnsToggle.check();
     await guidancePage.getByLabel(pack.share.operator, { exact: false }).fill('Diagnostic ISP');
     await guidancePreview.tap();
     const guidanceDownload = guidancePage.getByRole('button', { name: pack.report.download, exact: true });

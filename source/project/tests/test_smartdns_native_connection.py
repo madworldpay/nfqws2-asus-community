@@ -81,7 +81,7 @@ for(;;)sleep(1);}
             if($mode==='native_detacher')$foreignsh=proc_open(['/bin/sh','-c','while :; do sleep 1; done'],[0=>['file','/dev/null','r'],1=>['file','/dev/null','a'],2=>['file','/dev/null','a']],$unused);
             $backend=new AsusSmartDnsNativeBackend($store,$installer,$paths,$deps);
             try{$profile=json_decode(stream_get_contents(STDIN),true);$hash=$store->saveDraft($profile);$base=($deps['baseline'])()['hash'];$id=str_repeat('c',32);$preview=str_repeat('b',32);
-              $store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>$clock()+600]);
+              $store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>$clock()+600,'checks'=>[['stage'=>'profile','name'=>'example.com','ok'=>true]]]);
               $connection=new AsusSmartDnsConnection($store,$backend->dependencies()+['uptime'=>$clock]);$states=[];
               $states[]=$connection->apply($id,$preview,$hash,$base);$native=$backend->state();
               if($mode==='cleanup_failed'){unlink($root.'/probe-fail');$states[]=$connection->rollback($id);}
@@ -98,7 +98,7 @@ for(;;)sleep(1);}
                     $pid=proc_get_status($validationHolder)['pid'];$identity=AsusDpiRuntime::identity($pid);
                     file_put_contents($run.'/guard',$pid.' '.$identity['starttime'].' '.$identity['boot_id'].' 999999999.000'."\n");chmod($run.'/guard',0600);
                   }
-                  $preview=['id'=>str_repeat('f',32),'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>(float)explode(' ',file_get_contents('/proc/uptime'))[0]+600];$store->savePreview($preview);$store->transition($validation,['validating'],['state'=>'preview_ready','preview_id'=>$preview['id']]);
+                  $preview=['id'=>str_repeat('f',32),'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>(float)explode(' ',file_get_contents('/proc/uptime'))[0]+600,'checks'=>[['stage'=>'profile','name'=>'example.com','ok'=>true]]];$store->savePreview($preview);$store->transition($validation,['validating'],['state'=>'preview_ready','preview_id'=>$preview['id']]);
                 }]);
                 $states[]=$life->stop('upgrade');$other=$profile;$other['upstreams'][0]['label']='prepared next profile';if($mode==='upgrade_resume_draft')$store->saveDraft($other);
                 $states[]=$life->resume();$resumedHash=$store->active()['profile_hash']??null;$draftLabel=$store->draft()['upstreams'][0]['label'];

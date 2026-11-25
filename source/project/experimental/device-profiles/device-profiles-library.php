@@ -101,7 +101,8 @@ final class NfqwsDeviceProfilesLibrary
             if(!array_is_list($domains)||!$domains||count($domains)>256)throw new RuntimeException('invalid_request');
             foreach($domains as $host)if(!is_string($host)||!NfqwsStrategySynthesis::domain($host))throw new RuntimeException('invalid_request');
             $domains=array_values(array_unique($domains));sort($domains);
-            $source=new AsusShareResources($this->config,$this->owner,$this->bundledLua,$this->reader);$inventory=$source->inventory();$lua=[];$exclude='';$payloads=[];$pins=[];
+            $source=AsusShareResources::forPicker($this->config,$this->owner,$this->bundledLua,$this->reader);$inventory=$source->inventory();$lua=[];$exclude='';$payloads=[];$pins=[];
+            if($inventory['scan_truncated'])throw new RuntimeException('picker_resource_limit');
             foreach($inventory['files']as $file){
                 if(($file['bundled_lua']??false)&&in_array($file['bundled_name']??null,['zapret-lib.lua','zapret-antidpi.lua'],true))$lua[$file['bundled_name']]='/opt/etc/nfqws2/lua/'.$file['name'];
                 if(($file['bundled_resource']??false)&&$file['kind']==='blobs')foreach(NfqwsStrategySynthesis::packagedPayloads()as $id=>$name)if(($file['bundled_name']??null)===$name){
@@ -121,13 +122,42 @@ final class NfqwsDeviceProfilesLibrary
             return $this->create('Синтез · пустая основа',AsusImportConfig::replace('',$values),$imported,null,null,$pins);
         });
     }
-    public function stock(?string $trustedTemplate=null):array
+    public function stock(?string $trustedTemplate=null,bool $packagedInputs=false):array
     {
-        return $this->locked(function()use($trustedTemplate){
+        if($packagedInputs&&($trustedTemplate!==null||NfqwsPlatform::current()!=='asus-entware'))
+            throw new RuntimeException('invalid_request');
+        return $this->locked(function()use($trustedTemplate,$packagedInputs){
             if(file_exists($this->private.'/library/stock.json'))return $this->entry('stock');
-            $raw=$trustedTemplate??$this->reader->bytes(NfqwsDeviceProfilesPaths::guard(NfqwsPlatform::settings()['share'].'/defaults','nfqws2.conf'),262144);
-            $this->create('Стоковая стратегия',$raw,[],'stock');return $this->entry('stock');
+            $share=NfqwsPlatform::settings()['share'];$defaults=$share.'/defaults';
+            $raw=$trustedTemplate??$this->reader->bytes(NfqwsDeviceProfilesPaths::guard($defaults,'nfqws2.conf',$this->owner),262144);
+            $inputs=[];
+            if($packagedInputs){
+                $manifest=$this->reader->bytes(NfqwsDeviceProfilesPaths::guard($share,'report-baseline.json',$this->owner),131072);
+                $pins=json_decode($manifest,true,32,JSON_THROW_ON_ERROR)['stock_strategy']??[];
+                self::verifyStockBytes($raw,$pins['nfqws2.conf']??[]);
+                foreach(['user.list','auto.list','exclude.list','ipset.list','ipset_exclude.list'] as $name){
+                    $path=NfqwsDeviceProfilesPaths::guard($this->config.'/lists',$name.'.notactive',$this->owner);
+                    $bytes=$this->reader->bytes($path,262144);self::verifyStockBytes($bytes,$pins['lists/'.$name]??[]);
+                    $inputs[]=['kind'=>'lists','target_name'=>$name,'data_base64'=>base64_encode($bytes)];
+                }
+                foreach(['quic_initial.bin','tls_clienthello.bin'] as $name){
+                    $path=NfqwsDeviceProfilesPaths::guard($defaults.'/blobs',$name,$this->owner);
+                    $bytes=$this->reader->bytes($path,262144);self::verifyStockBytes($bytes,$this->bundledLua['blob/'.$name]??[]);
+                    $inputs[]=['kind'=>'blobs','target_name'=>$name,'data_base64'=>base64_encode($bytes)];
+                }
+                foreach(['zapret-lib.lua','zapret-antidpi.lua','zapret-auto.lua'] as $name){
+                    $path=NfqwsDeviceProfilesPaths::guard($share.'/factory/lua',$name,$this->owner);
+                    $bytes=$this->reader->bytes($path,262144);self::verifyStockBytes($bytes,$this->bundledLua['lua/'.$name]??[]);
+                    $inputs[]=['kind'=>'lua','target_name'=>$name,'data_base64'=>base64_encode($bytes)];
+                }
+            }
+            $this->create('Стоковая стратегия',$raw,$inputs,'stock');return $this->entry('stock');
         });
+    }
+    private static function verifyStockBytes(string $bytes,array $pin):void
+    {
+        if(($pin['bytes']??null)!==strlen($bytes)||($pin['sha256']??null)!==hash('sha256',$bytes))
+            throw new RuntimeException('source_changed');
     }
     public function import(string $name,string $document,bool $trustedLua):array
     {
@@ -152,8 +182,9 @@ final class NfqwsDeviceProfilesLibrary
         $displayName=trim($name);
         if($fixedId===null&&count($this->listing())>=8)throw new RuntimeException('library_limit');
         $expectedSource??=hash('sha256',$this->current());
-        $config=NfqwsNativeConfig::parse($raw);$source=new AsusShareResources($this->config,$this->owner,null,$this->reader);
+        $config=NfqwsNativeConfig::parse($raw);$source=AsusShareResources::forPicker($this->config,$this->owner,null,$this->reader);
         $inventory=$source->inventory();$files=[];$total=0;
+        if($inventory['scan_truncated'])throw new RuntimeException('picker_resource_limit');
         foreach($inventory['files']as $row)if($row['state']==='available'){
             $file=$source->read($row['id'],$row['sha256']);$files[$row['kind'].'/'.$row['name']]=base64_decode($file['data_base64'],true);
         }

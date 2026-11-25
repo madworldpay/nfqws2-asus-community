@@ -64,6 +64,34 @@ class NativeBuilderTests(unittest.TestCase):
         for args in [('24.10','all',1),('25.12','armv7-3.2',1),('24.10\n','arm_cortex-a9',1),('24.10','arm_cortex-a9',0),('24.10','arm_cortex-a9','1;reboot')]:
             with self.subTest(args=args),self.assertRaises(ValueError):builder.native_metadata(*args)
 
+    def test_package_hook_runs_php_as_cli_when_package_manager_inherits_cgi_environment(self):
+        php = os.environ.get('PHP_TEST_BINARY')
+        if not php:
+            self.skipTest('PHP interpreter not selected')
+        target = builder.native_metadata('24.10', 'x86_64', 108)
+        hook = builder.package_hook(target, 'postinstall').decode()
+        preamble = hook.split('case "$NFQWS_PKG_ACTION" in', 1)[0]
+        with tempfile.TemporaryDirectory() as td:
+            intended = Path(td) / 'intended.php'
+            intended.write_text('<?php echo "maintainer ran";')
+            request_file = Path(td) / 'request.txt'
+            request_file.write_text('web request body')
+            environment = {
+                **os.environ,
+                'REQUEST_METHOD': 'GET',
+                'GATEWAY_INTERFACE': 'CGI/1.1',
+                'SERVER_NAME': 'test.local',
+                'SERVER_SOFTWARE': 'uhttpd',
+                'SCRIPT_FILENAME': str(request_file),
+                'REDIRECT_STATUS': '200',
+            }
+            # Exercise the generated preamble without running package actions.
+            proc = subprocess.run(
+                ['sh', '-c', preamble + '\nexec "$1" -n -q -f "$2"', 'hook', php, intended],
+                env=environment, text=True, capture_output=True, check=True,
+            )
+            self.assertEqual(proc.stdout, 'maintainer ran')
+
     def test_defaults_are_portable_and_discover_uplinks(self):
         config=builder.native_defaults().decode()
         self.assertIn('ISP_INTERFACE=""',config)

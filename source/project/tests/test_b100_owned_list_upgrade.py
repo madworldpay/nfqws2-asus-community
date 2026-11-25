@@ -38,7 +38,14 @@ class OwnedHostlistUpgradeTests(unittest.TestCase):
             baseline['package_lists'] = self.pins
         prefix = 'opt/etc/nfqws2/lists/' if old else 'opt/share/nfqws2-asus/factory/lists/'
         payload = {prefix + name: (buf, 0o644) for name, buf in self.samples.items()}
-        payload['opt/libexec/nfqws2-asus/busybox'] = (BUSYBOX.read_bytes(), 0o755)
+        # The MAIN firmware's BusyBox rejects stat -c. Preserve that restriction
+        # when this fixture runs with a more featureful host BusyBox.
+        busybox = (
+            '#!/bin/sh\n'
+            'if [ "$1" = stat ] && [ "$2" = -c ]; then exit 1; fi\n'
+            f'exec {shlex.quote(str(BUSYBOX.resolve()))} "$@"\n'
+        )
+        payload['opt/libexec/nfqws2-asus/busybox'] = (busybox.encode(), 0o755)
         payload['opt/share/nfqws2-asus/report-baseline.json'] = (json.dumps(baseline, separators=(',', ':')).encode(), 0o644)
         control = {'control': (f'Package: nfqws2-asus\nVersion: {version}\nArchitecture: aarch64-3.10\nDescription: upgrade fixture\n'.encode(), 0o644)}
         if not old:

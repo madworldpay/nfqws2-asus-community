@@ -83,6 +83,9 @@ def prepare_engine(data, target):
     if hashlib.sha256(unpacked).hexdigest() != target['unpacked_sha256']:
         raise RuntimeError('Unexpected unpacked engine SHA256')
     return unpacked
+engine_spec=importlib.util.spec_from_file_location('nfqws_engine_release',ROOT/'core/engine_release.py')
+engine_release=importlib.util.module_from_spec(engine_spec)
+engine_spec.loader.exec_module(engine_release)
 CORE_VERSION = '1.3.2-asus6'
 WEB_VERSION = (ROOT/'VERSION').read_text().strip()
 ASSETS = json.loads((ROOT/'asus/assets.json').read_text())
@@ -350,7 +353,11 @@ def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
             if name.startswith('opt/etc/nfqws2/blobs/'):
                 name = name.replace('opt/etc/nfqws2/blobs/', 'opt/share/nfqws2-asus/defaults/blobs/', 1)
             core[name] = content, 0o755 if '/bin/' in name else 0o644
-    engine = prepare_engine(nfq[target['engine_member']], target)
+    release = engine_release.read(cache)
+    engine = release['engine/arm64' if arch == 'aarch64-3.10' else 'engine/arm']
+    for name, raw in release.items():
+        if name.startswith('lua/'):
+            core['opt/etc/nfqws2/'+name] = raw, 0o644
     validate_elf(engine, target, 'engine')
     core['opt/usr/bin/nfqws2'] = engine, 0o755
     core['opt/etc/nfqws2/lua/local-guarded-ts.lua'] = local('asus/lua/local-guarded-ts.lua')
@@ -361,7 +368,7 @@ def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
     list_pins = blob_bundle.add_module_resources(
         core, 'opt/share/nfqws2-asus/factory/lists', 'opt/share/nfqws2-asus/defaults/blobs')
     baseline = {'schema_version': 1, 'package_version': package_version(build_number), 'web_version': WEB_VERSION,
-                'engine': {'version': '1.0.7', 'provider': 'nfqws2-keenetic',
+                'engine': {**engine_release.PROVENANCE,
                            'sha256': hashlib.sha256(engine).hexdigest(),
                            'elf_class': engine[4], 'elf_machine': int.from_bytes(engine[18:20], 'little')},
                 'resources': {}, 'package_lists': list_pins}
@@ -371,8 +378,6 @@ def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
             if resource_name.startswith(prefix):
                 baseline['resources'][kind + '/' + resource_name[len(prefix):]] = {
                     'sha256': hashlib.sha256(resource_data).hexdigest(), 'bytes': len(resource_data)}
-    core['opt/share/nfqws2-asus/report-baseline.json'] = (
-        (json.dumps(baseline, sort_keys=True, separators=(',', ':')) + '\n').encode(), 0o644)
     family = target.get('family', arch)
     core.update(ip_health_sockets_payload(cache, offline, family))
     core['opt/lib/nfqws2-asus/target.sh'] = f"ASUS_PACKAGE_ARCH='{family}'\n".encode(), 0o644
@@ -386,6 +391,14 @@ def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
                     '# ASUS client selection: all, include or exclude\nASUS_CLIENT_MODE="all"\n'
                     '# Space-separated IP addresses or CIDRs\nASUS_CLIENTS4=""\nASUS_CLIENTS6=""', config, flags=re.S)
     core['opt/etc/nfqws2/nfqws2.conf.notactive'] = config.encode(), 0o600
+    stock = {'nfqws2.conf': config.encode()}
+    for name in ('user.list', 'auto.list', 'exclude.list', 'ipset.list', 'ipset_exclude.list'):
+        stock['lists/'+name] = core['opt/etc/nfqws2/lists/'+name+'.notactive'][0]
+    baseline['stock_strategy'] = {
+        name: {'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)} for name, raw in stock.items()
+    }
+    core['opt/share/nfqws2-asus/report-baseline.json'] = (
+        (json.dumps(baseline, sort_keys=True, separators=(',', ':')) + '\n').encode(), 0o644)
     for name in ['guard.sh', 'probe.sh', 'drop.sh', 'stop.sh', 'worker.php', 'cli.php', 'paths.sh']:
         core['opt/lib/nfqws2-asus/dpi/'+name] = local('asus/dpi/'+name)
     core['opt/bin/nfqws2-dpi'] = local('asus/dpi/cli.sh', True)
@@ -510,7 +523,12 @@ def build_one(cache, output, offline, arch, build_number=None, web_dist=None):
     overlap = core.keys() & web.keys()
     if overlap:
         raise RuntimeError(f'Overlapping core/web payload: {sorted(overlap)}')
-    payload = device_profiles.integrate({**core, **web}, 'asus-entware')
+    payload = {**core, **web}
+    public_payload.add_synthesis_seeds(
+        payload, 'opt/share/nfqws-asus-web', 'opt/share/nfqws2-asus',
+        'opt/share/nfqws2-asus/factory/lua', build_number if build_number is not None else (ROOT/'BUILD_NUMBER').read_text(),
+    )
+    payload = device_profiles.integrate(payload, 'asus-entware')
     package(output, 'nfqws2-asus', package_version(build_number),
             'iptables, flock, php8-cgi, php8-mod-session, php8-mod-openssl, ca-bundle, libc, libssp, librt, libpthread, libpcre2, libnettle',
             'nfqws2-keenetic, nfqws-keenetic, tpws-keenetic, nfqws-keenetic-web, nfqws-asus-web',

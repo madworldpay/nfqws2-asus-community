@@ -1,7 +1,7 @@
 """Only reviewed profile bytes become immutable signed cloud objects."""
 import base64,copy,hashlib,json,os,pathlib,subprocess,tempfile,unittest
 from test_dpi_normalize import PHP,PUBLIC,ROOT
-from test_import_document import STRATEGY
+from test_import_document import STRATEGY, envelope, wire
 from test_import_plan import documents
 
 
@@ -67,6 +67,28 @@ class ProfileCatalogPublisherTests(unittest.TestCase):
         self.meta['profiles'][0].update(min_build=88,source_sha256=hashlib.sha256(raw).hexdigest())
         self.publish()
         self.assertEqual(self.verified()['profiles'][0]['min_build'],88)
+
+    def test_package_lua_alias_requires_reviewed_bytes_and_preserves_local_auto_list(self):
+        strategy, resources = map(json.loads, documents())
+        strategy['shared']['NFQWS_BASE_ARGS'] = '--blob=hello:RESOURCE_1 --lua-init=@RESOURCE_2'
+        strategy['blocks'][0]['value'] += ' --hostlist-auto=/opt/etc/nfqws2/lists/auto.list'
+        lua = (ROOT/'asus/lua/local-tls13-stun.lua').read_bytes()
+        ref = resources['files'].pop()
+        package = {key: ref[key] for key in ('id', 'kind', 'aliases')}
+        package.update(name='local-tls13-stun.lua', byte_length=len(lua), sha256=hashlib.sha256(lua).hexdigest())
+        resources.update(schema_version=2, package_files=[package])
+        for valid in (True, False):
+            if not valid:
+                package['sha256'] = '0' * 64
+            profile = envelope(strategy)
+            profile['files'].append(wire('resources', resources))
+            raw = json.dumps(profile).encode()
+            (self.profiles/'example.json').write_bytes(raw)
+            self.meta['profiles'][0]['source_sha256'] = hashlib.sha256(raw).hexdigest()
+            self.meta['revision'] += 1
+            result = self.publish(valid)
+            if not valid:
+                self.assertIn('packaged Lua', result.stderr)
 
     def test_changed_unreviewed_input_does_not_replace_existing_catalog(self):
         self.publish();before=(self.out/'catalog.json').read_bytes()

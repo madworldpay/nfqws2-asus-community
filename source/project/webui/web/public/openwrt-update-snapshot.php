@@ -12,7 +12,7 @@ final class NfqwsOpenWrtUpdateSnapshot
     /** Validate a protected identity before using its paths or equivalence flags. */
     private static function identity(array $value,int $owner):array
     {
-        if(!self::keys($value,['files','bytes'])||!is_array($value['files'])||count($value['files'])>NfqwsUpdateSnapshotLimits::FILES||!is_int($value['bytes'])||$value['bytes']<0||$value['bytes']>NfqwsUpdateSnapshotLimits::BYTES)throw new RuntimeException('invalid_state');
+        if(!self::keys($value,['files','bytes'])||!is_array($value['files'])||!is_int($value['bytes'])||$value['bytes']<0||$value['bytes']>NfqwsUpdateSnapshotLimits::BYTES)throw new RuntimeException('invalid_state');
         $files=[];$bytes=0;
         foreach($value['files']as $name=>$r){
             if(!is_string($name)||strlen($name)>4096||!preg_match('~^etc/(?:nfqws2(?:/[A-Za-z0-9_+.-]{1,128})*|config/nfqws2-web|nfqws2-web/(?:auth\.json|support-relay\.json|update-channel\.json|smartdns/(?:draft|resume-intent)\.json))$~D',$name)||array_intersect(explode('/',$name),['.','..'])||!is_array($r)||!in_array($r['type']??null,['file','link'],true))throw new RuntimeException('invalid_state');
@@ -41,7 +41,7 @@ final class NfqwsOpenWrtUpdateSnapshot
         $file=$root.'/usr/share/nfqws2/report-baseline.json';AsusUpdateStore::noLinks($file);$s=@lstat($file);if(!$s)return [];
         if(!is_file($file)||$s['uid']!==$owner||($s['mode']&0022)!==0||$s['size']>1048576)throw new RuntimeException('invalid_state');
         $v=json_decode((string)file_get_contents($file),true,32,JSON_THROW_ON_ERROR);$out=[];
-        if(!is_array($v['resources']??null)||count($v['resources'])>NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException('invalid_state');
+        if(!is_array($v['resources']??null))throw new RuntimeException('invalid_state');
         foreach($v['resources']as $name=>$r){
             if(NfqwsResourcePaths::isPackageListPin($name,$r))continue;
             if(!preg_match('~^(lua|blob)/([A-Za-z0-9_.-]{1,128})$~D',$name,$m)||!is_int($r['bytes']??null)||$r['bytes']<0||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256']??''))throw new RuntimeException('invalid_state');
@@ -56,18 +56,23 @@ final class NfqwsOpenWrtUpdateSnapshot
     }
     private static function collect(string $root,int $owner):array
     {
-        $root=rtrim($root,'/');AsusUpdateStore::noLinks($root===''?'/':$root);$files=[];$bytes=0;$stock=self::stock($root,$owner);
-        $scan=function(string $name)use(&$scan,&$files,&$bytes,$root,$stock,$owner){
+        $root=rtrim($root,'/');AsusUpdateStore::noLinks($root===''?'/':$root);$files=[];$bytes=0;$indexBytes=0;$stock=self::stock($root,$owner);
+        $remember=function(string $name,array $record)use(&$files,&$indexBytes){
+            $indexBytes+=strlen(json_encode([$name=>$record],JSON_THROW_ON_ERROR))-1;
+            if($indexBytes>NfqwsUpdateSnapshotLimits::JSON)throw new RuntimeException('output_limit');
+            $files[$name]=$record;
+        };
+        $scan=function(string $name)use(&$scan,&$bytes,$remember,$root,$stock,$owner){
             $p=$root.'/'.$name;AsusUpdateStore::noLinks(dirname($p));clearstatcache(true,$p);$s=@lstat($p);if(!$s)return;
-            if(($s['mode']&0170000)!==0040000&&count($files)>=NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException('output_limit');
             if(is_link($p)){$target=readlink($p);if(!is_string($target)||strlen($target)>4096)throw new RuntimeException('invalid_state');
-                $files[$name]=['type'=>'link','target'=>$target,'uid'=>$s['uid'],'gid'=>$s['gid'],'mode'=>$s['mode']&0777,'size'=>strlen($target),'sha256'=>hash('sha256',$target),'stock'=>false];return;}
+                $remember($name,['type'=>'link','target'=>$target,'uid'=>$s['uid'],'gid'=>$s['gid'],'mode'=>$s['mode']&0777,'size'=>strlen($target),'sha256'=>hash('sha256',$target),'stock'=>false]);return;}
             if(is_dir($p)){foreach(scandir($p)as $leaf){if($leaf==='.'||$leaf==='..')continue;if(!preg_match('/^[A-Za-z0-9_+.-]{1,128}$/D',$leaf))throw new RuntimeException('invalid_state');$scan($name.'/'.$leaf);}return;}
             if(!is_file($p)||$s['size']>16777216)throw new RuntimeException('output_limit');
             $bytes+=$s['size'];if($bytes>NfqwsUpdateSnapshotLimits::BYTES)throw new RuntimeException('output_limit');$hash=hash_file('sha256',$p);if(!is_string($hash))throw new RuntimeException('invalid_state');
             $plain=['size'=>$s['size'],'sha256'=>$hash];$owned=$s['uid']===$owner&&$s['nlink']===1&&($s['mode']&0022)===0;
-            $files[$name]=['type'=>'file','uid'=>$s['uid'],'gid'=>$s['gid'],'mode'=>$s['mode']&0777]+$plain+['stock'=>$owned&&($stock[$name]??null)===$plain];
-            if($name==='etc/nfqws2-web/smartdns/resume-intent.json')$files[$name]['consent']=self::consent($p);
+            $record=['type'=>'file','uid'=>$s['uid'],'gid'=>$s['gid'],'mode'=>$s['mode']&0777]+$plain+['stock'=>$owned&&($stock[$name]??null)===$plain];
+            if($name==='etc/nfqws2-web/smartdns/resume-intent.json')$record['consent']=self::consent($p);
+            $remember($name,$record);
         };
         $scan('etc/nfqws2');$scan('etc/config/nfqws2-web');
         foreach(['auth.json','support-relay.json','update-channel.json','smartdns/draft.json','smartdns/resume-intent.json']as $name)$scan('etc/nfqws2-web/'.$name);
@@ -116,7 +121,7 @@ final class NfqwsOpenWrtUpdateSnapshot
     /** Verify live settings only; incomplete copies cannot weaken this proof. */
     public static function verifyState(array $saved,string $root='/',int $owner=0):bool
     {
-        $saved=self::identity($saved,$owner);self::bounded($saved,'invalid_state');$now=self::state($root,$owner);
+        self::bounded($saved,'invalid_state');$saved=self::identity($saved,$owner);$now=self::state($root,$owner);
         foreach($saved['files']as $name=>$r){
             $new=$now['files'][$name]??null;
             // The current package baseline may reclassify otherwise identical settings.

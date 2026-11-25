@@ -30,15 +30,52 @@ final class NfqwsStrategySynthesis
         static $rows;
         return $rows??=json_decode(file_get_contents(__DIR__.'/zapret2-pack/priors.json'),true,16,JSON_THROW_ON_ERROR);
     }
+    private static function catalogExamples():array
+    {
+        static $examples;
+        if($examples!==null)return $examples;
+        $examples=['http'=>[],'tls'=>[],'quic'=>[]];
+        $path=__DIR__.'/zapret2-pack/synthesis-seeds.json';
+        if(!is_file($path))return $examples;
+        $raw=file_get_contents($path,false,null,0,262145);
+        if($raw===false||strlen($raw)>262144)return $examples;
+        $document=json_decode($raw,true,12);
+        if(($document['schema_version']??null)!==1)return $examples;
+        foreach($examples as $protocol=>$_){
+            $rows=$document[$protocol]??null;
+            if(!is_array($rows)||!array_is_list($rows)||count($rows)>256)continue;
+            foreach($rows as $row){
+                if(!is_array($row['component']??null)||!is_array($row['sources']??null)||!array_is_list($row['sources'])||count($row['sources'])>128)continue;
+                try{$program=self::component($protocol,$row['component']);}catch(RuntimeException){continue;}
+                if($row['component']['method']==='pass')continue;
+                $credits=[];
+                foreach($row['sources'] as $source){
+                    $credit=$source['attribution']??null;
+                    if(!is_string($credit)||trim($credit)===''||strlen($credit)>256||preg_match('/[\x00-\x1f\x7f]/',$credit))continue;
+                    $credits[$credit]=true;
+                }
+                if(!$credits)continue;
+                if(isset($examples[$protocol][$program]))$credits=$examples[$protocol][$program]['credits']+$credits;
+                $examples[$protocol][$program]=['component'=>$row['component'],'credits'=>$credits];
+            }
+        }
+        return $examples;
+    }
     public static function exampleAttributions(array $recipe):array
     {
         $credits=[];
+        $catalog=self::catalogExamples();
         foreach(self::moduleRows() as $protocol=>$rows){
             $components=[$recipe[$protocol]??null];
             foreach($recipe['overrides']??[] as $rule)if(($rule['protocol']??null)===$protocol)$components[]=$rule['component'];
             foreach($rows as $row)if(in_array($row['component'],$components,false)){
                 $credits[$row['attribution']]=true;
                 if(count($credits)>=3)return array_keys($credits);
+            }
+            foreach($components as $component)if(is_array($component)){
+                $program=self::component($protocol,$component);
+                $credits+=$catalog[$protocol][$program]['credits']??[];
+                if(count($credits)>=3)return array_slice(array_keys($credits),0,3);
             }
         }
         return array_keys($credits);
@@ -78,8 +115,10 @@ final class NfqwsStrategySynthesis
         // Shared parameter axes, not a count of distinct compiled programs or
         // domain overrides. Never allocate their Cartesian product on a router.
         $dimensions=['http_methods'=>self::METHODS['http'],'tls_methods'=>self::METHODS['tls'],'split_positions'=>self::POSITIONS,'tcp_fooling'=>self::FOOLING,'fake_prefix'=>[false,true],'sequence_overlap'=>self::OVERLAPS,'fake_hosts'=>self::HOSTS,'tls_modifiers'=>array_keys(self::TLS_MODS),'fake_payloads'=>array_merge(['default','zero64'],self::budgetPayloads($budget)),'tls_window_scale'=>[null,1],'repeats'=>array_values(array_filter([1,2,3,4,5,6],fn($n)=>$n<=$limit)),'quic_fooling'=>['none','autottl']];
+        // Catalog examples ship with the package; no live catalog is needed.
         return ['knowledge_version'=>self::VERSION,'independent_of_catalog'=>true,
             'dimensions'=>$dimensions,'space_kind'=>'factorized_grid','module_examples'=>array_map('count',self::moduleExamples()),
+            'catalog_examples'=>array_map('count',self::catalogExamples()),
             'priors'=>self::PRIORS,'cost_weights'=>self::COST,
             'space_size'=>array_product(array_map('count',$dimensions)),
             'max_trials'=>$small?16:24,'max_rules'=>$small?16:24,'initial'=>$initial];
@@ -150,12 +189,20 @@ final class NfqwsStrategySynthesis
         foreach(self::budgetPayloads($budget)as $id)if($protocol!=='http'&&str_starts_with($id,$protocol==='quic'?'quic_':'tls_'))
             $out[]=['method'=>'fake','payload'=>$id,'fooling'=>$protocol==='quic'?'none':'ts','repeats'=>$two];
         if($protocol!=='quic')$out[]=['method'=>'fake','payload'=>'zero64','fooling'=>'seq','repeats'=>$two];
-        $eligible=[];
-        foreach(self::moduleExamples()[$protocol] as $c){
+        $eligible=[];$seen=[];
+        $catalog=array_column(self::catalogExamples()[$protocol],'component');
+        $module=self::moduleExamples()[$protocol];
+        $examples=[];
+        for($i=0;$i<max(count($catalog),count($module));$i++){
+            if(isset($catalog[$i]))$examples[]=$catalog[$i];
+            if(isset($module[$i]))$examples[]=$module[$i];
+        }
+        foreach($examples as $c){
             if(($c['repeats']??1)>$max)continue;
             $sample=$c['payload']??null;
             if($sample!==null&&$sample!=='zero64'&&!in_array($sample,$available,true))continue;
-            $eligible[]=$c;
+            $program=self::component($protocol,$c);
+            if(!isset($seen[$program])){$eligible[]=$c;$seen[$program]=true;}
         }
         // Alternate independent examples and original exploration. The queue
         // deduplicates compiled forms and owns the same trial and history caps.
@@ -290,7 +337,78 @@ final class NfqwsStrategySynthesis
         }
         return $out;
     }
-    public static function finalists(array $independent,array $improvements,array $control,string $goal='all',int $maxRules=24):array
+    public static function youtubeTls12Complete(array $runs):bool
+    {
+        $total=count(NfqwsStrategyPickerGoals::DOMAINS['youtube']);
+        foreach($runs as $run){
+            $cell=$run['services']['youtube']['tls12']??[];
+            if(($cell['total']??null)!==$total||($cell['ok']??null)!==$total)return false;
+        }
+        return $runs!==[];
+    }
+    /** Nominate a whole measured recipe. Only a fresh final comparison can
+     * promote it, including every existing aggregate protocol guard. */
+    public static function mainServicesCandidate(array $observations,array $control,int $minRuns):?array
+    {
+        $baseline=$control['runs']??[];
+        if(count($baseline)!==2)return null;
+        $minimum=[];
+        foreach(NfqwsStrategyPickerGoals::selected(NfqwsStrategyPickerGoals::MAIN_SERVICES)as $service){
+            foreach(['http','tls12','tls13','quic']as $protocol){
+                $first=$baseline[0]['services'][$service][$protocol]??[];
+                $second=$baseline[1]['services'][$service][$protocol]??[];
+                $total=$first['total']??null;
+                if(!is_int($total)||($second['total']??null)!==$total||!is_int($first['ok']??null)||!is_int($second['ok']??null))return null;
+                $minimum[]=[$service,$protocol,$total,min($first['ok'],$second['ok'])];
+            }
+        }
+        $ranked=null;$best=null;$blank=self::key(self::blank());
+        foreach(self::usable($observations)as $row){
+            $recipe=$row['recipe'];$runs=$row['runs'];
+            if(count($runs)<$minRuns||($recipe['basis']??'empty')!=='empty'||isset($recipe['custom_scope'])||
+                self::key($recipe)===$blank||!self::youtubeTls12Complete($runs))continue;
+            foreach($runs as $run){
+                if(($run['targets']??null)!==($baseline[0]['targets']??null)||($run['targets']??null)!==($baseline[1]['targets']??null))continue 2;
+                foreach($minimum as [$service,$protocol,$total,$floor]){
+                    $cell=$run['services'][$service][$protocol]??[];
+                    if(($cell['total']??null)!==$total||!is_int($cell['ok']??null)||$cell['ok']<$floor||$cell['ok']>$total)continue 3;
+                }
+            }
+            $losses=[];
+            foreach(NfqwsStrategyPickerScore::PROTOCOLS as $protocol){
+                $total=$baseline[0]['metrics'][$protocol]['total']??null;
+                foreach(array_merge($baseline,$runs)as $run){
+                    $cell=$run['metrics'][$protocol]??[];
+                    if(!is_int($total)||($cell['total']??null)!==$total||!is_int($cell['ok']??null)||$cell['ok']<0||$cell['ok']>$total)continue 3;
+                }
+                $before=min(array_map(fn($run)=>$run['metrics'][$protocol]['ok'],$baseline));
+                $after=min(array_map(fn($run)=>$run['metrics'][$protocol]['ok'],$runs));
+                $losses[$protocol]=max(0,$before-$after);
+            }
+            $priority=[$losses['tls13'],max($losses),array_sum($losses),self::cost($recipe)];
+            if($ranked===null||$priority<$ranked){$ranked=$priority;$best=$recipe;}
+        }
+        return $best;
+    }
+    public static function youtubeScopedCandidate(array $observations,array $control):?array
+    {
+        if(self::youtubeTls12Complete($control['runs']??[]))return null;
+        $whole=self::mainServicesCandidate($observations,$control,1);
+        if($whole===null||$whole['tls']['method']==='pass'||$whole['overrides'])return null;
+        $recipe=self::blank();
+        $recipe['overrides'][]=['protocol'=>'tls','domains'=>NfqwsStrategyPickerGoals::DOMAINS['youtube'],'component'=>$whole['tls']];
+        self::compile($recipe);
+        return $recipe;
+    }
+    public static function finalistPriority(array $original,array $zero,array $recipe,bool $mainServices):array
+    {
+        // A rejected variant can still explain the result. Prefer one that
+        // passed named services and TLS before looking at the recipe's cost.
+        $keptServices=$mainServices&&$original['reason']==='protocol_regression';
+        return [(int)$original['eligible'],(int)in_array($original['reason'],['no_improvement','goal_no_improvement'],true),
+            (int)$zero['eligible'],$original['gain'],(int)$keptServices,-self::cost($recipe)];
+    }
+    public static function finalists(array $independent,array $improvements,array $control,string $goal='all',int $maxRules=24,?array $reference=null):array
     {
         $current=self::blank();$current['basis']='current';$protocols=[];
         foreach(self::bestImprovements($improvements,$control,$goal,3)as $recipe){
@@ -303,6 +421,12 @@ final class NfqwsStrategySynthesis
         $out=[];
         if($current['overrides']){self::compile($current);$out[]=$current;}
         $recipe=self::assemble($independent,$goal,$maxRules);
+        if($goal===NfqwsStrategyPickerGoals::MAIN_SERVICES){
+            $whole=self::mainServicesCandidate($independent,$reference??$control,2);
+            if($whole!==null)$out[]=$whole;
+            if(self::key($recipe)!==self::key(self::blank())&&($whole===null||self::key($recipe)!==self::key($whole)))$out[]=$recipe;
+            return array_slice($out,0,2);
+        }
         if(!$out||self::key($recipe)!==self::key(self::blank()))$out[]=$recipe;
         return $out;
     }
@@ -813,7 +937,8 @@ final class NfqwsStrategySynthesis
     public static function refine(array $observations,array $budget,string $goal='all',bool $customOnly=false):array
     {
         $o=self::usable($observations);if(!$o)return [];
-        [$base]=self::selectBase($o,NfqwsStrategyPickerGoals::parse($goal),$customOnly);
+        $goal=NfqwsStrategyPickerGoals::parse($goal);
+        [$base,$selected]=self::selectBase($o,$goal,$customOnly);
         $seen=[];$groups=['http'=>[],'tls'=>[],'quic'=>[]];$protocol='http';$max=min(6,max(1,(int)($budget['max_repeats']??4)));
         foreach($o as $row)$seen[self::key($row['recipe'])]=true;
         $add=function($r)use(&$groups,&$protocol,&$seen){$key=self::key($r);if(!isset($seen[$key])){$groups[$protocol][]=$r;$seen[$key]=true;}};
@@ -829,8 +954,41 @@ final class NfqwsStrategySynthesis
         $protocol='quic';
         foreach(self::components('quic',$budget)as $component){$r=$base;$r['quic']=$component;$add($r);}
         foreach([1,2,3,4,5,6]as $repeat)if($repeat<=$max){$r=$base;$r['quic']=['method'=>'fake','repeats'=>$repeat];$add($r);}
-        foreach($groups as &$rows)usort($rows,fn($a,$b)=>self::cost($a)<=>self::cost($b));unset($rows);$out=[];
+        $priority=[];
+        foreach($groups as $protocol=>&$rows){
+            $priority[$protocol]=self::observedFailure($o[$selected[$protocol]],$protocol,$goal,$customOnly);
+            usort($rows,fn($a,$b)=>self::cost($a)<=>self::cost($b));
+            $first=[];$rest=[];
+            foreach($rows as $recipe){
+                $method=$recipe[$protocol]['method'];
+                if(isset($first[$method]))$rest[]=$recipe;else $first[$method]=$recipe;
+            }
+            $rows=array_merge(array_values($first),$rest);
+        }
+        unset($rows);
+        uksort($groups,fn($a,$b)=>$priority[$b]<=>$priority[$a]);$out=[];
         for($i=0;$i<max(array_map('count',$groups));$i++)foreach($groups as $rows)if(isset($rows[$i]))$out[]=$rows[$i];
         return $out;
+    }
+    private static function observedFailure(array $row,string $protocol,string $goal,bool $customOnly):float
+    {
+        $failure=0.;
+        if($protocol==='tls'&&isset($row['custom_minimum'])){
+            $cells=$row['custom_minimum']['cells'];
+            if($cells)$failure=1-array_sum(array_column($cells,'root_ok'))/count($cells);
+        }
+        if($customOnly)return $failure;
+        $columns=match($protocol){'http'=>['http'],'tls'=>['tls12','tls13'],'quic'=>['quic']};
+        $services=$goal==='all'?[]:NfqwsStrategyPickerGoals::selected($goal);
+        foreach($row['runs'] as $run){
+            $groups=[];
+            foreach($services as $service)if(isset($run['services'][$service]))$groups[]=$run['services'][$service];
+            if(!$groups)$groups=[$run['metrics']];
+            foreach($groups as $group)foreach($columns as $column){
+                $ok=$group[$column]['ok']??null;$total=$group[$column]['total']??null;
+                if(is_int($ok)&&is_int($total)&&$total>0&&$ok>=0&&$ok<=$total)$failure=max($failure,($total-$ok)/$total);
+            }
+        }
+        return $failure;
     }
 }

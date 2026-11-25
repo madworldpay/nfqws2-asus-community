@@ -1,0 +1,27 @@
+{
+  "asset": "zapret2-1.0.8-linux-patched.tar.gz",
+  "sha256": "8289190ab0cfd12a44eb02b1419dde06abd81adf94eb4916887ae9ed82e3a625",
+  "version": "1.0.8",
+  "commit": "93fbe9af8110107f44b70dba1ee956a0902f65b6",
+  "provider": "zapret2+fastpath",
+  "default_resources_provider": "nfqws2-keenetic",
+  "patches": {
+    "001-tls-reasm-fastpath.patch": "35ae3f6fcf52def6478b85933302a71a6b75d39c0613a49d14e285b5b4fd4633",
+    "002-zapret-1.0.8-fastpath-host-state.patch": "cec8f2570c2b3278da12b6abb91bc68c9b5f68d7c9e0a49d6bca93c9812b0579"
+  },
+  "members": {
+    "engine/arm": "0ac72fc3753e31c719040ffd0ee32621092785b5b9f8e32302bc210c81717d8e",
+    "engine/arm64": "906ace94c4b04838ab01ccd8bb6b4c40f1ee9be8092d4cebe637f974a9acd05f",
+    "engine/mips": "6409c42263c40c66b90acc4a1ccc886a591aa28ce355a70446d5bb56d483f445",
+    "engine/mipsel": "8a64f1b2497c1d5dc8b9e11f2a8a5ba74be1ff158affc87cad16eed4403f7ff3",
+    "engine/mips64": "3e57aade6401f7e57845fb7740927154579febb2bc6ed5c5487d3dfbc2e6ae06",
+    "engine/x86": "a49d22845ae303ccdf8f685b9253a83f32a8844021c84119059147dda35d6fd9",
+    "engine/x86_64": "aa871dd732bcf3565b70df3f9fb59da1a398f90af34c2f68e266567ddef61e53",
+    "lua/zapret-antidpi.lua": "ff6165a12d37915a98caef6462fe5bdd0138e567e447d1f65e33b5bb4e398424",
+    "lua/zapret-auto.lua": "030eb5e592438f47bc22d8f425f000f193649f80078aaebeb4e2f91622e9f4c6",
+    "lua/zapret-lib.lua": "79046853613128d8fcba19921a90ec91187f877ead6b893b155c1d7f7804e74e",
+    "lua/zapret-obfs.lua": "a6a3808d1dd21977aeae34603289b46e09dd8ebc4aef31ba6544224faaa2444b",
+    "lua/zapret-pcap.lua": "6866c37c92fbc62075accf94228da48af618c7f416edc682eba99b2196e05f45",
+    "lua/zapret-tests.lua": "82664cb50a751a531b63dce094ac03de5045b16b489e726ff32a9a1034811459"
+  }
+}

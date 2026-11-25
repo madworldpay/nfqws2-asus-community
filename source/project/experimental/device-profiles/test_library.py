@@ -155,6 +155,66 @@ class Library(unittest.TestCase):
         self.assertEqual(self.call('list'),[])
         self.assertIn(str(self.root/'engines/stock/lists/user.list'),first['config']['NFQWS_ARGS'])
 
+    def test_packaged_stock_uses_verified_package_copies_and_rejects_changed_inputs(self):
+        def pin(raw):
+            return {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+
+        for rel in ('share/defaults/blobs', 'share/factory/lua'):
+            (self.root/rel).mkdir(parents=True)
+        for path in (self.root/'share', *(p for p in (self.root/'share').rglob('*') if p.is_dir())):
+            path.chmod(0o755)
+        raw = (b'NFQWS_ARGS="--filter-tcp=443 --hostlist=/opt/etc/nfqws2/lists/user.list"\n'
+               b'NFQWS_EXTRA_ARGS="--hostlist-auto=/opt/etc/nfqws2/lists/auto.list"\n')
+        (self.root/'share/defaults/nfqws2.conf').write_bytes(raw)
+        stock = {'nfqws2.conf': pin(raw)}
+        original = (self.root/'config/lists/user.list').read_bytes()
+        for name in ('user.list', 'auto.list', 'exclude.list', 'ipset.list', 'ipset_exclude.list'):
+            data = b'stock.example.org\n' if name == 'user.list' else b''
+            (self.root/'config/lists'/f'{name}.notactive').write_bytes(data)
+            stock['lists/'+name] = pin(data)
+        resources = {}
+        for directory, kind, names in (
+            ('defaults/blobs', 'blob', ('quic_initial.bin', 'tls_clienthello.bin')),
+            ('factory/lua', 'lua', ('zapret-lib.lua', 'zapret-antidpi.lua', 'zapret-auto.lua')),
+        ):
+            for name in names:
+                data = name.encode()
+                (self.root/'share'/directory/name).write_bytes(data)
+                resources[kind+'/'+name] = pin(data)
+        (self.root/'share/report-baseline.json').write_text(json.dumps({'stock_strategy': stock, 'resources': resources}))
+        code = r'''
+        require $argv[1].'/share-resources.php';require $argv[1].'/import-plan.php';
+        require $argv[2].'/openwrt/config.php';require $argv[2].'/experimental/device-profiles/device-profiles-paths.php';
+        $source=file_get_contents($argv[2].'/experimental/device-profiles/device-profiles-library.php');
+        $GLOBALS['package']=$argv[3].'/share';
+        $scope=<<<'SCOPE'
+        namespace StockFixture;
+        use \AsusShareRead;use \AsusShareResources;use \NfqwsDeviceProfilesPaths;
+        use \NfqwsNativeConfig;use \NfqwsResourcePaths;use \RuntimeException;use \Throwable;
+        class NfqwsPlatform {
+            public static function settings(){return ['share'=>$GLOBALS['package']];}
+            public static function current(){return 'asus-entware';}
+        }
+        SCOPE;
+        eval($scope.substr($source,strpos($source,'final class NfqwsDeviceProfilesLibrary')));
+        $root=$argv[3];$owner=(int)$argv[4];$inputs=json_decode(file_get_contents($root.'/share/report-baseline.json'),true)['resources'];
+        try{
+          $lib=new \StockFixture\NfqwsDeviceProfilesLibrary($root.'/private',$root.'/engines',$root.'/config',$owner,$inputs);
+          $entry=$lib->stock(null,true);
+          file_put_contents($root.'/config/lists/user.list.notactive','changed');
+          $other=new \StockFixture\NfqwsDeviceProfilesLibrary($root.'/other-private',$root.'/other-engines',$root.'/config',$owner,$inputs);
+          try{$other->stock(null,true);$failure=null;}catch(RuntimeException $error){$failure=$error->getMessage();}
+          echo json_encode(['id'=>$entry['id'],'user'=>$entry['files']['lists/user.list'],'changed'=>$failure]);
+        }catch(Throwable $error){echo json_encode(['unexpected'=>$error->getMessage()]);}
+        '''
+        result = subprocess.run([PHP, '-n', '-r', code, str(lab.PUBLIC), str(HERE.parents[1]),
+                                 str(self.root), str(os.getuid())], capture_output=True, text=True, timeout=10)
+        self.assertEqual((result.returncode, result.stderr), (0, ''))
+        self.assertEqual(json.loads(result.stdout), {'id': 'stock', 'user': stock['lists/user.list']['sha256'],
+                                                     'changed': 'source_changed'})
+        self.assertEqual((self.root/'config/lists/user.list').read_bytes(), original)
+        self.assertEqual((self.root/'engines/stock/lists/user.list').read_bytes(), b'stock.example.org\n')
+
     def test_auto_learning_file_is_private_to_the_profile_and_debug_output_disabled(self):
         with (self.root/'config/nfqws2.conf').open('a')as f:
             f.write('NFQWS_EXTRA_ARGS="--hostlist-auto=/etc/nfqws2/lists/auto.list --hostlist-auto-debug=/var/log/nfqws2-auto.log"\n')

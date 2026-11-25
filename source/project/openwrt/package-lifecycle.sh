@@ -1,4 +1,8 @@
 # Embedded verbatim in native package hooks. Never run downloaded shell code.
+# When LuCI launches opkg, PHP must run the selected local script in CLI mode.
+unset REQUEST_METHOD QUERY_STRING CONTENT_TYPE CONTENT_LENGTH SCRIPT_FILENAME
+unset GATEWAY_INTERFACE SERVER_NAME SERVER_SOFTWARE PATH_INFO PATH_TRANSLATED REDIRECT_STATUS
+
 nfqws_package_state_dir=/tmp/nfqws2-native-package
 nfqws_package_updates_dir=/tmp/nfqws2-native-state/updates
 

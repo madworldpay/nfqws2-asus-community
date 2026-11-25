@@ -121,14 +121,16 @@ class SmartDnsBootResumeTests(unittest.TestCase):
         $backup=$store->backup(['candidate_profile'=>$profile]);$store->transition($id,['applying'],['state'=>'confirmed','active'=>['profile'=>$profile,'profile_hash'=>$hash,'backup_id'=>$backup]]);
         $store->saveIntent(['schema_version'=>1,'profile'=>$profile,'profile_hash'=>$hash,'engine_sha'=>str_repeat('e',64),'source_request_id'=>$mode==='foreign'?str_repeat('f',32):$id]);
         $state=file_get_contents($root.'/jffs/state');$state=str_replace(str_repeat('d',64),$hash,$state);file_put_contents($root.'/jffs/state',$state);
-        if($mode==='same_boot'){
+        if(str_starts_with($mode,'same_boot')){
           $j=json_decode(file_get_contents($root.'/dns/state.json'),true);$j['job']['boot']=$boot;file_put_contents($root.'/dns/state.json',json_encode($j));
         }
         if($mode==='fresh_switch'){$j=json_decode(file_get_contents($root.'/dns/state.json'),true);$j['job']['boot']=$boot;file_put_contents($root.'/dns/state.json',json_encode($j));}
         if($mode==='no_consent')$store->saveIntent(null);
         $store=new AsusSmartDnsStore($root.'/dns',$owner);
         $bundle=$root.'/engine/'.str_repeat('e',64);mkdir($root.'/engine',0700);mkdir($bundle,0700);mkdir($bundle.'/lib',0700);symlink(str_repeat('e',64),$root.'/engine/current');
-        $installer=new AsusSmartDnsInstaller($root.'/engine',$owner,['sha256'=>str_repeat('e',64),'version'=>'fixture','files'=>[],'links'=>[]]);
+        $artifact=['sha256'=>str_repeat('e',64),'version'=>'48.4','files'=>[],'links'=>[]];
+        if($mode==='same_boot_previous_engine')$artifact=['sha256'=>str_repeat('f',64),'version'=>'48.5','previous'=>$artifact];
+        $installer=new AsusSmartDnsInstaller($root.'/engine',$owner,$artifact);
         $native=new AsusSmartDnsNativeBackend($store,$installer,['native'=>$root.'/jffs','library'=>$root.'/lib'],['owner'=>$owner]);
         $backend=new class($native,$root,$mode,$boot) implements NfqwsSmartDnsBackend {
           public ?array $fresh=null; public int $restores=0;public int $switches=0;
@@ -136,7 +138,7 @@ class SmartDnsBootResumeTests(unittest.TestCase):
           public function state():?array{return $this->fresh??$this->native->state();}
           public function prepare(array $j,array $s):void{$this->fresh=['request_id'=>$j['request_id'],'profile_hash'=>$j['profile_hash'],'boot_id'=>$this->boot,'phase'=>'prepared'];}
           public function baseline():array{return ['hash'=>str_repeat('a',64),'snapshot'=>[],'conflicts'=>[]];}
-          public function healthy():bool{return $this->mode==='same_boot'||($this->fresh['phase']??null)==='confirmed';}
+          public function healthy():bool{return str_starts_with($this->mode,'same_boot')||($this->fresh['phase']??null)==='confirmed';}
           public function forwarding():string{return 'external';}
           public function lastCode(string $id):?string{return $this->native->lastCode($id);}
           public function guard(array $j,array $p):array{return ['identity'=>[],'guard_identity'=>[]];}
@@ -156,7 +158,7 @@ class SmartDnsBootResumeTests(unittest.TestCase):
             $store->beginValidation($id,$hash,$base,$source);
             if(in_array($mode,['baseline_ready','baseline_forever'],true)&&($validations===1||$mode==='baseline_forever')){$store->transition($id,['validating'],['state'=>'failed','code'=>'baseline_unavailable']);return;}
             if($mode==='hard_validation'){$store->transition($id,['validating'],['state'=>'failed','code'=>'unsupported_binary']);return;}
-            $preview=bin2hex(random_bytes(16));$store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>PHP_FLOAT_MAX]);$store->transition($id,['validating'],['state'=>'preview_ready','preview_id'=>$preview]);
+            $preview=bin2hex(random_bytes(16));$store->savePreview(['id'=>$preview,'profile_hash'=>$hash,'baseline_hash'=>$base,'expires_uptime'=>PHP_FLOAT_MAX,'checks'=>[['stage'=>'profile','name'=>'example.com','ok'=>true]]]);$store->transition($id,['validating'],['state'=>'preview_ready','preview_id'=>$preview]);
           }];
         $life=new AsusSmartDnsLifecycle($store,$backend,$installer,$deps);
         if(str_starts_with($mode,'status_')){
@@ -165,7 +167,7 @@ class SmartDnsBootResumeTests(unittest.TestCase):
           elseif($mode==='status_hardlink')link($root.'/foreign',$root.'/dns/boot-status.json');
           else {file_put_contents($root.'/dns/boot-status.json',str_repeat('x',4097));chmod($root.'/dns/boot-status.json',0600);}
         }
-        try{$result=$mode==='manual'?$life->resume():$life->$bootMethod();}catch(Throwable $e){$result=['error'=>$e->getMessage()];}
+        try{$result=$mode==='manual'?$life->resume():$life->$bootMethod();if($mode==='same_boot_previous_engine'&&$result['state']==='confirmed')$life->remember();}catch(Throwable $e){$result=['error'=>$e->getMessage()];}
         echo json_encode(['result'=>$result,'restores'=>$backend->restores,'switches'=>$backend->switches,'validations'=>$validations,'pauses'=>$pauses,'ids'=>$ids,'same_intent'=>$store->intent()===$original,'native'=>$native->state(),'events'=>file_get_contents($root.'/events'),'boot_status'=>is_file($root.'/dns/boot-status.json')?json_decode(file_get_contents($root.'/dns/boot-status.json'),true):null,'boot_status_mode'=>is_file($root.'/dns/boot-status.json')?(fileperms($root.'/dns/boot-status.json')&0777):null]);'''
         result = subprocess.run([PHP, '-n', '-r', code, str(PUBLIC), str(root), str(os.getuid()), mode],
             input=json.dumps(profile()), capture_output=True, text=True, timeout=15)
@@ -234,6 +236,12 @@ class SmartDnsBootResumeTests(unittest.TestCase):
                 self.assertEqual(value['result']['state'], 'idle' if mode == 'no_consent' else 'confirmed', value)
                 self.assertEqual((value['restores'], value['validations'], value['switches']), (0, 0, 0))
                 self.assertEqual(value['events'], '')
+
+    def test_active_previous_engine_uses_the_original_confirmed_intent(self):
+        value = self.scenario('same_boot_previous_engine')
+        self.assertEqual(value['result']['state'], 'confirmed', value)
+        self.assertTrue(value['same_intent'])
+        self.assertEqual((value['restores'], value['validations'], value['switches']), (0, 0, 0))
 
     def test_revoked_consent_stops_before_the_next_attempt(self):
         value = self.scenario('revoked')

@@ -87,9 +87,9 @@ try {
 import {createElement as h} from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 import {PackageUpdateDialog} from '@/components/PackageUpdateDialog';import {TranslationContext} from '@/context/TranslationContext';
 import ru from '@/translations/ru.json';import en from '@/translations/en.json';
-export function render(language,operation,resuming=false,checkOverride){
+export function render(language,operation,resuming=false,checkOverride,installed='1.3.1-asus6+b17'){
 const pack=language==='ru'?ru:en;const t=(key,params={})=>key.split('.').reduce((v,k)=>v[k],pack).replace(/{{(\\w+)}}/g,(_,k)=>String(params[k]??''));
-return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageUpdateDialog,{open:true,onClose(){},installed:'1.3.1-asus6+b17',updates:{pending:false,error:null,data:{check:checkOverride??{state:'available',candidate:{package_version:resuming?'1.3.1-asus6+b17':'1.3.1-asus6+b18',core_version:'1.3.1-asus6',web_version:'0.1.4',build:resuming?17:18,revision:'x',notes:'',...(resuming?{action:'configure'}:{})}},operation},refresh(){},prepare(){},apply(){}}})));
+return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageUpdateDialog,{open:true,onClose(){},installed,updates:{pending:false,error:null,data:{check:checkOverride??{state:'available',candidate:{package_version:resuming?'1.3.1-asus6+b17':'1.3.1-asus6+b18',core_version:'1.3.1-asus6',web_version:'0.1.4',build:resuming?17:18,revision:'x',notes:'',...(resuming?{action:'configure'}:{})}},operation},refresh(){},prepare(){},apply(){}}})));
 }`},bundle:true,platform:'node',format:'cjs',outfile,logLevel:'silent',tsconfig:fileURLToPath(new URL('../webui/web/tsconfig.app.json',import.meta.url)),plugins:[{name:'render-in-place',setup(b){b.onResolve({filter:/^@mui\/material$/},()=>({path:'mui',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`import {createElement as h} from 'react';export const Dialog=({children})=>h('section',{},children);export const DialogTitle=Dialog,DialogContent=Dialog,DialogActions=Dialog,Stack=Dialog,Typography=Dialog,Button=Dialog,LinearProgress=Dialog;export const Link=({href,children,target,rel})=>h('a',{href,target,rel},children);export const Alert=({children,severity})=>h('div',{'data-severity':severity},children);`,resolveDir:fileURLToPath(new URL('../webui/web/',import.meta.url))}));}}]});
  const {render}=await import(pathToFileURL(outfile));
  for(const lang of ['ru','en'])for(const installed_version of ['1.3.1-asus6+b16',undefined]) {
@@ -132,4 +132,25 @@ return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(PackageU
   assert.ok(genuine.includes(pack.package_update.pending_packages),'a fresh pending-packages failure must still be visible');
  }
  console.log('PASS RU/EN historical failure is distinguished from current package eligibility');
+ for (const lang of ['ru', 'en']) {
+  const {package_update: labels} = JSON.parse(await readFile(new URL(`../webui/web/src/translations/${lang}.json`, import.meta.url), 'utf8'));
+  const failedPreparation = {
+   ...operation, state: 'failed', phase: 'finished', failure_phase: 'checking_package',
+   package_version: '1.3.2-107', code: 'update_failed',
+  };
+  const current = {state: 'current', candidate: null, code: null, installed_version: '1.3.2-107'};
+  const recovered = render(lang, failedPreparation, false, current, current.installed_version);
+  assert.ok(recovered.includes(labels.current));
+  assert.ok(!recovered.includes(labels.copy_error), 'manual installation supersedes the failed old preparation');
+  assert.ok(!recovered.includes(labels.state_failed));
+  assert.ok(!recovered.includes('14%'));
+  const newer = {...current, installed_version: '1.3.2-108'};
+  assert.ok(!render(lang, failedPreparation, false, newer, newer.installed_version).includes(labels.copy_error));
+  const installing = {...failedPreparation, failure_phase: 'installing'};
+  assert.ok(render(lang, installing, false, current, current.installed_version).includes(labels.copy_error));
+  const failureAhead = {...failedPreparation, package_version: '1.3.2-108'};
+  assert.ok(render(lang, failureAhead, false, current, current.installed_version).includes(labels.copy_error));
+  assert.ok(render(lang, failedPreparation, false, {...current, state: 'checking'}, current.installed_version).includes(labels.copy_error));
+ }
+ console.log('PASS RU/EN failed preparation remains visible until the target or a newer package is installed');
 }finally{await rm(directory,{recursive:true,force:true});}

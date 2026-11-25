@@ -98,6 +98,8 @@ def panel(dist):
     result[LIB+'/diagnostics.sh'] = entware.local('asus/diagnostics.sh')
     result[LIB+'/keenetic-diagnostics.sh'] = entware.local('keenetic/diagnostics.sh', True)
     result[LIB+'/keenetic-resource-layout.php'] = entware.local('keenetic/resource-layout.php')
+    result[LIB+'/keenetic-update-worker.php'] = entware.local('keenetic/update-worker.php')
+    result[SHARE+'/update-release-key.pem'] = entware.local('updates/trusted-release-key.pem')
     worker, _ = entware.local('asus/smartdns/worker.sh')
     result[LIB+'/smartdns/worker.sh'] = worker.replace(b'bb=/opt/libexec/nfqws2-asus/busybox', b'bb=/opt/bin/busybox'), 0o755
     result[LIB+'/smartdns/worker.php'] = entware.local('asus/smartdns/worker.php')
@@ -172,6 +174,7 @@ def build(args):
         files[SHARE+'/keenetic-dpi-artifact.json']=document({'schema_version':1,'arch':arch,'engine':family,
             'version':detector['version'],'artifact':artifact})
         files.update(entware.dpi_terminal_payload(family))
+        entware.public_payload.add_synthesis_seeds(files, WEB, SHARE, SHARE+'/factory/lua', number)
         if set(files)&(stock.keys()|vendor_web.keys()):
             raise ValueError('Community payload collides with a stock package')
         control=('Package: '+PACKAGE+'\nVersion: '+version+'\nArchitecture: '+arch+'\n'

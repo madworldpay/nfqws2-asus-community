@@ -1,4 +1,5 @@
 import type {
+  PackageCheck,
   PackageOperation,
   PackageOperationPhase,
 } from '@/api/packageUpdates';
@@ -23,6 +24,43 @@ const stagePercent: Record<PackageOperationPhase, number> = {
   verifying: 85,
   finished: 100,
 };
+
+const buildVersion =
+  /^([0-9]+\.[0-9]+\.[0-9]+(?:-asus[1-9][0-9]*\+b|-r?))([1-9][0-9]*)$/;
+
+/** A confirmed installation supersedes an earlier failed package preparation. */
+export function visiblePackageOperation(
+  operation: PackageOperation | null | undefined,
+  check: PackageCheck | undefined,
+) {
+  if (
+    !operation ||
+    (operation.state !== 'failed' && operation.state !== 'interrupted') ||
+    (check?.state !== 'current' && check?.state !== 'available') ||
+    check.candidate?.action === 'configure'
+  )
+    return operation;
+
+  const phase = operation.failure_phase ?? operation.phase;
+  if (
+    phase !== 'downloading' &&
+    phase !== 'checking_package' &&
+    phase !== 'validating'
+  )
+    return operation;
+
+  const installed = check.installed_version?.match(buildVersion);
+  const target = operation.package_version.match(buildVersion);
+  if (!installed || !target || installed[1] !== target[1]) return operation;
+
+  const installedBuild = Number(installed[2]);
+  const targetBuild = Number(target[2]);
+  return Number.isSafeInteger(installedBuild) &&
+    Number.isSafeInteger(targetBuild) &&
+    installedBuild >= targetBuild
+    ? null
+    : operation;
+}
 
 /** Stage milestones, not transferred bytes or an estimate of remaining time. */
 export function packageUpdateProgress(

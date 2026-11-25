@@ -7,27 +7,24 @@
 Это самостоятельная экспериментальная адаптация для ASUS, не официальный
 пакет ASUS, Entware или авторов исходных проектов.
 
-Установщик SmartDNS использует официальный
-[Release48.4](https://github.com/pymumu/smartdns/releases/tag/Release48.4).
-Размеры и SHA256 пакетов ARM/AArch64, движка и комплектных библиотек закреплены
-в `support/smartdns-catalog.json`. Бинарные файлы не изменяются и не включаются
-в основной IPK: они загружаются после согласия пользователя. Лицензия движка — GPLv3. Штатные init/UI
-и установочные скрипты этого пакета не выполняются. Исходники, авторство и
-условия лицензии: [pymumu/smartdns](https://github.com/pymumu/smartdns/tree/Release48.4).
+Для новой установки SmartDNS на ASUS и поддерживаемых Keenetic/Netcraze используется официальный
+[Release48.5](https://github.com/pymumu/smartdns/releases/tag/Release48.5).
+Действующий SmartDNS [Release48.4](https://github.com/pymumu/smartdns/releases/tag/Release48.4)
+сохраняется при обновлении панели. Размеры и SHA-256 пакетов ARM/AArch64,
+движка и библиотек закреплены в `support/smartdns-catalog.json`.
+Панель загружает бинарные файлы после согласия пользователя. Штатные init/UI
+и установочные скрипты пакета не выполняются. Лицензия движка — GPLv3.
+[Исходный код 48.5](https://github.com/pymumu/smartdns/tree/Release48.5).
+Пакеты SmartDNS для OpenWrt закреплены отдельно в `openwrt/smartdns-assets.json`.
 
 - `core/`: https://github.com/nfqws/nfqws2-keenetic — импорт коммита
   `afd9f6a8a1be6b7ca28afc722a1be81946c41c6b`, пакет v1.3.3; MIT, исходное авторство сохранено.
 - `webui/`: https://github.com/nfqws/nfqws-keenetic-web — импорт коммита
   `c225df3`; MIT, исходное авторство сохранено. Интерфейс адаптирован для ASUS.
-- NFQWS2 ARMv7/AArch64 и Lua взяты из указанного пакета. AArch64-бинарник
-  сохранён побайтно; ARMv7-бинарник распакован из UPX для совместимой проверки
-  процесса на старом ядре. Машинный код и алгоритмы движка не переписывались;
-  его версия zapret2 — v1.0.7,
-  `038c97e5819df10f8e8c22a2f1fffe57f2f7379b`.
-  Исходники: https://github.com/bol-van/zapret2/tree/038c97e5819df10f8e8c22a2f1fffe57f2f7379b
-  Рецепт сборки и патчи поставщика находятся в `core/.github/workflows/`
-  и `core/patches/`. Лицензия основного проекта MIT; сторонние библиотеки
-  сохраняют собственные лицензии.
+- На Keenetic/Netcraze панель использует штатный пакет `nfqws2-keenetic 1.3.3`.
+  Его движок основан на zapret2 v1.0.7
+  (`038c97e5819df10f8e8c22a2f1fffe57f2f7379b`).
+  [Исходники движка поставщика](https://github.com/bol-van/zapret2/tree/038c97e5819df10f8e8c22a2f1fffe57f2f7379b).
 - Из Entware armv7sf-k3.2/aarch64-k3.10 взяты lighttpd 1.4.82-2 и mod_cgi той же версии
   (BSD-3-Clause). Устанавливаются по частным путям, без стандартного S80lighttpd.
   Исходники: https://github.com/lighttpd/lighttpd1.4/tree/lighttpd-1.4.82
@@ -76,10 +73,13 @@ ASUS browser favicon: https://www.asus.com/favicon.ico (PNG supplied by ASUS; AS
 
 DPI Detector: https://github.com/Runnin4ik/dpi-detector, MIT. Необязательные бинарники закреплены на v5.0.0-alpha.21 / a09d03b58d452c71bd63a9b3d410713dd22049f6. Оригинальное уведомление — support/dpi-detector-MIT.txt; каталог URL, SHA256 и размеров — support/dpi-catalog.json. Для `armv7-2.6` ARM-пакет содержит совместимую ARMv5TE soft-float сборку тех же неизменённых исходников; алгоритмы не менялись. Файл поставляется неисполняемыми данными и активируется после согласия с проверкой SHA256, ELF и версии. Для `armv7-3.2` и AArch64 сохранены официальные скачиваемые файлы; postinst DPI не запускает. Рецепт и инструменты: `asus/dpi/legacy/README.md` и `build.py`.
 
-Движок 1.0.7 и Lua из той же ревизии поставляются для ASUS/Entware и нативного OpenWrt.
-Штатный fastpath-патч поставщика перенесён на 1.0.7; эксперимент partial-SNI не включён.
-В 1.0.7 повторное указание одного файла списков одного типа в одном профиле
-считается ошибкой; перед запуском нужна проверка сохранённой конфигурации новым движком.
+В Build 108 для ASUS и нативного OpenWrt движок и Lua взяты из
+[zapret2 1.0.8](https://github.com/bol-van/zapret2/releases/tag/v1.0.8)
+(`93fbe9af8110107f44b70dba1ee956a0902f65b6`), с перенесённым патчем
+для совместимости с аппаратным ускорением. Точные хеши архива, движков,
+Lua и патчей указаны в `core/engine-release.json`.
+Повторное указание одного файла списков одного типа в одном профиле
+считается ошибкой, как и в 1.0.7.
 Публичные шаблоны пакетов сохраняют отдельно проверенное происхождение от 1.0.6.
 
 ## Библиотеки и дополнительные уведомления

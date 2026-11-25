@@ -12,4 +12,13 @@ check(NfqwsOpenWrtUpdatePackage::space(10000000,10000000,$p,1000,1000),'sufficie
 rejects(fn()=>NfqwsOpenWrtUpdatePackage::space(65536,10000000,$p,1000,1000),'insufficient_space');
 rejects(fn()=>NfqwsOpenWrtUpdatePackage::space(10000000,1000,$p,1000,1000),'insufficient_space');
 rejects(fn()=>NfqwsOpenWrtUpdatePackage::space(INF,10000000,$p,1000,1000),'insufficient_space');
+$stagedRam=6291456;
+$snapshot=2097152;
+$runtime=16777216;
+$large=$p;
+$large['size']=12002101;
+rejects(fn()=>NfqwsOpenWrtUpdatePackage::space(67108864,$stagedRam,$large,$snapshot,$runtime),'insufficient_space');
+check(NfqwsOpenWrtUpdatePackage::space(67108864,$stagedRam,$large,$snapshot,$runtime,staged:true),'apply budgets only pending writes');
+rejects(fn()=>NfqwsOpenWrtUpdatePackage::space(67108864,$stagedRam-1,$large,$snapshot,$runtime,staged:true),'insufficient_space');
+rejects(fn()=>NfqwsOpenWrtUpdatePackage::space(65536,$stagedRam,$large,$snapshot,$runtime,staged:true),'insufficient_space');
 echo "Native package identity/dependency isolation and separate overlay/RAM checks passed\n";

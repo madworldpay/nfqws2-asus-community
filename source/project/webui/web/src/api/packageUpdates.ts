@@ -1,4 +1,5 @@
 import { panelApi } from './panelPaths.js';
+
 export type PackageCandidate = {
   revision: string;
   package_version: string;
@@ -64,8 +65,9 @@ export class PackageUpdateError extends Error {
 }
 const ASUS_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+-asus[1-9][0-9]*\+b[1-9][0-9]*$/;
 const NATIVE_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+-r?[1-9][0-9]*$/;
+const KEENETIC_VERSION = /^1\.3\.3\+b([1-9][0-9]{0,8})-[1-9][0-9]{0,8}$/;
 const validVersion = (v: string) =>
-  ASUS_VERSION.test(v) || NATIVE_VERSION.test(v);
+  ASUS_VERSION.test(v) || NATIVE_VERSION.test(v) || KEENETIC_VERSION.test(v);
 const HEX32 = /^[a-f0-9]{32}$/;
 const HEX64 = /^[a-f0-9]{64}$/;
 const record = (v: unknown): v is Record<string, unknown> =>
@@ -130,17 +132,25 @@ function candidate(value: unknown): PackageCandidate {
     !keys(p, ['family', 'filename', 'size', 'sha256'])
   )
     return invalid();
+  const keenetic = value.package_version.match(KEENETIC_VERSION);
   const native = NATIVE_VERSION.test(value.package_version);
-  const filenameMatches = native
-    ? typeof p.family === 'string' &&
-      /^[a-z0-9][a-z0-9_+-]{0,99}$/.test(p.family) &&
-      !value.core_version.includes('-') &&
-      value.package_version.startsWith(value.core_version + '-') &&
+  const filenameMatches = keenetic
+    ? ['aarch64-3.10', 'mips-3.4', 'mipsel-3.4'].includes(String(p.family)) &&
+      value.core_version === '1.3.3' &&
+      value.build === Number(keenetic[1]) &&
       p.filename ===
-        `nfqws2-native_${value.package_version}_${p.family}.${value.package_version.includes('-r') ? 'apk' : 'ipk'}`
-    : (p.family === 'aarch64-3.10' || p.family === 'armv7') &&
-      value.core_version === value.package_version.replace(/\+b[0-9]+$/, '') &&
-      p.filename === `nfqws2-asus_${value.package_version}_${p.family}.ipk`;
+        `nfqws2-keenetic-community_${value.package_version}_${p.family}.ipk`
+    : native
+      ? typeof p.family === 'string' &&
+        /^[a-z0-9][a-z0-9_+-]{0,99}$/.test(p.family) &&
+        !value.core_version.includes('-') &&
+        value.package_version.startsWith(value.core_version + '-') &&
+        p.filename ===
+          `nfqws2-native_${value.package_version}_${p.family}.${value.package_version.includes('-r') ? 'apk' : 'ipk'}`
+      : (p.family === 'aarch64-3.10' || p.family === 'armv7') &&
+        value.core_version ===
+          value.package_version.replace(/\+b[0-9]+$/, '') &&
+        p.filename === `nfqws2-asus_${value.package_version}_${p.family}.ipk`;
   if (
     !filenameMatches ||
     !Number.isSafeInteger(p.size) ||
@@ -176,6 +186,8 @@ function check(value: unknown): PackageCheck {
       typeof value.installed_version === 'string' &&
       (ASUS_VERSION.test(c.package_version) !==
         ASUS_VERSION.test(value.installed_version) ||
+        KEENETIC_VERSION.test(c.package_version) !==
+          KEENETIC_VERSION.test(value.installed_version) ||
         c.package_version.includes('-r') !==
           value.installed_version.includes('-r'))
     )

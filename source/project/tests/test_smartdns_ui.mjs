@@ -19,6 +19,13 @@ try {
  export function preview(){return renderToStaticMarkup(h(TranslationContext.Provider,{value:{t}},h(SmartDnsPreview,{profile:profile(),preview:{groups:[],overlaps:[],config:'<script>PRIVATE_CANARY()</script>'},onApply(){},disabled:true})));}
  `},bundle:true,platform:'node',format:'cjs',outfile:out,jsx:'automatic',logLevel:'silent',tsconfig:fileURLToPath(new URL('../webui/web/tsconfig.app.json',import.meta.url))});
  const m=await import(out);const form=m.form();
+ for (const [state,routing,expected] of [
+   ['idle','inactive','off'], ['confirmed','managed','on'], ['confirmed','external','off'],
+   ['awaiting_confirmation','managed','trial'], ['awaiting_confirmation','inactive','unknown'],
+   ['rolling_back','inactive','switching'], ['applying','inactive','switching'],
+   ['confirmed','unknown','unknown'], ['conflict','inactive','unknown'],
+ ]) assert.equal(m.smartDnsConnectionState({status:{state},routing}),expected);
+ assert.equal(m.smartDnsConnectionState(), 'unknown');
  assert.ok(form.includes('Готовый сервер DoT / DoH'));assert.ok(form.includes('По умолчанию'));assert.ok(form.includes('Сайты для этого DNS'));assert.ok(form.includes('FIELD_ERROR'));assert.ok(form.includes('Фиксированные ответы'));
  assert.ok(!form.includes('__MISSING__'));assert.ok((m.form(true).match(/aria-disabled=\"true\"/g)||[]).length>=2,'both custom selects must be disabled during switching');const preview=m.preview();assert.ok(preview.includes('&lt;script&gt;'));assert.ok(!preview.includes('<script>PRIVATE'));assert.match(preview,/disabled=""/);
  const commands=[];globalThis.fetch=async(_url,options)=>{

@@ -426,7 +426,10 @@ function main(): void
 
   if (in_array($_POST['cmd'], ['packageupdatecheck','packageupdateprepare','packageupdateapply','packageupdatestatus'], true)) {
     header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
-    if ($authEnabled && !$sessionValid) {http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();}
+    if (($authEnabled && !$sessionValid) ||
+        (NfqwsPlatform::current() === 'keenetic-entware' && (!$authEnabled || !$sessionValid))) {
+      http_response_code(403);echo json_encode(['error'=>'auth_required']);exit();
+    }
     require_once __DIR__.'/update-api.php';require_once __DIR__.'/support-report.php';
     try {
       AsusUpdateApi::validate($_POST);

@@ -139,9 +139,9 @@ test('Per-line validation errors do not quote raw URLs, markup or secrets',()=>{
   }
 });
 
-async function withUi(check,{preview,plan,mutation,status,job=null,capability=true,savedMutation=null}={}){
+async function withUi(check,{preview,plan,mutation,status,job=null,capability=true,savedMutation=null,beacon=false}={}){
   const previous={document:globalThis.document,window:globalThis.window,fetch:globalThis.fetch,setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout,sessionStorage:globalThis.sessionStorage};
-  const nodes=new Map(),events=new Map(),requests=[],navigation=[],downloads=[],deadlines=new Map(),stored=new Map();
+  const nodes=new Map(),events=new Map(),documentEvents=new Map(),requests=[],navigation=[],downloads=[],deadlines=new Map(),stored=new Map(),beacons=[],keepalive=[];
   if(savedMutation)stored.set('nfqws-picker-pending-v1',JSON.stringify(savedMutation));
   globalThis.sessionStorage={getItem:k=>stored.get(k)??null,setItem:(k,v)=>stored.set(k,v),removeItem:k=>stored.delete(k)};
   globalThis.setTimeout=(fn,ms,...args)=>{if(ms===15000){const id={};deadlines.set(id,fn);return id;}return previous.setTimeout(fn,ms,...args);};
@@ -150,7 +150,7 @@ async function withUi(check,{preview,plan,mutation,status,job=null,capability=tr
     listeners:new Map(),classList:{toggle(){}},append(v){this.childNodes.push(v);},replaceChildren(...children){this.childNodes=children;},
     click(){if(this.download)downloads.push(this.download);},
     addEventListener(type,listener){this.listeners.set(type,listener);}});
-  const document={hidden:false,documentElement:{lang:'ru'},addEventListener(){},removeEventListener(){},
+  const document={hidden:false,documentElement:{lang:'ru'},addEventListener(type,listener){const list=documentEvents.get(type)||new Set();list.add(listener);documentEvents.set(type,list);},removeEventListener(type,listener){documentEvents.get(type)?.delete(listener);},
     createElement:element,getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);}};
   document.getElementById('search').value='synthesis';document.getElementById('goal-all').checked=true;
   document.getElementById('goal-youtube').checked=true;document.getElementById('custom-joint').checked=true;
@@ -160,8 +160,10 @@ async function withUi(check,{preview,plan,mutation,status,job=null,capability=tr
     custom_capability:capability?{available:true,budget:{...budget,deadline_seconds:6480},scope:'all_controls'}:
       {available:false,code:'insufficient_memory'}};
   globalThis.document=document;globalThis.window={addEventListener(type,fn){events.set(type,fn);},location:{assign(url){navigation.push(url);}}};
+  if(beacon)window.navigator={sendBeacon(url,body){beacons.push({url,...Object.fromEntries(body)});return true;}};
   globalThis.fetch=async(url,options)=>{
     assert.equal(url,'/index.php');const p=Object.fromEntries(options.body);requests.push(p);
+    if(options.keepalive)keepalive.push(p);
     const value=p.cmd==='status'?{csrf_token:'fixture'}:p.cmd==='pickertargets'?
       await (preview?.(p)??{valid:true,hosts:['alpha.example.com','beta.example.com'],errors:[]}):p.cmd==='pickerplan'?
       await (plan?.(p)??fixturePlan(p,budget)):p.cmd==='pickerstatus'?
@@ -174,7 +176,10 @@ async function withUi(check,{preview,plan,mutation,status,job=null,capability=tr
   const set=(id,values)=>Object.assign(document.getElementById(id),values);
   try{
     await import('../webui/web/public/strategy-picker/picker.js?custom-test='+Math.random());await flush();
-    await check({nodes,requests,navigation,downloads,fire,click,flush,set,stored,async timeout(){assert.ok(deadlines.size,'request must have a finite timeout');[...deadlines.values()].forEach(fn=>fn());await flush();await flush();},async update(next){response={...response,...next};await click('refresh');}});
+    await check({nodes,requests,navigation,downloads,fire,click,flush,set,stored,beacons,keepalive,
+      leave(){events.get('pagehide')?.();},back(){events.get('pageshow')?.();},
+      hide(){document.hidden=true;for(const fn of documentEvents.get('visibilitychange')||[])fn();},
+      async timeout(){assert.ok(deadlines.size,'request must have a finite timeout');[...deadlines.values()].forEach(fn=>fn());await flush();await flush();},async update(next){response={...response,...next};await click('refresh');}});
   }finally{
     events.get('pagehide')?.();for(const [key,value]of Object.entries(previous)){
       if(value===undefined)delete globalThis[key];else globalThis[key]=value;
@@ -214,6 +219,23 @@ test('A failed series retains selectable results and hands off only the sealed c
     }
     if(p.cmd==='pickerexport')return {filename:'NFQWS2_MEASURED_'+p.result+'.json',raw:'{"fixture":true}'};
   }});
+});
+
+test('Stopping exposes previous choices only after restoration confirms an importable result',async()=>{
+  const id='a'.repeat(32),result='2'.repeat(32);
+  const item={id:result,number:1,round:1,name:'Measured option',sample_type:'repeated',document_available:true};
+  const job={...report(),id,state:'running',can_apply:false,can_export:false,restored:false,measured_results:[item]};
+  await withUi(async({nodes,update})=>{
+    assert.equal(nodes.get('stopped-measured')?.hidden,true);
+    await update({active:false,job:{...job,state:'cancelled'}});
+    assert.equal(nodes.get('stopped-measured').hidden,true);
+    await update({job:{...job,state:'cancelled',restored:true}});
+    assert.equal(nodes.get('stopped-measured').hidden,false);
+    assert.equal(nodes.get('apply').hidden,true);
+    await update({job:{...job,state:'cancelled',restored:true,measured_results:[{...item,document_available:false}]}});
+    assert.equal(nodes.get('stopped-measured').hidden,true);
+    assert.equal(nodes.get('measured-section').hidden,false);
+  },{job});
 });
 
 function fixturePlan(p,budget={cores:4,available_kib:3000000,load:0,concurrency:10,deadline_seconds:2700,max_profiles:5}){
@@ -261,7 +283,9 @@ test('Reloaded mixed timeout request retains its canonical IP scope pool plan an
     assert.match(ui.nodes.get('confirmation-text').textContent,/8\.8\.8\.8/);
     await ui.click('confirm-submit');
     const sent=ui.requests.find(p=>p.cmd==='pickersynthesize');
-    assert.deepEqual(Object.fromEntries(Object.entries(sent).filter(([k])=>!['cmd','csrf_token'].includes(k))),savedMutation.extra);
+    const {cmd,csrf_token,window_id,...selection}=sent;
+    assert.match(window_id,/^[a-f0-9]{32}$/);
+    assert.deepEqual(selection,savedMutation.extra);
   },{savedMutation});
 });
 
@@ -404,14 +428,14 @@ test('Joint start previews before consent and sends only canonical hosts after c
     await ui.click('confirm-submit');
     const sent=ui.requests.filter(p=>p.cmd==='pickersynthesize');assert.equal(sent.length,1);
     assert.equal(sent[0].custom_sites,'alpha.example.com\nbeta.example.com');assert.equal(sent[0].custom_only,'0');
-    assert.equal(sent[0].goal,'all');assert.match(sent[0].request_id,/^[a-f0-9]{32}$/);
+    assert.equal(sent[0].goal,'youtube,discord,instagram');assert.match(sent[0].request_id,/^[a-f0-9]{32}$/);
   });
 });
 
 test('Custom-only mode works with no native service selected while joint mode requires a goal',async()=>{
   await withUi(async ui=>{
     ui.set('custom-enabled',{checked:true});ui.set('custom-sites',{value:'alpha.example.com\nbeta.example.com'});
-    ui.set('goal-all',{checked:false});ui.set('goal-selected',{checked:true});for(const service of ['youtube','discord','instagram','torrents'])ui.set('goal-'+service,{checked:false});
+    ui.set('goal-main',{checked:false});ui.set('goal-selected',{checked:true});for(const service of ['youtube','discord','instagram','torrents'])ui.set('goal-'+service,{checked:false});
     ui.fire('custom-enabled','change');await ui.click('start');
     assert.equal(ui.requests.some(p=>p.cmd==='pickertargets'),false);
     ui.set('custom-only',{checked:true});ui.set('custom-joint',{checked:false});ui.fire('custom-only','change');
@@ -524,6 +548,44 @@ test('A lost accepted start response times out, reconciles its request and leave
     status:(p,options,response)=>accepted?{...response,active:true,job:runningJob(accepted)}:response});
 });
 
+test('Only the starting window reports exit, and Back only resumes reading status',async()=>{
+  await withUi(async ui=>{
+    await ui.click('start');await ui.click('confirm-submit');
+    const start=ui.requests.find(p=>p.cmd==='pickersynthesize');
+    assert.match(start.window_id,/^[a-f0-9]{32}$/);
+    assert.notEqual(start.window_id,start.request_id);
+    assert.ok(ui.requests.some(p=>p.cmd==='pickerwindow'&&p.window_id===start.window_id&&p.presence==='open'));
+    ui.hide();
+    assert.equal(ui.beacons.length,0);
+    ui.leave();
+    const [sent]=ui.beacons;
+    assert.deepEqual(sent,{url:'/index.php',cmd:'pickerwindow',csrf_token:'fixture',window_id:start.window_id,request_id:start.request_id,presence:'closed'});
+    ui.back();ui.leave();
+    assert.equal(ui.beacons.length,1);
+    assert.equal(ui.requests.filter(p=>p.cmd==='pickersynthesize').length,1);
+    assert.equal(ui.requests.some(p=>p.cmd==='pickercancel'),false);
+  },{beacon:true,mutation:(p,_options,response)=>p.cmd==='pickersynthesize'?{...response,active:true,job:runningJob(p.request_id)}:response});
+  await withUi(async ui=>{
+    ui.leave();
+    assert.deepEqual(ui.beacons,[]);
+    assert.equal(ui.requests.some(p=>p.cmd==='pickerwindow'),false);
+  },{beacon:true,job:runningJob('a'.repeat(32))});
+});
+
+test('Leaving before Start answers uses keepalive and ignores a late response',async()=>{
+  let accept;
+  await withUi(async ui=>{
+    await ui.click('start');await ui.click('confirm-submit');
+    const start=ui.requests.find(p=>p.cmd==='pickersynthesize');
+    ui.leave();
+    assert.equal(ui.stored.size,0);
+    assert.deepEqual(ui.keepalive,[{cmd:'pickerwindow',csrf_token:'fixture',window_id:start.window_id,request_id:start.request_id,presence:'closed'}]);
+    accept();await ui.flush();
+    assert.equal(ui.requests.some(p=>p.cmd==='pickerwindow'&&p.presence==='open'),false);
+  },{mutation:(p,_options,response)=>p.cmd==='pickersynthesize'?
+    new Promise(resolve=>{accept=()=>resolve({...response,active:true,job:runningJob(p.request_id)});}):response});
+});
+
 test('An ambiguous start retry retains exactly the canonical payload and request id',async()=>{
   let attempts=0,offline=false;
   await withUi(async ui=>{
@@ -584,8 +646,8 @@ test('Recovered fixed stop permits a new UI request only when the server verifie
 
 test('User stop and process failures have distinct plain labels',async()=>{
   const {jobView}=await import('../webui/web/public/strategy-picker/picker.js');
-  assert.equal(jobView({state:'cancelled'},'ru').phase,'Остановлен пользователем.');
-  for(const state of ['failed','interrupted','recovery_required'])assert.notEqual(jobView({state},'ru').phase,'Остановлен пользователем.');
+  assert.equal(jobView({state:'cancelled'},'ru').phase,'Подбор остановлен.');
+  for(const state of ['failed','interrupted','recovery_required'])assert.notEqual(jobView({state},'ru').phase,'Подбор остановлен.');
 });
 
 
@@ -654,6 +716,24 @@ test('Owner682 new generation defaults to two confirmed sequential rounds',async
     await ui.click('confirm-submit');assert.equal(ui.requests.find(p=>p.cmd==='pickersynthesize').rounds,'2');
   });
 });
+
+test('A new search uses the main services even when a previous report covered all services',async()=>{
+  const job={...report(),state:'completed',goal:'all',can_apply:false};
+  delete job.custom_hosts;
+  delete job.custom_only;
+  await withUi(async ui=>{
+    assert.equal(ui.nodes.get('goal-main')?.checked,true);
+    assert.equal(ui.nodes.get('goal-torrents').checked,false);
+    assert.equal(ui.nodes.get('goal-options').hidden,true);
+    await ui.click('start');
+    assert.match(ui.nodes.get('confirmation-text').textContent,/YouTube.*Discord.*Instagram/);
+    assert.doesNotMatch(ui.nodes.get('confirmation-text').textContent,/торрент/i);
+    await ui.click('confirm-submit');
+    const goal='youtube,discord,instagram';
+    assert.equal(ui.requests.find(p=>p.cmd==='pickerplan').goal,goal);
+    assert.equal(ui.requests.find(p=>p.cmd==='pickersynthesize').goal,goal);
+  },{job});
+});
 test('Owner682 one round cannot acquire a new generation plan or confirmation',async()=>{
   await withUi(async ui=>{
     ui.set('rounds-value',{value:'1'});ui.fire('rounds-value','input');
@@ -676,11 +756,16 @@ test('Owner684 million numeric selection reaches confirmation and request withou
 test('All services checks every service and restores all four after a selected subset',async()=>{
   await withUi(async ui=>{
     const services=['youtube','discord','instagram','torrents'];
+    ui.set('goal-main',{checked:false});ui.set('goal-all',{checked:true});await ui.fire('goal-all','change');
     for(const service of services){assert.equal(ui.nodes.get('goal-'+service).checked,true,service);assert.equal(ui.nodes.get('goal-'+service).disabled,true,service);}
     ui.set('goal-all',{checked:false});ui.set('goal-selected',{checked:true});await ui.fire('goal-selected','change');
+    assert.equal(ui.nodes.get('goal-options').hidden,false);
+    assert.equal(ui.nodes.get('goal-torrents').disabled,false);
     for(const service of services.slice(1))ui.set('goal-'+service,{checked:false});
     ui.set('goal-all',{checked:true});ui.set('goal-selected',{checked:false});await ui.fire('goal-all','change');
     for(const service of services)assert.equal(ui.nodes.get('goal-'+service).checked,true,service);
+    await ui.click('start');await ui.click('confirm-submit');
+    assert.equal(ui.requests.find(p=>p.cmd==='pickersynthesize').goal,'all');
   });
 });
 
@@ -699,6 +784,9 @@ test('All services displays measured ranges for each service and labels missing 
     for(const row of serviceRows)assert.equal(row.childNodes[tls12].textContent,'1–2/2');
     const missing=section(rows[0],'tbody').childNodes.find(row=>row.childNodes[0].textContent==='Instagram');
     assert.equal(missing.childNodes[1].textContent,'Нет замеров');
+    assert.equal(section(rows[1],'tfoot').hidden,true);
+    ui.set('result-show-totals',{checked:true});await ui.fire('result-show-totals','change');
+    assert.equal(section(ui.nodes.get('results').childNodes[1],'tfoot').hidden,false);
     assert.equal(ui.nodes.get('error').textContent,'DPI Detector не завершил измерение. Сохраните отчёт.');
     assert.equal(ui.nodes.get('apply').hidden,true);
   },{job});

@@ -2,6 +2,38 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import * as picker from '../webui/web/public/strategy-picker/picker.js';
 
+test('Result numbers belong to their round and make repeat-check titles distinct',()=>{
+  const j=case10();
+  const cards=[{round:1,number:27,profile:j.profiles[0]},{round:2,number:1,profile:j.profiles[1]}];
+  assert.equal(picker.resultCardTitle(cards[0],'ru'),'1-27 Original');
+  assert.equal(picker.resultCardTitle(cards[1],'en'),'2-1 Generated');
+  const retested={...cards[0],profile:{...cards[0].profile,name:'Лучшие варианты · повторная проверка'}};
+  assert.equal(picker.resultCardTitle(retested,'ru'),'1-27 Вариант · повторная проверка');
+});
+
+test('A complete ratio is highlighted only when every measured result succeeded',()=>{
+  for(const total of [1,2,3,37])assert.equal(picker.isFullRatio({low:total,high:total,total}),true);
+  assert.equal(picker.isFullRatio({low:1,high:2,total:2}),false);
+  assert.equal(picker.isFullRatio({low:2,high:2,total:3}),false);
+  assert.equal(picker.isFullRatio({low:0,high:0,total:0}),false);
+});
+
+test('A result card may apply only its own current job measurement',()=>{
+  const j=case10(),profile=j.profiles[1],id='d'.repeat(32),other='e'.repeat(32);
+  const known=[{id,round:2,name:profile.name,sample_type:'repeated',document_available:true},
+    {id:other,round:1,name:profile.name,sample_type:'repeated',document_available:true}];
+  const card={id,number:1,profile,can_export:true};
+  const report={id:j.id,round:2,cards:[card]};
+  assert.deepEqual(picker.savedResultCards(report,j.id,2,known),[{...card,round:2}]);
+  for(const invalid of [{...report,id:other},{...report,round:1},
+    {...report,cards:[{...card,id:other}]},{...report,cards:[{...card,number:2}]},
+    {...report,cards:[card,{...card,number:2}]}]){
+    assert.equal(picker.savedResultCards(invalid,j.id,2,known),null);
+  }
+  const unsealed=known.map(item=>({...item,document_available:false}));
+  assert.equal(picker.savedResultCards(report,j.id,2,unsealed)?.[0].can_export,false);
+});
+
 // Anonymous raw ratios from an actual two-repeat selected-goal experiment.
 export function case10(){
   const run=(values)=>({targets:'a'.repeat(64),context_sha256:'b'.repeat(64),
@@ -109,19 +141,25 @@ async function withRenderer(check){
   const nodes=new Map(),windowEvents=new Map(),calls=[],requests=[];
   function element(){return {hidden:false,disabled:false,checked:false,value:'synthesis',childNodes:[],textContent:'',
     classList:{toggle(){}},listeners:new Map(),append(v){this.childNodes.push(v);},replaceChildren(){this.childNodes=[];},
-    addEventListener(type,fn){this.listeners.set(type,fn);}};}
+    setAttribute(name,value){this[name]=value;},addEventListener(type,fn){this.listeners.set(type,fn);}};}
   const document={hidden:false,documentElement:{lang:'ru'},addEventListener(){},removeEventListener(){},
     getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},createElement:element};
-  let response={job:{...case10(),search:'synthesis',skipped:[]},active:false,detector:{installed:true}};
+  let response={job:{...case10(),search:'synthesis',skipped:[]},active:false,detector:{installed:true}},reports={};
   document.getElementById('confirmation').hidden=true;
   globalThis.document=document;globalThis.window={addEventListener(type,fn){windowEvents.set(type,fn);}};
   globalThis.fetch=async(url,options)=>{const cmd=options.body.get('cmd');calls.push(cmd);requests.push(Object.fromEntries(options.body));
-    return {ok:true,status:200,json:async()=>structuredClone(cmd==='status'?{csrf_token:'fixture'}:response)};};
+    return {ok:true,status:200,json:async()=>structuredClone(cmd==='status'?{csrf_token:'fixture'}:
+      cmd==='pickerreport'?reports[options.body.get('round')]:response)};};
   const flush=()=>new Promise(resolve=>setImmediate(resolve));
-  const click=async id=>{nodes.get(id).listeners.get('click')();await flush();};
+  const press=async element=>{element.listeners.get('click')?.();await flush();};
+  const click=async id=>press(nodes.get(id));
+  const headings=()=>nodes.get('results').childNodes.map(card=>card.childNodes[0].textContent);
+  const buttons=()=>nodes.get('results').childNodes.flatMap(card=>card.childNodes.find(child=>child.className==='result-actions')?.childNodes??[]);
+  const roundButtons=()=>nodes.get('result-rounds').childNodes;
   try{
     await import('../webui/web/public/strategy-picker/picker.js?renderer='+Math.random());await flush();
-    await check({nodes,calls,requests,click,async update(job){response={...response,job};await click('refresh');}});
+    await check({nodes,calls,requests,click,press,headings,buttons,roundButtons,async update(job,roundReports={}){
+      reports=roundReports;response={...response,job};await click('refresh');await flush();}});
   }finally{
     windowEvents.get('pagehide')?.();
     for(const [key,value] of Object.entries(previous)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
@@ -134,13 +172,13 @@ test('Repeated pass-through improvement remains visible when the generated strat
     const job={...case10(),search:'synthesis',skipped:[],can_apply:false,can_export:false,
       generation:{from_zero:{eligible:true,gain:7},versus_current:{eligible:false,reason:'youtube_regression'},verified:false}};
     await ui.update(job);
-    assert.match(ui.nodes.get('generation').textContent,/относительно пустой основы подтверждён повторными измерениями/);
-    assert.match(ui.nodes.get('generation').textContent,/исходная стратегия сохранена: преимущества над ней не подтверждены/);
-    assert.equal(ui.nodes.get('apply').hidden,true);assert.equal(ui.nodes.get('export').hidden,true);
+    assert.match(ui.nodes.get('generation').textContent,/Повторные проверки показали улучшение.*соединением без обхода/);
+    assert.match(ui.nodes.get('generation').textContent,/исходная стратегия сохранена. Улучшение по сравнению с ней не подтвердилось/);
+    assert.equal(ui.buttons().filter(button=>!button.disabled).length,0);
     await ui.click('language');
-    assert.match(ui.nodes.get('generation').textContent,/confirmed improvement for the selected goal over pass-through/);
-    assert.match(ui.nodes.get('generation').textContent,/original was retained: improvement over it was not confirmed/);
-    assert.equal(ui.nodes.get('apply').hidden,true);assert.equal(ui.nodes.get('export').hidden,true);
+    assert.match(ui.nodes.get('generation').textContent,/Repeated checks showed an improvement.*connection without bypass/);
+    assert.match(ui.nodes.get('generation').textContent,/kept your original strategy. The new strategy did not show an improvement over it/);
+    assert.equal(ui.buttons().filter(button=>!button.disabled).length,0);
     assert.equal(ui.calls.includes('pickerapply'),false);
   });
 });
@@ -148,8 +186,8 @@ test('Repeated pass-through improvement remains visible when the generated strat
 test('Missing or non-boolean pass-through evidence cannot acquire an improvement claim from overall verification',async()=>{
   for(const from_zero of [undefined,null,{}, {eligible:false},{eligible:'true'},{eligible:1}])await withRenderer(async ui=>{
     const job={...case10(),search:'synthesis',skipped:[],generation:{from_zero,versus_current:{eligible:true},verified:true}};
-    await ui.update(job);assert.match(ui.nodes.get('generation').textContent,/пока не подтверждён/);
-    await ui.click('language');assert.match(ui.nodes.get('generation').textContent,/did not confirm improvement over pass-through/);
+    await ui.update(job);assert.match(ui.nodes.get('generation').textContent,/Проверки пока не показали.*лучше соединения без обхода/);
+    await ui.click('language');assert.match(ui.nodes.get('generation').textContent,/have not shown an improvement over the connection without bypass/);
   });
 });
 
@@ -157,45 +195,60 @@ test('Improvement over the original requires both its own comparison and overall
   for(const [verified,eligible,confirmed] of [[true,true,true],[false,true,false],['true',true,false],[true,'true',false],[true,false,false]])await withRenderer(async ui=>{
     const job={...case10(),search:'synthesis',skipped:[],generation:{from_zero:{eligible:true},versus_current:{eligible},verified}};
     await ui.update(job);
-    assert.equal(ui.nodes.get('generation').textContent.includes('Подтверждено улучшение по выбранной цели относительно исходной стратегии.'),confirmed);
+    assert.equal(ui.nodes.get('generation').textContent.includes('Она улучшила результат для выбранных сервисов по сравнению с вашей исходной стратегией.'),confirmed);
     await ui.click('language');
-    assert.equal(ui.nodes.get('generation').textContent.includes('It also improved the selected goal compared with the original strategy.'),confirmed);
+    assert.equal(ui.nodes.get('generation').textContent.includes('It also improved results for the selected services over your original strategy.'),confirmed);
   });
 });
 
-test('A pending Apply cannot survive status, job, winner, goal, warning or state changes',async()=>{
+test('A stale card cannot apply after its report changes',async()=>{
   const changes=[j=>j.can_apply=false,j=>j.id='d'.repeat(32),j=>j.winner='missing',
     j=>j.state='failed',j=>j.state='cancelled',j=>j.goal='youtube',
     j=>j.profiles[1].runs[1].metrics.tcp.ok=59];
   for(const change of changes)await withRenderer(async ui=>{
-    assert.equal(ui.nodes.get('apply').hidden,false);await ui.click('apply');
-    assert.equal(ui.nodes.get('confirmation').hidden,false);
+    const oldButton=ui.buttons().find(button=>!button.disabled);
+    assert.ok(oldButton);
     const job={...case10(),search:'synthesis',skipped:[]};change(job);await ui.update(job);
-    assert.equal(ui.nodes.get('confirmation').hidden,true,'changed report must invalidate confirmation');
-    await ui.click('confirm-submit');assert.equal(ui.calls.includes('pickerapply'),false);
+    await ui.press(oldButton);
+    assert.equal(ui.calls.includes('pickerapply'),false);
   });
 });
 
-test('Malformed refreshed reports clear previous recommendation and pending Apply without throwing',async()=>{
+test('Malformed refreshed reports clear cards without offering Apply',async()=>{
   for(const profiles of [null,{},[null],[...case10().profiles,null]])await withRenderer(async ui=>{
-    await ui.click('apply');const job={...case10(),search:'synthesis',skipped:[],profiles};await ui.update(job);
-    assert.equal(ui.nodes.get('apply').hidden,true);assert.equal(ui.nodes.get('confirmation').hidden,true);
-    assert.match(ui.nodes.get('tradeoffs').textContent,/сопоставить|недоступ/);
-    assert.equal(ui.nodes.get('results-section').hidden,false,'unknown comparison notice must stay visible');
+    const job={...case10(),search:'synthesis',skipped:[],profiles};await ui.update(job);
+    assert.equal(ui.buttons().length,0);
+    assert.match(ui.nodes.get('result-feed-status').textContent,/сопоставить|недоступ/);
+    assert.equal(ui.nodes.get('results-section').hidden,false);
     assert.equal(ui.nodes.get('generation').textContent,'');
-    assert.equal(ui.nodes.get('winner').textContent.includes('Generated'),false);
     assert.doesNotMatch(ui.nodes.get('error').textContent,/TypeError|Cannot read/);
-    await ui.click('confirm-submit');assert.equal(ui.calls.includes('pickerapply'),false);
   });
 });
 
-
-test('An unchanged valid confirmation sends one Apply for the displayed job and tracker choice',async()=>{
+test('A card applies only its round result in one action with no confirmation',async()=>{
   await withRenderer(async ui=>{
-    await ui.click('apply');assert.match(ui.nodes.get('confirmation-text').textContent,/TCP 95\/110 → 60\/110/);
-    await ui.click('confirm-submit');
-    const sent=ui.requests.filter(r=>r.cmd==='pickerapply');
-    assert.equal(sent.length,1);assert.equal(sent[0].id,'c'.repeat(32));assert.equal(sent[0].torrent_sites,'0');
+    const j={...case10(),search:'synthesis',skipped:[],series:{current:2,selected:1,total:2,completed:2}};
+    const one='a'.repeat(32),two='b'.repeat(32);
+    const profile={...j.profiles[1],name:'Вариант обхода · 1'};
+    j.measured_results=[one,two].map((id,index)=>({id,round:index+1,number:index+1,name:profile.name,sample_type:'repeated',document_available:true}));
+    await ui.update(j,{
+      1:{id:j.id,round:1,cards:[{id:one,number:1,profile,can_export:true}]},
+      2:{id:j.id,round:2,cards:[{id:two,number:1,profile,can_export:true}]},
+    });
+    assert.deepEqual(ui.roundButtons().map(button=>button.textContent),['Прогон 1','Прогон 2']);
+    assert.deepEqual(ui.headings(),['1-1 Вариант']);
+    const detached=ui.buttons()[0];
+    await ui.press(ui.roundButtons()[1]);
+    assert.deepEqual(ui.headings(),['2-1 Вариант']);
+    assert.equal(ui.buttons()[0]['aria-label'],'Применить 2-1');
+    await ui.press(detached);
+    assert.equal(ui.requests.some(row=>row.cmd==='pickerapply'),false);
+    await ui.press(ui.buttons()[0]);
+    const sent=ui.requests.filter(row=>row.cmd==='pickerapply');
+    assert.equal(sent.length,1);
+    assert.equal(sent[0].id,j.id);
+    assert.equal(sent[0].result,two);
     assert.equal(ui.nodes.get('confirmation').hidden,true);
+    assert.equal(detached['aria-label'],'Применить 1-1');
   });
 });

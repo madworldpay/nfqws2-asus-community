@@ -34,14 +34,15 @@ before(async () => {
   await build({
     stdin: { resolveDir: web, loader: 'tsx', contents: `
       import React from 'react';import {createRoot} from 'react-dom/client';
+      import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
       import {SmartDnsConfigurator} from './src/components/SmartDnsConfigurator';
       import {TranslationContext} from './src/context/TranslationContext';
       import en from './src/translations/en.json';
       const t=k=>k.split('.').reduce((v,p)=>v?.[p],en)||k;
       createRoot(document.getElementById('root')).render(
-        <TranslationContext.Provider value={{t,langcode:'en'}}>
+        <QueryClientProvider client={new QueryClient()}><TranslationContext.Provider value={{t,langcode:'en'}}>
           <SmartDnsConfigurator csrf="session" external={false}/>
-        </TranslationContext.Provider>);
+        </TranslationContext.Provider></QueryClientProvider>);
     ` },
     bundle: true, platform: 'browser', format: 'iife', outfile: join(dir, 'fixture.js'),
     jsx: 'automatic', logLevel: 'silent', tsconfig: join(web, 'tsconfig.app.json'),
@@ -60,11 +61,12 @@ after(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-async function fixture(t, delayInitial = false) {
+async function fixture(t, delayInitial = false, draft = profile()) {
   const page = await browser.newPage();
   page.setDefaultTimeout(5000);
   t.after(() => page.close());
-  const model = { draft: profile(), polls: 0, saves: [], checks: 0, state: status(), normalize: null, preview: null };
+  const model = { draft, polls: 0, saves: [], checks: 0, state: status(), normalize: null, preview: null,
+    activeProfile: null, routing: 'inactive', dns: undefined };
   let release;
   const initial = new Promise(resolve => { release = resolve; });
   await page.route('**/index.php', async route => {
@@ -76,7 +78,8 @@ async function fixture(t, delayInitial = false) {
         model.polls++;
         const draft = structuredClone(model.draft);
         if (delayInitial && model.polls === 1) await initial;
-        data = { status: model.state, draft, active_profile: null, confirmed_profile: null, routing: 'inactive', resume_code: null };
+        data = { status: model.state, draft, active_profile: model.activeProfile, confirmed_profile: null,
+          routing: model.routing, dns: model.dns, resume_code: null };
         break;
       }
       case 'smartdnsdraft':
@@ -105,6 +108,14 @@ async function fixture(t, delayInitial = false) {
   return { page, model, release };
 }
 const card = (page, label) => page.getByRole('button', { name: new RegExp(label + ' · DOT') });
+
+test('a fresh installation shows an empty profile and keeps the current DNS', async t => {
+  const { page, model } = await fixture(t, false, null);
+  await page.getByText(en.smartdns.first_profile, { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: en.smartdns.connect, exact: true }).count(), 0);
+  assert.deepEqual(model.saves, []);
+  assert.equal(model.checks, 0);
+});
 
 // Enabling editing before the initial GET lets its late snapshot erase a choice.
 test('the initial draft loads before profile editing becomes available', async t => {
@@ -160,11 +171,12 @@ test('server normalization after a successful check keeps its matching preview u
   })) });
   model.preview = {
     schema_version: 1, id: 'c'.repeat(32), profile_hash: 'a'.repeat(64), baseline_hash: 'd'.repeat(64),
-    config: '# checked configuration', groups: [], overlaps: [], checks: [], expires_uptime: 600,
+    config: '# checked configuration', groups: [], overlaps: [], checks: [], dns_answered: true, expires_uptime: 600,
     scope: 'configuration_only', service_success_tested: false,
   };
   await page.getByRole('button', { name: en.smartdns.validate, exact: true }).click();
   await page.getByRole('button', { name: en.smartdns.connect, exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: en.smartdns.connect, exact: true }).isEnabled(), true);
   assert.equal(model.saves.length, 1);
   assert.equal(model.saves[0].upstreams[0].domains[0].name, 'IMAGE.EXAMPLE.ORG.');
   assert.equal(await page.getByRole('textbox', { name: en.smartdns.form.domain, exact: true }).first().inputValue(), 'image.example.org');
@@ -199,6 +211,26 @@ test('loading an imported draft leaves confirmed DNS behind the explicit restore
   assert.equal(await page.getByRole('button', { name: en.smartdns.restore, exact: true }).isEnabled(), true);
   assert.equal(model.saves.length, 0);
   assert.equal(model.checks, 0);
+});
+
+test('connected DNS stays visible and only differing servers appear in DNS details', async t => {
+  const { page, model } = await fixture(t);
+  await card(page, 'Original DNS').waitFor();
+  model.state = { ...status('confirmed'), request_id: 'b'.repeat(32), active_profile_hash: 'f'.repeat(64) };
+  model.routing = 'managed';
+  model.activeProfile = profile();
+  model.dns = { state: 'available', default_servers: ['127.0.0.1#6054'], conditional_servers: [],
+    dhcp_dns: [], client_overrides_observed: false, connectivity_tested: false };
+  await page.getByText(en.smartdns.confirmed, { exact: true }).waitFor();
+  const details = page.locator('details').filter({ hasText: en.smartdns.current_dns });
+  assert.equal(await details.evaluate(el => el.open), false);
+  await details.locator('summary').click();
+  await details.getByText('127.0.0.1#6054', { exact: true }).waitFor();
+  assert.equal(await details.getByText(/Original DNS/).count(), 0);
+  model.draft = profile('Different draft');
+  await card(page, 'Different draft').waitFor();
+  await details.getByText(/Original DNS/).waitFor();
+  assert.equal(model.saves.length, 0);
 });
 
 test('a known saved hash rejects a mismatched preview at the same revision', async t => {

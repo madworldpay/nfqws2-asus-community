@@ -46,10 +46,13 @@ final class AsusUpdateRuntime
     {
         $opt=$config['opt']??dirname(AsusDpiStore::optPath('/var'));$opt=rtrim($opt,'/');AsusUpdateStore::noLinks($opt);
         AsusUpdateStore::noLinks($destination);if(file_exists($destination)||is_link($destination))throw new RuntimeException('invalid_state');
-        $sources=[];$total=0;
-        $add=function(string $name,string $path,int $mode,?string $boundary=null)use(&$sources,&$total,$owner){
+        $sources=[];$total=0;$indexBytes=0;
+        $add=function(string $name,string $path,int $mode,?string $boundary=null)use(&$sources,&$total,&$indexBytes,$owner){
             if(!preg_match('~^[a-zA-Z0-9_+.-]+(?:/[a-zA-Z0-9_+.-]+)*$~D',$name)||in_array('..',explode('/',$name),true)||in_array('.',explode('/',$name),true))throw new RuntimeException('invalid_state');
-            $s=self::source($path,$owner,$boundary);$s['mode']=$mode;if(isset($sources[$name])){if($sources[$name]!==$s)throw new RuntimeException('invalid_state');return;}$total+=$s['size'];if($total>self::CAP||count($sources)>=256)throw new RuntimeException('runtime_limit');$sources[$name]=$s;
+            $s=self::source($path,$owner,$boundary);$s['mode']=$mode;if(isset($sources[$name])){if($sources[$name]!==$s)throw new RuntimeException('invalid_state');return;}
+            $total+=$s['size'];
+            $indexBytes+=strlen(json_encode([$name=>['mode'=>$mode,'size'=>$s['size'],'sha256'=>$s['sha256']]],JSON_THROW_ON_ERROR))-1;
+            if($total>self::CAP||$indexBytes>131072)throw new RuntimeException('runtime_limit');$sources[$name]=$s;
         };
         $binary=$config['binary']??PHP_BINARY;$binaryReal=realpath($binary);if($binaryReal===false||!str_starts_with($binaryReal,$opt.'/bin/'))throw new RuntimeException('unsupported_runtime');
         $add('php',$binaryReal,0700,$opt.'/bin');$meta=self::elf(file_get_contents($binaryReal));$interpreter=$meta['interpreter'];if($interpreter===null||!str_starts_with($interpreter,'/opt/lib/'))throw new RuntimeException('unsupported_runtime');$loader=basename($interpreter);$queue=array_merge([$loader],$meta['needed'],['openssl.so']);
@@ -58,7 +61,7 @@ final class AsusUpdateRuntime
             $source=$name==='openssl.so'?$opt.'/lib/php8/openssl.so':$opt.'/lib/'.$name;$add('lib/'.$name,$source,0700,$opt.'/lib');
             $elf=self::elf(file_get_contents($sources['lib/'.$name]['source']));if($elf['machine']!==$meta['machine'])throw new RuntimeException('unsupported_runtime');foreach($elf['needed'] as $needed)$queue[]=$needed;
         }
-        $app=$config['application']??$opt.'/share/nfqws-asus-web';AsusUpdateStore::noLinks($app);$php=glob($app.'/*.php')?:[];if(count($php)>160)throw new RuntimeException('runtime_limit');
+        $app=$config['application']??$opt.'/share/nfqws-asus-web';AsusUpdateStore::noLinks($app);$php=glob($app.'/*.php')?:[];
         foreach($php as $p)$add('app/'.basename($p),$p,0600);
         $add('worker.php',$config['entry']??$opt.'/lib/nfqws2-asus/update/worker.php',0600);
         $add('update-launch',$config['launcher']??$opt.'/libexec/nfqws2-asus/update-launch',0700);
@@ -95,7 +98,7 @@ final class AsusUpdateRuntime
         AsusUpdateStore::noLinks($runtime);$s=@lstat($runtime);if(!$s||($s['mode']&0170000)!==0040000||$s['uid']!==$owner||($s['mode']&0777)!==0700)throw new RuntimeException('invalid_state');
         $p=$runtime.'/closure.json';$meta=self::source($p,$owner);if($meta['size']>131072)throw new RuntimeException('invalid_state');$s=lstat($p);if(($s['mode']&0777)!==0600)throw new RuntimeException('invalid_state');
         try{$m=json_decode(file_get_contents($p),true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){throw new RuntimeException('invalid_state');}
-        if(!is_array($m)||array_keys($m)!==['schema','files','loader','bytes']||$m['schema']!==1||!is_array($m['files'])||count($m['files'])>256||!is_int($m['bytes'])||$m['bytes']>self::CAP||!preg_match('/^ld[a-zA-Z0-9_.-]+$/D',$m['loader']))throw new RuntimeException('invalid_state');$total=0;
+        if(!is_array($m)||array_keys($m)!==['schema','files','loader','bytes']||$m['schema']!==1||!is_array($m['files'])||!is_int($m['bytes'])||$m['bytes']>self::CAP||!preg_match('/^ld[a-zA-Z0-9_.-]+$/D',$m['loader']))throw new RuntimeException('invalid_state');$total=0;
         foreach($m['files'] as $file=>$item){if(!is_string($file)||!preg_match('~^(?:php|worker\.php|check\.sh|run\.sh|update-launch|(?:app|lib|resources)/[a-zA-Z0-9_+.-]+)$~D',$file)||!is_array($item)||array_keys($item)!==['mode','size','sha256']||!in_array($item['mode'],[0600,0700],true)||!is_int($item['size'])||$item['size']<0||!preg_match('/^[a-f0-9]{64}$/D',$item['sha256']))throw new RuntimeException('invalid_state');
             $p=$runtime.'/'.$file;AsusUpdateStore::noLinks($p);$s=@lstat($p);if(!$s||($s['mode']&0170000)!==0100000||$s['uid']!==$owner||$s['nlink']!==1||($s['mode']&0777)!==$item['mode']||$s['size']!==$item['size']||hash_file('sha256',$p)!==$item['sha256'])throw new RuntimeException('runtime_changed');$total+=$item['size'];
         }

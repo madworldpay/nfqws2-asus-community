@@ -421,7 +421,7 @@ final class AsusUpdateRollback
         try{
             if(self::file($settings.'/snapshot.json',$owner,NfqwsUpdateSnapshotLimits::JSON)!==$m['settings'])throw new RuntimeException();
             $record=json_decode(file_get_contents($settings.'/snapshot.json'),true,32,JSON_THROW_ON_ERROR);
-            if(!is_array($record['files']??null)||count($record['files'])>NfqwsUpdateSnapshotLimits::FILES)throw new RuntimeException();
+            if(!is_array($record['files']??null))throw new RuntimeException();
             foreach($record['files'] as $name=>$meta){
                 if(!is_string($name)||!preg_match('~^etc/(?:nfqws2/[a-zA-Z0-9_./-]+|nfqws-asus-web/(?:auth|support-relay|update-channel)\.json)$~D',$name)||array_intersect(explode('/',$name),['.','..']))throw new RuntimeException();
                 self::meta($meta);AsusUpdateStore::noLinks($settings.'/'.$name);$s=lstat($settings.'/'.$name);

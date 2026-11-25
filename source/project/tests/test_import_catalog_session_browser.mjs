@@ -14,14 +14,14 @@ try {
   await build({
     stdin: { resolveDir: web, loader: 'tsx', contents: `
       import React, {useState} from 'react';import {createRoot} from 'react-dom/client';
-      import {ImportCatalog} from './src/components/ImportCatalog';
+      import {ImportStrategies} from './src/components/ImportStrategies';
       import {TranslationContext} from './src/context/TranslationContext';
       import en from './src/translations/en.json';
       const t=k=>k.split('.').reduce((v,p)=>v?.[p],en)||k;
       function Fixture(){const [csrf,setCsrf]=useState('old-session');
         window.changeCatalogSession=()=>setCsrf('new-session');
         return <TranslationContext.Provider value={{t,langcode:'en'}}>
-          <ImportCatalog csrfToken={csrf} disabled={false} onSelect={()=>{throw Error('unexpected selection')}}/>
+          <ImportStrategies csrf={csrf} disabled={false} onSelectLocal={()=>{throw Error('unexpected selection')}} onSelectProfile={()=>{throw Error('unexpected selection')}}/>
         </TranslationContext.Provider>;}
       createRoot(document.getElementById('root')).render(<Fixture/>);
     ` },
@@ -45,7 +45,12 @@ try {
   });
   await page.route('**/index.php', async route => {
     const post = new URLSearchParams(route.request().postData());
-    assert.equal(post.get('cmd'), 'importcatalog', 'session changes only reload the catalog');
+    if (post.get('cmd') === 'importlocalpack') {
+      await route.fulfill({json:{entries:[],assets:[],archive_date:'2026-11-01',attribution:'Test'}});
+      return;
+    }
+    assert.equal(post.get('cmd'), 'importcatalog', 'session changes only reload catalog data');
+    assert.equal(post.get('source'), 'package');
     await new Promise(resolve => {
       const token = post.get('csrf_token'), request = { route, resolve };
       pending.set(token, request); arrivals.get(token)?.(request); arrivals.delete(token);
@@ -65,21 +70,23 @@ try {
   };
   const assertCurrent = async outcome => {
     if (outcome === 'success') await page.getByRole('button', { name: /^New/ }).waitFor();
-    else await page.getByText(en.import.catalog.errors.catalog_tls, { exact: true }).waitFor();
+    else await page.getByText(en.import.strategies.package_unavailable, { exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: /^Old/ }).count(), 0, 'old catalog never replaces the current result');
-    assert.equal(await page.getByText(en.import.catalog.errors.catalog_dns, { exact: true }).count(), 0, 'old error never replaces the current result');
-    assert.equal(await page.getByRole('button', { name: 'Refresh list', exact: true }).isEnabled(), true);
+    assert.equal(await page.getByText(en.import.strategies.package_unavailable, { exact: true }).count(), outcome === 'error' ? 1 : 0, 'old errors never replace the current result');
+    assert.equal(await page.getByRole('searchbox').isEnabled(), true);
   };
   for (const old of ['success', 'error']) for (const current of ['success', 'error']) for (const oldFirst of [true, false]) {
     pending.clear();
-    const initial = page.waitForRequest(r => r.url().endsWith('/index.php'));
+    const initial = page.waitForRequest(r => r.url().endsWith('/index.php') && new URLSearchParams(r.postData()).get('cmd') === 'importcatalog');
     await page.goto(`http://127.0.0.1:${server.address().port}`); await initial;
-    const next = page.waitForRequest(r => r.url().endsWith('/index.php') && new URLSearchParams(r.postData()).get('csrf_token') === 'new-session');
+    const next = page.waitForRequest(r => {
+      const form = new URLSearchParams(r.postData());
+      return r.url().endsWith('/index.php') && form.get('cmd') === 'importcatalog' && form.get('csrf_token') === 'new-session';
+    });
     await page.evaluate(() => window.changeCatalogSession());
     await next; // A new session must start even while the old request is pending.
     if (oldFirst) {
       await reply('old-session', old);
-      assert.equal(await page.getByRole('button', { name: 'Refresh list', exact: true }).isDisabled(), true, 'old finally cannot clear current loading');
       assert.equal(await page.getByRole('progressbar').count(), 1);
       assert.equal(await page.getByRole('button', { name: /^Old/ }).count(), 0);
       assert.equal(await page.getByRole('alert').count(), 0, 'old failure stays invisible while current request is pending');

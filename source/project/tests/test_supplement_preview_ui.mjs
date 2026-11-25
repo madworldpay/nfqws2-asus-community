@@ -96,8 +96,8 @@ test('RU/EN view renders literal additions and file names, and exposes no Apply 
  const ui=api.mountSupplement({document,context:()=>({available:true,job:job()}),language:()=>language,request:async cmd=>cmd==='importsupplementstate'?saved():p});ui.render();
  const fire=(id,type='click')=>nodes.get(id).listeners.get(type)();await fire('supplement-open');nodes.get('supplement-domains').value='example.com';await fire('supplement-submit');
  assert.equal(nodes.get('supplement-rules').textContent,'<img src=x onerror=alert(1)>');assert.equal(nodes.get('supplement-files').childNodes[0].textContent,'/opt/etc/nfqws2/lua/zapret-lib.lua (1 B)');
- assert.match(nodes.get('supplement-note').textContent,/повторн/);assert.match(nodes.get('supplement-submit').textContent,/Предпросмотр/);
- language='en';ui.render();assert.match(nodes.get('supplement-note').textContent,/repeat/i);assert.match(nodes.get('supplement-submit').textContent,/Preview/);
+ assert.match(nodes.get('supplement-note').textContent,/сохранение и скачивание.*недоступны/i);assert.equal(nodes.get('supplement-submit').textContent,'Посмотреть изменения');
+ language='en';ui.render();assert.match(nodes.get('supplement-note').textContent,/saving and downloading.*not yet available/i);assert.equal(nodes.get('supplement-submit').textContent,'See changes');
  assert.equal(nodes.get('supplement-rules').innerHTML,undefined);assert.deepEqual([...nodes].filter(([id,n])=>id.startsWith('supplement-')&&n.listeners.has('click')).map(([id])=>id).sort(),['supplement-open','supplement-submit']);
 });
 test('Actual picker wires the existing same-origin API, drops preview on busy state/auth expiry/pagehide and has accessible HTML controls',async()=>{

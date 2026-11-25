@@ -39,6 +39,36 @@ class SmartDnsInstallTests(unittest.TestCase):
             self.assertEqual(p.returncode,0,p.stdout+p.stderr)
             self.assertFalse(old.exists());self.assertTrue(active.exists());self.assertTrue(link.is_symlink());self.assertEqual((outside/'canary').read_text(),'keep')
 
+    def test_verified_previous_engine_is_preserved_after_catalog_update(self):
+        code = r'''require $argv[1].'/smartdns-install.php';umask(0077);
+        $root=$argv[2].'/engine';$owner=(int)$argv[3];
+        $old=['version'=>'1.2026.08.05-0921','sha256'=>str_repeat('a',64),
+              'files'=>['smartdns'=>['size'=>3,'sha256'=>hash('sha256','old')]],'links'=>[]];
+        $new=['version'=>'1.2026.11.20-0147','sha256'=>str_repeat('b',64),'previous'=>$old];
+        $installer=new AsusSmartDnsInstaller($root,$owner,$new);
+        $empty=$installer->installed();
+        $bundle=$root.'/'.$old['sha256'];mkdir($bundle.'/lib',0700,true);
+        file_put_contents($bundle.'/smartdns','old');chmod($bundle.'/smartdns',0700);
+        symlink($old['sha256'],$root.'/current');
+        $installed=$installer->installed();
+        $dir=$installed['installed']?basename($installer->binaryDirectory()):null;
+        $idempotent=$installed['installed']?$installer->install(str_repeat('c',32)):null;
+        file_put_contents($bundle.'/smartdns','bad');
+        $tampered=$installer->installed();
+        unlink($root.'/current');symlink(str_repeat('f',64),$root.'/current');
+        echo json_encode(['empty'=>$empty,'installed'=>$installed,'dir'=>$dir,'idempotent'=>$idempotent,
+                          'tampered'=>$tampered,'foreign'=>$installer->installed()]);'''
+        with tempfile.TemporaryDirectory() as root:
+            result = subprocess.run([PHP,'-n','-r',code,str(PUBLIC),root,str(os.getuid())],
+                                    text=True,capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(result.stderr,'')
+        value = json.loads(result.stdout)
+        missing = {'installed':False,'version':None}
+        old = {'installed':True,'version':'1.2026.08.05-0921'}
+        self.assertEqual(value,{'empty':missing,'installed':old,'dir':'a'*64,'idempotent':old,
+                                'tampered':missing,'foreign':missing})
+
     def probe(self, variant='ok'):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -50,7 +80,11 @@ class SmartDnsInstallTests(unittest.TestCase):
             files = {'smartdns': bytes(binary), 'lib/libc.so': b'loader'}
             prefix = 'opt/usr/local/lib/smartdns/'
             entries = [(prefix+n, raw, 'link' if variant == 'link' and n == 'smartdns' else 'file') for n, raw in files.items()]
-            entries += [('opt/etc/init.d/S50smartdns', b'UNWANTED_INIT', 'file')]
+            entries += [
+                ('opt/etc/init.d/S50smartdns', b'UNWANTED_INIT', 'file'),
+                ('opt/etc/smartdns/smartdns.conf', b'address /poster.example/192.0.2.11\n', 'file'),
+                ('opt/etc/nfqws-asus-web/smartdns/draft.json', b'{"private":"fixture"}', 'file'),
+            ]
             data = archive(entries)
             ipk = archive([('debian-binary', b'2.0\n', 'file'), ('control.tar.gz', archive([('postinst', b'UNWANTED_POSTINST', 'file')]), 'file'), ('data.tar.gz', data, 'file')])
             (root/'asset').write_bytes(ipk)
@@ -81,6 +115,8 @@ class SmartDnsInstallTests(unittest.TestCase):
             value = json.loads(result.stdout)
             self.assertEqual((root/'existing-dns.conf').read_text(), 'ORIGINAL_DNS')
             self.assertFalse((root/'etc').exists())
+            self.assertFalse(list(root.rglob('smartdns.conf')))
+            self.assertFalse(list(root.rglob('draft.json')))
             if 'error' not in value:
                 bundle = Path(value['path'])
                 self.assertEqual((bundle/'smartdns').read_bytes(), bytes(binary))

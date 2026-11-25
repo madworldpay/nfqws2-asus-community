@@ -5,8 +5,16 @@ require_once __DIR__.'/strategy-synthesis-export.php';
 /** Runs under the picker's existing process guard and shared mutation writer. */
 trait NfqwsStrategySynthesisRuntime
 {
+    private const MAIN_SERVICES_POLICY='from-scratch-main-services-v1';
     private array $synthesisExplored=[];
     private float $synthesisProbePeak=0;
+    private static function expectedResourcesDigest(array $job):?string
+    {
+        // Keep the original digest in saved measurement bindings. Only an
+        // observed original-service restart can advance the strict live pin.
+        $digest=$job['current_resources_sha256']??$job['resources_sha256']??null;
+        return is_string($digest)?$digest:null;
+    }
     private function synthesisCustom(array $job):bool
     {
         if(!array_key_exists('custom_hosts',$job))return false;
@@ -55,6 +63,7 @@ trait NfqwsStrategySynthesisRuntime
             };
         }
         $this->checkpoint();$j=$this->store->read();NfqwsStrategyPickerConcurrency::admit($j,true);$custom=$this->synthesisCustom($j);
+        $expectedResources=self::expectedResourcesDigest($j);
         if($custom){
             $this->customCheckpoint();
             // Admission includes the full registered native bound, all custom
@@ -64,7 +73,8 @@ trait NfqwsStrategySynthesisRuntime
                 NfqwsStrategyPickerBudget::customTrialSeconds($j['budget'],$repeats,$warm,($j['custom_manifest']??null)===null);
             $deadline=NfqwsStrategyPickerBudget::overallDeadline($j);if($deadline!==null&&$deadline-AsusUpdateStore::uptime()<$seconds)throw new RuntimeException('timed_out');
         }
-        $p=['id'=>$entry['id'],'name'=>$name,'source'=>$recipe===null?'current':'synthesis','sample_type'=>$repeats===1?'exploratory':'repeated'];
+        $source=$recipe!==null?'synthesis':($entry['id']==='stock'?'stock':'current');
+        $p=['id'=>$entry['id'],'name'=>$name,'source'=>$source,'sample_type'=>$repeats===1?'exploratory':'repeated'];
         if($custom){$p['custom_role']='trial-'.bin2hex(random_bytes(12));$p['custom_runs']=[];}
         if($recipe!==null){
             $recipe=$this->synthesisScopeRecipe($recipe);
@@ -93,7 +103,7 @@ trait NfqwsStrategySynthesisRuntime
                         'resource_binding_scope'=>'existing_fingerprint_excludes_mutable_AUTO',
                         'warmup'=>$i<0,'repeat'=>$i<0?null:$i+1];
                     $prepare=$beforeNative===null?null:fn(string $request)=>$beforeNative($request,$input);
-                    $native=$this->probe([2,3],function(array $snapshot)use($onNative,$input):void{
+                    $native=$this->probe([2,3],function(array $snapshot)use($onNative,$input,$expectedResources):void{
                         $onNative($snapshot,$input);$this->checkpoint();$current=$this->store->read();
                         if(($current['id']??null)!==$input['parent_id']||
                             ($current['request_id']??null)!==$input['parent_request_id']||
@@ -101,7 +111,8 @@ trait NfqwsStrategySynthesisRuntime
                             ($current['current']??null)!==$input['config_sha256']||
                             hash('sha256',$this->config->raw())!==$input['config_sha256']||
                             ($current['resources_sha256']??null)!==$input['resource_fingerprint_sha256']||
-                            $this->resourcesFingerprint()!==$input['resource_fingerprint_sha256'])
+                            self::expectedResourcesDigest($current)!==$expectedResources||
+                            $this->resourcesFingerprint()!==$expectedResources)
                             throw new RuntimeException('source_changed');
                     },null,$prepare);
                 }
@@ -124,7 +135,7 @@ trait NfqwsStrategySynthesisRuntime
         $count=($profile['sample_type']??null)==='repeated'?2:1;
         if(!is_array($profile['runs']??null)||count($profile['runs'])!==$count||
             ($profile['config_sha256']??null)!==$sha||($job['current']??null)!==$sha||
-            $this->config->raw()!==$raw||$this->resourcesFingerprint()!==($job['resources_sha256']??null))
+            $this->config->raw()!==$raw||$this->resourcesFingerprint()!==self::expectedResourcesDigest($job))
             throw new RuntimeException('source_changed');
         NfqwsStrategyPickerConcurrency::verifyRuns($job,[$profile]);
         $round=$job['series']['current']??1;
@@ -184,9 +195,10 @@ trait NfqwsStrategySynthesisRuntime
         if($matches!==1)throw new RuntimeException('source_changed');
         $this->store->write($current);return $profile;
     }
-    private function synthesisRecord(array $p,array $rank):void
+    private function synthesisRecord(array $p,array $rank,bool $promote=false):void
     {
         $j=$this->store->read();
+        if($promote&&!isset($p['measured_reference']))throw new RuntimeException('source_changed');
         if(isset($p['measured_reference'])){
             $matches=0;
             foreach($j['measured_results']as &$item){
@@ -200,7 +212,14 @@ trait NfqwsStrategySynthesisRuntime
         }
         $p['rank']=$rank;$index=null;
         foreach($j['profiles']as $i=>$old)if(($old['id']??null)===$p['id']&&($old['recipe']??null)===($p['recipe']??null)){$index=$i;break;}
-        if($index===null)$j['profiles'][]=$p;
+        if($promote){
+            if($index===null)throw new RuntimeException('source_changed');
+            $old=$j['profiles'][$index];$former=$old;
+            unset($former['rank'],$former['previous_attempts']);
+            if($former!==array_diff_key($p,['rank'=>true])||($old['rank']['reason']??null)!=='retested')
+                throw new RuntimeException('source_changed');
+            $j['profiles'][$index]['rank']=$rank;
+        }elseif($index===null)$j['profiles'][]=$p;
         else{
             $old=$j['profiles'][$index];$attempts=$old['previous_attempts']??[];unset($old['previous_attempts']);
             $attempts[]=$old;$p['previous_attempts']=$attempts;$j['profiles'][$index]=$p;
@@ -220,7 +239,13 @@ trait NfqwsStrategySynthesisRuntime
     private function synthesisRank(array $baseline,array $candidate,string $goal):array
     {
         $j=$this->store->read();
-        if(!$this->synthesisCustom($j))return NfqwsStrategySynthesis::improvementCompare($baseline['runs'],$candidate['runs'],$goal);
+        if(!$this->synthesisCustom($j)){
+            $rank=NfqwsStrategySynthesis::improvementCompare($baseline['runs'],$candidate['runs'],$goal);
+            if($rank['eligible']&&($j['matrix']['policy_version']??null)===self::MAIN_SERVICES_POLICY&&
+                !NfqwsStrategySynthesis::youtubeTls12Complete($candidate['runs']))
+                return ['eligible'=>false,'reason'=>'goal_no_improvement','gain'=>0];
+            return $rank;
+        }
         $only=$j['custom_only']??false;if(!is_bool($only))throw new RuntimeException('invalid_request');
         return $this->synthesisJoint()->compare($baseline,$candidate,$goal,$only);
     }
@@ -428,11 +453,59 @@ trait NfqwsStrategySynthesisRuntime
         }
         return $keys;
     }
+    /** The series controller supplies only a completed, restored round it just archived. */
+    private function synthesisPreviousWinner(array $round):?array
+    {
+        if(($round['goal']??null)!==NfqwsStrategyPickerGoals::MAIN_SERVICES||
+            ($round['state']??null)!=='completed'||($round['restored']??null)!==true||
+            ($round['generation']['from_zero']['eligible']??null)!==true||
+            ($round['generation']['versus_current']['eligible']??null)!==true||
+            ($round['generation']['versus_stock']['eligible']??null)!==true||!is_string($round['winner']??null))return null;
+        foreach($round['profiles']as $profile){
+            if(($profile['id']??'').':'.($profile['recipe']??'')!==$round['winner'])continue;
+            $recipe=$profile['components']??null;
+            if(($profile['source']??null)!=='synthesis'||($profile['sample_type']??null)!=='repeated'||
+                ($profile['rank']['eligible']??null)!==true||!is_array($profile['runs']??null)||count($profile['runs'])!==2||!is_array($recipe)||
+                isset($recipe['custom_scope'])||($recipe['basis']??'empty')!=='empty'||
+                $profile['recipe']!=='s-'.substr(NfqwsStrategySynthesis::key($recipe),0,16))
+                throw new RuntimeException('source_changed');
+            $this->synthesisCheckRecordedProfile($round,$profile);
+            return $recipe;
+        }
+        throw new RuntimeException('source_changed');
+    }
+    private function synthesisFinalistAuto(array $entry,array $job):array
+    {
+        $source=$this->store->profileRoot($job['id']).'/'.$entry['id'];
+        $seed=NfqwsStrategyPickerResources::snapshotMutable($entry,$source,$this->store->owner(),$this->store);
+        return array_map(static fn($file)=>$file['sha256'],$seed);
+    }
+    /** Only promote a paired trial returned by this round, with its original sealed evidence. */
+    private function synthesisReuseFinalist(array $retest,array $entry,array $recipe,array $controls):?array
+    {
+        $this->checkpoint();$this->assertOriginal();$job=$this->store->read();
+        $profile=$retest['profile'];$ref=$profile['measured_reference'];
+        if($entry!==$retest['entry']||self::expectedResourcesDigest($job)!==$retest['resources'])return null;
+        $bound=$entry;$bound['config']=NfqwsStrategySynthesis::bind($recipe,$entry['config']);
+        if($bound['config']!==$profile['variant']||hash('sha256',$this->candidate($bound))!==$profile['config_sha256'])return null;
+        $runs=$profile['runs'];
+        if(count($runs)!==2)return null;
+        $targets=$runs[0]['targets']??null;$context=$runs[0]['context_sha256']??null;
+        if(!is_string($targets)||!is_string($context))return null;
+        foreach(array_merge([$profile],$controls)as $measured)foreach($measured['runs']as $run)
+            if(($run['targets']??null)!==$targets||($run['context_sha256']??null)!==$context)return null;
+        if($this->synthesisFinalistAuto($entry,$job)!==$retest['auto'])return null;
+        $saved=$this->synthesisMeasuredSelection($job['id'],$ref['id'],$job);
+        if($saved['item']['reference']!==$ref||$saved['item']['round']!==($job['series']['current']??1)||
+            $saved['profile']!==array_diff_key($profile,['measured_reference'=>true]))
+            throw new RuntimeException('source_changed');
+        $this->checkpoint();return $profile;
+    }
     private function synthesisWork():void
     {
         $job=$this->store->read();$total=NfqwsStrategyPickerRequest::rounds((string)($job['rounds']??1));
         if($total===1){$this->synthesisRound();$this->phase('complete',['state'=>'completed','finished_at'=>time(),'progress'=>100]);return;}
-        $series=['total'=>$total,'current'=>1,'completed'=>0,'selected'=>null,'runs'=>[],'archive_version'=>2];$best=null;$priority=null;
+        $series=['total'=>$total,'current'=>1,'completed'=>0,'selected'=>null,'runs'=>[],'archive_version'=>2];$best=null;$priority=null;$previousWinner=null;
         $this->phase('synthesis_setup',['series'=>$series]);
         for($number=1;$number<=$total;$number++){
             if($number>1){
@@ -451,16 +524,19 @@ trait NfqwsStrategySynthesisRuntime
                 $next['winner']=null;$next['state']='running';$next['progress']=0;
                 $series['current']=$number;$series['selected']=null;$next['series']=$series;$this->store->write($next);
             }
-            $this->synthesisRound();$this->checkpoint();$this->assertOriginal();$done=$this->store->read();
+            $this->synthesisRound($previousWinner);$this->checkpoint();$this->assertOriginal();$done=$this->store->read();
             if(($done['restored']??false)!==true)throw new RuntimeException('recovery_required');
             $archive=$this->store->round($number);
             if($archive->read()!==null)throw new RuntimeException('source_changed');
             $report=$done;$report['state']='completed';$report['phase']='complete';$report['finished_at']=time();$report['series_round']=$number;
             $archive->write($report);
             foreach(['generated-auto.json','winner-auto.json']as $name){$seed=$this->store->read($name);if($seed!==null)$archive->write($seed,$name);}
+            if($number<$total)$previousWinner=$this->synthesisPreviousWinner($report);
             $rank=$done['generation']['versus_current']??[];
             $quality=[(int)($rank['eligible']??false),(int)in_array($rank['reason']??null,['improved','no_improvement','goal_no_improvement'],true),
                 (int)($done['generation']['verified']??false),(int)($rank['gain']??0)];
+            if(isset($done['generation']['versus_stock']))array_unshift($quality,(int)isset($done['winner']),
+                (int)$done['generation']['versus_stock']['eligible'],$done['generation']['versus_stock']['gain']);
             if($best===null||$quality>$priority){$best=$number;$priority=$quality;}
             $series['completed']=$number;$series['runs'][]=['number'=>$number,'state'=>'completed','restored'=>true,
                 'winner'=>$done['winner']??null,'generated'=>$done['generated']??null,'comparison'=>$rank,'tested'=>$done['matrix']['tested']??0];
@@ -478,10 +554,11 @@ trait NfqwsStrategySynthesisRuntime
         foreach(['generated-auto.json','winner-auto.json']as $name){$seed=$selectedStore->read($name);if($seed!==null)$this->store->write($seed,$name);}
         $this->phase('complete',['state'=>'completed','finished_at'=>time(),'progress'=>100]);
     }
-    private function synthesisRound():void
+    private function synthesisRound(?array $previousWinner=null):void
     {
         $this->synthesisAdmission();
         $j=$this->store->read();$custom=$this->synthesisCustom($j);$customOnly=$custom?($j['custom_only']??false):false;
+        $mainServices=!$custom&&($j['goal']??'all')===NfqwsStrategyPickerGoals::MAIN_SERVICES;
         if(!is_bool($customOnly))throw new RuntimeException('invalid_request');
         $matrix=NfqwsStrategySynthesis::matrix($j['budget']);
         // The existing custom artifact limit includes warm-ups, two controls,
@@ -492,6 +569,12 @@ trait NfqwsStrategySynthesisRuntime
         $this->phase('synthesis_setup',['state'=>'running','matrix'=>$summary,'synthesis_memory'=>$this->synthesisMemory($history,null,$this->synthesisExplored)]);$lib=$this->library();$captured=$lib->capture('Исходная стратегия · контроль');
         $control=$this->synthesisTrial($lib->entry($captured['id']),$captured['name'],null,2,true);$this->synthesisRecord($control,['eligible'=>false,'reason'=>'baseline','gain'=>0]);
         $this->phase('synthesis_setup',['current_basis_entry'=>$captured['id']]);
+        $stock=null;
+        if($mainServices&&NfqwsPlatform::current()==='asus-entware'){
+            $stock=$this->synthesisTrial($lib->stock(null,true),'Стоковая стратегия · контроль',null,2);
+            $this->synthesisRecord($stock,['eligible'=>false,'reason'=>'stock_baseline','gain'=>0]);
+        }
+        $reference=$stock??$control;
         $scope=array_keys($control['runs'][0]['domains']);
         foreach($control['runs'][0]['probe_hosts']??[]as $host)$scope[]=$host;
         if($custom)$scope=array_merge($scope,$j['custom_hosts']);
@@ -510,12 +593,17 @@ trait NfqwsStrategySynthesisRuntime
         $remainingCoarse=NfqwsStrategySynthesis::queue($searchBudget,$history,$this->synthesisExplored,null,$j['goal']??'all',$matrix['max_trials']);
         $queue=array_splice($remainingCoarse,0,$seedLimit);$tested=0;
         $oldKeys=array_fill_keys(array_map([NfqwsStrategySynthesis::class,'key'],$history),true);
-        $summary['policy_version']='from-scratch-adaptive-v3';$summary['coarse_candidates']=count($queue);$summary['feedback_batches']=0;$summary['history_available']=count($history);
+        $summary['policy_version']=$mainServices?self::MAIN_SERVICES_POLICY:'from-scratch-adaptive-v4';
+        $summary['coarse_candidates']=count($queue);$summary['feedback_batches']=0;$summary['history_available']=count($history);
         $summary['history_candidates']=count(array_filter($queue,fn($r)=>isset($oldKeys[NfqwsStrategySynthesis::key($r)])));
         $summary['current_basis_candidates']=count(array_filter($queue,fn($r)=>($r['basis']??'empty')==='current'));
         while($tested<$matrix['max_trials']){
             $this->checkpoint();if(!$this->synthesisTime()){$summary['stopped_by_budget']=true;break;}
-            if(!$queue){$queue=array_merge(NfqwsStrategySynthesis::refine($observations,$searchBudget,$j['goal']??'all',$customOnly),$remainingCoarse);$remainingCoarse=[];$summary['feedback_batches']++;$this->phase('discovering',['matrix'=>$summary]);}
+            if(!$queue){
+                $queue=array_merge(NfqwsStrategySynthesis::refine($observations,$searchBudget,$j['goal']??'all',$customOnly),$remainingCoarse);
+                if($mainServices&&($scoped=NfqwsStrategySynthesis::youtubeScopedCandidate($observations,$reference))!==null)array_unshift($queue,$scoped);
+                $remainingCoarse=[];$summary['feedback_batches']++;$this->phase('discovering',['matrix'=>$summary]);
+            }
             $recipe=null;while($queue){$r=$this->synthesisScopeRecipe(array_shift($queue),$control);$key=NfqwsStrategySynthesis::key($r);if(!isset($previouslyExplored[$key])&&!isset($seen[$key])){$recipe=$r;$seen[$key]=true;break;}}
             if($recipe===null)break;$tested++;
             $this->synthesisExplored=array_slice(array_values(array_unique(array_merge([NfqwsStrategySynthesis::key($recipe)],$this->synthesisExplored))),0,64);
@@ -534,9 +622,21 @@ trait NfqwsStrategySynthesisRuntime
         $repeated=[$observations[0]];$repeatedImprovements=[];$repeatedComposite=null;$compositeGain=-1;
         $currentRecipes=$custom?[]:NfqwsStrategySynthesis::bestImprovements($improvements,$control,$j['goal']??'all',3);
         $retest=array_merge($currentRecipes,NfqwsStrategySynthesis::bestForRetest($observations,$j['goal']??'all',$customOnly,$custom?3:4-count($currentRecipes)));
+        if($mainServices&&($whole=NfqwsStrategySynthesis::mainServicesCandidate($observations,$reference,1))!==null){
+            $ordered=[NfqwsStrategySynthesis::key($whole)=>$whole];
+            foreach($retest as $recipe)$ordered[NfqwsStrategySynthesis::key($recipe)]=$recipe;
+            $retest=array_slice(array_values($ordered),0,4);
+        }
+        $paired=[];
         foreach($retest as $recipe){
             $this->checkpoint();$current=($recipe['basis']??'empty')==='current';
-            $p=$this->synthesisTrial($current?$lib->entry($captured['id']):$entry,'Лучшие варианты · повторная проверка',$recipe,2,true);
+            $candidateEntry=$current?$lib->entry($captured['id']):$entry;
+            $p=$this->synthesisTrial($candidateEntry,'Лучшие варианты · повторная проверка',$recipe,2,true);
+            if($stock!==null&&isset($p['measured_reference'])){
+                $trialJob=$this->store->read();
+                $paired[NfqwsStrategySynthesis::key($recipe)]=['profile'=>$p,'entry'=>$candidateEntry,
+                    'resources'=>self::expectedResourcesDigest($trialJob),'auto'=>$this->synthesisFinalistAuto($candidateEntry,$trialJob)];
+            }
             if($current)$repeatedImprovements[]=['recipe'=>$recipe,'runs'=>$p['runs']];
             elseif($custom&&($recipe['overrides']??[])!==[]){
                 // The joint observer accepts base discovery recipes only.
@@ -550,34 +650,62 @@ trait NfqwsStrategySynthesisRuntime
         }
         $this->phase('assembling');
         $finalists=$custom?[$repeatedComposite??NfqwsStrategySynthesis::assemble($repeated,$j['goal']??'all',$matrix['max_rules'],$customOnly)]:
-            NfqwsStrategySynthesis::finalists($repeated,$repeatedImprovements,$control,$j['goal']??'all',$matrix['max_rules']);
-        $choice=null;$summary['finalists_tested']=0;
+            NfqwsStrategySynthesis::finalists($repeated,$repeatedImprovements,$control,$j['goal']??'all',$matrix['max_rules'],$stock);
+        $carriedKey=null;
+        if($stock!==null&&$previousWinner!==null){
+            $carriedKey=NfqwsStrategySynthesis::key($previousWinner);$ordered=[$carriedKey=>$previousWinner];
+            foreach($finalists as $recipe)$ordered[NfqwsStrategySynthesis::key($recipe)]=$recipe;
+            $finalists=array_slice(array_values($ordered),0,2);
+        }
+        // Check the optional promotion last so another finalist cannot change its AUTO files afterwards.
+        $reuseKey=null;
+        foreach($finalists as $i=>$recipe){
+            $key=NfqwsStrategySynthesis::key($recipe);
+            if($key===$carriedKey||!isset($paired[$key]))continue;
+            unset($finalists[$i]);$finalists[]=$recipe;$reuseKey=$key;break;
+        }
+        $choice=null;$summary['finalists_tested']=0;$summary['finalists_reused']=0;
+        $contexts=$stock===null?[]:[$control,$none,$stock];
         foreach($finalists as $proposed){
             $current=($proposed['basis']??'empty')==='current';$candidateEntry=$current?$lib->entry($captured['id']):$entry;
-            $measured=$this->synthesisTrial($candidateEntry,'Собранная стратегия · повторная проверка',$proposed,2,true);
-            $this->synthesisExplored=array_slice(array_values(array_unique(array_merge([NfqwsStrategySynthesis::key($proposed)],$this->synthesisExplored))),0,64);
+            $key=NfqwsStrategySynthesis::key($proposed);
+            $measured=$key===$reuseKey?$this->synthesisReuseFinalist($paired[$key],$candidateEntry,$proposed,$contexts):null;
+            $reused=$measured!==null;
+            $measured??=$this->synthesisTrial($candidateEntry,'Собранная стратегия · повторная проверка',$proposed,2,true);
+            if($stock!==null)$contexts[]=$measured;
+            $this->synthesisExplored=array_slice(array_values(array_unique(array_merge([$key],$this->synthesisExplored))),0,64);
             $zeroRank=$this->synthesisRank($none,$measured,$j['goal']??'all');$originalRank=$this->synthesisRank($control,$measured,$j['goal']??'all');
-            $this->synthesisRecord($measured,$originalRank);$summary['finalists_tested']++;
-            $priority=[(int)$originalRank['eligible'],(int)in_array($originalRank['reason'],['no_improvement','goal_no_improvement'],true),
-                (int)$zeroRank['eligible'],$originalRank['gain'],-NfqwsStrategySynthesis::cost($proposed)];
+            $stockRank=$stock===null?null:$this->synthesisRank($stock,$measured,$j['goal']??'all');
+            $this->synthesisRecord($measured,$originalRank,$reused);$summary[$reused?'finalists_reused':'finalists_tested']++;
+            $priority=NfqwsStrategySynthesis::finalistPriority($originalRank,$zeroRank,$proposed,$mainServices);
+            if($stockRank!==null)array_unshift($priority,(int)($stockRank['eligible']&&$originalRank['eligible']&&$zeroRank['eligible']),
+                (int)$stockRank['eligible'],$stockRank['gain']);
             if($choice===null||$priority>$choice['priority'])$choice=['priority'=>$priority,'recipe'=>$proposed,'final'=>$measured,
-                'entry'=>$candidateEntry,'from_zero'=>$zeroRank,'versus_current'=>$originalRank];
+                'entry'=>$candidateEntry,'from_zero'=>$zeroRank,'versus_current'=>$originalRank,'versus_stock'=>$stockRank];
+        }
+        if($choice===null){
+            // The measured pass-through is the control and stays in its own row.
+            $noChoice=['eligible'=>false,'reason'=>'goal_no_improvement','gain'=>0];
+            $choice=['recipe'=>$blank,'final'=>$none,'entry'=>$entry,'from_zero'=>$noChoice,'versus_current'=>$noChoice,
+                'versus_stock'=>$stock===null?null:$this->synthesisRank($stock,$none,$j['goal']??'all')];
         }
         $recipe=$choice['recipe'];$final=$choice['final'];$selectedEntry=$choice['entry'];
-        $fromZero=$choice['from_zero'];$versusCurrent=$choice['versus_current'];
+        $fromZero=$choice['from_zero'];$versusCurrent=$choice['versus_current'];$versusStock=$choice['versus_stock'];
         $key=$final['id'].':'.$final['recipe'];$generated=null;$winner=null;
         if($fromZero['eligible']&&(!$custom||in_array($versusCurrent['reason'],['improved','no_improvement'],true))){
             $generated=$key;$source=NfqwsPlatform::settings()['config'].'/strategy-picker/'.$j['id'].'/'.$selectedEntry['id'];
             $seed=['id'=>$j['id'],'generated'=>$key,'files'=>NfqwsStrategyPickerResources::snapshotMutable($selectedEntry,$source,0,$this->store)];$this->store->write($seed,'generated-auto.json');
-            if($versusCurrent['eligible']){$winner=$key;unset($seed['generated']);$seed['winner']=$key;$this->store->write($seed,'winner-auto.json');}
+            if($versusCurrent['eligible']&&($versusStock===null||$versusStock['eligible'])){$winner=$key;unset($seed['generated']);$seed['winner']=$key;$this->store->write($seed,'winner-auto.json');}
         }
         $leaders=NfqwsStrategySynthesis::bestForRetest($repeated,$j['goal']??'all',$customOnly);
         // The final composite already has its artifact-backed comparison. It
         // is a proposal here, never a fabricated per-method observation.
         $memory=$this->synthesisMemory(array_merge($generated===null?[]:[$recipe],$currentRecipes,$leaders,$history),null,$this->synthesisExplored);
-        $this->phase('restoring',['state'=>'restoring','winner'=>$winner,'generated'=>$generated,'matrix'=>$summary,'synthesis_memory'=>$memory,'generation'=>[
+        $generation=[
             'independent_of_catalog'=>true,'knowledge_version'=>NfqwsStrategySynthesis::VERSION,'from_zero'=>$fromZero,'versus_current'=>$versusCurrent,'overrides'=>count($recipe['overrides']),
-            'scope_guard_rules'=>isset($recipe['custom_scope'])?2:0,'custom_profile_count'=>count($recipe['overrides'])+(isset($recipe['custom_scope'])?2:0),'verified'=>$generated!==null]]);
+            'scope_guard_rules'=>isset($recipe['custom_scope'])?2:0,'custom_profile_count'=>count($recipe['overrides'])+(isset($recipe['custom_scope'])?2:0),'verified'=>$generated!==null];
+        if($versusStock!==null)$generation['versus_stock']=$versusStock;
+        $this->phase('restoring',['state'=>'restoring','winner'=>$winner,'generated'=>$generated,'matrix'=>$summary,'synthesis_memory'=>$memory,'generation'=>$generation]);
         $this->restore();
     }
     private function synthesisMeasuredSelection(string $id,string $result,?array $job=null):array
@@ -603,20 +731,48 @@ trait NfqwsStrategySynthesisRuntime
         }
         return ['job'=>$job,'item'=>$item,'profile'=>$profile];
     }
+    private const MEASURED_TERMINAL_STATES=['completed','failed','cancelled','interrupted','applied'];
+
     private static function synthesisMeasuredExportable(array $job,array $item):bool
     {
         return is_array($item['document']??null)&&($job['restored']??false)===true&&
             ($job['engine_trial']??null)===null&&($job['actuator_intent']??null)===null&&($job['actuator_attention']??null)===null&&
-            in_array($job['state']??null,['completed','failed','cancelled','interrupted','applied'],true);
+            in_array($job['state']??null,self::MEASURED_TERMINAL_STATES,true);
     }
-    private function synthesisMeasuredView(string $id,string $result):array
+    private function synthesisMeasuredView(string $id,string $result,?array $job=null):array
     {
-        $selected=$this->synthesisMeasuredSelection($id,$result);
+        $selected=$this->synthesisMeasuredSelection($id,$result,$job);
         $profile=$selected['profile'];
-        unset($profile['variant']);
+        unset($profile['variant'],$profile['measured_reference']);
         if(isset($selected['item']['rank']))$profile['rank']=$selected['item']['rank'];
         return ['id'=>$result,'round'=>$selected['item']['round'],'profile'=>$profile,
             'can_export'=>self::synthesisMeasuredExportable($selected['job'],$selected['item'])];
+    }
+    private function synthesisMeasuredReport(string $id,int $round):array
+    {
+        $job=$this->store->read('state.json',$pin);
+        if(($job['id']??null)!==$id||!in_array($job['state']??null,self::MEASURED_TERMINAL_STATES,true))
+            throw new RuntimeException('stale_state');
+        if($round>NfqwsStrategyPickerRequest::rounds((string)($job['rounds']??1)))throw new RuntimeException('invalid_request');
+        $catalog=$job['measured_results']??[];
+        if(!is_array($catalog)||!array_is_list($catalog))throw new RuntimeException('source_changed');
+        $cards=[];$sealed=[];
+        foreach($catalog as $item){
+            if(($item['round']??null)!==$round)continue;
+            if(!is_string($item['id']??null))throw new RuntimeException('source_changed');
+            $view=$this->synthesisMeasuredView($id,$item['id'],$job);
+            $profile=$view['profile'];$profileId=$profile['id']??null;$recipe=$profile['recipe']??null;
+            if(!is_string($profileId)||($recipe!==null&&!is_string($recipe)))throw new RuntimeException('source_changed');
+            $key=json_encode([$profileId,$recipe],JSON_THROW_ON_ERROR);
+            $hasDocument=is_array($item['document']??null);
+            // Keep the first card position and prefer its most recent sealed measurement.
+            if(($sealed[$key]??false)&&!$hasDocument)continue;
+            $number=$cards[$key]['number']??(count($cards)+1);
+            $cards[$key]=['id'=>$view['id'],'number'=>$number,'profile'=>$profile,'can_export'=>$view['can_export']];
+            $sealed[$key]=$hasDocument;
+        }
+        if($this->store->read('state.json',$after)!==$job||$after!==$pin)throw new RuntimeException('source_changed');
+        return ['id'=>$id,'round'=>$round,'cards'=>array_values($cards)];
     }
     private function synthesisMeasuredExport(string $id,string $result):array
     {

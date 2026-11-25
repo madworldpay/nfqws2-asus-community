@@ -4,7 +4,7 @@
 
 [English](README.en.md)
 
-[Build 107 для ASUS, OpenWrt, Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build107) · [Выбрать пакет](DOWNLOADS.md) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
+[Build 108 для ASUS, OpenWrt, Keenetic и Netcraze](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108) · [Выбрать пакет](DOWNLOADS.md) · [Документация](#project-guides) · [Чат в Telegram](https://t.me/nfqws2AsusCommunityChat) · [Поддержать проект](#project-support)
 
 <details>
 <summary>Все ссылки проекта</summary>
@@ -37,7 +37,7 @@
 
 Панель устанавливается в текущую прошивку. На ASUS с Asuswrt-Merlin, Keenetic и Netcraze она использует Entware. Для OpenWrt выпускаются нативные пакеты.
 
-**Keenetic и Netcraze.** Панель сообщества использует штатную службу `nfqws2-keenetic`. В домашней сети она открывается по адресу `http://<адрес-роутера>:90/nfqws-community/`. Для Build 107 выпущены пакеты ARM64, MIPS и MIPSEL. [Установка](INSTALL.md#keenetic) · [Пакеты по архитектурам](DOWNLOADS.md#keenetic).
+**Keenetic и Netcraze.** Панель сообщества использует штатную службу `nfqws2-keenetic`. В домашней сети она открывается по адресу `http://<адрес-роутера>:90/nfqws-community/`. Для Build 108 выпущены пакеты ARM64, MIPS и MIPSEL. [Установка](INSTALL.md#keenetic) · [Пакеты по архитектурам](DOWNLOADS.md#keenetic).
 
 **Бесплатно · RU / EN**
 

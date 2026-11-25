@@ -19,7 +19,9 @@ SYSROOT=AUDIT/(ABI+'-sysroot')
 class PackageUpdateRuntimeTests(unittest.TestCase):
     def test_excess_application_files_are_rejected_before_staging(self):
         for n in range(161):
-            (self.application/f'bounded-fixture-{n}.php').write_text('<?php')
+            file=self.application/f'bounded-fixture-{n}.php'
+            file.write_text('<?php')
+            file.chmod(0o644)
         self.assertEqual(self.call(),{'error':'runtime_limit'})
         self.assertFalse(self.runtime.exists())
 
@@ -30,6 +32,10 @@ class PackageUpdateRuntimeTests(unittest.TestCase):
         shutil.copytree(TLS/'opt/lib',self.opt/'lib',dirs_exist_ok=True,symlinks=True)
         (self.opt/'bin').mkdir();shutil.copy2(SYSROOT/'opt/bin/php8-cgi',self.opt/'bin/php-cgi')
         self.application=self.base/'original/app';shutil.copytree(PUBLIC,self.application,ignore=shutil.ignore_patterns('*.js','*.css','assets','*.svg','*.png'))
+        profiles=ROOT/'experimental/device-profiles'
+        for name in ('lab','library','paths','plan','queues','runtime','transaction'):
+            filename=f'device-profiles-{name}.php'
+            shutil.copyfile(profiles/filename,self.application/filename)
         for p in self.application.rglob('*'):
             if p.is_file():p.chmod(0o644)
         self.entry=self.base/'original/entry.php';self.entry.write_text('<?php require __DIR__."/app/update-store.php";echo json_encode(["ready"=>true,"ssl"=>extension_loaded("openssl"),"maps"=>file_get_contents("/proc/self/maps")]);')

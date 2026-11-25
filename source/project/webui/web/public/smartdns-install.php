@@ -98,17 +98,35 @@ final class AsusSmartDnsInstaller
         try{if(!symlink($a['sha256'],$next)||!rename($next,$this->root.'/current'))throw new RuntimeException('invalid_state');}
         finally{if(is_link($next))unlink($next);}
     }
+    /** Recognize the exact active bundle, including the pinned previous release. */
+    public function installedArtifact(): ?array
+    {
+        if (!file_exists($this->root) && !is_link($this->root)) return null;
+        $this->directory();
+        $current=$this->root.'/current';
+        if (!is_link($current)) {
+            if (file_exists($current)) throw new RuntimeException('invalid_state');
+            return null;
+        }
+        $artifact=$this->artifact();
+        $digest=readlink($current);
+        if ($digest!==$artifact['sha256']) {
+            $artifact=$artifact['previous']??null;
+            if ($artifact===null || $digest!==$artifact['sha256']) return null;
+        }
+        return $this->verifiedBundle($this->root.'/'.$digest,$artifact)?$artifact:null;
+    }
     public function installed(): array
     {
-        $no=['installed'=>false,'version'=>null];if(!file_exists($this->root)&&!is_link($this->root))return $no;
-        $this->directory();$a=$this->artifact();$current=$this->root.'/current';
-        if(!is_link($current)){if(file_exists($current))throw new RuntimeException('invalid_state');return $no;}
-        if(readlink($current)!==$a['sha256'])return $no;$dir=$this->root.'/'.$a['sha256'];
-        if(!$this->verifiedBundle($dir,$a))return $no;
-        return ['installed'=>true,'version'=>$a['version']];
+        $artifact=$this->installedArtifact();
+        return ['installed'=>$artifact!==null,'version'=>$artifact['version']??null];
     }
     public function binaryDirectory(): string
-    {if(!$this->installed()['installed'])throw new RuntimeException('not_installed');return $this->root.'/'.$this->artifact()['sha256'];}
+    {
+        $artifact=$this->installedArtifact();
+        if ($artifact===null) throw new RuntimeException('not_installed');
+        return $this->root.'/'.$artifact['sha256'];
+    }
     public function availability(): array
     {
         try{$a=$this->artifact();if(!function_exists('gzopen')||!function_exists('proc_open'))throw new RuntimeException('unsupported_runtime');

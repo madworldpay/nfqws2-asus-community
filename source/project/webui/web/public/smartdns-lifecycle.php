@@ -15,7 +15,8 @@ final class AsusSmartDnsLifecycle
     {
         $active=$this->store->active();$job=$this->store->transaction();
         if ($active===null || ($job['state']??null)!=='confirmed') throw new RuntimeException('invalid_state');
-        $digest=isset($this->deps['digest'])?($this->deps['digest'])():$this->installer->artifact()['sha256'];
+        $digest=isset($this->deps['digest'])?($this->deps['digest'])():($this->installer->installedArtifact()['sha256']??null);
+        if ($digest===null) throw new RuntimeException('not_installed');
         $this->store->saveIntent(['schema_version'=>1,'profile'=>$active['profile'],'profile_hash'=>$active['profile_hash'],'engine_sha'=>$digest,'source_request_id'=>$job['request_id']]);
     }
     public function stop(string $mode): array
@@ -164,8 +165,8 @@ final class AsusSmartDnsLifecycle
     {
         $intent=$this->store->intent();
         if ($intent===null) return ['state'=>'idle','code'=>null];
-        $installed=$this->installer->installed();
-        if (!$installed['installed'] || !hash_equals($intent['engine_sha'],$this->installer->artifact()['sha256'])) return ['state'=>'action_required','code'=>'engine_changed'];
+        $installed=$this->installer->installedArtifact();
+        if ($installed===null || !hash_equals($intent['engine_sha'],$installed['sha256'])) return ['state'=>'action_required','code'=>'engine_changed'];
         $job=$this->store->transaction();$connection=new AsusSmartDnsConnection($this->store,$this->backend->dependencies());
         if ($this->backend->healthy() && ($job['state']??null)==='confirmed') return $job['profile_hash']===$intent['profile_hash']?['state'=>'confirmed','code'=>null]:['state'=>'action_required','code'=>'stale_state'];
         if ($job!==null && in_array($job['state'],['confirmed','conflict'],true)) {

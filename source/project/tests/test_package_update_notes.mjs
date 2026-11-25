@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 
 const source = new URL('../webui/web/src/api/packageUpdateNotes.ts', import.meta.url);
 assert.ok(existsSync(source), 'cumulative release notes loader is missing');
-const { getPackageUpdateNotes } = await import(source.href);
+const { getPackageUpdateNotes, getKeeneticPanelUpdate } = await import(source.href);
 const release = (build, body = `Changes ${build}`, extra = {}) => ({
   tag_name: `build${build}`, body, draft: false, prerelease: false,
   published_at: '2026-10-25T00:00:00Z', ...extra,
@@ -77,4 +77,18 @@ for (const response of [
   globalThis.fetch = async () => response();
   await assert.rejects(getPackageUpdateNotes('1.3.2-asus6+b70',71));
 }
-console.log('PASS cumulative range, sparse releases, pagination, partial history, anonymous bounded transport');
+const panelRelease = (build, revision, arch, extra={}) => release(build, '', {
+  tag_name:`keenetic-build${build}-r${revision}`,
+  assets:[{name:`nfqws2-keenetic-community_1.4.0+b${build}-${revision}_${arch}.ipk`,state:'uploaded',size:1000}],
+  ...extra,
+});
+pages([[panelRelease(102,2,'mips-3.4'),panelRelease(104,1,'aarch64-3.10',{draft:true}),panelRelease(102,3,'aarch64-3.10')]]);
+assert.equal(await getKeeneticPanelUpdate('1.3.3+b102-1','aarch64-3.10'),'https://github.com/madworldpay/nfqws2-asus-community/releases/tag/keenetic-build102-r3');
+pages([[panelRelease(102,1,'aarch64-3.10'),panelRelease(102,3,'mips-3.4'),panelRelease(103,1,'aarch64-3.10',{assets:[]})]]);
+assert.equal(await getKeeneticPanelUpdate('1.3.3+b102-1','aarch64-3.10'),null);
+pages([[panelRelease(108,1,'aarch64-3.10',{tag_name:'build108'}),
+        panelRelease(109,2,'mipsel-3.4',{tag_name:'build109'}),
+        panelRelease(110,1,'aarch64-3.10',{tag_name:'build110',prerelease:true})]]);
+assert.equal(await getKeeneticPanelUpdate('1.3.3+b107-2','aarch64-3.10'),
+             'https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108');
+console.log('PASS release notes and architecture-specific Keenetic updates');

@@ -370,12 +370,12 @@ try {
     await page.evaluate(() => window.fixture.refreshStatus());
     f.checkState = "failed";
     await page.evaluate(() => window.fixture.refreshOverview());
-    await page.locator('.rabbit-build-stage[data-state="unknown"]').waitFor();
+    await page.locator('.rabbit-build-stage[data-state="idle"]').waitFor();
     await menu.waitFor({ state: "hidden" });
     assert.equal(
       await trigger.count(),
       0,
-      "losing the artwork closes its video menu",
+      "the running rabbit has no OFF video menu",
     );
     f.checkState = "current";
     await page.evaluate(() => window.fixture.refreshOverview());
@@ -410,7 +410,7 @@ try {
       assert.equal(
         await trigger.isVisible(),
         false,
-        "compact views retain the hidden rabbit",
+        "compact views show artwork without a video menu trigger",
       );
       await page.setViewportSize({ width: 1306, height: 900 });
       await trigger.waitFor({ state: "visible" });

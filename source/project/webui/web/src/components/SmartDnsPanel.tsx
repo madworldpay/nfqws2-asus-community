@@ -89,7 +89,7 @@ export const SmartDnsPanel = () => {
         )}
         {data && (
           <Typography variant="caption" color="text.secondary">
-            {t('smartdns.engine_version')}: {data.version}
+            {t('smartdns.engine_version')}: {data.installed.version ?? data.version}
           </Typography>
         )}
         {data?.installed.installed && (

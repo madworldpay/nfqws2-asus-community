@@ -35,6 +35,7 @@ final class NfqwsStrategyPickerRuntime
         $fields['pickerwindow']=['request_id','window_id','presence'];
         $cmd=$p['cmd']??null;if(!is_string($cmd)||!isset($fields[$cmd]))throw new RuntimeException('invalid_request');
         $keys=array_keys($p);sort($keys);$expected=array_merge(['cmd','csrf_token'],$fields[$cmd]);sort($expected);
+        if($cmd==='pickerreport'&&(array_key_exists('id',$p)||array_key_exists('round',$p)))$expected=['cmd','csrf_token','id','round'];
         if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize','pickerplan'],true)&&array_key_exists('goal',$p)){$expected[]='goal';sort($expected);}
         if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize','pickerplan'],true)&&array_key_exists('concurrency',$p)){$expected[]='concurrency';sort($expected);}
         if(($cmd==='pickersynthesize'||$cmd==='pickerplan'&&($p['search']??null)==='synthesis')&&array_key_exists('rounds',$p)){$expected[]='rounds';sort($expected);}
@@ -42,6 +43,7 @@ final class NfqwsStrategyPickerRuntime
         if(in_array($cmd,['pickerstart','pickerextended','pickersynthesize'],true)&&array_key_exists('window_id',$p)){$expected[]='window_id';sort($expected);}
         if(in_array($cmd,['pickerexport','pickerapply'],true)&&array_key_exists('torrent_sites',$p)){$expected[]='torrent_sites';sort($expected);}
         if($cmd==='pickerexport'&&array_key_exists('result',$p)){$expected[]='result';sort($expected);}
+        if($cmd==='pickerapply'&&array_key_exists('result',$p))$expected=['cmd','csrf_token','id','result'];
         if(($cmd==='pickersynthesize'||$cmd==='pickerplan'&&($p['search']??null)==='synthesis')&&(array_key_exists('custom_sites',$p)||array_key_exists('custom_only',$p))){$expected=array_merge($expected,['custom_sites','custom_only']);sort($expected);}
         if($keys!==$expected)throw new RuntimeException('invalid_request');
         foreach($p as $key=>$v)if(!is_string($v)||strlen($v)>($key==='custom_sites'?4096:128))throw new RuntimeException('invalid_request');
@@ -51,6 +53,7 @@ final class NfqwsStrategyPickerRuntime
         if(isset($p['goal']))NfqwsStrategyPickerGoals::parse($p['goal']);
         if(isset($p['concurrency']))NfqwsStrategyPickerConcurrency::parse($p['concurrency']);
         if(isset($p['rounds']))NfqwsStrategyPickerRequest::rounds($p['rounds']);
+        if(isset($p['round']))NfqwsStrategyPickerRequest::rounds($p['round']);
         if(isset($p['plan_sha256'])&&!preg_match('/^[a-f0-9]{64}$/D',$p['plan_sha256']))throw new RuntimeException('invalid_request');
         if($cmd==='pickerplan'&&(!in_array($p['search'],['profiles','synthesis'],true)||!in_array($p['extended'],['0','1'],true)))throw new RuntimeException('invalid_request');
         if(isset($p['torrent_sites'])&&!in_array($p['torrent_sites'],['0','1'],true))throw new RuntimeException('invalid_request');
@@ -363,7 +366,7 @@ final class NfqwsStrategyPickerRuntime
         };
         $check();
         if($action==='start'&&$profile!==null){
-            if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==$j['resources_sha256'])throw new RuntimeException('source_changed');$observe(false);
+            if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==($j['current_resources_sha256']??$j['resources_sha256']))throw new RuntimeException('source_changed');$observe(false);
             // The same source-created copy may learn only during this actual
             // guarded service cycle. A record alone never adopts an old write.
             $publish(['profile'=>$profile['id'],'metadata'=>$metadataPin,'config_sha256'=>$sha,'guard'=>$guard,'guard_pin'=>$guardPin,'state'=>'starting']);
@@ -384,7 +387,7 @@ final class NfqwsStrategyPickerRuntime
         if($action==='stop'&&$trial!==null){
             // Accept only stable same-copy AUTO after the fixed controller has
             // actually stopped it; retain the trial on uncertain observations.
-            $observed=$observe(true);$current=$this->store->read();if(array_key_exists('resources_sha256',$current)&&$this->resourcesFingerprint()!==$current['resources_sha256'])throw new RuntimeException('source_changed');$publish(null,$observed);
+            $observed=$observe(true);$current=$this->store->read();if(array_key_exists('resources_sha256',$current)&&$this->resourcesFingerprint()!==($current['current_resources_sha256']??$current['resources_sha256']))throw new RuntimeException('source_changed');$publish(null,$observed);
         }
         $check();
     }
@@ -398,7 +401,7 @@ final class NfqwsStrategyPickerRuntime
             else{$installer=new AsusDpiInstaller();$available=$installer->installed()+$installer->availability();}
             $budget=$this->budget();
         }catch(Throwable $e){$error=self::error($e);}
-        $public=$j===null?null:array_intersect_key($j,array_flip(['id','state','phase','current_name','started_at','finished_at','request_id','running_before','restored','profiles','skipped','winner','code','budget','extended','goal','progress','dns','original_sha256','applied_sha256','search','matrix','generation','generated','torrent_sites','custom_hosts','custom_only','concurrency','rounds','series']));
+        $public=$j===null?null:array_intersect_key($j,array_flip(['id','state','phase','current_name','started_at','finished_at','request_id','running_before','restored','profiles','skipped','winner','code','budget','extended','goal','progress','dns','original_sha256','applied_sha256','applied_result','search','matrix','generation','generated','torrent_sites','custom_hosts','custom_only','concurrency','rounds','series']));
         if($public!==null){
             $public['measured_results']=[];
             foreach($j['measured_results']??[]as $item)$public['measured_results'][]=
@@ -485,14 +488,22 @@ final class NfqwsStrategyPickerRuntime
     }
     private function resourcesFingerprint():string
     {
+        return self::resourcesDigest($this->resourcesSnapshot());
+    }
+    private static function resourcesDigest(array $snapshot):string
+    {
+        return hash('sha256',json_encode($snapshot,JSON_THROW_ON_ERROR));
+    }
+    private function resourcesSnapshot():array
+    {
         // Candidate profiles use their own copied AUTO. The original resource
         // tree, including AUTO, has no implicit permission to change meanwhile.
         $owner=$this->store->owner();
         $root=NfqwsDeviceProfilesPaths::readPath($this->store->configDirectory);
         $reader=NfqwsDeviceProfilesPaths::reader($root,$owner);
-        $resources=new AsusShareResources($root,$owner,AsusShareResources::packageLua('/opt',$owner),$reader);
+        $resources=AsusShareResources::forPicker($root,$owner,AsusShareResources::packageLua('/opt',$owner),$reader);
         $inventory=$resources->inventory();
-        if($inventory['scan_truncated'])throw new RuntimeException('output_limit');
+        if($inventory['scan_truncated'])throw new RuntimeException('picker_resource_limit');
         $files=[];$pins=[];$directories=[];
         $fields=array_flip(['dev','ino','mode','uid','gid','nlink','size','mtime','ctime']);
         $directoryFields=array_flip(['dev','ino','mode','uid','gid']);
@@ -521,8 +532,38 @@ final class NfqwsStrategyPickerRuntime
             clearstatcache(true,$path);$s=@lstat($path);
             if($pin===null?$s!==false:($s===false||!$reader->directory($path)||array_intersect_key($s,$directoryFields)!==$pin))throw new RuntimeException('source_changed');
         }
-        ksort($files);return hash('sha256',json_encode(['mode'=>'observed-original-resources-v1',
-            'files'=>$files,'directories'=>$directories,'skipped'=>$inventory['skipped']],JSON_THROW_ON_ERROR));
+        ksort($files);return ['mode'=>'observed-original-resources-v1',
+            'files'=>$files,'directories'=>$directories,'skipped'=>$inventory['skipped']];
+    }
+    private static function resumedResourcesDigest(array $before,array $after,string $original):string
+    {
+        $digest=self::resourcesDigest($after);
+        if($after===$before)return $digest;
+        try{$values=NfqwsNativeConfig::parse($original);}
+        catch(RuntimeException $e){throw new RuntimeException('source_changed',0,$e);}
+        $paths=[];
+        foreach($values as $key=>$value){
+            if(!str_starts_with($key,'NFQWS_'))continue;
+            $tokens=preg_split('/\s+/',trim($value),-1,PREG_SPLIT_NO_EMPTY);
+            foreach($tokens as $i=>$token){
+                if($token==='--hostlist-auto')$path=$tokens[$i+1]??'';
+                elseif(str_starts_with($token,'--hostlist-auto='))$path=substr($token,strlen('--hostlist-auto='));
+                else continue;
+                $canonical=NfqwsResourcePaths::canonical($path);
+                if($canonical===null||!str_starts_with($canonical,'/opt/etc/nfqws2/lists/'))throw new RuntimeException('source_changed');
+                $paths[substr($canonical,strlen('/opt/etc/nfqws2/'))]=true;
+            }
+        }
+        if(count($paths)!==1)throw new RuntimeException('source_changed');
+        $name=array_key_first($paths);
+        $previous=$before['files'][$name]['identity']['ctime']??null;
+        $current=$after['files'][$name]['identity']['ctime']??null;
+        if(!is_int($previous)||!is_int($current)||$current<=$previous)throw new RuntimeException('source_changed');
+        // nfqws2 chowns its configured AUTO before dropping privileges. A
+        // same-UID chown can advance ctime while preserving bytes and inode.
+        $after['files'][$name]['identity']['ctime']=$previous;
+        if($after!==$before)throw new RuntimeException('source_changed');
+        return $digest;
     }
     private function planSelection(array $selection):array
     {
@@ -667,7 +708,7 @@ final class NfqwsStrategyPickerRuntime
             if($fresh){
                 if($this->config->observe()!==$baselineConfig||$this->resourcesFingerprint()!==$baselineResources)throw new RuntimeException('source_changed');
             }else{
-                $this->config->raw(true);$resources=($j['state']??null)==='applied'?($j['applied_resources_sha256']??null):($j['resources_sha256']??null);
+                $this->config->raw(true);$resources=($j['state']??null)==='applied'?($j['applied_resources_sha256']??null):self::expectedResourcesDigest($j);
                 if($resources!==null&&$this->resourcesFingerprint()!==$resources)throw new RuntimeException('source_changed');
             }
             if($this->store->read('state.json',$afterPin)!==$j||$afterPin!==$journalPin)throw new RuntimeException('source_changed');
@@ -856,7 +897,7 @@ final class NfqwsStrategyPickerRuntime
             $actual=$this->actor('guard',$id,$actualGuardPin);
             if($actual===null||$actual!==$guard||$actualGuardPin!==$guardPin)throw new RuntimeException('guard_lost');
             if($lib->entry($profile['id'],$actualMetaPin)!==$profile||$actualMetaPin!==$metaPin)throw new RuntimeException('source_changed');
-            if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==$j['resources_sha256'])throw new RuntimeException('source_changed');
+            if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==($j['current_resources_sha256']??$j['resources_sha256']))throw new RuntimeException('source_changed');
             if($this->store->read('state.json',$afterPin)!==$j||$afterPin!==$journalPin)throw new RuntimeException('source_changed');
         };
         $check();$plan=[];$total=0;$seen=[];
@@ -918,6 +959,7 @@ final class NfqwsStrategyPickerRuntime
     {
         if($beforeNative!==null&&$onNative===null)throw new RuntimeException('invalid_request');
         $this->checkpoint();$jobs??=new AsusDpiJobs();$j=$this->store->read();$req=bin2hex(random_bytes(16));
+        $expectedResources=$j['current_resources_sha256']??$j['resources_sha256']??null;
         $custom=$this->synthesisCustom($j);
         $probeDeadline=$custom?AsusUpdateStore::uptime()+NfqwsStrategyPickerBudget::customProbeSeconds($j['budget']):null;
         if($custom)$this->customCheckpoint();
@@ -937,7 +979,8 @@ final class NfqwsStrategyPickerRuntime
                 ($current['current']??null)!==($j['current']??null)||
                 hash('sha256',$this->config->raw())!==($j['current']??null)||
                 ($current['resources_sha256']??null)!==($j['resources_sha256']??null)||
-                $this->resourcesFingerprint()!==($j['resources_sha256']??null))throw new RuntimeException('source_changed');
+                ($current['current_resources_sha256']??null)!==($j['current_resources_sha256']??null)||
+                $this->resourcesFingerprint()!==$expectedResources)throw new RuntimeException('source_changed');
         }
         $job=$jobs->startRun($uuid,$groups,[],$options);$this->phase($j['phase'],['dpi_job'=>$job['id']]);
         while(true){
@@ -956,7 +999,8 @@ final class NfqwsStrategyPickerRuntime
                     ($current['current']??null)!==($j['current']??null)||
                     hash('sha256',$this->config->raw())!==($j['current']??null)||
                     ($current['resources_sha256']??null)!==($j['resources_sha256']??null)||
-                    $this->resourcesFingerprint()!==($j['resources_sha256']??null))throw new RuntimeException('source_changed');
+                    ($current['current_resources_sha256']??null)!==($j['current_resources_sha256']??null)||
+                    $this->resourcesFingerprint()!==$expectedResources)throw new RuntimeException('source_changed');
                 $raw=$snapshot['native']['raw'];
             }
             $native=json_decode($raw,true,32,JSON_THROW_ON_ERROR);
@@ -990,7 +1034,8 @@ final class NfqwsStrategyPickerRuntime
         $j=$this->store->read();$actual=hash('sha256',$this->config->raw(true));
         if(($j['actuator_attention']??null)!==null||($j['actuator_intent']??null)!==null)throw new RuntimeException('recovery_required');
         if(!in_array($actual,$j['known'],true))throw new RuntimeException('source_changed');
-        if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==$j['resources_sha256'])throw new RuntimeException('source_changed');
+        $bound=array_key_exists('resources_sha256',$j);$expected=$j['current_resources_sha256']??$j['resources_sha256']??null;
+        if($bound&&$this->resourcesFingerprint()!==$expected)throw new RuntimeException('source_changed');
         $cleanup=null;
         $custom=($j['custom_worker']??null)!==null||!$boot&&isset($j['actuator'])||$boot&&
             (array_key_exists('custom_sample_pending',$j)||array_key_exists('custom_sample_refs',$j));
@@ -999,11 +1044,20 @@ final class NfqwsStrategyPickerRuntime
             try{$this->stopOwnedProbe();}catch(Throwable $e){$cleanup??='detector_stop_failed';}
             $this->service('stop');
         }
-        if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==$j['resources_sha256'])throw new RuntimeException('source_changed');
+        $resume=!$boot&&$j['running_before'];
+        $before=$bound&&$resume?$this->resourcesSnapshot():null;
+        if($bound&&($before===null?$this->resourcesFingerprint():self::resourcesDigest($before))!==$expected)throw new RuntimeException('source_changed');
         $this->config->restore();$this->phase($this->store->read()['phase'],['restored'=>false]);
-        if(!$boot&&$j['running_before'])$this->service('start');
-        if(array_key_exists('resources_sha256',$j)&&$this->resourcesFingerprint()!==$j['resources_sha256'])throw new RuntimeException('source_changed');
-        $this->phase($this->store->read()['phase'],['restored'=>true]);
+        if($resume)$this->service('start');
+        $result=['restored'=>true];
+        if($before!==null){
+            $original=$this->config->raw(true);
+            if(hash('sha256',$original)!==$j['original_sha256'])throw new RuntimeException('source_changed');
+            $digest=self::resumedResourcesDigest($before,$this->resourcesSnapshot(),$original);
+            if($this->config->raw(true)!==$original)throw new RuntimeException('source_changed');
+            if($digest!==$expected)$result['current_resources_sha256']=$digest;
+        }elseif($bound&&$this->resourcesFingerprint()!==$expected)throw new RuntimeException('source_changed');
+        $this->phase($this->store->read()['phase'],$result);
         if($cleanup!==null)throw new RuntimeException($cleanup);
     }
     public function work(string $id):void
@@ -1141,7 +1195,7 @@ final class NfqwsStrategyPickerRuntime
                 $this->config->raw(true);$current=$this->store->read();
                 if(($current['id']??null)!==$id||!in_array($current['state']??null,self::ACTIVE,true))throw new RuntimeException('source_changed');
                 if(($current['actuator_attention']??null)!==null||($current['actuator_intent']??null)!==null)throw new RuntimeException('recovery_required');
-                if(array_key_exists('resources_sha256',$current)&&$this->resourcesFingerprint()!==$current['resources_sha256'])throw new RuntimeException('source_changed');
+                if(array_key_exists('resources_sha256',$current)&&$this->resourcesFingerprint()!==self::expectedResourcesDigest($current))throw new RuntimeException('source_changed');
                 $actual=$this->actor('guard',$id,$actualPin);if($actual===null)throw new RuntimeException('guard_lost');
                 if($actual!==$guardIdentity||$actualPin!==$guardPin)throw new RuntimeException('source_changed');
                 $this->config->raw(true);
@@ -1220,10 +1274,47 @@ final class NfqwsStrategyPickerRuntime
             $this->launchPair($id);return $this->status();
         });}finally{foreach([$lock,$lease]as $f){flock($f,LOCK_UN);fclose($f);}}
     }
+    private function applyMeasured(string $id,string $result):array
+    {
+        $selected=$this->synthesisMeasuredSelection($id,$result);
+        if(!self::synthesisMeasuredExportable($selected['job'],$selected['item']))
+            throw new RuntimeException('synthesis_unverified');
+        $lease=(new AsusUpdateGuard(new AsusUpdateStore()))->mutationLease();
+        try{$lock=$this->store->lock();}
+        catch(Throwable $e){fclose($lease);throw $e;}
+        try{
+            $raw=$this->store->measuredDocument($selected['item']['document'],$id);
+            $runningBefore=false;$applied=null;
+            ignore_user_abort(true);
+            require_once __DIR__.'/import-api.php';
+            (new AsusImportApi())->applyMeasured([$raw],$result,function()use($selected,$id,&$runningBefore){
+                if($this->store->read()!==$selected['job'])throw new RuntimeException('source_changed');
+                foreach(['work','guard']as $role)if($this->actor($role,$id)!==null)throw new RuntimeException('busy');
+                $this->preflight();
+                $this->assertOriginal();
+                $runningBefore=$this->running();
+            },function(bool $applying)use(&$runningBefore,&$applied){
+                if($runningBefore){
+                    $command=NfqwsPlatform::run(NfqwsPlatform::serviceCommand('restart'),25);
+                    if($command['status']!==0)throw new RuntimeException('recovery_required');
+                }
+                $diagnostic=NfqwsPlatform::run(NfqwsPlatform::serviceCommand('diagnostics'),8);
+                $state=json_decode(implode("\n",$diagnostic['output']),true);
+                if($diagnostic['status']!==0||!is_bool($state['process_running']??null))
+                    throw new RuntimeException('recovery_required');
+                if($state['process_running']!==$runningBefore||$runningBefore&&($state['nfqueue']['state']??null)!=='bound')
+                    throw new RuntimeException('service_check_failed');
+                if($applying)$applied=['applied_sha256'=>hash('sha256',$this->config->raw()),
+                    'applied_resources_sha256'=>$this->resourcesFingerprint()];
+            });
+            $this->phase('applied',$applied+['state'=>'applied','restored'=>false,'applied_result'=>$result,'code'=>null,'finished_at'=>time()]);
+        }finally{foreach([$lock,$lease]as $f){flock($f,LOCK_UN);fclose($f);}}
+        return $this->status();
+    }
     private function assertOriginal():void
     {
         $j=$this->store->read();
-        if(hash('sha256',$this->config->raw(true))!==$j['original_sha256']||$this->resourcesFingerprint()!==$j['resources_sha256'])throw new RuntimeException('source_changed');
+        if(hash('sha256',$this->config->raw(true))!==$j['original_sha256']||$this->resourcesFingerprint()!==self::expectedResourcesDigest($j))throw new RuntimeException('source_changed');
     }
     private function applyWork():void
     {
@@ -1249,8 +1340,10 @@ final class NfqwsStrategyPickerRuntime
             return ['recorded'=>$this->store->updateBrowser($post['request_id'],$post['window_id'],$post['presence']==='closed')];
         }
         if($post['cmd']==='pickertargets'){require_once __DIR__.'/strategy-picker-targets.php';return NfqwsStrategyPickerTargets::inspectMixed($post['custom_sites']);}
+        if($post['cmd']==='pickerreport'&&isset($post['round']))return $this->synthesisMeasuredReport($post['id'],(int)$post['round']);
         if($post['cmd']==='pickerresult')return $this->synthesisMeasuredView($post['id'],$post['result']);
         if($post['cmd']==='pickerexport'&&isset($post['result']))return $this->synthesisMeasuredExport($post['id'],$post['result']);
+        if($post['cmd']==='pickerapply'&&isset($post['result']))return $this->applyMeasured($post['id'],$post['result']);
         if($post['cmd']==='pickerplan')return $this->previewPlan(NfqwsStrategyPickerRequest::selection($post['extended']==='1',$post['goal']??'all',$post['search']==='synthesis',isset($post['custom_sites'])?NfqwsStrategyPickerRequest::custom($post['custom_sites'],$post['custom_only']):null,$post['concurrency']??'auto',$post['rounds']??($post['search']==='synthesis'?'2':'1')));
         return match($post['cmd']){
             'pickerstart','pickerextended'=>$this->start($post['request_id'],$post['cmd']==='pickerextended',$post['goal']??'all',
@@ -1267,7 +1360,7 @@ final class NfqwsStrategyPickerRuntime
     public static function error(Throwable $e):string
     {
         $v=$e->getMessage();$known=['admission_closed','admission_busy','admission_mismatch','invalid_admission','invalid_request','consent_required','busy','source_changed','stale_state','recovery_required','not_installed','unsupported_abi','unsupported_runtime','insufficient_memory','insufficient_space','storage_unavailable','output_limit','launch_failed','cancelled','timed_out','interrupted','service_state_unknown','service_start_failed','service_stop_failed','service_check_failed','detector_failed','detector_stop_failed','incomparable_result','youtube_not_tested','split_mode_active','all_mode_not_supported','previous_result_retained','guard_lost','actuator_stop_failed','profile_import_incomplete','lua_trust','unresolved_profile_resource','catalog_unavailable','catalog_version'];
-        return in_array($v,array_merge($known,['synthesis_lua_unavailable','invalid_synthesis_recipe','synthesis_unverified','synthesis_rule_limit','custom_budget_unavailable','concurrency_budget_unavailable','torrent_sites_incompatible','invalid_custom_targets','request_conflict','plan_changed']),true)?$v:'failed';
+        return in_array($v,array_merge($known,['synthesis_lua_unavailable','invalid_synthesis_recipe','synthesis_unverified','synthesis_rule_limit','custom_budget_unavailable','concurrency_budget_unavailable','torrent_sites_incompatible','invalid_custom_targets','request_conflict','plan_changed','picker_resource_limit']),true)?$v:'failed';
     }
 }
 

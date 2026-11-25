@@ -7,7 +7,7 @@ import json,os,subprocess,tempfile,unittest
 from test_dpi_normalize import PHP,PUBLIC
 
 CODE=r'''
-umask(0077);require $argv[1].'/strategy-picker-runtime.php';$root=$argv[2];$uid=(int)$argv[3];$late=$argv[4]==='late';
+umask(0077);require $argv[1].'/strategy-picker-runtime.php';$root=$argv[2];$uid=(int)$argv[3];$late=$argv[4]==='late';$multi=$argv[4]==='report';
 foreach(['lists','lua','blobs']as $kind)mkdir($root.'/'.$kind);
 $files=['lua/zapret-lib.lua'=>'LOCAL fixture library, never executed','lua/zapret-antidpi.lua'=>'LOCAL fixture antidpi, never executed',
  'lists/user.list'=>"youtube.com\n",'lists/AUTO'=>'','lists/exclude.list'=>"t.me\n"];$hashes=[];
@@ -21,9 +21,9 @@ $configPath=$root.'/config';file_put_contents($configPath,NfqwsStrategyPickerCon
 $s=new NfqwsStrategyPickerState($root.'/picker',$uid);$cfg=new NfqwsStrategyPickerConfig($s,$configPath,$uid);$j=$cfg->snapshot(false);
 $j+=['request_id'=>str_repeat('b',32),'profiles'=>[],'budget'=>['concurrency'=>2],'resources_sha256'=>str_repeat('c',64),'goal'=>'all',
  'search'=>'synthesis','rounds'=>2,'series'=>['current'=>1,'total'=>2]];$j['state']='running';$j['phase']='discovering';$s->write($j);$id=$j['id'];
-$h=new class($s,$cfg,$root,$late){use NfqwsStrategySynthesisRuntime;
+$h=new class($s,$cfg,$root,$late?4:($multi?10:0)){use NfqwsStrategySynthesisRuntime;
  public int $stops=0;private int $trial=0;
- public function __construct(private $store,private $config,private string $root,private bool $late){}
+ public function __construct(private $store,private $config,private string $root,private int $faultStop){}
  public function run(array $entry):array{
   $profile=$this->synthesisTrial($entry,'Local measured program',null,2,false);
   $this->synthesisRecord($profile,['eligible'=>false,'reason'=>'baseline','gain'=>0]);
@@ -32,7 +32,7 @@ $h=new class($s,$cfg,$root,$late){use NfqwsStrategySynthesisRuntime;
  private function checkpoint():void{} // LOCAL source guard double, no live admission.
  private function resourcesFingerprint():string{return str_repeat('c',64);} // LOCAL immutable-resource context double.
  private function phase(string $phase,array $extra=[]):void{$this->store->write(array_replace($this->store->read(),$extra,['phase'=>$phase]));}
- private function service(string $action):void{if($action==='stop'&&++$this->stops===4&&$this->late)throw new RuntimeException('service_stop_failed');} // LOCAL actuator double.
+ private function service(string $action):void{if($action==='stop'&&++$this->stops===$this->faultStop)throw new RuntimeException('service_stop_failed');} // LOCAL actuator double.
  private function resetAuto(array $entry):void{$this->trial++;file_put_contents($this->root.'/lists/AUTO','');}
  private function candidate(array $entry):string{return NfqwsStrategyPickerConfig::candidate(base64_decode($this->store->read()['original'],true),$entry['config']);}
  private function probe(array $groups):array{ // LOCAL Detector data double; not a quality observation.
@@ -62,8 +62,10 @@ $h=new class($s,$cfg,$root,$late){use NfqwsStrategySynthesisRuntime;
 };
 $out=[];try{
  $h->run($entry);
+ if($multi){$h->run(array_replace($entry,['id'=>'saved-0123456789abcdee']));$h->run($entry);}
  $next=$s->read();$next['series']['current']=2;$next['profiles']=[];$s->write($next);
  $h->run($entry);
+ if($multi)$h->run($entry);
 }catch(Throwable $e){$out['late_error']=$e->getMessage();}
 $cfg->restore();$j=$s->read();$j['state']='failed';$j['restored']=true;$j['code']=$out['late_error']??'LOCAL later failure';$s->write($j);$out['catalog']=$j['measured_results']??[];$out['documents']=[];
 $picker=new NfqwsStrategyPickerRuntime($s,$cfg);
@@ -81,6 +83,27 @@ foreach($out['catalog']as $item){
 $first=$out['catalog'][0]['id']??str_repeat('0',32);
 $out['foreign_job']=$expectError(fn()=>$select('pickerresult',$first,str_repeat('9',32)));
 $out['unmeasured_modifier']=$expectError(fn()=>$select('pickerexport',$first,null,['torrent_sites'=>'1']));
+$out['apply_foreign_job']=$expectError(fn()=>$select('pickerapply',$first,str_repeat('9',32)));
+$out['apply_unmeasured_modifier']=$expectError(fn()=>$select('pickerapply',$first,null,['torrent_sites'=>'0']));
+if($late&&isset($out['catalog'][1]))$out['apply_unsealed']=$expectError(fn()=>$select('pickerapply',$out['catalog'][1]['id']));
+$report=static function(array $fields)use($picker):array{
+ try{return $picker->dispatch(['cmd'=>'pickerreport','csrf_token'=>'local-fixture']+$fields);}
+ catch(RuntimeException $e){return ['error'=>$e->getMessage()];}
+};
+$out['last_report']=$report(['id'=>$id,'round'=>'2']);
+if($multi){
+ $cancelled=$j;$cancelled['state']='cancelled';$s->write($cancelled);
+ $out['reports']=[$report(['id'=>$id,'round'=>'1']),$report(['id'=>$id,'round'=>'2'])];
+ $out['legacy_report']=$report([])['job']['id']??null;
+ $unsealed=$cancelled;$unsealed['measured_results'][0]['document']=null;$unsealed['measured_results'][2]['document']=null;$s->write($unsealed);
+ $out['unsealed_repeat_report']=$report(['id'=>$id,'round'=>'1']);$s->write($cancelled);
+ $out['rejected_reports']=[];
+ foreach([['id'=>$id],['round'=>'1'],['id'=>$id,'round'=>'01'],['id'=>$id,'round'=>1],
+          ['id'=>$id,'round'=>'11'],['id'=>$id,'round'=>'3'],['id'=>str_repeat('9',32),'round'=>'1']] as $fields)
+  $out['rejected_reports'][]=$report($fields)['error']??null;
+ $running=$cancelled;$running['state']='running';$s->write($running);
+ $out['active_report']=$report(['id'=>$id,'round'=>'1']);$s->write($j);
+}
 if(!$late&&count($out['catalog'])===2){
  $swapped=$j;$swapped['measured_results'][0]['document']=$j['measured_results'][1]['document'];$s->write($swapped);
  $out['wrong_document']=$expectError(fn()=>$select('pickerexport',$first));$s->write($j);
@@ -89,10 +112,24 @@ $out['actual_local_original_restored']=$cfg->raw()===base64_decode($s->read()['o
 '''
 
 class MeasuredRuntimeTests(unittest.TestCase):
-    def run_fixture(self,late=False):
+    def run_fixture(self,late=False,report=False):
+        mode='report' if report else 'late' if late else 'normal'
         with tempfile.TemporaryDirectory(prefix='measured-trial-',dir=os.environ.get('TMPDIR'))as folder:
-            p=subprocess.run([str(PHP),'-n','-r',CODE,str(PUBLIC),folder,str(os.getuid()),'late'if late else'normal'],capture_output=True,text=True,timeout=25)
+            p=subprocess.run([str(PHP),'-n','-r',CODE,str(PUBLIC),folder,str(os.getuid()),mode],capture_output=True,text=True,timeout=25)
             self.assertEqual((p.returncode,p.stderr),(0,''),p.stdout+p.stderr);return json.loads(p.stdout)
+    def test_round_report_numbers_exact_measured_results_in_catalog_order(self):
+        v=self.run_fixture(report=True)
+        self.assertEqual(len(v['catalog']),5)
+        job=v['documents'][0]['artifact']['job_id']
+        def card(index,number,can_export=True):
+            view=v['documents'][index]['view']
+            return {'id':view['id'],'number':number,'profile':view['profile'],'can_export':can_export}
+        self.assertEqual(v['reports'],[{'id':job,'round':1,'cards':[card(2,1),card(1,2)]},
+                                       {'id':job,'round':2,'cards':[card(3,1)]}])
+        self.assertEqual(v['unsealed_repeat_report'],{'id':job,'round':1,'cards':[card(2,1,False),card(1,2)]})
+        self.assertEqual(v['legacy_report'],job)
+        self.assertEqual(v['rejected_reports'],['invalid_request']*6+['stale_state'])
+        self.assertEqual(v['active_report'],{'error':'stale_state'})
     def test_each_measured_trial_keeps_its_own_AUTO_document_after_later_trial_and_failure(self):
         v=self.run_fixture();self.assertEqual(len(v['catalog']),2,'Complete trials did not preserve selectable own snapshots')
         self.assertEqual(v['documents'][0]['AUTO'],['learned-round-1.example\n'])
@@ -104,12 +141,18 @@ class MeasuredRuntimeTests(unittest.TestCase):
         self.assertEqual(v['wrong_document'],'source_changed')
         self.assertEqual(v['foreign_job'],'stale_state')
         self.assertEqual(v['unmeasured_modifier'],'invalid_request')
+        self.assertEqual(v['apply_foreign_job'],'stale_state')
+        self.assertEqual(v['apply_unmeasured_modifier'],'invalid_request')
     def test_failure_of_service_stop_after_completed_measurements_keeps_the_result(self):
         v=self.run_fixture(late=True);self.assertEqual(v['late_error'],'service_stop_failed');self.assertEqual(len(v['catalog']),2,'Late actuator failure erased a fully measured result')
         self.assertEqual(v['documents'][0]['AUTO'],['learned-round-1.example\n'])
         self.assertEqual(v['documents'][1]['AUTO'],[],'An uncertain stop must not grant an AUTO snapshot')
         self.assertIsNone(v['catalog'][1]['document']);self.assertEqual(len(v['documents'][1]['artifact']['profile']['runs']),2)
         self.assertEqual(v['unsealed_export'],'synthesis_unverified')
+        self.assertEqual(v['apply_unsealed'],'synthesis_unverified')
+        view=v['documents'][1]['view']
+        self.assertEqual(v['last_report'],{'id':v['documents'][1]['artifact']['job_id'],'round':2,
+                         'cards':[{'id':view['id'],'number':1,'profile':view['profile'],'can_export':False}]})
         self.assertTrue(v['actual_local_original_restored'])
 
 if __name__=='__main__':unittest.main()

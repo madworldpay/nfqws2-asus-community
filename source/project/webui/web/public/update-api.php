@@ -38,8 +38,32 @@ final class AsusUpdateApi
     public static function dispatch(array $post): array
     {
         self::validate($post);
-        if (NfqwsPlatform::current() === 'keenetic-entware') throw new RuntimeException('unsupported_abi');
         $store=new AsusUpdateStore();$dispatch=new AsusUpdateDispatch($store);
+        if (NfqwsPlatform::current() === 'keenetic-entware') {
+            require_once __DIR__.'/keenetic-update.php';
+            $keenetic = new NfqwsKeeneticUpdate($store);
+            if ($post['cmd'] === 'packageupdatecheck') return self::checkResult($keenetic->check());
+            if ($post['cmd'] === 'packageupdateprepare') {
+                return self::operation($keenetic->prepare($post['revision'], $post['request_id']));
+            }
+            if ($post['cmd'] === 'packageupdateapply') {
+                return self::operation($keenetic->apply($post['operation_id'], $post['revision'], $post['request_id']));
+            }
+            $status = $store->status();
+            $id = $post['operation_id'] ?: ($status['active']['id'] ?? $status['history'][0]['id'] ?? '');
+            $job = $id === '' ? null : $dispatch->status($id);
+            $check = ['state' => 'checking', 'code' => null, 'candidate' => null, 'installed_version' => null];
+            // opkg can report an unpacked package while installation is in progress.
+            if (($job['state'] ?? null) !== 'applying') {
+                try {
+                    $check = $keenetic->check();
+                } catch (RuntimeException $error) {
+                    $check['state'] = 'failed';
+                    $check['code'] = AsusUpdatePrepare::code($error);
+                }
+            }
+            return ['check' => self::checkResult($check), 'operation' => self::operation($job)];
+        }
         if($post['cmd']==='packageupdatecheck')return self::checkResult((new AsusUpdateCheck($store))->request($post['force']==='1'));
         if($post['cmd']==='packageupdateprepare')return self::operation($dispatch->prepare($post['revision'],$post['request_id']));
         if($post['cmd']==='packageupdateapply')return self::operation($dispatch->apply($post['operation_id'],$post['revision'],$post['request_id']));

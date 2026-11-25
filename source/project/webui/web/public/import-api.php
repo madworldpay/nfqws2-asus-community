@@ -62,6 +62,52 @@ final class AsusImportApi
             $this->tx->recover();return $fn();
         });}finally{if(is_resource($lease)){flock($lease,LOCK_UN);fclose($lease);}}
     }
+    /** Internal path for documents sealed by the local picker. */
+    public function applyMeasured(array $documents,string $id,callable $before,callable $activate): array
+    {
+        return $this->mutation(function()use($documents,$id,$before,$activate){
+            $before();
+            $document=$this->tx->inspect($documents);
+            if(!$document['values']||$document['dns_sources']||$document['ignored'])
+                throw new RuntimeException('invalid_import');
+            $pick=static function(array $values,array $allowed):array{
+                $result=[];
+                foreach(array_intersect_key($values,array_flip($allowed)) as $key=>$value)
+                    $result[]=['key'=>$key,'value'=>$value];
+                return $result;
+            };
+            $selection=[
+                'blocks'=>$pick($document['values'],AsusImportConfig::BLOCKS),
+                'shared'=>$pick($document['values'],AsusImportConfig::SHARED),
+                'ports'=>$pick($document['ports'],AsusImportConfig::PORTS),
+                'files'=>array_map(static fn($f)=>['id'=>$f['id']],$document['resources']),
+                'dns'=>[],'allow_shared_impact'=>true,'allow_incomplete'=>false,'trusted_lua'=>true,
+            ];
+            $plan=$this->tx->prepare($documents,$selection);
+            // A sealed local run has already used these exact Lua bytes.
+            // Resolve this one warning without accepting any missing file or other warning.
+            if($plan['problems']===[['code'=>'incomplete_analysis']]&&
+                $plan['warnings']===[['source'=>'lua','kind'=>'lua_dependencies_unchecked']]){
+                $selection['allow_incomplete']=true;
+                $confirmed=$this->tx->prepare($documents,$selection);
+                if($confirmed['warnings']===$plan['warnings'])$plan=$confirmed;
+            }
+            if(!$plan['ready'])throw new RuntimeException('profile_import_incomplete');
+            $digest=$document['input_sha256'];
+            if($this->tx->receipt($id,$digest)!==null)throw new RuntimeException('stale_state');
+            $receipt=$this->tx->apply($plan,$id,$digest);
+            try{$activate(true);}
+            catch(Throwable $error){
+                if($error->getMessage()==='recovery_required')throw $error;
+                try{
+                    if($this->tx->undo($id)['state']!=='undone')throw new RuntimeException('source_changed');
+                    $activate(false);
+                }catch(Throwable $recovery){throw new RuntimeException('recovery_required',0,$recovery);}
+                throw $error;
+            }
+            return $receipt;
+        });
+    }
     public function handle(array $post,string $key,int $now): array
     {
         self::validate($post);$cmd=$post['cmd'];

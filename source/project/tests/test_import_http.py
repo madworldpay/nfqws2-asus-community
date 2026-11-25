@@ -1,5 +1,6 @@
 """Authenticated real route, proof/CAS/replay and common writer admission."""
 import json,os,subprocess,unittest,urllib.parse
+from shutil import copytree
 from test_share_router_http import ShareRouterTests
 from test_import_plan import documents,selection,CURRENT
 from test_dpi_normalize import PHP,PUBLIC
@@ -10,6 +11,7 @@ class ImportHttpTests(unittest.TestCase):
  change=ShareRouterTests.change
  def setUp(self):
   ShareRouterTests.setUp(self)
+  copytree(PUBLIC/'zapret2-pack',self.base/'zapret2-pack')
   root=self.base/'resources';root.chmod(0o755)
   for k in ['lists','lua','blobs']:(root/k).mkdir(mode=0o755);(root/k).chmod(0o755)
   (root/'nfqws2.conf').write_text(CURRENT)

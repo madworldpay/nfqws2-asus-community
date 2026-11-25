@@ -1,20 +1,33 @@
 # Updates
 
+## Moving to Build 108 if the update button stops
+
+If an older panel stops while checking settings and resources, run the [universal installer](README.en.md#install-command) once over SSH. Keep your settings and history. The installer selects the package for your platform and architecture.
+
+Build 108 checks actual backup size, metadata size and available space. No separate ceiling on the number of files in the backup applies.
+
+## Upgrading to Build 107 after an ASUS update error
+
+If the panel stopped with `invalid_state`, `rollback_unavailable`, or `busy`, run the
+[unified installation command](README.en.md#install-command) once via SSH.
+The installer selects the package automatically. You can upgrade directly from
+Build 105 or 106. Refresh the panel when it completes. Future updates are available in the panel.
+
 ## Keenetic and Netcraze
 
-For these routers, Build 105 ships as a separate Entware package called `nfqws2-keenetic-community`. Run `opkg print-architecture` to identify your Entware architecture. [Choose a package and verify its checksum](DOWNLOADS.en.md#keenetic).
+For these routers, Build 108 ships as a separate Entware package called `nfqws2-keenetic-community`. Run `opkg print-architecture` to identify your Entware architecture. [Choose a package and verify its checksum](DOWNLOADS.en.md#keenetic).
 
 <a id="current-release-and-device-profiles"></a>
 
 ## ASUS and OpenWrt
 
-The current combined release is [Build 105](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105). [Build 100 screenshots](SCREENSHOTS.en.md#build100).
+The current combined release is [Build 108](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108). [Build 100 screenshots](SCREENSHOTS.en.md#build100).
 
 In the update section, check for updates, then use “Prepare package” and “Install update”. The panel selects the package for your firmware and architecture. If Build 100 previously rolled back with `invalid_state`, check for updates again. Your own site lists are preserved.
 
 Before updating from an active Per device mode, save and apply Common in Devices and wait for success. After installation check the version, previous service state, library and SmartDNS. Re-enable per-device mode by explicitly applying it when needed.
 
-Build 99 fixes ASUS preparation failures involving learned lists in saved strategies. Backup capture, validation, restoration and cleanup share limits of 4096 files, 64 MiB of data and 2 MiB of metadata; size is checked before stopping the service. If preview Build 98 fails with `invalid_state`, save its log; the current ASUS installer command in README includes the fix. Do not bypass unrelated failures by deleting files or editing the package database; share the error and log through community support.
+Build 99 fixes ASUS preparation failures involving learned lists in saved strategies. In Build 99, backups supported up to 4096 files. Build 108 removes that count ceiling and checks the size of the backup before stopping the service. If preview Build 98 fails with `invalid_state`, save its log; the current ASUS installer command in README includes the fix. Do not bypass unrelated failures by deleting files or editing the package database; share the error and log through community support.
 
 ## Lua copies and settings preservation: Build 90
 
@@ -165,11 +178,13 @@ Settings identity is recorded before stopping services and refreshed for the fin
 
 A partially replaced package is not started without verification: the log is retained and package recovery is required. For a saved `pending_packages` state, use the supported recovery path rather than editing the OPKG/APK database manually.
 
+<a id="manual-install"></a>
+
 ## Manually
 
 **ASUSWRT-Merlin / Entware:**
 
-Download the IPK for your architecture from the [latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build105),
+Download the IPK for your architecture from the [latest release](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108),
 verify SHA256 against `SHA256SUMS` and copy the file to `/opt/tmp/nfqws2-asus.ipk`.
 To install with processing off, run:
 

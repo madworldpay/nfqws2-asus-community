@@ -1,4 +1,4 @@
-import json, os, subprocess, tempfile, unittest
+import hashlib, json, os, subprocess, tempfile, unittest
 from pathlib import Path
 from test_dpi_normalize import PHP, PUBLIC
 
@@ -10,6 +10,81 @@ class PickerTests(unittest.TestCase):
         self.assertEqual(r.returncode,0,r.stderr+r.stdout)
         self.assertEqual(r.stderr,'')
         return json.loads(r.stdout)
+
+    def test_start_binding_covers_main_resource_count_above_the_share_picker_limit(self):
+        result = self.php(r"""require $argv[1].'/strategy-picker-runtime.php';
+        $root=$argv[2].'/resources';mkdir($root);mkdir($root.'/blobs');
+        for($i=0;$i<146;$i++)file_put_contents($root.'/blobs/sample-'.$i.'.bin','sample '.$i);
+        $store=new NfqwsStrategyPickerState($argv[2].'/picker',(int)$argv[3],$root);
+        $runtime=new NfqwsStrategyPickerRuntime($store);
+        $fingerprint=new ReflectionMethod($runtime,'resourcesFingerprint');
+        $share=(new AsusShareResources($root,(int)$argv[3]))->inventory();
+        $out=['share_truncated'=>$share['scan_truncated'],'share_count'=>count($share['files'])];
+        try {
+          $before=$fingerprint->invoke($runtime);
+          file_put_contents($root.'/blobs/sample-145.bin','changed');
+          $out['bound_last_file']=$fingerprint->invoke($runtime)!==$before;
+          for($i=146;$i<257;$i++)file_put_contents($root.'/blobs/sample-'.$i.'.bin','sample '.$i);
+          $fingerprint->invoke($runtime);
+        }catch(RuntimeException $e){$out['refusal']=$e->getMessage();}
+        echo json_encode($out);""")
+        self.assertEqual(result, {'share_truncated':True, 'share_count':128,
+                                  'bound_last_file':True, 'refusal':'picker_resource_limit'})
+
+    def test_picker_library_copies_all_inputs_from_a_main_sized_resource_tree(self):
+        result = self.php(r"""require $argv[1].'/strategy-picker-runtime.php';
+        $root=$argv[2].'/resources';mkdir($root);mkdir($root.'/blobs');
+        for($i=0;$i<146;$i++)file_put_contents($root.'/blobs/sample-'.$i.'.bin','sample '.$i);
+        $raw="NFQWS_BASE_ARGS=\"--blob=sample:@/opt/etc/nfqws2/blobs/sample-145.bin\"\n";
+        file_put_contents($root.'/nfqws2.conf',$raw);
+        $library=new NfqwsDeviceProfilesLibrary($argv[2].'/state',$argv[2].'/copies',$root,(int)$argv[3],[]);
+        $entry=$library->capture('MAIN fixture');$entry=$library->entry($entry['id']);
+        echo json_encode(['file_count'=>count($entry['files']),
+          'last'=>$entry['files']['blobs/sample-145.bin']??null,
+          'original_untouched'=>file_get_contents($root.'/nfqws2.conf')===$raw]);""")
+        self.assertEqual(result['file_count'],146)
+        self.assertEqual(result['last'],hashlib.sha256(b'sample 145').hexdigest())
+        self.assertTrue(result['original_untouched'])
+
+    def test_original_resume_rebinds_only_same_inode_configured_auto_ctime(self):
+        result=self.php(r"""require $argv[1].'/strategy-picker-runtime.php';
+        $root=$argv[2].'/resources';mkdir($root);mkdir($root.'/lists');
+        $auto=$root.'/lists/learned.list';$other=$root.'/lists/user.list';
+        file_put_contents($auto,"learned.example\n");file_put_contents($other,"user.example\n");
+        $store=new NfqwsStrategyPickerState($argv[2].'/picker',(int)$argv[3],$root);
+        $runtime=new NfqwsStrategyPickerRuntime($store);
+        $read=new ReflectionMethod($runtime,'resourcesSnapshot');
+        $fingerprint=new ReflectionMethod($runtime,'resourcesFingerprint');
+        $rebind=new ReflectionMethod($runtime,'resumedResourcesDigest');
+        $expectation=new ReflectionMethod($runtime,'expectedResourcesDigest');
+        $config="MODE_AUTO=\"--hostlist-auto=/opt/etc/nfqws2/lists/learned.list\"\nNFQWS_EXTRA_ARGS=\"\$MODE_AUTO\"\n";
+        $before=$read->invoke($runtime);$initial=$fingerprint->invoke($runtime);
+        sleep(1);if(!chown($auto,(int)$argv[3]))throw new RuntimeException('fixture ownership change failed');
+        $after=$read->invoke($runtime);$actual=$fingerprint->invoke($runtime);
+        $acting=$rebind->invoke(null,$before,$after,$config);
+        $job=['resources_sha256'=>$initial,'current_resources_sha256'=>$acting];
+        $out=['native_step_changed_identity_digest'=>$initial!==$actual,'accepted_digest_is_fresh'=>$acting===$actual,
+          'original_measurement_digest_is_immutable'=>$job['resources_sha256']===$initial,
+          'strict_next_read_bound_to_resume'=>$expectation->invoke(null,$job)===$actual,
+          'legacy_reads_original'=>$expectation->invoke(null,['resources_sha256'=>$initial])===$initial];
+        $attempt=static function(array $tree,string $raw)use($rebind,$before):string{
+          try{$rebind->invoke(null,$before,$tree,$raw);return 'accepted';}
+          catch(RuntimeException $e){return $e->getMessage();}
+        };
+        $out['inactive_auto_refused']=$attempt($after,str_replace('"$MODE_AUTO"','""',$config));
+        $out['ambiguous_auto_refused']=$attempt($after,$config."NFQWS_ARGS=\"--hostlist-auto=/opt/etc/nfqws2/lists/user.list\"\n");
+        $changed=$after;$changed['files']['lists/learned.list']['identity']['ino']++;
+        $out['replacement_refused']=$attempt($changed,$config);
+        $changed=$after;$changed['files']['lists/user.list']['identity']['ctime']++;
+        $out['unrelated_ctime_refused']=$attempt($changed,$config);
+        file_put_contents($auto,"other.example\n");
+        $out['changed_content_refused']=$attempt($read->invoke($runtime),$config);
+        echo json_encode($out);""")
+        self.assertEqual(result, {'native_step_changed_identity_digest':True, 'accepted_digest_is_fresh':True,
+                                  'original_measurement_digest_is_immutable':True, 'strict_next_read_bound_to_resume':True,
+                                  'legacy_reads_original':True, 'inactive_auto_refused':'source_changed',
+                                  'ambiguous_auto_refused':'source_changed', 'replacement_refused':'source_changed',
+                                  'unrelated_ctime_refused':'source_changed','changed_content_refused':'source_changed'})
 
     def test_service_actuator_lock_wait_hint_is_explicit_and_other_children_do_not_inherit_it(self):
         r=self.php("""require $argv[1].'/strategy-picker-runtime.php';$s=new NfqwsStrategyPickerState($argv[2].'/picker',(int)$argv[3]);$s->write(['id'=>str_repeat('a',32),'state'=>'running','phase'=>'warming']);$runtime=new NfqwsStrategyPickerRuntime($s);$m=new ReflectionMethod($runtime,'actuator');$out=[];foreach([false,true,false]as $wait){$out[]=$m->invoke($runtime,['/bin/sh','-c','printf %s \"${NFQWS_CORE_LOCK_WAIT-unset}\"'],2,null,null,$wait);}echo json_encode(['children'=>$out,'actuator'=>$s->read()['actuator']??null,'intent'=>$s->read()['actuator_intent']??null]);""")

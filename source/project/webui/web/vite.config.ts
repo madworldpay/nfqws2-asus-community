@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { join } from 'node:path';
 import tsrConfig from './tsr.config.json';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react-swc';
@@ -54,8 +55,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     {
       name: 'delete-mock',
-      writeBundle() {
-        fs.rmSync('dist/mockServiceWorker.js', { force: true });
+      writeBundle({ dir }) {
+        if (dir) fs.rmSync(join(dir, 'mockServiceWorker.js'), { force: true });
       },
     },
   ],

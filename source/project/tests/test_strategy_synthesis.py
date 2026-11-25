@@ -82,7 +82,7 @@ class SynthesisTests(unittest.TestCase):
         self.assertEqual(r[1],'synthesis_payload_unavailable')
         self.assertEqual(r[2],[])
 
-    def test_compiled_packet_local_clone_exports_without_a_phantom_external_blob(self):
+    def test_compiled_packet_local_clone_exports_from_a_large_library_without_a_phantom_blob(self):
         # Real compiler/export/import. These fixture Lua bytes are not run;
         # native syntax and real package-byte checks are separate tests.
         r=self.php(r"""require $argv[1].'/strategy-picker-runtime.php';$root=$argv[2];$hashes=[];
@@ -90,16 +90,20 @@ class SynthesisTests(unittest.TestCase):
         foreach(['lua/zapret-lib.lua'=>'fixture lib','lua/zapret-antidpi.lua'=>'fixture antidpi',
           'lists/synthesis-user.list'=>"youtube.com\n",'lists/synthesis-auto.list'=>'','lists/synthesis-exclude.list'=>"t.me\n"]as $name=>$raw){
           file_put_contents($root.'/'.$name,$raw);chmod($root.'/'.$name,0644);$hashes[$name]=hash('sha256',$raw);}
+        for($i=0;$i<144;$i++){
+          $name='lists/unused-'.$i.'.list';$raw="unused.example\n";
+          file_put_contents($root.'/'.$name,$raw);chmod($root.'/'.$name,0644);$hashes[$name]=hash('sha256',$raw);}
         $base=['NFQWS_BASE_ARGS'=>'--lua-init=@'.$root.'/lua/zapret-lib.lua --lua-init=@'.$root.'/lua/zapret-antidpi.lua',
           'NFQWS_EXTRA_ARGS'=>'--hostlist='.$root.'/lists/synthesis-user.list --hostlist-auto='.$root.'/lists/synthesis-auto.list --hostlist-exclude='.$root.'/lists/synthesis-exclude.list',
           'NFQWS_ARGS_IPSET'=>'','TCP_PORTS'=>'80,443','UDP_PORTS'=>'443'];
         $recipe=NfqwsStrategySynthesis::blank();$recipe['tls']=['method'=>'tls_client_hello_clone','fooling'=>'seq','repeats'=>2];
         $entry=['files'=>$hashes,'mutable_files'=>['lists/synthesis-auto.list'],'config'=>NfqwsStrategySynthesis::bind($recipe,$base),'synthesis_recipe'=>$recipe];
         $seed=NfqwsStrategyPickerResources::snapshotMutable($entry,$root,getmyuid());$bundle=NfqwsStrategySynthesisExport::bundle($entry,$root,$seed,getmyuid());
-        $doc=AsusImportDocument::read([$bundle['raw']]);echo json_encode([$doc['dependencies'],$doc['values']['NFQWS_ARGS']]);""")
+        $doc=AsusImportDocument::read([$bundle['raw']]);echo json_encode([$doc['dependencies'],$doc['values']['NFQWS_ARGS'],array_column($doc['resources'],'name')]);""")
         self.assertTrue(r[0])
         self.assertTrue(all(x['included'] for x in r[0]))
         self.assertIn('--lua-desync=tls_client_hello_clone:',r[1])
+        self.assertFalse(any('unused-' in name for name in r[2]))
 
     @unittest.skipUnless(os.environ.get('NFQWS_TEST_ENGINE_DIR'),'Requires pinned MAIN engine')
     def test_expanded_family_programs_parse_in_actual_MAIN_engine(self):
@@ -198,6 +202,61 @@ class SynthesisTests(unittest.TestCase):
     def test_http_search_includes_host_split_timestamp_family(self):
         r=self.php("echo json_encode(NfqwsStrategySynthesis::queue(['max_repeats'=>6]));")
         self.assertTrue(any(x['http']['method']=='hostfakesplit' and x['http'].get('fooling')=='ts' for x in r))
+
+    def test_feedback_prioritizes_a_measured_goal_failure_over_a_healthy_axis(self):
+        first = self.php(r"""$healthy=['ok'=>2,'total'=>2];$weak=['ok'=>0,'total'=>2];
+          $metrics=array_fill_keys(['tcp','http','tls12','tls13','quic'],$healthy);
+          $metrics['http']=$weak;
+          $youtube=['http'=>$healthy,'tls12'=>$healthy,'tls13'=>$healthy,'quic'=>$weak];
+          $run=['targets'=>'same','metrics'=>$metrics,'services'=>['youtube'=>$youtube],'domains'=>[]];
+          $out=NfqwsStrategySynthesis::refine([['recipe'=>NfqwsStrategySynthesis::blank(),'runs'=>[$run,$run]]],
+              ['max_repeats'=>6],'youtube');echo json_encode(array_slice($out,0,3));""")
+        self.assertNotEqual(first[0]['quic'], {'method':'pass'})
+        self.assertEqual(first[0]['http'], {'method':'pass'})
+        self.assertTrue(any(row['http'] != {'method':'pass'} for row in first))
+        self.assertTrue(any(row['tls'] != {'method':'pass'} for row in first))
+
+    def test_feedback_tests_distinct_families_before_repeating_a_method(self):
+        recipes = self.php(r"""$run=['targets'=>'same','metrics'=>array_fill_keys(['tcp','http','tls12','tls13','quic'],
+          ['ok'=>0,'total'=>1]),'domains'=>[]];
+          $out=NfqwsStrategySynthesis::refine([['recipe'=>NfqwsStrategySynthesis::blank(),'runs'=>[$run,$run]]],
+            ['max_repeats'=>6]);echo json_encode(array_slice($out,0,12));""")
+        tls = [row['tls']['method'] for row in recipes if row['tls'] != {'method':'pass'}]
+        self.assertEqual(len(tls), 4)
+        self.assertEqual(len(set(tls)), 4)
+
+    def test_packaged_examples_keep_provenance_and_current_payload_admission(self):
+        # Exercise the production loader and queue against a package layout.
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for file in PUBLIC.glob('*.php'):
+                shutil.copyfile(file, root / file.name)
+            pack = root / 'zapret2-pack'
+            pack.mkdir()
+            for file in ('priors.json', 'samples.json'):
+                shutil.copyfile(PUBLIC / 'zapret2-pack' / file, pack / file)
+            source = {'id':'fixture', 'collection':'cloud', 'attribution':'Example author'}
+            component = {'method':'fake', 'payload':'tls_iana', 'repeats':6}
+            row = {'component':component, 'sources':[source]}
+            bad = {'component':{'method':'fake','repeats':7}, 'sources':[source]}
+            manual = {'component':{'method':'orchestrate'}, 'sources':[source]}
+            (pack / 'synthesis-seeds.json').write_text(json.dumps({
+                'schema_version':1, 'http':[], 'tls':[row,row,bad,manual], 'quic':[],
+            }))
+            result = subprocess.run([PHP, '-n', '-r', r"""require $argv[1].'/strategy-synthesis.php';
+                $s=NfqwsStrategySynthesis::class;$allowed=['max_repeats'=>6,'synthesis_payloads'=>['tls_iana']];
+                $recipe=$s::blank();$recipe['tls']=['method'=>'fake','payload'=>'tls_iana','repeats'=>6];
+                echo json_encode([$s::matrix($allowed)['catalog_examples'],$s::exampleAttributions($recipe),
+                  in_array($recipe,$s::queue($allowed),false),
+                  in_array($recipe,$s::queue(['max_repeats'=>6]),false),
+                  in_array($recipe,$s::queue($allowed+['small'=>true],[],[$s::key($recipe)]),false)]);""",
+                folder], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stderr, '')
+        counts, credits, available, missing, measured = json.loads(result.stdout)
+        self.assertEqual(counts, {'http':0,'tls':1,'quic':0})
+        self.assertIn('Example author', credits)
+        self.assertEqual((available, missing, measured), (True, False, False))
 
     def test_runtime_uses_observation_feedback_before_search_budget_is_exhausted(self):
         # External service/Detector are doubles; queue, memory and refinement

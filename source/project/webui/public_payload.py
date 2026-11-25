@@ -4,6 +4,7 @@ Compiled React inputs are not attested here: callers still build from a frozen
 source checkout. Reviewed IDNA files retain their independent pinned supplier.
 """
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -11,6 +12,43 @@ from pathlib import Path
 
 
 ZEMIDALA_OFFLINE = 'zapret2-pack/zemidala-offline.json'
+SYNTHESIS_SEEDS = 'zapret2-pack/synthesis-seeds.json'
+
+
+def add_synthesis_seeds(files, web_root, shared_root, lua_root, build_number):
+    """Compile only against the catalog and resource bytes in this package."""
+    here = Path(__file__).resolve().parent
+    extractor_spec = importlib.util.spec_from_file_location('nfqws_synthesis_seeds', here/'synthesis_seeds.py')
+    extractor = importlib.util.module_from_spec(extractor_spec)
+    extractor_spec.loader.exec_module(extractor)
+    pack_spec = importlib.util.spec_from_file_location('nfqws_preset_pack', here.parent/'asus/preset_pack.py')
+    preset_pack = importlib.util.module_from_spec(pack_spec)
+    pack_spec.loader.exec_module(preset_pack)
+
+    pack_root = web_root + '/zapret2-pack/'
+    catalog_root = shared_root + '/profile-catalog/v1/'
+    packed = {path.removeprefix(pack_root): record for path, record in files.items() if path.startswith(pack_root)}
+    signed = {path.removeprefix(shared_root+'/'): record for path, record in files.items() if path.startswith(catalog_root)}
+    lua = {name: extractor.digest(files[lua_root+'/'+name][0]) for name in extractor.STOCK_LUA
+           if lua_root+'/'+name in files}
+    try:
+        if not signed:
+            raise ValueError('verified cloud catalog is absent')
+        extra = json.loads(packed['samples.json'][0])
+        samples = preset_pack.STOCK_SAMPLES | {ident: row['name'] for ident, row in extra.items()}
+        blobs = {}
+        for ident, name in samples.items():
+            path = shared_root+'/defaults/blobs/'+name
+            if path in files:
+                blobs[extractor.digest(files[path][0])] = ident
+        result = extractor.compile_seeds(packed, signed, lua, blobs, int(build_number))
+        raw = (json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(',', ':'))+'\n').encode()
+        if len(raw) > 262144 or any(len(result[p]) > 256 or any(len(row['sources']) > 128 for row in result[p])
+                                   for p in extractor.PROTOCOLS):
+            raise ValueError('synthesis seed catalog exceeds runtime bounds')
+        files[web_root+'/'+SYNTHESIS_SEEDS] = raw, 0o644
+    except (KeyError, TypeError, ValueError) as error:
+        raise RuntimeError('Invalid package inputs for synthesis seed catalog') from error
 
 
 def zemidala_offline(source, catalog):
@@ -56,6 +94,8 @@ def payload(public, dist, verified_vendor):
             name = path.relative_to(public).as_posix()
             if name == ZEMIDALA_OFFLINE:
                 raise ValueError('Zemidala offline input belongs outside public source')
+            if name == SYNTHESIS_SEEDS:
+                raise ValueError('Synthesis seeds must be generated from verified package inputs')
             if name != 'mockServiceWorker.js' and not name.endswith('.map'):
                 sources[name] = path
         files = {}

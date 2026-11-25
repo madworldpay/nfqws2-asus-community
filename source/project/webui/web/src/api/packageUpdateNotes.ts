@@ -95,30 +95,18 @@ export async function getKeeneticPanelUpdate(
         !Array.isArray(r.assets)
       )
         continue;
-      const tag = /^keenetic-build([1-9]\d*)(?:-r([1-9]\d*))?$/.exec(
-        r.tag_name,
-      );
+      const legacy = /^keenetic-build([1-9]\d*)(?:-r([1-9]\d*))?$/.exec(r.tag_name);
+      const tag = legacy ?? /^build([1-9]\d*)$/.exec(r.tag_name);
       if (!tag) continue;
-      const b = Number(tag[1]),
-        rev = Number(tag[2] ?? 1);
-      if (
-        !Number.isSafeInteger(b) ||
-        !Number.isSafeInteger(rev) ||
-        b < build ||
-        (b === build && rev <= revision)
-      )
-        continue;
-      const suffix = `+b${b}-${rev}_${arch}.ipk`;
-      if (
-        r.assets.some(
-          (a) =>
-            typeof a?.name === 'string' &&
-            /^nfqws2-keenetic-community_\d+\.\d+\.\d+\+/.test(a.name) &&
-            a.name.slice(a.name.indexOf('+')) === suffix &&
-            a.state === 'uploaded' &&
-            a.size > 0,
-        )
-      ) {
+      const b = Number(tag[1]);
+      if (!Number.isSafeInteger(b) || b < build) continue;
+      for (const a of r.assets) {
+        if (typeof a?.name !== 'string' || a.state !== 'uploaded' || !(a.size > 0)) continue;
+        const asset = /^nfqws2-keenetic-community_\d+\.\d+\.\d+\+b([1-9]\d*)-([1-9]\d*)_([a-z0-9.-]+)\.ipk$/.exec(a.name);
+        if (!asset || asset[1] !== tag[1] || asset[3] !== arch) continue;
+        const rev = Number(asset[2]);
+        if (legacy && asset[2] !== (legacy[2] ?? '1')) continue;
+        if (!Number.isSafeInteger(rev) || (b === build && rev <= revision)) continue;
         build = b;
         revision = rev;
         url = `https://github.com/madworldpay/nfqws2-asus-community/releases/tag/${r.tag_name}`;

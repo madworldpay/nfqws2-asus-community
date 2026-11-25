@@ -6,39 +6,39 @@
   },
   "engines": {
     "arm": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-armv7",
-      "packed_sha256": "fa066bf4a9e71b9077b37b5c9acf263567716839db30d708273935302f52cb6e",
-      "unpacked_sha256": "458fd5adc9fe07797ee5a9b5574313d3b9490863b41108c4d9c4afb96dc594b5"
+      "member": "engine/arm",
+      "packed_sha256": "0ac72fc3753e31c719040ffd0ee32621092785b5b9f8e32302bc210c81717d8e",
+      "unpacked_sha256": "0ac72fc3753e31c719040ffd0ee32621092785b5b9f8e32302bc210c81717d8e"
     },
     "arm64": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-aarch64",
-      "packed_sha256": "96f61de18dafa255dbffb5f2cc34f23652ccf6bb34fd0c7d3d4fd4c196e80b29",
-      "unpacked_sha256": "7c60806e242356d95c2611b62f4f1b223c62f29dccad7247d75572e290e43329"
+      "member": "engine/arm64",
+      "packed_sha256": "906ace94c4b04838ab01ccd8bb6b4c40f1ee9be8092d4cebe637f974a9acd05f",
+      "unpacked_sha256": "906ace94c4b04838ab01ccd8bb6b4c40f1ee9be8092d4cebe637f974a9acd05f"
     },
     "mips": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-mips",
-      "packed_sha256": "449023376cc258da0dac173feab184e94ad70ac1899eb963874f84cb8fb6fdb9",
-      "unpacked_sha256": "722b94d2520dca96b44dbe5f05eaf7860267231ded14a6a1228f8e31a2ab3430"
+      "member": "engine/mips",
+      "packed_sha256": "6409c42263c40c66b90acc4a1ccc886a591aa28ce355a70446d5bb56d483f445",
+      "unpacked_sha256": "6409c42263c40c66b90acc4a1ccc886a591aa28ce355a70446d5bb56d483f445"
     },
     "mipsel": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-mipsel",
-      "packed_sha256": "44a869f5c1a4d7d4e4bbbbfdb2da75b4e7160a189b6addc511c35c4e7557cf35",
-      "unpacked_sha256": "933654512efc8499efa81fa246c66ae81a672fd5d8f85c7d900c312cc83c7255"
+      "member": "engine/mipsel",
+      "packed_sha256": "8a64f1b2497c1d5dc8b9e11f2a8a5ba74be1ff158affc87cad16eed4403f7ff3",
+      "unpacked_sha256": "8a64f1b2497c1d5dc8b9e11f2a8a5ba74be1ff158affc87cad16eed4403f7ff3"
     },
     "mips64": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-mips64",
-      "packed_sha256": "dcd7ebee0f1db6eb29eac207d94e1cc23dcc582133bab72c8bf9f1d5f32f0067",
-      "unpacked_sha256": "dcd7ebee0f1db6eb29eac207d94e1cc23dcc582133bab72c8bf9f1d5f32f0067"
+      "member": "engine/mips64",
+      "packed_sha256": "3e57aade6401f7e57845fb7740927154579febb2bc6ed5c5487d3dfbc2e6ae06",
+      "unpacked_sha256": "3e57aade6401f7e57845fb7740927154579febb2bc6ed5c5487d3dfbc2e6ae06"
     },
     "x86": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-x86",
-      "packed_sha256": "43946442b0c67aba99202b693b813a6ba73c075e1ea0f2982f54e185de8811b7",
-      "unpacked_sha256": "5a47e7f16fd583e264b72b410464db22fdb73858b18c53203de3b6192fd36cf4"
+      "member": "engine/x86",
+      "packed_sha256": "a49d22845ae303ccdf8f685b9253a83f32a8844021c84119059147dda35d6fd9",
+      "unpacked_sha256": "a49d22845ae303ccdf8f685b9253a83f32a8844021c84119059147dda35d6fd9"
     },
     "x86_64": {
-      "member": "opt/tmp/nfqws2_binary/nfqws2-x86_64",
-      "packed_sha256": "4a68d58df2ee4f9eb576aa9f1ef12647d11a7b4d365706afe39e5929dd85ccd6",
-      "unpacked_sha256": "ce8d6c7de5334a57f73e5c265e80f01dda36008da685c6c75d7fd4f0b3777afa"
+      "member": "engine/x86_64",
+      "packed_sha256": "aa871dd732bcf3565b70df3f9fb59da1a398f90af34c2f68e266567ddef61e53",
+      "unpacked_sha256": "aa871dd732bcf3565b70df3f9fb59da1a398f90af34c2f68e266567ddef61e53"
     }
   },
   "ipkg_build": {

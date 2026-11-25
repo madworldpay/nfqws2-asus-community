@@ -67,12 +67,14 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
     queryFn: ({ signal }) =>
       getKeeneticPanelUpdate(packageVersion ?? '', arch, signal),
     enabled: keenetic && isReady && !!packageVersion && !!arch,
-    staleTime: 3_600_000,
+    staleTime: (query) => (query.state.data === null ? 30_000 : 3_600_000),
+    refetchOnWindowFocus: (query) => !query.state.data,
+    refetchOnReconnect: (query) => !query.state.data,
     retry: false,
   });
   const updates = usePackageUpdates(
     csrfToken,
-    platform !== 'keenetic-entware' && (anonym || authenticated),
+    keenetic ? authenticated : anonym || authenticated,
     open,
     refreshingSession || !!intent,
   );
@@ -176,7 +178,7 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
     buildNumber,
   );
   const availableUpdate = keenetic
-    ? !!keeneticUpdate.data
+    ? !!keeneticUpdate.data || updates.data?.check.state === 'available'
     : badges.core || badges.web || badges.build;
   const rabbitState: RabbitBuildState =
     !isReady || typeof service !== 'boolean'
@@ -187,41 +189,46 @@ export const CurrentVersion = ({ sx }: { sx?: SxProps }) => {
           ? 'update'
           : 'idle';
   const badge = (label: ReactNode, available: boolean) => {
-    const chip = keenetic ? (
-      keeneticUpdate.data ? (
-        <Chip
-          component="a"
-          href={keeneticUpdate.data}
-          target="_blank"
-          rel="noopener noreferrer"
-          clickable
-          label={label}
-          size="small"
-          variant="outlined"
-          color="warning"
-          title={t('package_update.badge_available')}
-        />
+    const chip =
+      keenetic &&
+      (!authenticated ||
+        (keeneticUpdate.data && updates.data?.check.state !== 'available')) ? (
+        keeneticUpdate.data ? (
+          <Chip
+            component="a"
+            href={keeneticUpdate.data}
+            target="_blank"
+            rel="noopener noreferrer"
+            clickable
+            label={label}
+            size="small"
+            variant="outlined"
+            color="warning"
+            title={t('package_update.badge_available')}
+          />
+        ) : (
+          <Chip label={label} size="small" variant="outlined" />
+        )
       ) : (
-        <Chip label={label} size="small" variant="outlined" />
-      )
-    ) : (
-      <Tooltip
-        key={String(label)}
-        title={t(
-          available ? 'package_update.badge_available' : 'package_update.check',
-        )}
-        enterTouchDelay={0}
-      >
-        <Chip
-          label={label}
-          size="small"
-          variant="outlined"
-          color={available ? 'warning' : 'primary'}
-          onClick={() => setOpen(true)}
-          sx={{ cursor: 'pointer' }}
-        />
-      </Tooltip>
-    );
+        <Tooltip
+          key={String(label)}
+          title={t(
+            available
+              ? 'package_update.badge_available'
+              : 'package_update.check',
+          )}
+          enterTouchDelay={0}
+        >
+          <Chip
+            label={label}
+            size="small"
+            variant="outlined"
+            color={available ? 'warning' : 'primary'}
+            onClick={() => setOpen(true)}
+            sx={{ cursor: 'pointer' }}
+          />
+        </Tooltip>
+      );
     return appearance === 'rabbit' ? (
       <RabbitBuildBadge
         key={String(label)}
