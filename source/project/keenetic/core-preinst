@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+# Keep retained directories out of data.tar.gz so opkg does not re-own them.
+opt="${IPKG_INSTROOT:-}/opt"
+[ -d "$opt" ]
+umask 022
+for name in @CORE_DIRECTORIES@; do
+    path="$opt/$name"
+    if [ -L "$path" ] || { [ -e "$path" ] && [ ! -d "$path" ]; }; then
+        echo "Invalid Entware directory: $path" >&2
+        exit 1
+    fi
+    [ -d "$path" ] || mkdir "$path"
+done

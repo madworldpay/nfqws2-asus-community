@@ -7,13 +7,16 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import re
 import tarfile
 
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent
 PACKAGE = 'nfqws2-keenetic-community'
+CORE_PACKAGE = 'nfqws2-keenetic'
 STOCK_VERSION = '1.3.3'
-PACKAGE_REVISION = 2
+PACKAGE_REVISION = 3
+CORE_REVISION = 1
 WEB_STOCK = 'nfqws-keenetic-web_3.0.24_all_entware.ipk'
 WEB_SHA = '767b7003db0057d1d46513dcdd6c8c87dc666732a2f7b8c6d756b15cd7900565'
 TARGETS = {
@@ -27,6 +30,8 @@ LIB = 'opt/lib/nfqws2-asus'
 SHARE = 'opt/share/nfqws2-asus'
 SHARED_DIRS = {'opt','opt/usr','opt/usr/bin','opt/etc','opt/etc/nfqws2','opt/etc/nfqws2/lua',
                'opt/lib','opt/libexec','opt/share','opt/share/licenses','opt/share/www','opt/share/www/nfqws'}
+CORE_BINARY = 'opt/usr/bin/nfqws2'
+CORE_CONFIG = 'opt/etc/nfqws2/'
 spec = importlib.util.spec_from_file_location('community_entware', PROJECT/'asus/build.py')
 entware = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(entware)
@@ -40,14 +45,84 @@ def document(value):
     return (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode(), 0o644
 
 
-def vendor_files(path, checksum):
+def tar_contents(raw):
+    files, directories = {}, set()
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:gz') as archive:
+        for member in archive:
+            name = member.name.removeprefix('./')
+            if member.isdir():
+                if name != '.':
+                    directories.add(name)
+            elif member.isfile() and name not in files:
+                files[name] = archive.extractfile(member).read(), member.mode
+            else:
+                raise ValueError('Unexpected vendor archive member: '+name)
+    return files, directories
+
+
+def vendor_package(path, checksum):
     raw = path.read_bytes()
     if digest(raw) != checksum:
         raise ValueError('Unexpected vendor package: '+path.name)
-    with tarfile.open(fileobj=io.BytesIO(raw)) as outer:
-        member = next(m for m in outer if m.name.removeprefix('./') == 'data.tar.gz')
-        with tarfile.open(fileobj=outer.extractfile(member), mode='r:gz') as data:
-            return {m.name.removeprefix('./'): data.extractfile(m).read() for m in data if m.isfile()}
+    outer, directories = tar_contents(raw)
+    if directories or set(outer) != {'debian-binary', 'control.tar.gz', 'data.tar.gz'}:
+        raise ValueError('Unexpected vendor IPK layout: '+path.name)
+    if outer['debian-binary'][0] != b'2.0\n':
+        raise ValueError('Unexpected vendor IPK version: '+path.name)
+    controls, _ = tar_contents(outer['control.tar.gz'][0])
+    files, directories = tar_contents(outer['data.tar.gz'][0])
+    return controls, files, directories
+
+
+def ipk(controls, files, *, omit_directories):
+    return entware.compressed_tar({
+        'debian-binary': (b'2.0\n', 0o644),
+        'control.tar.gz': (entware.compressed_tar(controls), 0o644),
+        'data.tar.gz': (entware.compressed_tar(files, omit_directories=omit_directories), 0o644),
+    })
+
+
+def core_package(cache, arch, checksum, version, engine, binary):
+    template = cache/f'{CORE_PACKAGE}_{STOCK_VERSION}_{arch}.ipk'
+    controls, files, directories = vendor_package(template, checksum)
+    control, mode = controls['control']
+    lines = control.splitlines()
+    old_version = b'Version: '+STOCK_VERSION.encode()
+    for field in (b'Package: '+CORE_PACKAGE.encode(), old_version, b'Architecture: '+arch.encode()):
+        if lines.count(field) != 1:
+            raise ValueError('Unexpected vendor core metadata: '+field.decode())
+    control = control.replace(old_version+b'\n', b'Version: '+version.encode()+b'\n', 1)
+    control = control.replace(b'Description: ', b'Maintainer: NFQWS2 Community\nDescription: ', 1)
+    controls = {'control': (control, mode), 'conffiles': controls['conffiles']}
+
+    # Preserve the original service shell and defaults. These compressed Lua
+    # paths belong to the engine package as a set and share the engine pin.
+    lua = {CORE_CONFIG+name+'.gz': raw for name, raw in engine.items() if name.startswith('lua/')}
+    if set(lua) != {path for path in files if path.startswith(CORE_CONFIG+'lua/')}:
+        raise ValueError('Engine and vendor core Lua paths differ')
+    files[CORE_BINARY] = binary, files[CORE_BINARY][1]
+    for path, raw in lua.items():
+        compressed, mode = files[path]
+        if gzip.decompress(compressed) != raw:
+            files[path] = gzip.compress(raw, mtime=0), mode
+
+    # Entware opkg needs the existing parents when directory entries are
+    # omitted. Create only missing parents and retain live owner and mode.
+    preinst, mode = entware.local('keenetic/core-preinst', True)
+    marker = b'@CORE_DIRECTORIES@'
+    if preinst.count(marker) != 1 or 'opt' not in directories:
+        raise ValueError('Unexpected vendor core directory template')
+    subdirs = sorted(directories-{'opt'})
+    component = r'[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*'
+    if any(re.fullmatch(rf'opt(?:/{component})+', name) is None for name in subdirs):
+        raise ValueError('Unexpected vendor core directory path')
+    relative_dirs = [name.removeprefix('opt/') for name in subdirs]
+    controls['preinst'] = preinst.replace(marker, ' '.join(relative_dirs).encode()), mode
+    controls['prerm'] = entware.local('keenetic/core-prerm', True)
+    # Replace vendor hooks explicitly. Service restoration is owned by the
+    # update transaction, and package removal never prompts to delete data.
+    controls['postinst'] = controls['postrm'] = b'#!/bin/sh\nexit 0\n', 0o755
+    return files, ipk(controls, files, omit_directories=directories)
 
 
 def panel(dist):
@@ -125,34 +200,51 @@ def panel(dist):
 
 
 def build(args):
-    vendor_web=vendor_files(args.cache/WEB_STOCK, WEB_SHA)
+    _, vendor_web, _=vendor_package(args.cache/WEB_STOCK, WEB_SHA)
     common=panel(args.dist)
     detector=json.loads((PROJECT/'openwrt/dpi-assets.json').read_bytes())
     number=(PROJECT/'BUILD_NUMBER').read_text().strip()
     if not number.isdecimal() or int(number)<1:
         raise ValueError('Invalid community build number')
     version=f'{STOCK_VERSION}+b{number}-{PACKAGE_REVISION}'
+    core_version=f'{STOCK_VERSION}+community{number}-{CORE_REVISION}'
+    engine_spec=importlib.util.spec_from_file_location('nfqws_engine_release', PROJECT/'core/engine_release.py')
+    engine_release=importlib.util.module_from_spec(engine_spec)
+    engine_spec.loader.exec_module(engine_release)
+    engine=engine_release.read(args.cache)
     args.output.mkdir(parents=True,exist_ok=True)
     for arch in args.arch or TARGETS:
         family, checksum=TARGETS[arch]
-        stock=vendor_files(args.cache/f'nfqws2-keenetic_{STOCK_VERSION}_{arch}.ipk',checksum)
+        binary=engine['engine/'+family]
+        artifact=detector['artifacts'][family]
+        machine=int.from_bytes(binary[18:20], 'little' if binary[5]==1 else 'big')
+        if binary[:4]!=b'\x7fELF' or [binary[4],binary[5],machine]!=[artifact['elf_class'],artifact['elf_data'],artifact['elf_machine']]:
+            raise ValueError('Unexpected target ELF: '+arch)
+        stock, core=core_package(args.cache, arch, checksum, core_version, engine, binary)
+        if stock.keys()&vendor_web.keys():
+            raise ValueError('Core payload collides with the vendor web package')
         files=dict(common)
         index = PUBLIC+'/index.html'
         page, mode = files[index]
         files[index] = page.replace(b'<html ', f'<html data-entware-arch="{arch}" '.encode(), 1), mode
         # Factories are separate from the operator's active config and lists.
-        files[SHARE+'/defaults/nfqws2.conf']=stock['opt/etc/nfqws2/nfqws2.conf'],0o600
+        files[SHARE+'/defaults/nfqws2.conf']=stock[CORE_CONFIG+'nfqws2.conf'][0],0o600
         resources={}
-        for path, raw in stock.items():
-            rel=path.removeprefix('opt/etc/nfqws2/')
+        core_factory=[]
+        for path, (raw, _) in stock.items():
+            rel=path.removeprefix(CORE_CONFIG)
             if rel.startswith('lua/') and rel.endswith('.lua.gz'):
+                core_factory.append((rel, digest(raw)))
                 key=rel[:-3];raw=gzip.decompress(raw);dest=SHARE+'/factory/'+key
             elif rel.startswith('blobs/'):
+                core_factory.append((rel, digest(raw)))
                 key='blob/'+Path(rel).name;dest=SHARE+'/defaults/'+rel
             else:
                 continue
             files[dest]=raw,0o644
             resources[key]={'bytes':len(raw),'sha256':digest(raw)}
+        factory_index=''.join(f'{checksum}  {path}\n' for path,checksum in sorted(core_factory))
+        files[SHARE+'/keenetic-core-factory.sha256']=factory_index.encode(),0o644
         for name in ('local-guarded-ts.lua', 'local-tls13-stun.lua'):
             raw, _ = entware.local('asus/lua/'+name)
             key = 'lua/'+name
@@ -163,14 +255,9 @@ def build(args):
         for path,(raw,_) in files.items():
             if path.startswith(SHARE+'/defaults/blobs/'):
                 resources['blob/'+Path(path).name]={'bytes':len(raw),'sha256':digest(raw)}
-        binary=stock['opt/usr/bin/nfqws2']
-        artifact=detector['artifacts'][family]
-        machine=int.from_bytes(binary[18:20], 'little' if binary[5]==1 else 'big')
-        if binary[:4]!=b'\x7fELF' or [binary[4],binary[5],machine]!=[artifact['elf_class'],artifact['elf_data'],artifact['elf_machine']]:
-            raise ValueError('Unexpected target ELF: '+arch)
         files[SHARE+'/report-baseline.json']=document({'schema_version':1,'package_version':version,
             'web_version':entware.WEB_VERSION,'resources':resources,'package_lists':lists,
-            'engine':{'version':'1.0.7','provider':'nfqws2-keenetic','sha256':digest(binary),'elf_class':binary[4],'elf_machine':machine}})
+            'engine':{**engine_release.PROVENANCE,'sha256':digest(binary),'elf_class':binary[4],'elf_machine':machine}})
         files[SHARE+'/keenetic-dpi-artifact.json']=document({'schema_version':1,'arch':arch,'engine':family,
             'version':detector['version'],'artifact':artifact})
         files.update(entware.dpi_terminal_payload(family))
@@ -179,18 +266,17 @@ def build(args):
             raise ValueError('Community payload collides with a stock package')
         control=('Package: '+PACKAGE+'\nVersion: '+version+'\nArchitecture: '+arch+'\n'
             'Maintainer: NFQWS2 Community\nLicense: MIT\nSection: net\n'
-            'Depends: nfqws2-keenetic (= '+STOCK_VERSION+'), nfqws-keenetic-web (>= 3.0.24), busybox, flock, php8-cgi, php8-mod-session, php8-mod-openssl, ca-bundle\n'
+            'Depends: '+CORE_PACKAGE+' (= '+core_version+'), nfqws-keenetic-web (>= 3.0.24), busybox, flock, php8-cgi, php8-mod-session, php8-mod-openssl, ca-bundle\n'
             'Conflicts: nfqws2-asus, nfqws-asus-web\n'
             'Description: Community panel for the stock KeeneticOS nfqws2 service\n').encode()
         controls={'control':(control,0o644),'preinst':entware.local('keenetic/preinst',True),
                   'postinst':entware.local('keenetic/postinst',True)}
-        package=entware.compressed_tar({'debian-binary':(b'2.0\n',0o644),
-            'control.tar.gz':(entware.compressed_tar(controls),0o644),
-            'data.tar.gz':(entware.compressed_tar(files,omit_directories=SHARED_DIRS),0o644)})
-        name=f'{PACKAGE}_{version}_{arch}.ipk'
-        with (args.output/name).open('xb') as f:
-            f.write(package)
-        print(f'{digest(package)}  {name}')
+        package=ipk(controls, files, omit_directories=SHARED_DIRS)
+        for name, content in ((f'{CORE_PACKAGE}_{core_version}_{arch}.ipk',core),
+                              (f'{PACKAGE}_{version}_{arch}.ipk',package)):
+            with (args.output/name).open('xb') as f:
+                f.write(content)
+            print(f'{digest(content)}  {name}')
 
 
 if __name__=='__main__':

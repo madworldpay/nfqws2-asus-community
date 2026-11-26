@@ -489,11 +489,76 @@ entware_workspace() {
     trap cleanup 0
     trap 'exit 130' INT
     trap 'exit 143' TERM HUP
+    [ "$CHECK_ONLY" = 0 ] || return 0
     nfqws_asus_bootstrap_lease || fail 'Другой установщик NFQWS2 уже работает или его блокировка недоступна.'
 }
 
-# Only the immutable Build 101 r2 release and its matching upstream packages.
-# Community package hashes come from the signed SHA256SUMS-keenetic.txt.
+keenetic_require_download() {
+    if entware_download_tools; then return 0; fi
+    [ "$CHECK_ONLY" = 0 ] || fail 'Для проверки загрузок нужен curl или GNU wget из Entware.'
+    prepare_opkg
+    "$OPKG" --tmp-dir "$WORK/opkg" install curl ca-bundle && entware_download_tools ||
+        fail 'Не удалось подготовить curl и сертификаты Entware.'
+}
+
+keenetic_pair_signature() {
+    cat > "$WORK/keenetic-release-key.pem" <<'NFQWS_KEENETIC_KEY'
+-----BEGIN PUBLIC KEY-----
+MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAnMAJvg+5yMc2KriuNn8l
+RJjCmnlDDp/c5425Fo88zFoXLW7eVTc1gimagMxRqFjQG+nWo4eR+ZuzAJ/ZPSMk
+oXRzgwTh7tPMYefdR57aSGcFMAUZ3juBBolw6NWTKe0y71BVr6rhGgE7YJOLjySX
+yRMPlVTxkDimS8Gx3/pXRFc3ZwcFJB+wYcN066hfbepo8OA390UqozCHff+1ZeX6
+6CjFbhwuOC7KkDkteARQI74vZq8e4fy+KXFd1ZdWYW+aScgCFLGsKfGqKZ+uTiaW
+x8ByXkuhoeiyePo31nN1UUe7WZPWlDyuueTgXlkKMtat/i8wHes5bQM8561vBCoF
+LH8DZZ50Unbtyrkt6ZI+QKEcPxz8J3SKGcI34on77+hs+N/+uGrH6BLp87WgezWZ
+lCbneSVH54pjbJ7wKmBvpHjZfL9QyNZYppJf8WrIBJSAOL+bKzZi276r52WeOhZj
+iZKKHyVyZmj1/SXQb2oQJcOAwqPYN0rQKqzxmOwAa8OhAgMBAAE=
+-----END PUBLIC KEY-----
+NFQWS_KEENETIC_KEY
+    [ "$(wc -c < "$WORK/keenetic-pairs.tsv.sig")" -eq 384 ] || return 1
+    if keenetic_openssl=$(tool openssl); then
+        "$keenetic_openssl" dgst -sha256 -verify "$WORK/keenetic-release-key.pem" \
+            -signature "$WORK/keenetic-pairs.tsv.sig" "$WORK/keenetic-pairs.tsv" >/dev/null
+        return $?
+    fi
+    if [ ! -x /opt/bin/php-cgi ] || [ ! -f /opt/lib/php8/openssl.so ]; then
+        [ "$CHECK_ONLY" = 0 ] || fail 'Для проверки подписи нужен OpenSSL или PHP с OpenSSL из Entware.'
+        prepare_opkg
+        "$OPKG" --tmp-dir "$WORK/opkg" install php8-cgi php8-mod-openssl ||
+            fail 'Не удалось подготовить OpenSSL для проверки подписи.'
+    fi
+    cat > "$WORK/keenetic-verify.php" <<'NFQWS_KEENETIC_VERIFY'
+<?php
+$directory = __DIR__;
+$signature = file_get_contents($directory.'/keenetic-pairs.tsv.sig');
+$manifest = file_get_contents($directory.'/keenetic-pairs.tsv');
+$key = file_get_contents($directory.'/keenetic-release-key.pem');
+exit(openssl_verify($manifest, $signature, $key, OPENSSL_ALGO_SHA256) === 1 ? 0 : 1);
+NFQWS_KEENETIC_VERIFY
+    env -u REQUEST_METHOD -u QUERY_STRING -u CONTENT_TYPE -u CONTENT_LENGTH -u SCRIPT_FILENAME \
+        /opt/bin/php-cgi -n -d extension=/opt/lib/php8/openssl.so -q -f "$WORK/keenetic-verify.php" >/dev/null
+}
+
+keenetic_read_pair() {
+    LC_ALL=C awk -F '[ \t]' -v abi="$1" '
+        NF!=5 || $1!~/^(aarch64-3[.]10|mips-3[.]4|mipsel-3[.]4)$/ || ++seen[$1]!=1 ||
+        length($2)>40 || $2!~/^1[.]3[.]3[+]community[1-9][0-9]*-[1-9][0-9]*$/ ||
+        length($4)>40 || $4!~/^1[.]3[.]3[+]b[1-9][0-9]*-[1-9][0-9]*$/ ||
+        length($3)!=64 || $3!~/^[0-9a-f]+$/ || length($5)!=64 || $5!~/^[0-9a-f]+$/ {bad=1;next}
+        {
+            c=$2; p=$4
+            sub(/^1[.]3[.]3[+]community/,"",c); sub(/^1[.]3[.]3[+]b/,"",p)
+            sub(/-.*/,"",c); sub(/-.*/,"",p)
+            if (c!=p || (NR>1 && ($2!=core || $4!=panel))) bad=1
+            core=$2; panel=$4
+            if ($1==abi) pair=$2 " " $3 " " $4 " " $5 " " p
+        }
+        END {if (bad || NR!=3 || pair=="") exit 1; print pair}
+    ' "$WORK/keenetic-pairs.tsv"
+}
+
+keenetic_emit_worker() {
+    cat > "$WORK/keenetic-functions.sh" <<'NFQWS_KEENETIC_FUNCTIONS' || return 1
 keenetic_package_version() {
     record=$("$OPKG" status "$1") || return 1
     [ -n "$record" ] || return 0
@@ -513,6 +578,301 @@ keenetic_package_version() {
             print version
         }'
 }
+NFQWS_KEENETIC_FUNCTIONS
+    cat > "$WORK/keenetic-worker.sh" <<'NFQWS_KEENETIC_WORKER'
+#!/bin/sh
+WORK=$1 OPKG=$2 HASH=$3 HASH_BUSYBOX=$4
+previous_core=$5 previous_panel=$6 core_target=$7 panel_target=$8
+shift 8
+. "$WORK/keenetic-functions.sh"
+settings=/opt/etc/nfqws2
+service=/opt/etc/init.d/S51nfqws2
+pidfile=/opt/var/run/nfqws2.pid
+engine=/opt/usr/bin/nfqws2
+backup=$WORK/keenetic-before
+
+worker_fail() { printf '%s\n' "$*" >&2; exit 1; }
+file_hash() {
+    [ -f "$1" ] && [ ! -L "$1" ] || return 1
+    if [ "$HASH_BUSYBOX" = 1 ]; then checksum=$("$HASH" sha256sum "$1") || return 1
+    else checksum=$("$HASH" "$1") || return 1; fi
+    printf '%s\n' "${checksum%% *}"
+}
+service_state() {
+    [ -x "$service" ] && [ ! -L "$service" ] || return 1
+    service_line=$("$service" status) || return 1
+    case "$service_line" in
+        'Service NFQWS2 is running') printf 'running\n' ;;
+        'Service NFQWS2 is stopped') printf 'stopped\n' ;;
+        *) return 1 ;;
+    esac
+}
+process_stat() {
+    if ! IFS= read -r stat_line 2>/dev/null < "$1/stat"; then
+        [ -d "$1" ] && return 1
+        return 2
+    fi
+    process_fields=${stat_line##*) }
+    [ "$process_fields" != "$stat_line" ] || return 1
+    process_name=${stat_line%") $process_fields"}
+    process_name=${process_name#*(}
+    process_state=${process_fields%% *}
+}
+process_ticks() {
+    printf '%s\n' "$process_fields" | awk '$20~/^[1-9][0-9]*$/ {print $20;found=1} END {if(!found)exit 1}'
+}
+engine_actors_match() {
+    expected_pid=${1-} expected_ticks=${2-} expected_exe=${3-}
+    actor_found=0
+    for process in /proc/[0-9]*; do
+        [ -d "$process" ] || continue
+        if process_stat "$process"; then
+            case "$process_state" in Z|X|x) continue ;; esac
+            executable=$(readlink "$process/exe" 2>/dev/null) || executable=''
+            case "$process_name:${executable##*/}" in
+                nfqws2:*|*:nfqws2|*:'nfqws2 (deleted)') ;;
+                *) continue ;;
+            esac
+            [ "${process##*/}" = "$expected_pid" ] && [ "$executable" = "$expected_exe" ] &&
+                [ "$(process_ticks)" = "$expected_ticks" ] || return 1
+            actor_found=1
+        else
+            [ "$?" = 2 ] || return 1
+        fi
+    done
+    if [ -n "$expected_pid" ]; then [ "$actor_found" = 1 ]; else [ "$actor_found" = 0 ]; fi
+}
+running_actor() {
+    [ -f "$pidfile" ] && [ ! -L "$pidfile" ] || return 1
+    actor_pid=$(cat "$pidfile") || return 1
+    case "$actor_pid" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$actor_pid" -gt 1 ] 2>/dev/null && process_stat "/proc/$actor_pid" || return 1
+    case "$process_state" in Z|X|x) return 1 ;; esac
+    actor_ticks=$(process_ticks) && actor_exe=$(readlink -f "$engine") || return 1
+    engine_actors_match "$actor_pid" "$actor_ticks" "$actor_exe" &&
+        [ "$(cat "$pidfile")" = "$actor_pid" ] || return 1
+    printf '%s %s\n' "$actor_pid" "$actor_ticks"
+}
+old_actor_closed() {
+    if process_stat "/proc/${original_actor%% *}"; then
+        case "$process_state" in Z|X|x) return 0 ;; esac
+        remaining_ticks=$(process_ticks) || return 1
+        [ "$remaining_ticks" != "${original_actor#* }" ]
+    else
+        [ "$?" = 2 ]
+    fi
+}
+wait_for_engine_exit() {
+    # Stock stop removes its pidfile as soon as TERM is sent. Wait for the
+    # same kernel process, then check for any other NFQWS2 engine.
+    attempts=0
+    until old_actor_closed; do
+        [ "$attempts" -lt 10 ] || return 1
+        sleep 1
+        attempts=$((attempts+1))
+    done
+    engine_actors_match
+}
+factory_path() {
+    case "$1" in
+        blobs/quic_initial.bin|blobs/tls_clienthello.bin|\
+        lua/zapret-pcap.lua.gz|lua/zapret-obfs.lua.gz|lua/zapret-lib.lua.gz|\
+        lua/zapret-auto.lua.gz|lua/zapret-antidpi.lua.gz|lua/zapret-tests.lua.gz) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+verify_original_factory() {
+    if [ "$previous_core" = '1.3.3' ]; then
+        factory_index=$WORK/vendor-factory.sha256
+        cat > "$factory_index" <<'NFQWS_VENDOR_FACTORY'
+f4589c57749f956bb30538197a521d7005f8b0a8723b4707e72405e51ddac50a  blobs/quic_initial.bin
+936c2bee4cfb80aa3c426b2dcbcc834b3fbcd1adb17172959dc569c73a14275c  blobs/tls_clienthello.bin
+212705f841a6945d7805a26f517691798b59ccd790f96ec903c7a3f1d3053ba0  lua/zapret-pcap.lua.gz
+a135bfd8893482faf0c2f975460cc71850121a0d55a70f5ded31b4211bfda5cd  lua/zapret-obfs.lua.gz
+184e3af0186ff7e6950ed65c0bac6fe2bc84897c0b78cfc655d8a3209b8045a7  lua/zapret-lib.lua.gz
+9f11b5d599f51d55036bce14570ae635623836cf9a054ec72c7644607d8624eb  lua/zapret-auto.lua.gz
+b3d435628d0ebfe239d4e5fb716a6bbd51d05cc63eb612562e7616b686e5bf5f  lua/zapret-antidpi.lua.gz
+4ed70fa2707381f2ae4150195ff4e939069eea0b1af9060dbcb694d770b44590  lua/zapret-tests.lua.gz
+NFQWS_VENDOR_FACTORY
+    else
+        factory_index=/opt/share/nfqws2-asus/keenetic-core-factory.sha256
+    fi
+    if [ -n "$previous_core" ]; then
+        [ -f "$factory_index" ] && [ ! -L "$factory_index" ] || return 1
+        [ "$(wc -l < "$factory_index")" -eq 8 ] || return 1
+    fi
+    for relative in blobs/quic_initial.bin blobs/tls_clienthello.bin \
+        lua/zapret-pcap.lua.gz lua/zapret-obfs.lua.gz lua/zapret-lib.lua.gz \
+        lua/zapret-auto.lua.gz lua/zapret-antidpi.lua.gz lua/zapret-tests.lua.gz; do
+        [ -e "$settings/$relative" ] || [ -L "$settings/$relative" ] || continue
+        [ -n "$previous_core" ] || return 1
+        expected=$(awk -v f="$relative" '$2==f && NF==2 {n++;h=$1} END {if(n!=1) exit 1;print h}' "$factory_index") || return 1
+        [ "$(file_hash "$settings/$relative")" = "$expected" ] || {
+            printf 'Изменён штатный файл %s. Обновление ядра остановлено.\n' "$relative" >&2
+            return 1
+        }
+    done
+}
+verify_settings() {
+    while IFS= read -r relative; do
+        case "$relative" in ./*) relative=${relative#./} ;; *) return 1 ;; esac
+        if [ "$1" = new ] && factory_path "$relative"; then continue; fi
+        old_file=$backup/$relative
+        live_file=$settings/$relative
+        if [ -L "$old_file" ]; then
+            [ -L "$live_file" ] && [ "$(readlink "$old_file")" = "$(readlink "$live_file")" ] || return 1
+        else
+            [ -f "$old_file" ] && [ -f "$live_file" ] && [ ! -L "$live_file" ] &&
+                cmp -s "$old_file" "$live_file" || return 1
+        fi
+    done < "$WORK/keenetic-before.list"
+}
+detect_factory_network() {
+    route_table=$(ip -4 route show default) || return 1
+    factory_iface=$(printf '%s\n' "$route_table" | awk '
+        $1=="default" {
+            dev="";metric=0
+            for(i=2;i<NF;i++) {
+                if($i=="dev") dev=$(i+1)
+                if($i=="metric") metric=$(i+1)
+            }
+            if(dev!~/^[A-Za-z0-9_.:-]+$/ || length(dev)>15 || metric!~/^[0-9]+$/) next
+            if(!have || metric+0<best) {iface=dev;best=metric+0;have=1;tied=0}
+            else if(metric+0==best && iface!=dev) tied=1
+        }
+        END {if(!have || tied) exit 1; print iface}' ) || return 1
+    addresses=$(ip -f inet6 addr show dev "$factory_iface") || return 1
+    factory_ipv6=0
+    if printf '%s\n' "$addresses" | grep -q 'scope global'; then factory_ipv6=1; fi
+}
+write_factory_network() {
+    config=$settings/nfqws2.conf
+    initial=$(file_hash "$config") || return 1
+    [ ! -L "$settings" ] || return 1
+    temp=$settings/.nfqws2.conf.keenetic.$$
+    [ ! -e "$temp" ] && [ ! -L "$temp" ] && cp -p "$config" "$temp" || return 1
+    if awk -v iface="$factory_iface" -v v6="$factory_ipv6" '
+        /^ISP_INTERFACE="[^"]+"$/ {n++; print "ISP_INTERFACE=\"" iface "\""; next}
+        /^IPV6_ENABLED=[01]$/ {v++; print "IPV6_ENABLED=" v6; next}
+        {print}
+        END {if(n!=1 || v!=1) exit 1}' "$config" > "$temp" &&
+        [ "$(file_hash "$config")" = "$initial" ] && mv -f "$temp" "$config"; then return 0; fi
+    rm -f "$temp"
+    return 1
+}
+restore_known_service() {
+    result=$?
+    [ "$result" -ne 0 ] && [ "$restore_service" = 1 ] || return 0
+    if [ "$(keenetic_package_version nfqws2-keenetic)" = "$previous_core" ] &&
+        [ "$(file_hash "$engine")" = "$original_engine" ] && [ "$(file_hash "$service")" = "$original_init" ] &&
+        [ "$(file_hash "$settings/nfqws2.conf")" = "$original_config" ] &&
+        { [ ! -f "$WORK/keenetic-before.list" ] || verify_settings old; } &&
+        [ "$(service_state)" = stopped ] && old_actor_closed && engine_actors_match &&
+        "$service" start && [ "$(service_state)" = running ] && running_actor >/dev/null; then
+        printf '%s\n' 'Запущена прежняя служба NFQWS2.'
+    else
+        printf '%s\n' 'Прежняя служба не запущена автоматически. Проверьте сохранённое состояние.' >&2
+    fi
+}
+
+if [ -d /opt/var/lib/nfqws2-asus/updates ]; then
+    [ ! -L /opt/var/lib/nfqws2-asus/updates ] || worker_fail 'Каталог обновлений является ссылкой.'
+    update_state=$(cd /opt/var/lib/nfqws2-asus/updates && pwd -P) || exit 1
+    [ "$(LC_ALL=C ls -dn "$update_state" | awk '{print $1,$3}')" = 'drwx------ 0' ] ||
+        worker_fail 'Каталог обновлений имеет неожиданные права.'
+    update_lock=$update_state/apply.lock
+    [ ! -L "$update_lock" ] || worker_fail 'Блокировка обновлений имеет неожиданный тип.'
+    if [ -e "$update_lock" ]; then
+        [ "$(LC_ALL=C ls -ln "$update_lock" | awk '{print $1,$2,$3}')" = '-rw------- 1 0' ] ||
+            worker_fail 'Блокировка обновлений имеет неожиданные права.'
+    fi
+    exec 8>>"$update_lock" || exit 1
+    flock -n 8 || worker_fail 'Другое обновление уже выполняется.'
+fi
+
+[ "$(keenetic_package_version nfqws2-keenetic)" = "$previous_core" ] &&
+    [ "$(keenetic_package_version nfqws2-keenetic-community)" = "$previous_panel" ] ||
+    worker_fail 'Установленные пакеты изменились при подготовке.'
+"$OPKG" --tmp-dir "$WORK/opkg" --noaction install "$@" ||
+    worker_fail 'Entware не смогла подготовить установку. Служба не переключалась.'
+
+restore_service=0
+original_service=stopped
+original_actor=''
+original_config=''
+core_changes=0
+factory_iface=''
+[ "$previous_core" = "$core_target" ] || core_changes=1
+if [ -n "$previous_core" ] || [ -e "$service" ] || [ -L "$service" ]; then
+    original_service=$(service_state) || worker_fail 'Не удалось определить состояние службы NFQWS2.'
+fi
+if [ "$original_service" = running ]; then
+    original_actor=$(running_actor) || worker_fail 'Не удалось подтвердить работающий процесс NFQWS2.'
+else
+    engine_actors_match || worker_fail 'Обнаружен процесс NFQWS2 при выключенной службе.'
+fi
+if [ -e "$settings/nfqws2.conf" ] || [ -L "$settings/nfqws2.conf" ] || [ -n "$previous_core" ]; then
+    original_config=$(file_hash "$settings/nfqws2.conf") || worker_fail 'Не удалось проверить настройки NFQWS2.'
+else
+    detect_factory_network || worker_fail 'Не удалось определить интернет-интерфейс для первой установки.'
+fi
+if [ "$core_changes" = 1 ]; then
+    verify_original_factory || worker_fail 'Не удалось подтвердить штатные Lua и файлы ядра. Настройки сохранены.'
+    if [ "$original_service" = running ]; then
+        [ -n "$previous_core" ] || worker_fail 'Не удалось определить пакет работающего NFQWS2.'
+        original_engine=$(file_hash "$engine") && original_init=$(file_hash "$service") ||
+            worker_fail 'Не удалось проверить работающую службу NFQWS2.'
+        [ "$(running_actor)" = "$original_actor" ] || worker_fail 'Работающий процесс NFQWS2 изменился.'
+        restore_service=1
+        trap restore_known_service 0
+        "$service" stop && [ "$(service_state)" = stopped ] && wait_for_engine_exit ||
+            worker_fail 'Процесс NFQWS2 не завершился. Установка пакетов остановлена.'
+    fi
+    mkdir "$backup" || exit 1
+    if [ -e "$settings" ] || [ -L "$settings" ]; then
+        [ -d "$settings" ] && [ ! -L "$settings" ] && cp -pR "$settings/." "$backup/" ||
+            worker_fail 'Не удалось сохранить настройки, списки и Lua NFQWS2.'
+    fi
+    (cd "$backup" && find . ! -type d -print) > "$WORK/keenetic-before.list" && verify_settings old ||
+        worker_fail 'Настройки NFQWS2 изменились при создании резервной копии.'
+fi
+
+if [ "$core_changes" = 1 ] || [ "$original_service" = stopped ]; then
+    engine_actors_match || worker_fail 'Появился процесс NFQWS2. Установка пакетов остановлена.'
+else
+    [ "$(running_actor)" = "$original_actor" ] || worker_fail 'Работающий процесс NFQWS2 изменился.'
+fi
+
+"$OPKG" --tmp-dir "$WORK/opkg" install "$@" || worker_fail 'opkg сообщил об ошибке установки.'
+web_version=$(keenetic_package_version nfqws-keenetic-web) || exit 1
+[ "$(keenetic_package_version nfqws2-keenetic-community)" = "$panel_target" ] &&
+    [ "$(keenetic_package_version nfqws2-keenetic)" = "$core_target" ] && [ -n "$web_version" ] &&
+    "$OPKG" compare-versions "$web_version" '>=' '3.0.24' &&
+    [ -f /opt/share/www/nfqws/nfqws-community/index.php ] || worker_fail 'Не удалось подтвердить установленную панель и пакет ядра.'
+if [ -n "$original_config" ]; then
+    [ "$(file_hash "$settings/nfqws2.conf")" = "$original_config" ] || worker_fail 'Конфигурация NFQWS2 изменилась.'
+else
+    write_factory_network || worker_fail 'Не удалось записать интернет-интерфейс и IPv6 в новые настройки NFQWS2.'
+fi
+if [ "$core_changes" = 1 ]; then
+    verify_settings new || worker_fail 'Списки или пользовательские файлы NFQWS2 изменились.'
+    [ "$(service_state)" = stopped ] && engine_actors_match ||
+        worker_fail 'Установщик ядра неожиданно изменил состояние службы.'
+    if [ "$original_service" = running ]; then
+        "$service" start || worker_fail 'Не удалось запустить NFQWS2 после обновления.'
+    fi
+fi
+[ "$(service_state)" = "$original_service" ] || worker_fail 'Состояние службы NFQWS2 изменилось.'
+if [ "$original_service" = running ]; then
+    final_actor=$(running_actor) || worker_fail 'Не удалось подтвердить работу процесса NFQWS2.'
+    [ "$core_changes" = 1 ] || [ "$final_actor" = "$original_actor" ] || worker_fail 'Работающий процесс NFQWS2 изменился.'
+else
+    engine_actors_match || worker_fail 'Обнаружен процесс NFQWS2 при выключенной службе.'
+fi
+restore_service=0
+trap - 0
+NFQWS_KEENETIC_WORKER
+}
 
 # opkg uses >> for strictly newer. A solver error must not look like an older package.
 keenetic_compare() {
@@ -527,12 +887,7 @@ keenetic_asset() {
         cp "/opt/packages/$filename" "$WORK/$filename" || fail 'Не удалось прочитать пакет с накопителя.'
         digest=$(recovery_hash "$WORK/$filename") && [ "${digest%% *}" = "$expected" ] && return 0
     fi
-    if ! entware_download_tools; then
-        [ "$CHECK_ONLY" = 0 ] || fail 'Для проверки загрузок нужен curl или GNU wget из Entware.'
-        prepare_opkg
-        "$OPKG" --tmp-dir "$WORK/opkg" install curl ca-bundle && entware_download_tools ||
-            fail 'Не удалось подготовить curl и сертификаты Entware.'
-    fi
+    keenetic_require_download
     download "$base/$filename" "$WORK/$filename" 33554432
     digest=$(recovery_hash "$WORK/$filename") && [ "${digest%% *}" = "$expected" ] ||
         fail "Контрольная сумма не совпала: $filename"
@@ -621,24 +976,28 @@ nfqws_keenetic_main() {
     [ -x "$OPKG" ] || fail 'Сначала подключите накопитель с Entware и выберите его в разделе OPKG.'
     entware_select_abi keenetic
     case "$abi:$(uname -m)" in
-        aarch64-3.10:aarch64)
-            core_sha=1315b74b9cf243a78dd0a23a5ebd8b7c94c6067e29a5713dbcf0541aedea9c91
-            panel_sha=51ef4841819f0958a812a817dc9bd7c7ae39ee20bccf90e750895d906e542e34 ;;
-        mips-3.4:mips|mips-3.4:mips64)
-            core_sha=f0d3bf7389f796e9b07481629d52fe687bda2dcd01b4a1f5518532d5c9ea7245
-            panel_sha=4c54d7968aae52976f1ad973557bd6713474ae25e301882764f69737cc8afc56 ;;
-        mipsel-3.4:mips|mipsel-3.4:mipsel|mipsel-3.4:mips64|mipsel-3.4:mips64el)
-            core_sha=3da1a9a57cfcc16d243fe128024ecfb2c8f11802d932643ea46509e8ec0465b5
-            panel_sha=7ac365f03c38897c26d1e434ca09f094892e201e9b47ddbb00729c4b031645a2 ;;
+        aarch64-3.10:aarch64|mips-3.4:mips|mips-3.4:mips64|\
+        mipsel-3.4:mips|mipsel-3.4:mipsel|mipsel-3.4:mips64|mipsel-3.4:mips64el) ;;
         *) fail "Для $model с архитектурой Entware $abi совместимого пакета пока нет." ;;
     esac
     case "$model" in KN-*) brand=Keenetic;; NC-*) brand=Netcraze;; esac
     say "$brand $model · Entware $abi"
-    version='1.3.3+b101-2'
     name=nfqws2-keenetic-community
     core=nfqws2-keenetic
     web=nfqws-keenetic-web
     entware_workspace
+    keenetic_emit_worker || fail 'Не удалось подготовить установщик Keenetic и Netcraze.'
+    . "$WORK/keenetic-functions.sh"
+    keenetic_release='https://github.com/madworldpay/nfqws2-asus-community/releases'
+    keenetic_require_download
+    download "$keenetic_release/latest/download/keenetic-pairs.tsv" "$WORK/keenetic-pairs.tsv" 1024
+    download "$keenetic_release/latest/download/keenetic-pairs.tsv.sig" "$WORK/keenetic-pairs.tsv.sig" 384
+    keenetic_pair_signature || fail 'Не удалось подтвердить подпись выпуска Keenetic и Netcraze.'
+    pair=$(keenetic_read_pair "$abi") || fail 'Подписанный список пакетов Keenetic и Netcraze некорректен.'
+    read -r core_target core_sha version panel_sha build <<NFQWS_KEENETIC_PAIR
+$pair
+NFQWS_KEENETIC_PAIR
+    keenetic_release="$keenetic_release/download/build$build"
     for conflict in nfqws2-asus nfqws-asus-web nfqws-keenetic tpws-keenetic; do
         other=$(keenetic_package_version "$conflict") || fail "Проверьте состояние пакета $conflict в Entware."
         [ -z "$other" ] || fail "Установлен несовместимый пакет $conflict. Настройки сохранены."
@@ -649,12 +1008,12 @@ nfqws_keenetic_main() {
     if [ -n "$installed" ] && keenetic_compare "$installed" '>>' "$version"; then
         fail "Установлен более новый пакет панели $installed."
     fi
-    if [ -n "$core_version" ] && keenetic_compare "$core_version" '>>' '1.3.3'; then
-        fail "Для штатного NFQWS2 $core_version требуется более новая версия панели."
+    if [ -n "$core_version" ] && keenetic_compare "$core_version" '>>' "$core_target"; then
+        fail "Установлен более новый пакет NFQWS2 $core_version."
     fi
     web_ready=0
     if [ -n "$web_version" ] && keenetic_compare "$web_version" '>=' '3.0.24'; then web_ready=1; fi
-    if [ "$CHECK_ONLY" = 0 ] && [ "$installed" = "$version" ] && [ "$core_version" = '1.3.3' ] && [ "$web_ready" = 1 ]; then
+    if [ "$CHECK_ONLY" = 0 ] && [ "$installed" = "$version" ] && [ "$core_version" = "$core_target" ] && [ "$web_ready" = 1 ]; then
         [ -f /opt/share/www/nfqws/nfqws-community/index.php ] || fail 'Пакет установлен, но отсутствует файл панели. Проверьте накопитель Entware.'
         say "$name $version уже установлен."
         keenetic_panel_link
@@ -667,10 +1026,10 @@ nfqws_keenetic_main() {
             fail 'Не удалось подготовить проверку SHA-256.'
     fi
     set --
-    if [ "$core_version" != '1.3.3' ]; then
-        file="${core}_1.3.3_${abi}.ipk"
-        keenetic_stock_asset "$file" "$core_sha" 'https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.3'
-        set -- "$@" "$WORK/stock/$file"
+    file="${core}_${core_target}_${abi}.ipk"
+    keenetic_asset "$file" "$core_sha" "$keenetic_release"
+    if [ "$CHECK_ONLY" = 1 ] || [ "$core_version" != "$core_target" ]; then
+        set -- "$@" "$WORK/$file"
     fi
     if [ "$web_ready" = 0 ]; then
         file="${web}_3.0.24_all_entware.ipk"
@@ -678,18 +1037,16 @@ nfqws_keenetic_main() {
         set -- "$@" "$WORK/stock/$file"
     fi
     file="${name}_${version}_${abi}.ipk"
-    keenetic_asset "$file" "$panel_sha" 'https://github.com/madworldpay/nfqws2-asus-community/releases/download/keenetic-build101-r2'
-    set -- "$@" "$WORK/$file"
-    if [ "$CHECK_ONLY" = 1 ]; then say "Пакеты Build 101 для $brand проверены."; return 0; fi
+    keenetic_asset "$file" "$panel_sha" "$keenetic_release"
+    if [ "$CHECK_ONLY" = 1 ] || [ "$installed" != "$version" ]; then
+        set -- "$@" "$WORK/$file"
+    fi
+    if [ "$CHECK_ONLY" = 1 ]; then say "Пакеты Build $build для $brand проверены."; return 0; fi
     prepare_opkg
-    "$OPKG" --tmp-dir "$WORK/opkg" --noaction install "$@" || fail 'Entware не смогла подготовить установку. Проверьте доступ к её репозиторию.'
-    nfqws_asus_background "$OPKG" --tmp-dir "$WORK/opkg" install "$@" || fail 'Установка не завершена. Сохраните журнал opkg.'
-    web_version=$(keenetic_package_version "$web") || fail 'Не удалось проверить штатную веб-панель.'
-    [ "$(keenetic_package_version "$name")" = "$version" ] &&
-        [ "$(keenetic_package_version "$core")" = '1.3.3' ] && [ -n "$web_version" ] &&
-        keenetic_compare "$web_version" '>=' '3.0.24' &&
-        [ -f /opt/share/www/nfqws/nfqws-community/index.php ] || fail 'Не удалось подтвердить установленную панель.'
-    say 'Готово. Пакет панели Build 101 установлен.'
+    nfqws_asus_background /bin/sh "$WORK/keenetic-worker.sh" "$WORK" "$OPKG" "$HASH" "$HASH_BUSYBOX" \
+        "$core_version" "$installed" "$core_target" "$version" "$@" ||
+        fail 'Установка не завершена. Сохраните журнал и резервную копию настроек.'
+    say "Готово. Пакеты Build $build установлены."
     keenetic_panel_link
 }
 

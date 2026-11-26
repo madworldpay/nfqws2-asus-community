@@ -1,8 +1,12 @@
 7f60b92a5d074004862792811408f0a6919cb86df63b8892233f7042bb686de9  nfqws2-asus_1.3.2-asus6+b108_aarch64-3.10.ipk
 64a3c71849b13764fbd079792002d777baba4d6dc3914c345368506546606bbf  nfqws2-asus_1.3.2-asus6+b108_armv7.ipk
-275febb2fcbee5049524b1fa2896c8a5fc70eac208328cd116512beeeec98894  nfqws2-keenetic-community_1.3.3+b108-2_aarch64-3.10.ipk
-81ba2475fc87d9b6ac7aa9c29b873ceab9e3fa90eeb86e1a1d8a0d39ac9dd34f  nfqws2-keenetic-community_1.3.3+b108-2_mips-3.4.ipk
-73d178711bf10e4e34fc8d7c2ed47a4490acc194c3d3f71a28cf82d005adacfd  nfqws2-keenetic-community_1.3.3+b108-2_mipsel-3.4.ipk
+08ff6d67d06eff7788e2f20fd5ba0c30beff88ab64da53da0b2462f4f0a2d656  nfqws2-community-build108-keenetic-r3_source.tar.gz
+ce53ab9c3649e5b520101650aeac87b38e2ad8a6c793a3877511e60ddb9fc12c  nfqws2-keenetic-community_1.3.3+b108-3_aarch64-3.10.ipk
+3ea2f17892a92f284607ed62c5a63b7e0b49f082074faf5abb004761559fd9b4  nfqws2-keenetic-community_1.3.3+b108-3_mips-3.4.ipk
+6ae9006acbab332496f43b3d424ddd3df8b353adba280a1c3db6c77c3d9e0c44  nfqws2-keenetic-community_1.3.3+b108-3_mipsel-3.4.ipk
+fb7727993b9b8be1ae78ad02a89927f11a1b915bc0f9ce063e728d206945e13f  nfqws2-keenetic_1.3.3+community108-1_aarch64-3.10.ipk
+1439875f2fcfc8231c5741f880402e6205053f7a80f1b82de9645590d2cffd11  nfqws2-keenetic_1.3.3+community108-1_mips-3.4.ipk
+1e09b97229d3de0394fed08b9be48d77c3466a5ef4e4a15069ed340207b35af7  nfqws2-keenetic_1.3.3+community108-1_mipsel-3.4.ipk
 58215c2145e1eaa215647cd55ec036862dd76cb344f7060d27af62126e4c26fa  nfqws2-native_1.3.2-108_aarch64_cortex-a53.ipk
 870726a83ecfda791bc665b9f06eb8a02ddbc7ec2f3beb57b6a2fe683dcb8297  nfqws2-native_1.3.2-108_arm_cortex-a15_neon-vfpv4.ipk
 56a86951b0c4706b0f089def6fe4424aaa96e42f3f0f1452d8c7408c6d8c6892  nfqws2-native_1.3.2-108_arm_cortex-a7_neon-vfpv4.ipk

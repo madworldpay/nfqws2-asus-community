@@ -15,7 +15,7 @@
 
 ## Keenetic и Netcraze
 
-Для этих роутеров Build 105 выпущен отдельным пакетом Entware `nfqws2-keenetic-community`. Архитектуру установленной Entware покажет `opkg print-architecture`. [Выбрать пакет и проверить контрольную сумму](DOWNLOADS.md#keenetic).
+Для перехода на обновлённый Build 108 один раз запустите [универсальный установщик](README.md#install-command) по SSH. Он подберёт панель и движок zapret2 1.0.8 для вашей архитектуры и сохранит настройки службы. [Пакеты и контрольные суммы](DOWNLOADS.md#keenetic).
 
 <a id="текущая-сборка-и-профили-устройств"></a>
 
@@ -215,6 +215,8 @@ SmartDNS заново. После обновления проверьте вер
 <a id="manual-install"></a>
 
 ## Вручную
+
+**Keenetic и Netcraze:** [запустите универсальный установщик по SSH](README.md#install-command).
 
 **ASUSWRT-Merlin / Entware:**
 

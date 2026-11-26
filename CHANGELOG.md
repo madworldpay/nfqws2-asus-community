@@ -4,10 +4,10 @@
 
 ## Build 108 для ASUS, OpenWrt, Keenetic и Netcraze
 
-- Обновили zapret2 до 1.0.8 для ASUS и OpenWrt.
+- Обновили движок и Lua до zapret2 1.0.8 для ASUS, OpenWrt, Keenetic и Netcraze.
 - Доработали генератор стратегий (бета). Варианты пронумерованы, можно выбрать прогон, сравнить измерения и применить стратегию из карточки. Измеренные варианты доступны после остановки подбора.
 - Для новых установок SmartDNS на ASUS и поддерживаемых Keenetic и Netcraze доступен Release48.5. Обновлены пакеты SmartDNS для OpenWrt.
-- Работа над процессом обновления.
+- Работа над процессом обновления. Для Keenetic и Netcraze панель и движок устанавливаются вместе через [универсальный установщик](README.md#install-command).
 - [Скачать Build 108](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108) · [Ручная установка](PACKAGE-UPDATES.md#manual-install).
 
 ## Build 107 для ASUS, OpenWrt, Keenetic и Netcraze

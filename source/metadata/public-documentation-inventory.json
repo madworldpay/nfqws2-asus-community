@@ -7,8 +7,8 @@
     },
     {
       "file": "CHANGELOG.md",
-      "bytes": 66182,
-      "sha256": "ed320b73fde909855e485ec833e3fc2c0b2e312707c4c971c79d49a0627ebbe2"
+      "bytes": 69390,
+      "sha256": "a806c5994b88eec6659a98167ff13e44f1a2be1078e363bea8ec63f1bf2e2c2f"
     },
     {
       "file": "COMPATIBILITY.en.md",
@@ -52,13 +52,13 @@
     },
     {
       "file": "DOWNLOADS.en.md",
-      "bytes": 3662,
-      "sha256": "577cf14427d00706b36a11a45a24e65c6fbb23af4ade42f4f3c15f04e26211eb"
+      "bytes": 3665,
+      "sha256": "3bdabf685cf1a5e58eb785c21cc7d36f54660accfbb247b5f2b166ece2ef44bf"
     },
     {
       "file": "DOWNLOADS.md",
-      "bytes": 4806,
-      "sha256": "7742722115bd48b657e021d30d6f1c1fd0b6e6e4dec3f2240ccfcce2f53e75af"
+      "bytes": 4698,
+      "sha256": "34ef3d35f339d2ef9323113c369ad3cf8a68ddebb4031f14aecb1563babbd71f"
     },
     {
       "file": "DPI-DETECTOR.en.md",
@@ -122,13 +122,13 @@
     },
     {
       "file": "PACKAGE-UPDATES.en.md",
-      "bytes": 14871,
-      "sha256": "f1901311213290cb9f1d3408e5e06a120b7f81d02c4483492f65a768508597bb"
+      "bytes": 15832,
+      "sha256": "7faf0fef2e7184e19d560d19989815d07b694ed26202b111bb3028d6ab6da30d"
     },
     {
       "file": "PACKAGE-UPDATES.md",
-      "bytes": 26942,
-      "sha256": "932adc921f1e5a1c511fa923aadf33f0bd4f3a3a5308eda917e06308aef13435"
+      "bytes": 28585,
+      "sha256": "7b91563b256ee99f4a664c564795d043da30d62970daa9dd412ed5b794d9c2e8"
     },
     {
       "file": "PRESETS.en.md",
@@ -152,13 +152,13 @@
     },
     {
       "file": "README.en.md",
-      "bytes": 32069,
-      "sha256": "d73248c83e4518d8bd72c7684c95281dfeb0cb10888fbcc2831aaeb42a9ff8dd"
+      "bytes": 32067,
+      "sha256": "19318b40685e3a7d724dab10c1c3b19dbefe3fcc3b57eeadb9e71ae500deae98"
     },
     {
       "file": "README.md",
-      "bytes": 51450,
-      "sha256": "3410885891082698c58942a703981a1200de09ef3149b10c75c70e1f3440a4a1"
+      "bytes": 51475,
+      "sha256": "988d724576edce327cd2b80d74fbc8ce502d197c618cf834c1ddd69f86980481"
     },
     {
       "file": "ROADMAP.en.md",

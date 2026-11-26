@@ -7,7 +7,7 @@
 | Где устанавливаете | Какой пакет выбрать |
 | --- | --- |
 | ASUSWRT / Merlin с готовой Entware | `nfqws2-asus_…_armv7.ipk` или `nfqws2-asus_…_aarch64-3.10.ipk` по архитектуре Entware |
-| Keenetic или Netcraze с Entware | [Выбрать IPK панели](#keenetic) по архитектуре установленной Entware |
+| Keenetic или Netcraze с Entware | [Выбрать пакеты](#keenetic) по архитектуре установленной Entware |
 | OpenWrt 24.10 | `nfqws2-native_ВЕРСИЯ_АРХИТЕКТУРА.ipk` по точному `DISTRIB_ARCH` |
 | OpenWrt 25.12 | `nfqws2-native_ВЕРСИЯ_АРХИТЕКТУРА.apk` по точному `DISTRIB_ARCH`; подпись проверяется нативным установщиком OpenWrt |
 
@@ -19,19 +19,19 @@
 
 ## Keenetic и Netcraze
 
-Панель Build 108 устанавливается рядом со штатной веб-панелью. Для неё нужны Entware, `nfqws2-keenetic` версии `1.3.3` и `nfqws-keenetic-web` версии `3.0.24` или новее. Установка сохраняет конфигурацию штатной службы. [Штатный NFQWS2](https://github.com/nfqws/nfqws2-keenetic) · [Штатная веб-панель](https://github.com/nfqws/nfqws-keenetic-web).
+Панель Build 108 использует штатную службу NFQWS2 с движком и Lua zapret2 1.0.8. Нужны Entware и штатная веб-панель `nfqws-keenetic-web` версии `3.0.24` или новее.
 
-В терминале Entware выполните `opkg print-architecture`. Найдите свою архитектуру в таблице и скачайте один файл.Рядом с основной архитектурой может стоять вариант с суффиксом `_kn`. Например, если в списке есть `aarch64-3.10` и `aarch64-3.10_kn`, выбирайте пакет `aarch64-3.10`.
+Для установки или перехода со старой ревизии запустите [универсальный установщик](README.md#install-command) по SSH. Он проверит пакеты и установит подходящую пару. Узнать архитектуру можно командой `opkg print-architecture`. Если рядом есть вариант с суффиксом `_kn`, используйте основную архитектуру без этого суффикса.
 
-| Архитектура Entware | Пакет Build 108 |
-| --- | --- |
-| `aarch64-3.10` | [Скачать ARM64](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic-community_1.3.3%2Bb108-2_aarch64-3.10.ipk) |
-| `mips-3.4` | [Скачать MIPS](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic-community_1.3.3%2Bb108-2_mips-3.4.ipk) |
-| `mipsel-3.4` | [Скачать MIPSEL](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic-community_1.3.3%2Bb108-2_mipsel-3.4.ipk) |
+| Архитектура Entware | Панель | Движок |
+| --- | --- | --- |
+| `aarch64-3.10` | [IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic-community_1.3.3%2Bb108-3_aarch64-3.10.ipk) | [IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic_1.3.3%2Bcommunity108-1_aarch64-3.10.ipk) |
+| `mips-3.4` | [IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic-community_1.3.3%2Bb108-3_mips-3.4.ipk) | [IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic_1.3.3%2Bcommunity108-1_mips-3.4.ipk) |
+| `mipsel-3.4` | [IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic-community_1.3.3%2Bb108-3_mipsel-3.4.ipk) | [IPK](https://github.com/madworldpay/nfqws2-asus-community/releases/download/build108/nfqws2-keenetic_1.3.3%2Bcommunity108-1_mipsel-3.4.ipk) |
 
 Для Extra KN-1711 производитель указывает MIPSEL. [Инструкция Keenetic для этой модели](https://support.keenetic.ru/eaeu/extra/kn-1711/ru/20980-installing-the-entware-repository-on-a-usb-drive.html).
 
-Сверьте SHA-256, скопируйте IPK на роутер и в его каталоге выполните `opkg install ./имя-файла.ipk`, подставив имя скачанного файла. Затем откройте `http://<адрес-роутера>:90/nfqws-community/`. [Выпуск, контрольные суммы и исходники](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108).
+После установки откройте `http://<адрес-роутера>:90/nfqws-community/`.
 
 ## ASUS и OpenWrt
 

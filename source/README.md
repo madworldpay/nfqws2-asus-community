@@ -1,6 +1,6 @@
 # Исходники
 
-Исходники всех пакетов [Build 106](https://github.com/madworldpay/nfqws2-asus-community/tree/build106/source) находятся в едином теге. Для панели Keenetic и Netcraze см. [инструкцию по сборке](BUILD-KEENETIC.md). Исходники [ASUS Build 103](https://github.com/madworldpay/nfqws2-asus-community/tree/build103/source), [OpenWrt Build 104](https://github.com/madworldpay/nfqws2-asus-community/tree/build104/source) и [Build 101](https://github.com/madworldpay/nfqws2-asus-community/tree/build101/source) доступны в тегах выпусков.
+Исходники ASUS и OpenWrt находятся в [теге Build 108](https://github.com/madworldpay/nfqws2-asus-community/tree/build108/source). Для обновлённой ревизии Keenetic и Netcraze используйте архив `nfqws2-community-build108-keenetic-r3_source.tar.gz` из того же выпуска и [инструкцию по сборке](BUILD-KEENETIC.md).
 
 - [project/](project/) — общий WebUI, адаптации ASUS/Entware и OpenWrt, службы, модуль ASUS, тесты и серверная часть.
 - [sources/](sources/) — исходники движка, SmartDNS, BusyBox, lighttpd и библиотек.

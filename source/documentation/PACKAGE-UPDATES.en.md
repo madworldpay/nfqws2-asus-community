@@ -15,7 +15,7 @@ Build 105 or 106. Refresh the panel when it completes. Future updates are availa
 
 ## Keenetic and Netcraze
 
-For these routers, Build 108 ships as a separate Entware package called `nfqws2-keenetic-community`. Run `opkg print-architecture` to identify your Entware architecture. [Choose a package and verify its checksum](DOWNLOADS.en.md#keenetic).
+To migrate to the revised Build 108, run the [universal installer](README.en.md#install-command) once over SSH. It selects the panel and zapret2 1.0.8 engine for your architecture and preserves service settings. [Packages and checksums](DOWNLOADS.en.md#keenetic).
 
 <a id="current-release-and-device-profiles"></a>
 
@@ -181,6 +181,8 @@ A partially replaced package is not started without verification: the log is ret
 <a id="manual-install"></a>
 
 ## Manually
+
+**Keenetic and Netcraze:** [run the universal installer over SSH](README.en.md#install-command).
 
 **ASUSWRT-Merlin / Entware:**
 

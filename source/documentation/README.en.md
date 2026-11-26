@@ -37,7 +37,7 @@ Test video playback, seeking and voice calls separately.
 
 The panel runs on your existing firmware. It uses Entware on ASUS routers running Asuswrt-Merlin and on Keenetic and Netcraze routers. OpenWrt uses native packages.
 
-**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. Build 108 packages are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
+**Keenetic and Netcraze.** The community panel uses the stock `nfqws2-keenetic` service. On your LAN, open `http://<router-address>:90/nfqws-community/`. The panel and zapret2 1.0.8 engine are available for ARM64, MIPS and MIPSEL. [Installation](INSTALL.en.md#keenetic) · [Package architectures](DOWNLOADS.en.md#keenetic).
 
 **Free · RU / EN**
 
@@ -90,7 +90,7 @@ On a fresh ASUSWRT-Merlin installation, prepare Entware first:
 
 Paste this block into the router’s SSH shell. The same command selects the package for ASUS with Entware, Keenetic or Netcraze with Entware, and native OpenWrt.
 
-On Keenetic or Netcraze, enable the OPKG component, select the Entware drive and wait for Entware to finish installing. Open the Entware SSH shell as `root`. The installer checks the firmware and Entware architecture, installs the matching panel and prints its address. The panel uses the stock NFQWS2 service.
+On Keenetic or Netcraze, enable the OPKG component, select the Entware drive and wait for Entware to finish installing. Open the Entware SSH shell as `root`. The installer checks the firmware and Entware architecture, installs the matching panel and engine, and prints the panel address. The panel uses the stock NFQWS2 service.
 
 ```sh
 (

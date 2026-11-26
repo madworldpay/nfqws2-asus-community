@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+# The updater must stop a previously running service under its own guard.
+# A standalone removal still shuts down the service it is about to remove.
+[ -z "${IPKG_INSTROOT:-}" ] || exit 0
+init=/opt/etc/init.d/S51nfqws2
+[ -x "$init" ] || exit 0
+case $("$init" status) in
+    'Service NFQWS2 is stopped') exit 0 ;;
+    'Service NFQWS2 is running')
+        if [ "${1:-}" = remove ]; then
+            exec "$init" stop
+        fi
+        echo 'Stop the NFQWS2 service through the guarded updater before replacing its engine.' >&2
+        exit 1
+        ;;
+    *) echo 'Cannot determine the NFQWS2 service state.' >&2; exit 1 ;;
+esac

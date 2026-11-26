@@ -21,8 +21,8 @@
   },
   {
     "path": "UPSTREAM.md",
-    "bytes": 11855,
-    "sha256": "aaa43b283b607ed19c47cff497e11a09a90b9be9d300c4014ae0cd8ef3775d2e"
+    "bytes": 11804,
+    "sha256": "6eb1ab327ebf234fa0ef4327ab59924dbfb32d064abcab290d7a6f57048c9071"
   },
   {
     "path": "VERSION",
@@ -1146,13 +1146,23 @@
   },
   {
     "path": "keenetic/build.py",
-    "bytes": 11369,
-    "sha256": "4f2c728cc3138086146506f16b4ff2830e4baecbfdf3b4885447827dc60a9d8e"
+    "bytes": 16138,
+    "sha256": "c5b5e8688e2c64ad3a7bbe39c236c784d64b62258b0cde0533bb21da5b62615f"
   },
   {
     "path": "keenetic/check.php",
     "bytes": 597,
     "sha256": "a93ca8df4caae63300572b8c68045c32a430e87c6eabbbb3a256e9fe883bfd98"
+  },
+  {
+    "path": "keenetic/core-preinst",
+    "bytes": 391,
+    "sha256": "20a522addcc4d1b55bb19c8c1ab1bfa60044c827a9f0ac309f9275273ec5e269"
+  },
+  {
+    "path": "keenetic/core-prerm",
+    "bytes": 646,
+    "sha256": "634f182347eb1d432b0297b6473af5afb74c56ce7bed018b6aa1f6571f0c8185"
   },
   {
     "path": "keenetic/diagnostics.sh",

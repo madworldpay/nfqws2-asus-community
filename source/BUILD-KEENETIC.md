@@ -1,11 +1,11 @@
-# Build 106 · Keenetic and Netcraze
+# Build 108 · Keenetic and Netcraze
 
 This archive contains the complete community panel project with the KeeneticOS port.
-The Build 106 source distribution includes the third-party sources, recipes and notices.
+The revised Build 108 builds the panel and the zapret2 1.0.8 engine as a matching pair.
 
 Prepare Python 3, a Node.js version supported by Vite 7, and the pinned Yarn from this project.
 From the root of this archive, create an empty directory named `vendor` and put the four original IPKs listed below in it.
-Verify the downloads against `upstream-sha256.txt` from inside that directory.
+Verify the four IPKs against `upstream-sha256.txt` from inside that directory. Copy `sources/zapret2-1.0.8-linux-patched.tar.gz` to the same directory. The builder verifies the archive and its binary and Lua members against `project/core/engine-release.json`.
 
 ```sh
 cd project/webui/web
@@ -22,4 +22,4 @@ python3 -B keenetic/build.py --cache ../vendor --dist webui/web/dist --output ..
 - [nfqws2-keenetic_1.3.3_mips-3.4.ipk](https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.3/nfqws2-keenetic_1.3.3_mips-3.4.ipk)
 - [nfqws2-keenetic_1.3.3_mipsel-3.4.ipk](https://github.com/nfqws/nfqws2-keenetic/releases/download/v1.3.3/nfqws2-keenetic_1.3.3_mipsel-3.4.ipk)
 
-[Build 106 source distribution](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build106)
+[Build 108 source distribution](https://github.com/madworldpay/nfqws2-asus-community/releases/tag/build108)
